@@ -164,7 +164,7 @@
                                 PIN_MODE_OUTPUT(GPIOA_EEPROM_PWR_EN) |        \
                                 PIN_MODE_ALTERNATE(GPIOA_SONAR_PWM) |         \
                                 PIN_MODE_OUTPUT(GPIOA_AD_CLK) |               \
-                                PIN_MODE_ALTERNATE(GPIOA_ADIS_NSS) |          \
+                                PIN_MODE_OUTPUT(GPIOA_ADIS_NSS) |             \
                                 PIN_MODE_ALTERNATE(GPIOA_ADIS_SCK) |          \
                                 PIN_MODE_ALTERNATE(GPIOA_ADIS_MISO) |         \
                                 PIN_MODE_ALTERNATE(GPIOA_ADIS_MOSI) |         \
@@ -196,7 +196,7 @@
                                 PIN_OSPEED_2M(GPIOA_EEPROM_PWR_EN) |          \
                                 PIN_OSPEED_2M(GPIOA_SONAR_PWM) |              \
                                 PIN_OSPEED_2M(GPIOA_AD_CLK) |                 \
-                                PIN_OSPEED_25M(GPIOA_ADIS_NSS) |              \
+                                PIN_OSPEED_2M(GPIOA_ADIS_NSS) |               \
                                 PIN_OSPEED_25M(GPIOA_ADIS_SCK) |              \
                                 PIN_OSPEED_25M(GPIOA_ADIS_MISO) |             \
                                 PIN_OSPEED_25M(GPIOA_ADIS_MOSI) |             \
@@ -216,7 +216,7 @@
                                 PIN_PUPDR_PULLUP(GPIOA_ADIS_SCK) |            \
                                 PIN_PUPDR_PULLUP(GPIOA_ADIS_MISO) |           \
                                 PIN_PUPDR_PULLUP(GPIOA_ADIS_MOSI) |           \
-                                PIN_PUPDR_FLOATING(GPIOA_ADIS_NRST) |         \
+                                PIN_PUPDR_PULLDOWN(GPIOA_ADIS_NRST) |         \
                                 PIN_PUPDR_FLOATING(GPIOA_TO_GPS) |            \
                                 PIN_PUPDR_FLOATING(GPIOA_FROM_GPS) |          \
                                 PIN_PUPDR_FLOATING(GPIOA_OTG_FS_DM) |         \
@@ -232,7 +232,7 @@
                                 PIN_ODR_HIGH(GPIOA_ADIS_SCK) |                \
                                 PIN_ODR_HIGH(GPIOA_ADIS_MISO) |               \
                                 PIN_ODR_HIGH(GPIOA_ADIS_MOSI) |               \
-                                PIN_ODR_HIGH(GPIOA_ADIS_NRST) |               \
+                                PIN_ODR_LOW(GPIOA_ADIS_NRST) |                \
                                 PIN_ODR_HIGH(GPIOA_TO_GPS) |                  \
                                 PIN_ODR_HIGH(GPIOA_FROM_GPS) |                \
                                 PIN_ODR_HIGH(GPIOA_OTG_FS_DM) |               \
@@ -244,7 +244,7 @@
                                 PIN_AFIO_AF(GPIOA_EEPROM_PWR_EN, 0) |         \
                                 PIN_AFIO_AF(GPIOA_SONAR_PWM, 1) |             \
                                 PIN_AFIO_AF(GPIOA_AD_CLK, 0) |                \
-                                PIN_AFIO_AF(GPIOA_ADIS_NSS, 5) |              \
+                                PIN_AFIO_AF(GPIOA_ADIS_NSS, 0) |              \
                                 PIN_AFIO_AF(GPIOA_ADIS_SCK, 5) |              \
                                 PIN_AFIO_AF(GPIOA_ADIS_MISO, 5) |             \
                                 PIN_AFIO_AF(GPIOA_ADIS_MOSI, 5))
@@ -608,7 +608,7 @@
                                 PIN_OSPEED_2M(GPIOE_TIM1_PWM4) |              \
                                 PIN_OSPEED_2M(GPIOE_SDIO_PWR_EN))
 #define VAL_GPIOE_PUPDR        (PIN_PUPDR_PULLDOWN(GPIOE_GPS_PPS) |           \
-                                PIN_PUPDR_PULLUP(GPIOE_ADIS_INT) |            \
+                                PIN_PUPDR_PULLDOWN(GPIOE_ADIS_INT) |          \
                                 PIN_PUPDR_FLOATING(GPIOE_PIN2) |              \
                                 PIN_PUPDR_PULLUP(GPIOE_MPU9150_INT) |         \
                                 PIN_PUPDR_PULLUP(GPIOE_BMP085_EOC) |          \

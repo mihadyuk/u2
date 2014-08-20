@@ -2,10 +2,13 @@
 #define MAIN_H_
 
 /* chibios includes */
-#include "ch.hpp"
-#include "hal.h"
+#ifdef __cplusplus
+  #include "ch.hpp"
+#else
+  #include "ch.h"
+#endif
 
-using namespace chibios_rt;
+#include "hal.h"
 
 ///* Heap size for dynamic thread creation */
 //#define THREAD_HEAP_SIZE    (1024 * 4)

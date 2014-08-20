@@ -42,6 +42,8 @@ Giovanni
 #include <time.h>
 
 #include "main.h"
+#include "adis.h"
+
 //#include "global_flags.h"
 //#include "fault_handlers.h"
 //#include "message.hpp"
@@ -75,6 +77,8 @@ Giovanni
 //#include "marg_rover.hpp"
 //#include "drivetrain.hpp"
 //#include "exti_local.hpp"
+
+using namespace chibios_rt;
 
 /*
  ******************************************************************************
@@ -172,7 +176,10 @@ Giovanni
  *******************************************************************************
  *******************************************************************************
  */
+
 int main(void) {
+  bool status;
+
   halInit();
   System::init();
   chThdSleepMilliseconds(1);
@@ -222,17 +229,20 @@ int main(void) {
 //  drivetrain.start();
 //  sins.start(&state_vector);
 
+    status = AdisStart();
+    osalDbgCheck(OSAL_SUCCESS == status);
+
   while (TRUE){
-    osalThreadSleepMilliseconds(1000);
+    AdisRead(NULL, NULL, NULL, NULL, NULL, NULL);
+    osalThreadSleepMilliseconds(100);
     //blue_led_on();
     //red_led_on();
     green_led_on();
-    eeprom_power_on();
-    osalThreadSleepMilliseconds(1000);
+    //AdisExchange();
+    osalThreadSleepMilliseconds(100);
     //blue_led_off();
     //red_led_off();
     green_led_off();
-    eeprom_power_off();
 //    if (ATTITUDE_UNIT_UPDATE_RESULT_OK == attitude_unit.update()){
 //      sins.update();
 //      if (ACS_STATUS_ERROR == acs.update())
