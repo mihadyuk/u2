@@ -42,7 +42,7 @@ Giovanni
 #include <time.h>
 
 #include "main.h"
-#include "adis.h"
+#include "adis.hpp"
 
 //#include "global_flags.h"
 //#include "fault_handlers.h"
@@ -76,7 +76,7 @@ Giovanni
 //#include "pwm_receiver_rover.hpp"
 //#include "marg_rover.hpp"
 //#include "drivetrain.hpp"
-//#include "exti_local.hpp"
+#include "exti_local.hpp"
 
 using namespace chibios_rt;
 
@@ -176,9 +176,14 @@ using namespace chibios_rt;
  *******************************************************************************
  *******************************************************************************
  */
+static float acc[3];
+static float gyr[3];
+static float mag[3];
+static float baro;
+static float quat[4];
+static float euler[3];
 
 int main(void) {
-  bool status;
 
   halInit();
   System::init();
@@ -202,7 +207,7 @@ int main(void) {
 //
 //  chHeapInit(&ThdHeap, (uint8_t *)MEM_ALIGN_NEXT(link_thd_buf), THREAD_HEAP_SIZE);
 //
-//  Exti.start();
+    Exti.start();
 //  time_keeper.start();
 //  MsgInit();
 //  BlinkerInit();
@@ -229,20 +234,17 @@ int main(void) {
 //  drivetrain.start();
 //  sins.start(&state_vector);
 
-    status = AdisStart();
-    osalDbgCheck(OSAL_SUCCESS == status);
+  osalDbgCheck(OSAL_SUCCESS == adis.start());
 
   while (TRUE){
-    AdisRead(NULL, NULL, NULL, NULL, NULL, NULL);
-    osalThreadSleepMilliseconds(100);
-    //blue_led_on();
-    //red_led_on();
+    chDbgCheck(MSG_OK == adis.wait(MS2ST(200)));
     green_led_on();
-    //AdisExchange();
-    osalThreadSleepMilliseconds(100);
-    //blue_led_off();
-    //red_led_off();
+    adis.get(acc, gyr, mag, &baro, quat, euler);
     green_led_off();
+
+    //osalThreadSleepMilliseconds(100);
+
+
 //    if (ATTITUDE_UNIT_UPDATE_RESULT_OK == attitude_unit.update()){
 //      sins.update();
 //      if (ACS_STATUS_ERROR == acs.update())

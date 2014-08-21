@@ -105,11 +105,13 @@ CSRC = $(PORTSRC) \
        $(CHIBIOS)/os/various/shell.c \
        $(CHIBIOS)/os/various/chprintf.c \
        $(CHIBIOS)/os/various/syscalls.c \
-       devices/adis.c \
+       
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
 CPPSRC = main.cpp \
+         devices/adis.cpp \
+         devices/exti_local.cpp \
          $(CHIBIOS)/os/various/cpp_wrappers/ch.cpp \
          $(CHIBIOS)/os/various/cpp_wrappers/syscalls_cpp.cpp \
 

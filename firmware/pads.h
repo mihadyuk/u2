@@ -25,6 +25,7 @@ static inline void red_led_on(void)           {palClearPad(GPIOB, GPIOB_LED_R);}
 static inline void red_led_off(void)          {palSetPad(GPIOB,   GPIOB_LED_R);}
 static inline void green_led_on(void)         {palClearPad(GPIOB, GPIOB_LED_G);}
 static inline void green_led_off(void)        {palSetPad(GPIOB,   GPIOB_LED_G);}
+static inline void green_led_toggle(void)     {palTogglePad(GPIOB,GPIOB_LED_G);}
 
 static inline void normal_led_on(void)        {green_led_on();}
 static inline void normal_led_off(void)       {green_led_off();}
