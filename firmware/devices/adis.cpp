@@ -1,5 +1,3 @@
-#include <math.h>
-
 #include "main.h"
 #include "pads.h"
 
@@ -14,11 +12,11 @@
 #define ADIS_START_TIME_MS        560
 #define ADIS_SPI                  SPID1
 
-/* address definitions */
-#define DIAG_STS      0x0A
-#define GLOB_CMD      0x02
-#define PROD_ID       0x7E
-#define SYS_E_FLAG    0x08
+/* some address definitions */
+#define DIAG_STS          0x0A
+#define GLOB_CMD          0x02
+#define PROD_ID           0x7E
+#define SYS_E_FLAG        0x08
 
 /*
  ******************************************************************************
@@ -189,31 +187,35 @@ static bool selftest(void){
 /**
  *
  */
-static inline float u16_conv(uint16_t msb, float scale){
+template<typename T>
+static inline T u16_conv(T scale, uint16_t msb){
   return scale * (int16_t)msb;
 }
 
 /**
  *
  */
-static inline float u32_conv(uint16_t msb, uint16_t lsb, float scale){
+template<typename T>
+static inline T u32_conv(T scale, uint16_t msb, uint16_t lsb){
   return scale * (int32_t)((msb << 16) | lsb);
 }
 
 /**
  *
  */
-static inline void u16_conv_block(const uint16_t *raw, float *ret, float scale){
-  for (size_t i = 0; i<3; i++)
-    ret[i] = u16_conv(raw[i], scale);
+template<typename T>
+static inline void u16_block_conv(T scale, const uint16_t *raw, T *ret, size_t len){
+  for (size_t i = 0; i<len; i++)
+    ret[i] = u16_conv(scale, raw[i]);
 }
 
 /**
  *
  */
-static inline void u32_conv_block(const uint16_t *raw, float *ret, float scale){
-  for (size_t i = 0; i<3; i++)
-    ret[i] = u32_conv(raw[2*i+1], raw[2*i], scale);
+template<typename T>
+static inline void u32_block_conv(T scale, const uint16_t *raw, T *ret, size_t len){
+  for (size_t i = 0; i<len; i++)
+    ret[i] = u32_conv(scale, raw[2*i+1], raw[2*i]);
 }
 
 /*
@@ -268,18 +270,18 @@ void Adis::stop(void){
 /**
  * @note    If you do not need some data than pass NULL pointer.
  */
-uint16_t Adis::get(float *acc, float *gyr, float *mag,
-                   float *baro, float *quat, float *euler){
+uint16_t Adis::get(adisfp *acc, adisfp *gyr, adisfp *mag,
+    adisfp *baro, adisfp *quat, adisfp *euler){
 
-  const float gyr_scale   = 0.00000030517578125; /* to deg/s */
-  const float acc_scale   = 0.00000001220703125; /* to G */
-  const float mag_scale   = 0.0001; /* to millygauss */
-  const float baro_scale  = 0.04; /* to millybars */
-  const float temp_scale  = 0.00565; /* to celsius */
-  const float quat_scale  = 0.000030517578125;
-  const float euler_scale = 0.0054931640625; /* to deg (360/65536) */
+  const adisfp gyr_scale   = 0.00000030517578125; /* to deg/s */
+  const adisfp acc_scale   = 0.00000001220703125; /* to G */
+  const adisfp mag_scale   = 0.0001; /* to millygauss */
+  const adisfp baro_scale  = 0.04; /* to millybars */
+  const adisfp temp_scale  = 0.00565; /* to celsius */
+  const adisfp quat_scale  = 0.000030517578125;
+  const adisfp euler_scale = 0.0054931640625; /* to deg (360/65536) */
   uint16_t errors;
-  float temp;
+  adisfp temp;
 
   chTMStartMeasurementX(&tm);
   osalDbgCheck(ready);
@@ -290,27 +292,25 @@ uint16_t Adis::get(float *acc, float *gyr, float *mag,
     rxbuf[i-1] = read(request[i]);
 
   /* converting to useful values */
-  temp = 25 + u16_conv(rxbuf[1], temp_scale);
+  temp = 25 + u16_conv(temp_scale, rxbuf[1]);
 
   if (nullptr != acc)
-    u32_conv_block(&rxbuf[8], acc, acc_scale);
+    u32_block_conv(acc_scale, &rxbuf[8], acc, 3);
 
   if (nullptr != gyr)
-    u32_conv_block(&rxbuf[2], gyr, gyr_scale);
+    u32_block_conv(gyr_scale, &rxbuf[2], gyr, 3);
 
   if (nullptr != mag)
-    u16_conv_block(&rxbuf[14], mag, mag_scale);
+    u16_block_conv(mag_scale, &rxbuf[14], mag, 3);
 
   if (nullptr != baro)
-    *baro = u32_conv(rxbuf[14], rxbuf[15], baro_scale);
+    *baro = u32_conv(baro_scale, rxbuf[14], rxbuf[15]);
 
-  if (nullptr != quat){
-    for (size_t i=0; i<4; i++)
-      quat[i] = u16_conv(rxbuf[i+19], quat_scale);
-  }
+  if (nullptr != quat)
+    u16_block_conv(quat_scale, &rxbuf[19], quat, 4);
 
   if (nullptr != euler)
-    u16_conv_block(&rxbuf[24], euler, euler_scale);
+    u16_block_conv(euler_scale, &rxbuf[24], euler, 3);
 
   errors = rxbuf[0];
 

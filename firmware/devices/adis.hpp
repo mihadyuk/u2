@@ -1,13 +1,15 @@
 #ifndef ADIS_HPP_
 #define ADIS_HPP_
 
+typedef float adisfp; /* adis floating point type */
+
 class Adis {
 public:
   Adis(void);
   bool start(void);
   void stop(void);
-  uint16_t get(float *acc, float *gyr, float *mag,
-               float *baro, float *quat, float *euler);
+  uint16_t get(adisfp *acc, adisfp *gyr, adisfp *mag,
+               adisfp *baro, adisfp *quat, adisfp *euler);
   float dt(void);
   static void extiISR(EXTDriver *extp, expchannel_t channel);
   msg_t wait(systime_t timeout);
