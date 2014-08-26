@@ -94,6 +94,8 @@ static const uint8_t request[] = {
 static const size_t request_len = sizeof(request) / sizeof(request[0]);
 static uint16_t rxbuf[request_len];
 
+static const adisfp ADIS_DT = (adisfp)ADIS_SAMPLE_RATE_DIV / ADIS_INTERNAL_SAMPLE_RATE;
+
 /*
  ******************************************************************************
  ******************************************************************************
@@ -271,7 +273,7 @@ void Adis::stop(void){
  * @note    If you do not need some data than pass NULL pointer.
  */
 uint16_t Adis::get(adisfp *acc, adisfp *gyr, adisfp *mag,
-    adisfp *baro, adisfp *quat, adisfp *euler){
+                   adisfp *baro, adisfp *quat, adisfp *euler){
 
   const adisfp gyr_scale   = 0.00000030517578125; /* to deg/s */
   const adisfp acc_scale   = 0.00000001220703125; /* to G */
@@ -342,8 +344,6 @@ msg_t Adis::wait(systime_t timeout){
 /**
  *
  */
-float Adis::dt(void){
-  float ret = ADIS_SAMPLE_RATE_DIV;
-  ret /= ADIS_INTERNAL_SAMPLE_RATE;
-  return  ret;
+adisfp Adis::dt(void){
+  return ADIS_DT;
 }

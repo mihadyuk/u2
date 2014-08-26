@@ -10,7 +10,7 @@ public:
   void stop(void);
   uint16_t get(adisfp *acc, adisfp *gyr, adisfp *mag,
                adisfp *baro, adisfp *quat, adisfp *euler);
-  float dt(void);
+  adisfp dt(void);
   static void extiISR(EXTDriver *extp, expchannel_t channel);
   msg_t wait(systime_t timeout);
 
