@@ -183,6 +183,21 @@ static float baro;
 static float quat[4];
 static float euler[3];
 
+#include "eeprom_mtd.hpp"
+
+static const EepromConfig eeprom_cfg = {
+  OSAL_MS2ST(20),
+  1024,
+  32,
+};
+
+static const MtdConfig mtd_cfg = {
+  &I2CD2,
+  0b1010000,
+};
+
+static EepromMtd eeprom_mtd(&mtd_cfg, &eeprom_cfg);
+
 int main(void) {
 
   halInit();
@@ -235,6 +250,7 @@ int main(void) {
 //  sins.start(&state_vector);
 
   osalDbgCheck(OSAL_SUCCESS == adis.start());
+  eeprom_mtd.getPageSize();
 
   while (TRUE){
     chDbgCheck(MSG_OK == adis.wait(MS2ST(200)));

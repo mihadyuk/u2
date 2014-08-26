@@ -75,8 +75,8 @@
 #define GPIOB_I2C_SLOW_SDA      7 /* I2C1*/
 #define GPIOB_TACHOMETER        8
 #define GPIOB_RECEIVER_PPM      9
-#define GPIOB_I2C_FAST_SCL      10 /* i2c2*/
-#define GPIOB_I2C_FAST_SDA      11 /* i2c2*/
+#define GPIOB_I2C_FAST_SCL      10 /* I2C2*/
+#define GPIOB_I2C_FAST_SDA      11 /* I2C2*/
 #define GPIOB_SPI2_NSS_UEXT     12
 #define GPIOB_SPI2_SCK_UEXT     13
 #define GPIOB_SPI2_MISO_UEXT    14

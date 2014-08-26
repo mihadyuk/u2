@@ -114,7 +114,9 @@ CPPSRC = main.cpp \
          devices/exti_local.cpp \
          $(CHIBIOS)/os/various/cpp_wrappers/ch.cpp \
          $(CHIBIOS)/os/various/cpp_wrappers/syscalls_cpp.cpp \
-
+         24aa/cpp/mtd.cpp \
+         24aa/cpp/eeprom_mtd.cpp \
+         
 # C sources to be compiled in ARM mode regardless of the global setting.
 # NOTE: Mixing ARM and THUMB mode enables the -mthumb-interwork compiler
 #       option that results in lower performance and larger code size.
@@ -144,6 +146,7 @@ INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
          $(CHIBIOS)/os/various \
          $(CHIBIOS)/os/various/cpp_wrappers \
          board devices \
+         24aa/cpp \
 
 #
 # Project, sources and paths
