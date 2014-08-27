@@ -49,7 +49,7 @@ Giovanni
 //#include "message.hpp"
 //#include "gps_eb500.hpp"
 //#include "sanity.hpp"
-//#include "i2c_local.hpp"
+#include "i2c_local.hpp"
 //#include "eeprom_file_tree.hpp"
 //#include "param.hpp"
 //#include "timekeeper.hpp"
@@ -183,20 +183,7 @@ static float baro;
 static float quat[4];
 static float euler[3];
 
-#include "eeprom_mtd.hpp"
-
-static const EepromConfig eeprom_cfg = {
-  OSAL_MS2ST(20),
-  1024,
-  32,
-};
-
-static const MtdConfig mtd_cfg = {
-  &I2CD2,
-  0b1010000,
-};
-
-static EepromMtd eeprom_mtd(&mtd_cfg, &eeprom_cfg);
+#include "test_eeprom_mtd.hpp"
 
 int main(void) {
 
@@ -214,20 +201,21 @@ int main(void) {
 //  else
 //    chThdSleepMilliseconds(100);
 //
-//  /* give power to all needys */
+  /* give power to all needys */
 //  pwr5v_power_on();
-    gps_power_on();
-    xbee_reset_clear();
+  gps_power_on();
+  xbee_reset_clear();
+  eeprom_power_on();
+  osalThreadSleepMilliseconds(100);
 
-//
 //  chHeapInit(&ThdHeap, (uint8_t *)MEM_ALIGN_NEXT(link_thd_buf), THREAD_HEAP_SIZE);
 //
-    Exti.start();
+  Exti.start();
 //  time_keeper.start();
 //  MsgInit();
 //  BlinkerInit();
 //  SanityControlInit();
-//  I2CInitLocal();
+  I2CInitLocal();
 //  EepromFileTreeInit();
 //  ParametersInit();   /* read parameters from EEPROM via I2C*/
 //  MavInit();          /* mavlink constants initialization must be called after parameters init */
@@ -249,8 +237,9 @@ int main(void) {
 //  drivetrain.start();
 //  sins.start(&state_vector);
 
+  testEepromMtd();
+
   osalDbgCheck(OSAL_SUCCESS == adis.start());
-  eeprom_mtd.getPageSize();
 
   while (TRUE){
     chDbgCheck(MSG_OK == adis.wait(MS2ST(200)));

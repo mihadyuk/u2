@@ -109,14 +109,18 @@ CSRC = $(PORTSRC) \
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
-CPPSRC = main.cpp \
+CPPSRC = $(CHIBIOS)/os/various/cpp_wrappers/ch.cpp \
+         $(CHIBIOS)/os/various/cpp_wrappers/syscalls_cpp.cpp \
+         main.cpp \
          devices/adis.cpp \
          devices/exti_local.cpp \
-         $(CHIBIOS)/os/various/cpp_wrappers/ch.cpp \
-         $(CHIBIOS)/os/various/cpp_wrappers/syscalls_cpp.cpp \
          24aa/cpp/mtd.cpp \
          24aa/cpp/eeprom_mtd.cpp \
-         
+         24aa/cpp/eeprom_fs.cpp \
+         24aa/cpp/eeprom_file.cpp \
+         24aa/cpp/test_eeprom_mtd.cpp \
+         common/i2c_local.cpp \
+
 # C sources to be compiled in ARM mode regardless of the global setting.
 # NOTE: Mixing ARM and THUMB mode enables the -mthumb-interwork compiler
 #       option that results in lower performance and larger code size.
@@ -147,6 +151,7 @@ INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
          $(CHIBIOS)/os/various/cpp_wrappers \
          board devices \
          24aa/cpp \
+         common \
 
 #
 # Project, sources and paths
