@@ -114,11 +114,11 @@ CPPSRC = $(CHIBIOS)/os/various/cpp_wrappers/ch.cpp \
          main.cpp \
          devices/adis.cpp \
          devices/exti_local.cpp \
-         24aa/mtd.cpp \
-         24aa/eeprom_mtd.cpp \
-         24aa/nvram_fs.cpp \
-         24aa/nvram_file.cpp \
-         24aa/test_nvram.cpp \
+         24aa/lib/mtd.cpp \
+         24aa/lib/eeprom_mtd.cpp \
+         24aa/lib/nvram_fs.cpp \
+         24aa/lib/nvram_file.cpp \
+         24aa/test_suite/test_nvram.cpp \
          common/i2c_local.cpp \
 
 # C sources to be compiled in ARM mode regardless of the global setting.
@@ -150,7 +150,8 @@ INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
          $(CHIBIOS)/os/various \
          $(CHIBIOS)/os/various/cpp_wrappers \
          board devices \
-         24aa \
+         24aa/lib \
+         24aa/test_suite \
          common \
 
 #
