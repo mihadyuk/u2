@@ -183,7 +183,7 @@ static float baro;
 static float quat[4];
 static float euler[3];
 
-#include "test_eeprom_mtd.hpp"
+#include "test_nvram.hpp"
 
 int main(void) {
 
@@ -237,7 +237,7 @@ int main(void) {
 //  drivetrain.start();
 //  sins.start(&state_vector);
 
-  testEepromMtd();
+  testNvram();
 
   osalDbgCheck(OSAL_SUCCESS == adis.start());
 

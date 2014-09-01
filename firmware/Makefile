@@ -116,9 +116,9 @@ CPPSRC = $(CHIBIOS)/os/various/cpp_wrappers/ch.cpp \
          devices/exti_local.cpp \
          24aa/cpp/mtd.cpp \
          24aa/cpp/eeprom_mtd.cpp \
-         24aa/cpp/eeprom_fs.cpp \
-         24aa/cpp/eeprom_file.cpp \
-         24aa/cpp/test_eeprom_mtd.cpp \
+         24aa/cpp/nvram_fs.cpp \
+         24aa/cpp/nvram_file.cpp \
+         24aa/cpp/test_nvram.cpp \
          common/i2c_local.cpp \
 
 # C sources to be compiled in ARM mode regardless of the global setting.
