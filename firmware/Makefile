@@ -40,7 +40,7 @@ endif
 
 # Enable this if you want to see the full log while compiling.
 ifeq ($(USE_VERBOSE_COMPILE),)
-  USE_VERBOSE_COMPILE = no
+  USE_VERBOSE_COMPILE = yes
 endif
 
 #
@@ -110,14 +110,14 @@ NVRAM = 24aa/lib
 CPPSRC = $(CHIBIOS)/os/various/cpp_wrappers/ch.cpp \
          $(CHIBIOS)/os/various/cpp_wrappers/syscalls_cpp.cpp \
          main.cpp \
-         devices/adis.cpp \
-         devices/exti_local.cpp \
+         drivers/adis.cpp \
+         drivers/exti_local.cpp \
          $(NVRAM)/mtd.cpp \
          $(NVRAM)/eeprom_mtd.cpp \
          $(NVRAM)/fram_mtd.cpp \
          $(NVRAM)/nvram_fs.cpp \
          $(NVRAM)/nvram_file.cpp \
-         common/i2c_local.cpp \
+         services/i2c_local.cpp \
 
 # C sources to be compiled in ARM mode regardless of the global setting.
 # NOTE: Mixing ARM and THUMB mode enables the -mthumb-interwork compiler
@@ -147,9 +147,9 @@ INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
          $(CHIBIOS)/os/various/devices_lib/accel \
          $(CHIBIOS)/os/various \
          $(CHIBIOS)/os/various/cpp_wrappers \
-         devices \
+         drivers \
          $(NVRAM) \
-         common \
+         services \
 
 #
 # Project, sources and paths
