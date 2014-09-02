@@ -1,6 +1,8 @@
 #ifndef PADS_H_
 #define PADS_H_
 
+#include "board.h"
+
 static inline void xbee_reset_assert(void)    {palClearPad(GPIOD, GPIOD_XBEE_RESET);}
 static inline void xbee_reset_clear(void)     {palSetPad(GPIOD,   GPIOD_XBEE_RESET);}
 
@@ -13,8 +15,8 @@ static inline void gps_power_off(void)        {palSetPad(GPIOA,   GPIOA_GPS_ENAB
 static inline void pwr5v_power_on(void)       {palSetPad(GPIOD,   GPIOD_5V_ENABLE);}
 static inline void pwr5v_power_off(void)      {palClearPad(GPIOD, GPIOD_5V_ENABLE);}
 
-static inline void eeprom_power_on(void)      {palClearPad(GPIOA, GPIOA_EEPROM_PWR_EN);}
-static inline void eeprom_power_off(void)     {palSetPad(GPIOA,   GPIOA_EEPROM_PWR_EN);}
+static inline void eeprom_power_on(void)      {palClearPad(GPIOA, GPIOA_NVRAM_PWR_EN);}
+static inline void eeprom_power_off(void)     {palSetPad(GPIOA,   GPIOA_NVRAM_PWR_EN);}
 
 static inline void microsd_power_on(void)     {palClearPad(GPIOE, GPIOE_SDIO_PWR_EN);}
 static inline void microsd_power_off(void)    {palSetPad(GPIOE,   GPIOE_SDIO_PWR_EN);}

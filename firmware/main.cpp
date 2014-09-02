@@ -183,8 +183,6 @@ static float baro;
 static float quat[4];
 static float euler[3];
 
-#include "test_nvram.hpp"
-
 int main(void) {
 
   halInit();
@@ -236,8 +234,6 @@ int main(void) {
 //  //acs.start();
 //  drivetrain.start();
 //  sins.start(&state_vector);
-
-  testNvram();
 
   osalDbgCheck(OSAL_SUCCESS == adis.start());
 

@@ -24,7 +24,7 @@
 /*
  * Board identifier.
  */
-#define BOARD_NONSTANDARD_STM32F4_BARTHESS1
+#define BOARD_BEZVODIATEL
 #define BOARD_NAME              "Hand made STM32F4x board"
 
 /*
@@ -49,7 +49,7 @@
  * IO pins assignments.
  */
 #define GPIOA_GPS_ENABLE        0
-#define GPIOA_EEPROM_PWR_EN     1
+#define GPIOA_NVRAM_PWR_EN      1
 #define GPIOA_SONAR_PWM         2 /* tim2_ch3 */
 #define GPIOA_AD_CLK            3
 #define GPIOA_ADIS_NSS          4 /* spi1 */
@@ -161,7 +161,7 @@
  * GPIOA setup
  */
 #define VAL_GPIOA_MODER        (PIN_MODE_OUTPUT(GPIOA_GPS_ENABLE) |           \
-                                PIN_MODE_OUTPUT(GPIOA_EEPROM_PWR_EN) |        \
+                                PIN_MODE_OUTPUT(GPIOA_NVRAM_PWR_EN) |        \
                                 PIN_MODE_ALTERNATE(GPIOA_SONAR_PWM) |         \
                                 PIN_MODE_OUTPUT(GPIOA_AD_CLK) |               \
                                 PIN_MODE_OUTPUT(GPIOA_ADIS_NSS) |             \
@@ -177,7 +177,7 @@
                                 PIN_MODE_ALTERNATE(GPIOA_JTCK) |              \
                                 PIN_MODE_ALTERNATE(GPIOA_JTDI))
 #define VAL_GPIOA_OTYPER       (PIN_OTYPE_PUSHPULL(GPIOA_GPS_ENABLE) |        \
-                                PIN_OTYPE_OPENDRAIN(GPIOA_EEPROM_PWR_EN) |    \
+                                PIN_OTYPE_OPENDRAIN(GPIOA_NVRAM_PWR_EN) |    \
                                 PIN_OTYPE_PUSHPULL(GPIOA_SONAR_PWM) |         \
                                 PIN_OTYPE_PUSHPULL(GPIOA_AD_CLK) |            \
                                 PIN_OTYPE_PUSHPULL(GPIOA_ADIS_NSS) |          \
@@ -193,7 +193,7 @@
                                 PIN_OTYPE_PUSHPULL(GPIOA_JTCK) |              \
                                 PIN_OTYPE_PUSHPULL(GPIOA_JTDI))
 #define VAL_GPIOA_OSPEEDR      (PIN_OSPEED_2M(GPIOA_GPS_ENABLE) |             \
-                                PIN_OSPEED_2M(GPIOA_EEPROM_PWR_EN) |          \
+                                PIN_OSPEED_2M(GPIOA_NVRAM_PWR_EN) |          \
                                 PIN_OSPEED_2M(GPIOA_SONAR_PWM) |              \
                                 PIN_OSPEED_2M(GPIOA_AD_CLK) |                 \
                                 PIN_OSPEED_2M(GPIOA_ADIS_NSS) |               \
@@ -209,7 +209,7 @@
                                 PIN_OSPEED_100M(GPIOA_JTCK) |                 \
                                 PIN_OSPEED_100M(GPIOA_JTDI))
 #define VAL_GPIOA_PUPDR        (PIN_PUPDR_PULLUP(GPIOA_GPS_ENABLE) |          \
-                                PIN_PUPDR_FLOATING(GPIOA_EEPROM_PWR_EN) |     \
+                                PIN_PUPDR_FLOATING(GPIOA_NVRAM_PWR_EN) |     \
                                 PIN_PUPDR_PULLDOWN(GPIOA_SONAR_PWM) |         \
                                 PIN_PUPDR_PULLUP(GPIOA_AD_CLK) |              \
                                 PIN_PUPDR_PULLUP(GPIOA_ADIS_NSS) |            \
@@ -225,7 +225,7 @@
                                 PIN_PUPDR_FLOATING(GPIOA_JTCK) |              \
                                 PIN_PUPDR_FLOATING(GPIOA_JTDI))
 #define VAL_GPIOA_ODR          (PIN_ODR_HIGH(GPIOA_GPS_ENABLE) |              \
-                                PIN_ODR_HIGH(GPIOA_EEPROM_PWR_EN) |           \
+                                PIN_ODR_LOW(GPIOA_NVRAM_PWR_EN) |            \
                                 PIN_ODR_HIGH(GPIOA_SONAR_PWM) |               \
                                 PIN_ODR_HIGH(GPIOA_AD_CLK) |                  \
                                 PIN_ODR_HIGH(GPIOA_ADIS_NSS) |                \
@@ -241,7 +241,7 @@
                                 PIN_ODR_HIGH(GPIOA_JTCK) |                    \
                                 PIN_ODR_HIGH(GPIOA_JTDI))
 #define VAL_GPIOA_AFRL         (PIN_AFIO_AF(GPIOA_GPS_ENABLE, 0) |            \
-                                PIN_AFIO_AF(GPIOA_EEPROM_PWR_EN, 0) |         \
+                                PIN_AFIO_AF(GPIOA_NVRAM_PWR_EN, 0) |         \
                                 PIN_AFIO_AF(GPIOA_SONAR_PWM, 1) |             \
                                 PIN_AFIO_AF(GPIOA_AD_CLK, 0) |                \
                                 PIN_AFIO_AF(GPIOA_ADIS_NSS, 0) |              \

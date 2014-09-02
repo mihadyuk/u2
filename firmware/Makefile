@@ -87,7 +87,6 @@ include $(CHIBIOS)/os/hal/ports/STM32/STM32F4xx/platform.mk
 include $(CHIBIOS)/os/hal/osal/rt/osal.mk
 include $(CHIBIOS)/os/rt/rt.mk
 include $(CHIBIOS)/os/rt/ports/ARMCMx/compilers/GCC/mk/port_stm32f4xx.mk
-include $(CHIBIOS)/test/rt/test.mk
 
 # Define linker script file here
 LDSCRIPT= $(PORTLD)/STM32F407xG.ld
@@ -101,24 +100,23 @@ CSRC = $(PORTSRC) \
        $(OSALSRC) \
        $(PLATFORMSRC) \
        $(BOARDSRC) \
-       $(CHIBIOS)/os/various/devices_lib/accel/lis302dl.c \
-       $(CHIBIOS)/os/various/shell.c \
        $(CHIBIOS)/os/various/chprintf.c \
        $(CHIBIOS)/os/various/syscalls.c \
        
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
+NVRAM = 24aa/lib
 CPPSRC = $(CHIBIOS)/os/various/cpp_wrappers/ch.cpp \
          $(CHIBIOS)/os/various/cpp_wrappers/syscalls_cpp.cpp \
          main.cpp \
          devices/adis.cpp \
          devices/exti_local.cpp \
-         24aa/lib/mtd.cpp \
-         24aa/lib/eeprom_mtd.cpp \
-         24aa/lib/nvram_fs.cpp \
-         24aa/lib/nvram_file.cpp \
-         24aa/test_suite/test_nvram.cpp \
+         $(NVRAM)/mtd.cpp \
+         $(NVRAM)/eeprom_mtd.cpp \
+         $(NVRAM)/fram_mtd.cpp \
+         $(NVRAM)/nvram_fs.cpp \
+         $(NVRAM)/nvram_file.cpp \
          common/i2c_local.cpp \
 
 # C sources to be compiled in ARM mode regardless of the global setting.
@@ -145,13 +143,12 @@ TCPPSRC =
 ASMSRC = $(PORTASM)
 
 INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
-         $(HALINC) $(OSALINC) $(PLATFORMINC) \
+         $(HALINC) $(OSALINC) $(PLATFORMINC) $(BOARDINC) \
          $(CHIBIOS)/os/various/devices_lib/accel \
          $(CHIBIOS)/os/various \
          $(CHIBIOS)/os/various/cpp_wrappers \
-         board devices \
-         24aa/lib \
-         24aa/test_suite \
+         devices \
+         $(NVRAM) \
          common \
 
 #
