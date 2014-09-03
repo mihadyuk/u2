@@ -183,7 +183,6 @@ static float baro;
 static float quat[4];
 static float euler[3];
 
-#include "fir_test.hpp"
 int main(void) {
 
   halInit();
@@ -191,7 +190,6 @@ int main(void) {
   chThdSleepMilliseconds(1);
 
   endianness_test();
-  firTest();
 
 //
 //  /* enable softreset on panic */
@@ -203,11 +201,11 @@ int main(void) {
 //    chThdSleepMilliseconds(100);
 //
   /* give power to all needys */
-//  pwr5v_power_on();
+//  pwr5v_power_on(); // TODO: check main voltage first using internal ADC
   gps_power_on();
   xbee_reset_clear();
   eeprom_power_on();
-  osalThreadSleepMilliseconds(100);
+  osalThreadSleepMilliseconds(10);
 
 //  chHeapInit(&ThdHeap, (uint8_t *)MEM_ALIGN_NEXT(link_thd_buf), THREAD_HEAP_SIZE);
 //
@@ -218,7 +216,7 @@ int main(void) {
 //  SanityControlInit();
   I2CInitLocal();
 //  EepromFileTreeInit();
-//  ParametersInit();   /* read parameters from EEPROM via I2C*/
+  ParametersInit();   /* read parameters from EEPROM via I2C */
 //  MavInit();          /* mavlink constants initialization must be called after parameters init */
 //  mission_planner.start(CONTROLLERPRIO);
 //  ControllerInit();
