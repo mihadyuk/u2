@@ -1,0 +1,3 @@
+[submodule "firmware/lib/24aa"]
+	path = firmware/lib/24aa
+	url = git@github.com:barthess/24aa.git

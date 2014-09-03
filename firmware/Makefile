@@ -5,7 +5,7 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -O0 -ggdb -fomit-frame-pointer -falign-functions=16
+  USE_OPT = -O3 -ggdb -fomit-frame-pointer -falign-functions=16
 endif
 
 # C specific options here (added to USE_OPT).
@@ -40,7 +40,7 @@ endif
 
 # Enable this if you want to see the full log while compiling.
 ifeq ($(USE_VERBOSE_COMPILE),)
-  USE_VERBOSE_COMPILE = yes
+  USE_VERBOSE_COMPILE = no
 endif
 
 #
@@ -102,11 +102,12 @@ CSRC = $(PORTSRC) \
        $(BOARDSRC) \
        $(CHIBIOS)/os/various/chprintf.c \
        $(CHIBIOS)/os/various/syscalls.c \
+       lib/uav_utils/endianness.c \
        
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
-NVRAM = 24aa/lib
+NVRAM = lib/24aa/src
 CPPSRC = $(CHIBIOS)/os/various/cpp_wrappers/ch.cpp \
          $(CHIBIOS)/os/various/cpp_wrappers/syscalls_cpp.cpp \
          main.cpp \
@@ -118,6 +119,7 @@ CPPSRC = $(CHIBIOS)/os/various/cpp_wrappers/ch.cpp \
          $(NVRAM)/nvram_fs.cpp \
          $(NVRAM)/nvram_file.cpp \
          services/i2c_local.cpp \
+         lib/filters/fir_test.cpp \
 
 # C sources to be compiled in ARM mode regardless of the global setting.
 # NOTE: Mixing ARM and THUMB mode enables the -mthumb-interwork compiler
@@ -148,6 +150,8 @@ INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
          $(CHIBIOS)/os/various \
          $(CHIBIOS)/os/various/cpp_wrappers \
          drivers \
+         lib/uav_utils \
+         lib/filters \
          $(NVRAM) \
          services \
 

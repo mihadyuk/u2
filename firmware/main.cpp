@@ -67,8 +67,8 @@ Giovanni
 //#include "mission_planner.hpp"
 //#include "mavlocal.hpp"
 #include "pads.h"
-//#include "endianness.hpp"
-//
+#include "endianness.h"
+
 //#include "attitude_unit_rover.hpp"
 //#include "acs.hpp"
 //#include "stabilizer_rover.hpp"
@@ -183,13 +183,16 @@ static float baro;
 static float quat[4];
 static float euler[3];
 
+#include "fir_test.hpp"
 int main(void) {
 
   halInit();
   System::init();
   chThdSleepMilliseconds(1);
 
-//  endianness_test();
+  endianness_test();
+  firTest();
+
 //
 //  /* enable softreset on panic */
 //  setGlobalFlag(GlobalFlags.allow_softreset);
