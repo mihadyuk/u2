@@ -1,0 +1,13 @@
+<?xml version='1.0'?>
+<!-- MESSAGE IDs 150 - 240: Space for custom messages in individual projectname_messages.xml files -->
+<mavlink>
+<include>common.xml</include>
+	<messages>
+		<message id="150" name="LAPWING_DUMMY_MESSAGE">
+			<description>Dummy placeholder.</description>
+			<field type="uint64_t" name="time_usec">Timestamp (microseconds since Unix epoch)</field>
+			<field type="uint32_t" name="time_boot_ms">Timestamp (milliseconds since system boot)</field>
+			<field type="uint32_t" name="flags">State flags</field>
+		</message>
+	</messages>
+</mavlink>
