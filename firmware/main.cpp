@@ -44,14 +44,14 @@ Giovanni
 #include "main.h"
 #include "adis.hpp"
 
-//#include "global_flags.h"
+#include "global_flags.h"
 //#include "fault_handlers.h"
 //#include "message.hpp"
 //#include "gps_eb500.hpp"
 //#include "sanity.hpp"
 #include "i2c_local.hpp"
 //#include "eeprom_file_tree.hpp"
-//#include "param.hpp"
+#include "parameters.hpp"
 //#include "timekeeper.hpp"
 //#include "sensors.hpp"
 //#include "pwr_mgmt.hpp"
@@ -95,12 +95,12 @@ using namespace chibios_rt;
 //
 ///* store here time from GPS */
 //struct tm gps_timp;
-//
-///* some global flags */
-//GlobalFlags_t GlobalFlags = {0,0,0,0,0,0,0,0,
-//                             0,0,0,0,0,0,0,0,
-//                             0,0,0,0,0,0,0,0,
-//                             0,0,0,0,0,0,0,0};
+
+/* reset all global flags */
+GlobalFlags_t GlobalFlags = {0,0,0,0,0,0,0,0,
+                             0,0,0,0,0,0,0,0,
+                             0,0,0,0,0,0,0,0,
+                             0,0,0,0,0,0,0,0};
 //
 ///* heap for some threads */
 //MemoryHeap ThdHeap;

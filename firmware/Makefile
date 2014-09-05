@@ -118,7 +118,10 @@ CPPSRC = $(CHIBIOS)/os/various/cpp_wrappers/ch.cpp \
          $(NVRAM)/fram_mtd.cpp \
          $(NVRAM)/nvram_fs.cpp \
          $(NVRAM)/nvram_file.cpp \
-         services/i2c_local.cpp \
+         src/i2c_local.cpp \
+         src/message.cpp \
+         src/mavlink_local/parameters.cpp \
+         src/mavlink_local/mav_registry.cpp \
          lib/filters/fir_test.cpp \
 
 # C sources to be compiled in ARM mode regardless of the global setting.
@@ -153,7 +156,9 @@ INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
          lib/uav_utils \
          lib/filters \
          $(NVRAM) \
-         services \
+         src \
+         src/mavlink_local \
+         lib/mavlink/C/lapwing \
 
 #
 # Project, sources and paths

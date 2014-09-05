@@ -1,5 +1,7 @@
+#ifndef MEMCPY_TRY_H_
+#define MEMCPY_TRY_H_
+
 #include <string.h>
-#include "hal.h"
 
 /**
  * @brief Thread "safe" variant of memcpy function.
@@ -11,7 +13,7 @@
  *
  * @return  status of operation
  */
-bool memcpy_try(void *dest, const void *src, size_t len, uint32_t retry){
+static inline bool memcpy_try(void *dest, const void *src, size_t len, size_t retry){
   do{
     memcpy(dest, src, len);
   }while ((0 != memcmp(dest, src, len)) && ((retry--) > 0));
@@ -22,3 +24,4 @@ bool memcpy_try(void *dest, const void *src, size_t len, uint32_t retry){
     return OSAL_FAILED;
 }
 
+#endif /* MEMCPY_TRY_H_ */

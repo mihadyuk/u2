@@ -4,11 +4,12 @@
 #include "global_flags.h"
 
 #include "message.hpp"
-#include "this_comp_id.h"
 #include "param_registry.hpp"
-#include "utils.hpp"
 #include "mavdbg.hpp"
-#include "mavlocal.hpp"
+#include "this_comp_id.h"
+#include "memcpy_try.h"
+
+using namespace chibios_rt;
 
 /*
  ******************************************************************************
@@ -31,9 +32,9 @@ extern mavlink_param_set_t            mavlink_in_param_set_struct;
 extern mavlink_param_request_read_t   mavlink_in_param_request_read_struct;
 extern mavlink_param_request_list_t   mavlink_in_param_request_list_struct;
 
-extern EventSource event_mavlink_in_param_set;
-extern EventSource event_mavlink_in_param_request_list;
-extern EventSource event_mavlink_in_param_request_read;
+extern EvtSource event_mavlink_in_param_set;
+extern EvtSource event_mavlink_in_param_request_list;
+extern EvtSource event_mavlink_in_param_request_read;
 
 /*
  ******************************************************************************
@@ -54,13 +55,19 @@ extern EventSource event_mavlink_in_param_request_read;
  ******************************************************************************
  ******************************************************************************
  */
+static void ParamValueSend(const mavlink_param_value_t *m, MAV_COMPONENT comp){
+  (void)m;
+  (void)comp;
+  osalSysHalt("Unported yet");
+}
+
 /**
  * @brief   Sends answer to QGC
  *
  * @param[in] key   if NULL than perform search by index
  * @param[in] n     search index
  */
-static bool_t send_value(char *key, int32_t n){
+static bool send_value(char *key, int32_t n){
   int32_t index = -1;
   const GlobalParam_t *p;
 
@@ -76,11 +83,11 @@ static bool_t send_value(char *key, int32_t n){
 
     /* inform sending thread */
     ParamValueSend(&mavlink_out_param_value_struct, MAV_COMP_ID_SYSTEM_CONTROL);
-    chThdSleep(SEND_VALUE_PAUSE);
-    return PARAM_SUCCESS;
+    osalThreadSleep(SEND_VALUE_PAUSE);
+    return OSAL_SUCCESS;
   }
   else
-    return PARAM_FAILED;
+    return OSAL_FAILED;
 }
 
 /**
@@ -109,10 +116,10 @@ static void send_all_values(void){
   int32_t i = 0;
   int32_t retry = 20;
 
-  msg_t status = RDY_RESET;
+  msg_t status = MSG_RESET;
   while ((i < param_registry.paramCount()) && (retry > 0)){
     status = send_value(NULL, i);
-    if (status == PARAM_SUCCESS)
+    if (status == OSAL_SUCCESS)
       i++;
     else
       retry--;
@@ -129,7 +136,7 @@ static void param_set_handler(void){
   param_status_t status;
   mavlink_param_set_t param_set_msg; /* local copy for thread safety */
 
-  if (CH_SUCCESS != memcpy_ts(&param_set_msg, &mavlink_in_param_set_struct, sizeof(param_set_msg), 4))
+  if (OSAL_SUCCESS != memcpy_try(&param_set_msg, &mavlink_in_param_set_struct, sizeof(param_set_msg), 4))
     return;
 
   valuep = (floatint *)&(param_set_msg.param_value);
@@ -142,25 +149,26 @@ static void param_set_handler(void){
     status = param_registry.setParam(valuep, paramp);
 
   /* send confirmation */
-  switch(status){
-  case PARAM_CLAMPED:
-    mavlink_dbg_print(MAV_SEVERITY_WARNING, "PARAM: clamped", MAV_COMP_ID_SYSTEM_CONTROL);
-    break;
-  case PARAM_NOT_CHANGED:
-    mavlink_dbg_print(MAV_SEVERITY_WARNING, "PARAM: not changed", MAV_COMP_ID_SYSTEM_CONTROL);
-    break;
-  case PARAM_INCONSISTENT:
-    mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: inconsistent", MAV_COMP_ID_SYSTEM_CONTROL);
-    break;
-  case PARAM_WRONG_TYPE:
-    mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: wrong type", MAV_COMP_ID_SYSTEM_CONTROL);
-    break;
-  case PARAM_UNKNOWN_ERROR:
-    mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: unknown error", MAV_COMP_ID_SYSTEM_CONTROL);
-    break;
-  case PARAM_OK:
-    break;
-  }
+//  switch(status){
+//  case PARAM_CLAMPED:
+//    mavlink_dbg_print(MAV_SEVERITY_WARNING, "PARAM: clamped", MAV_COMP_ID_SYSTEM_CONTROL);
+//    break;
+//  case PARAM_NOT_CHANGED:
+//    mavlink_dbg_print(MAV_SEVERITY_WARNING, "PARAM: not changed", MAV_COMP_ID_SYSTEM_CONTROL);
+//    break;
+//  case PARAM_INCONSISTENT:
+//    mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: inconsistent", MAV_COMP_ID_SYSTEM_CONTROL);
+//    break;
+//  case PARAM_WRONG_TYPE:
+//    mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: wrong type", MAV_COMP_ID_SYSTEM_CONTROL);
+//    break;
+//  case PARAM_UNKNOWN_ERROR:
+//    mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: unknown error", MAV_COMP_ID_SYSTEM_CONTROL);
+//    break;
+//  case PARAM_OK:
+//    break;
+//  }
+  osalSysHalt("Unrealized");
   send_value(param_set_msg.param_id, 0);
 }
 
@@ -170,7 +178,7 @@ static void param_set_handler(void){
 static void param_request_read_handler(void){
   mavlink_param_request_read_t p; /* local copy */
 
-  if (CH_SUCCESS != memcpy_ts(&p, &mavlink_in_param_request_read_struct, sizeof(p), 4))
+  if (OSAL_SUCCESS != memcpy_try(&p, &mavlink_in_param_request_read_struct, sizeof(p), 4))
     return;
 
   if (p.param_index >= 0)
@@ -183,10 +191,10 @@ static void param_request_read_handler(void){
  * Decide is this packed addressed to us.
  */
 template <typename T>
-static bool_t for_me(T *message){
+static bool for_me(T *message){
   if (message->target_system != mavlink_system_struct.sysid)
     return FALSE;
-  if (COMP_ID == message->target_component)
+  if (THIS_COMP_ID == message->target_component)
     return TRUE;
   else if (MAV_COMP_ID_ALL == message->target_component)
     return TRUE;
@@ -197,44 +205,16 @@ static bool_t for_me(T *message){
 /**
  * Receive messages with parameters and transmit parameters by requests.
  */
-static WORKING_AREA(ParametersThreadWA, 512);
-static msg_t ParametersThread(void *arg){
+static THD_WORKING_AREA(ParametersThreadWA, 512);
+static THD_FUNCTION(ParametersThread, arg){
   chRegSetThreadName("Parameters");
   (void)arg;
 
   while(GlobalFlags.messaging_ready == 0)
     chThdSleepMilliseconds(50);
 
-  eventmask_t evt = 0;
-  struct EventListener el_param_set;
-  struct EventListener el_param_request_list;
-  struct EventListener el_param_request_read;
-  chEvtRegisterMask(&event_mavlink_in_param_set,           &el_param_set,          EVMSK_MAVLINK_IN_PARAM_SET);
-  chEvtRegisterMask(&event_mavlink_in_param_request_list,  &el_param_request_list, EVMSK_MAVLINK_IN_PARAM_REQUEST_LIST);
-  chEvtRegisterMask(&event_mavlink_in_param_request_read,  &el_param_request_read, EVMSK_MAVLINK_IN_PARAM_REQUEST_READ);
-
-  while (!chThdShouldTerminate()) {
-    evt = chEvtWaitOne(EVMSK_MAVLINK_IN_PARAM_SET | EVMSK_MAVLINK_IN_PARAM_REQUEST_LIST | EVMSK_MAVLINK_IN_PARAM_REQUEST_READ);
-
-    switch (evt){
-    /* setParam param */
-    case EVMSK_MAVLINK_IN_PARAM_SET:
-      if (for_me(&mavlink_in_param_set_struct))
-        param_set_handler();
-      break;
-
-    /* request all */
-    case EVMSK_MAVLINK_IN_PARAM_REQUEST_LIST:
-      if (for_me(&mavlink_in_param_request_list_struct))
-        send_all_values();
-      break;
-
-    /* request single */
-    case EVMSK_MAVLINK_IN_PARAM_REQUEST_READ:
-      if (for_me(&mavlink_in_param_request_read_struct))
-        param_request_read_handler();
-      break;
-    }
+  while (!chThdShouldTerminateX()) {
+    osalThreadSleepMilliseconds(100);
   }
   return 0;
 }
@@ -250,11 +230,12 @@ static msg_t ParametersThread(void *arg){
  */
 void ParametersInit(void){
   /* read data from eeprom to memory mapped structure */
-  param_registry.load();
+  //param_registry.load();
+  osalSysHalt("Parameters loading unrealized");
 
   chThdCreateStatic(ParametersThreadWA,
           sizeof(ParametersThreadWA),
-          LINKPRIO + 1,
+          NORMALPRIO,
           ParametersThread,
           NULL);
 
