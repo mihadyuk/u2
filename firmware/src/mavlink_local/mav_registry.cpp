@@ -53,6 +53,9 @@ int MavRegistry::search(const uint8_t msg_id){
  ******************************************************************************
  */
 
+/**
+ *
+ */
 MavRegistry::MavRegistry(void) {
   registry = _reg;
 }
@@ -63,23 +66,33 @@ MavRegistry::MavRegistry(void) {
 void MavRegistry::add_link(uint8_t msg_id, SubscribeLink *new_link){
   int idx;
   idx = search(msg_id);
-  osalDbgAssert(-1 != idx, "This message ID unregistered. Please check generation script");
-
+  osalDbgAssert(-1 != idx,
+      "This message ID unregistered. Check generation script");
+  osalDbgAssert(false == new_link->connected,
+      "You can not connect single link twice");
   new_link->next = registry[idx].link;
   registry[idx].link = new_link;
+  new_link->connected = true;
 }
 
+/**
+ *
+ */
 void MavRegistry::del_link(uint8_t msg_id, SubscribeLink *linkp){
   int idx;
   idx = search(msg_id);
-  osalDbgAssert(-1 != idx, "This message ID unregistered. Please check generation script");
+  osalDbgAssert(-1 != idx,
+      "This message ID unregistered. Check generation script");
+  osalDbgAssert(true == linkp->connected,
+      "This link not connected. Check your program logic");
 
   SubscribeLink *head = registry[idx].link;
 
-  /* special case when we need to delete head link */
+  /* special case when we need to delete first link in chain */
   if (head == linkp){
     head = head->next;
     linkp->next = NULL;
+    linkp->connected = false;
     return;
   }
 
@@ -87,27 +100,30 @@ void MavRegistry::del_link(uint8_t msg_id, SubscribeLink *linkp){
     if (head->next == linkp){
       head->next = linkp->next;
       linkp->next = NULL;
+      linkp->connected = false;
       return;
     }
     head = head->next;
   }
+
   osalSysHalt("Link already deleted. Program logic broken somewhere.");
 }
 
 /**
- * @brief     Public API. Return NULL as a signal if nothing found
+ *
  */
-SubscribeLink *MavRegistry::get_chain(uint8_t msg_id){
+void MavRegistry::dispatch(mavlink_message_t *msg){
   int idx;
-  idx = search(msg_id);
+  idx = search(msg->msgid);
 
-  if(-1 != idx)
-    return NULL;
-  else
-    return registry[idx].link; // here can be NULL too
+  if(-1 != idx){
+    SubscribeLink *head = registry[idx].link;
+    while (nullptr != head){
+      head->callback(msg);
+      head = head->next;
+    }
+  }
 }
-
-
 
 
 

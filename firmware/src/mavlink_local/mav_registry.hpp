@@ -5,7 +5,8 @@
 
 struct mav_registry_item_t {
   SubscribeLink *link;
-  uint8_t msg_id;
+  uint16_t drop_cnt;
+  const uint8_t msg_id;
 };
 
 /**
@@ -16,7 +17,7 @@ public:
   MavRegistry(void);
   void add_link(uint8_t msg_id, SubscribeLink *sl);
   void del_link(uint8_t msg_id, SubscribeLink *sl);
-  SubscribeLink *get_chain(uint8_t msg_id);
+  void dispatch(mavlink_message_t *msg);
 private:
   int search(uint8_t msg_id);
   mav_registry_item_t *registry;
