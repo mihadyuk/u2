@@ -3,12 +3,6 @@
 
 #include "subscribe_link.hpp"
 
-struct mav_registry_item_t {
-  SubscribeLink *link;
-  uint16_t drop_cnt;
-  uint8_t msg_id;
-};
-
 /**
  *
  */

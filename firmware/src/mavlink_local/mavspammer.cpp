@@ -1,5 +1,5 @@
 #include "main.h"
-#include "mav_spammer.hpp"
+#include "mavspammer.hpp"
 
 /*
  ******************************************************************************
@@ -45,7 +45,7 @@ const uint8_t LinkRegistry<Nums...>::msg_id[] = {Nums...};
 template<uint8_t...Nums>
 SubscribeLink * LinkRegistry<Nums...>::link[];
 
-/* Instaniate our template. Keep it alphabetically sorted for convenience */
+/* Instantiate our template. Keep parameters alphabetically sorted for convenience */
 typedef LinkRegistry <
     MAVLINK_MSG_ID_COMMAND_LONG,
     MAVLINK_MSG_ID_HEARTBEAT,

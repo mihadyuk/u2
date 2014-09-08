@@ -19,33 +19,33 @@
 //
 //#define BAUDRATE_XBEE 115200
 //
-///* Enable messages about unhandled mavlink messages received */
-//#define MAVLINK_UNHANDLED_MSG_DEBUG     FALSE
-//
+/* Enable messages about unhandled mavlink messages received */
+#define MAVLINK_UNHANDLED_MSG_DEBUG     FALSE
+
 ///* Disarm halting on panic and changing it to soft reset after this amount of time */
 //#define HALT_DISARM_TMO_SEC             30
 //
 ///* use hardcoded value instead of measured */
 //#define GYRO_UPDATE_PERIOD_HARDCODED    TRUE
-//
-///*
-// * Size of mavlink send buffer. It must be big enogh to store
-// * (MAVLINK_MAX_PAYLOAD_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES) bytes.
-// *
-// * WARNING! Buffer must be aligned to CPU word boundaries. In other
-// * words its size must be multiple of 4 on Cortex-Mx
-// */
-//#define MAVLINK_SENDBUF_SIZE      264
-//
-///* приоритеты для потоков */
-//#define I2CPRIO           (NORMALPRIO - 5)
-//#define TIMEKEEPERPRIO    (I2CPRIO - 1)
-//#define LINKPRIO          (NORMALPRIO - 5)
-//#define CONTROLLERPRIO    (NORMALPRIO)
-//#define CMDPRIO           (LINKPRIO - 2)
-//#define GPSPRIO           (NORMALPRIO - 2)
-//#define TELEMTRYPRIO      (LINKPRIO - 1)
-//#define SHELLPRIO         (NORMALPRIO - 10)
+
+/*
+ * Size of mavlink send buffer. It must be big enogh to store
+ * (MAVLINK_MAX_PAYLOAD_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES) bytes.
+ *
+ * WARNING! Buffer must be aligned to CPU word boundaries. In other
+ * words its size must be multiple of 4 on Cortex-Mx
+ */
+#define MAVLINK_SENDBUF_SIZE      264
+
+/* приоритеты для потоков */
+#define I2CPRIO           (NORMALPRIO - 5)
+#define TIMEKEEPERPRIO    (I2CPRIO - 1)
+#define LINKPRIO          (NORMALPRIO - 5)
+#define CONTROLLERPRIO    (NORMALPRIO)
+#define CMDPRIO           (LINKPRIO - 2)
+#define GPSPRIO           (NORMALPRIO - 2)
+#define TELEMTRYPRIO      (LINKPRIO - 1)
+#define SHELLPRIO         (NORMALPRIO - 10)
 //
 ///* статусы возвращаемые разными подсистемами */
 //#define PARAM_SUCCESS     CH_SUCCESS
