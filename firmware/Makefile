@@ -5,7 +5,7 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -O0 -ggdb -fomit-frame-pointer -falign-functions=16
+  USE_OPT = -O2 -ggdb -fomit-frame-pointer -falign-functions=16
 endif
 
 # C specific options here (added to USE_OPT).
@@ -121,7 +121,8 @@ CPPSRC = $(CHIBIOS)/os/various/cpp_wrappers/ch.cpp \
          src/i2c_local.cpp \
          src/message.cpp \
          src/mavlink_local/parameters.cpp \
-         src/mavlink_local/mav_registry.cpp \
+         src/mavlink_local/mav_spammer.cpp \
+         src/proto.cpp \
          lib/filters/fir_test.cpp \
 
 # C sources to be compiled in ARM mode regardless of the global setting.
