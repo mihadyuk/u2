@@ -22,4 +22,6 @@ private:
   int search(uint8_t msg_id);
 };
 
+extern MavSpammer mav_spammer;
+
 #endif /* MAV_SPAMMER_HPP_ */
