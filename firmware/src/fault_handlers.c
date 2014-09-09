@@ -129,7 +129,7 @@ void HardFaultVector(void)
  * Stub
  */
 static void uav_hardfault_handler(void){
-  while (TRUE){
+  while (1){
     fake++;
   }
 }
@@ -178,9 +178,7 @@ void Vector24(void) {
 void Vector28(void) {
   uav_hardfault_handler();
 }
-//void HardFaultVector(void) {
-//  my_fault();
-//}
+
 void MemManageVector(void) {
   uav_hardfault_handler();
 }
