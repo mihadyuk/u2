@@ -103,7 +103,8 @@ CSRC = $(PORTSRC) \
        $(CHIBIOS)/os/various/chprintf.c \
        $(CHIBIOS)/os/various/syscalls.c \
        lib/uav_utils/endianness.c \
-       
+       src/fault_handlers.c \
+
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.

@@ -483,10 +483,12 @@
  * @details This hook is invoked in case to a system halting error before
  *          the system is halted.
  */
+#if !defined(_FROM_ASM_)
+#include "fault_handlers.h"
 #define CH_CFG_SYSTEM_HALT_HOOK(reason) {                                   \
-  /* System halt code here.*/                                               \
+    uav_panic_handler();                                                    \
 }
-
+#endif
 /** @} */
 
 /*===========================================================================*/

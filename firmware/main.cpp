@@ -45,7 +45,7 @@ Giovanni
 #include "adis.hpp"
 
 #include "global_flags.h"
-//#include "fault_handlers.h"
+#include "fault_handlers.h"
 //#include "message.hpp"
 //#include "gps_eb500.hpp"
 //#include "sanity.hpp"
@@ -190,15 +190,14 @@ int main(void) {
 
   endianness_test();
 
-//
-//  /* enable softreset on panic */
-//  setGlobalFlag(GlobalFlags.allow_softreset);
-//  if (was_softreset() || was_padreset()){
-//    chThdSleepMilliseconds(1);
-//  }
-//  else
-//    chThdSleepMilliseconds(100);
-//
+  /* enable softreset on panic */
+  setGlobalFlag(GlobalFlags.allow_softreset);
+  if (was_softreset() || was_padreset()){
+    chThdSleepMilliseconds(1);
+  }
+  else
+    chThdSleepMilliseconds(100);
+
   /* give power to all needys */
 //  pwr5v_power_on(); // TODO: check main voltage first using internal ADC
   gps_power_on();
