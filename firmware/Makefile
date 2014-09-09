@@ -121,10 +121,13 @@ CPPSRC = $(CHIBIOS)/os/various/cpp_wrappers/ch.cpp \
          src/i2c_local.cpp \
          src/message.cpp \
          src/mavlink_local/parameters.cpp \
+         src/mavlink_local/param_registry.cpp \
+         src/mavlink_local/param_validator.cpp \
          src/mavlink_local/mavspammer.cpp \
          src/mavlink_local/mavworker.cpp \
          src/mavlink_local/mavchannel_serial.cpp \
          src/proto.cpp \
+         src/nvram_local.cpp \
          lib/filters/fir_test.cpp \
 
 # C sources to be compiled in ARM mode regardless of the global setting.

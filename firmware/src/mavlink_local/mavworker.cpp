@@ -26,6 +26,8 @@ using namespace chibios_rt;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
+static mavlink_message_t msg;
+static mavlink_status_t status;
 
 /*
  ******************************************************************************
@@ -47,8 +49,9 @@ static THD_FUNCTION(RxThread, arg) {
   while (!chThdShouldTerminateX()){
     c = channel->getTimeout(MS2ST(50));
     if (c != Q_TIMEOUT){
-      //link_cbc_parse((uint8_t)c);
-      osalThreadSleepMilliseconds(10);
+      if (mavlink_parse_char(MAVLINK_COMM_0, c, &msg, &status)) {
+        mav_spammer.dispatch(msg);
+      }
     }
   }
 
@@ -80,9 +83,11 @@ static THD_FUNCTION(TxThread, arg) {
  * EXPORTED FUNCTIONS
  ******************************************************************************
  */
+/**
+ *
+ */
 MavWorker::MavWorker(void){
-  this->rxworker = NULL;
-  this->txworker = NULL;
+  return;
 }
 
 /**
@@ -110,14 +115,23 @@ void MavWorker::stop(void){
   chThdWait(rxworker);
   chThdWait(txworker);
 
+  rxworker = NULL;
+  txworker = NULL;
+
   channel->stop();
   channel = NULL;
 }
 
+/**
+ *
+ */
 void MavWorker::subscribe(uint8_t msg_id, SubscribeLink *sl){
   mav_spammer.add_link(msg_id, sl);
 }
 
+/**
+ *
+ */
 void MavWorker::unsubscribe(uint8_t msg_id, SubscribeLink *sl){
   mav_spammer.del_link(msg_id, sl);
 }

@@ -37,8 +37,8 @@ private:
   chibios_rt::MailboxBuffer<12> txmb; //Box for storing IDs of message scheduled to be sent via channel.
   MultiBuffer<uint8_t, MAVCHANNEL_BUF_SIZE, MAVCHANNEL_BUF_CNT> multi_rxbuf;
   /* staticstic counter */
-  size_t rxbytes;
-  size_t txbytes;
+  size_t rxbytes = 0;
+  size_t txbytes = 0;
 };
 
 #endif /* MAVWORKER_HPP_ */

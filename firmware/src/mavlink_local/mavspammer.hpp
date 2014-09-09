@@ -11,7 +11,7 @@ public:
   MavSpammer(void);
   void add_link(uint8_t msg_id, SubscribeLink *sl);
   void del_link(uint8_t msg_id, SubscribeLink *sl);
-  void dispatch(mavlink_message_t *msg);
+  void dispatch(const mavlink_message_t &msg);
 private:
   int search(uint8_t msg_id);
 };

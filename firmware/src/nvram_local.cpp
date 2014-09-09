@@ -1,20 +1,37 @@
-#include <stdio.h>
-
 #include "main.h"
-#include "message.hpp"
+
+#include "nvram_local.hpp"
+#include "fram_mtd.hpp"
+
+using namespace chibios_rt;
 
 /*
  ******************************************************************************
  * DEFINES
  ******************************************************************************
  */
+#define FRAM_I2CD               I2CD_SLOW
+#define FRAM_I2C_ADDR           0b1010000
+#define FRAM_SIZE               (1024 * 32)
 
 /*
  ******************************************************************************
  * EXTERNS
  ******************************************************************************
  */
-extern mavlink_statustext_t mavlink_out_statustext_struct;
+
+static const FramConfig fram_cfg = {
+  FRAM_SIZE
+};
+
+static const MtdConfig mtd_cfg = {
+  &FRAM_I2CD,
+  FRAM_I2C_ADDR,
+};
+
+static FramMtd nvmtd(&mtd_cfg, &fram_cfg);
+
+NvramFs nvram_fs(nvmtd);
 
 /*
  ******************************************************************************
@@ -42,20 +59,23 @@ extern mavlink_statustext_t mavlink_out_statustext_struct;
  ******************************************************************************
  */
 
-/**
- * Send debug message.
- *
- * severity[in]   severity of message
- * text[in]       text to send
- */
-void mavlink_dbg_print(uint8_t severity, const char *text, MAV_COMPONENT comp){
-  uint32_t n = sizeof(mavlink_out_statustext_struct.text);
+void NvramInit(void){
 
-  mavlink_out_statustext_struct.severity = severity;
-  memset(mavlink_out_statustext_struct.text, 0, n);
-  memcpy(mavlink_out_statustext_struct.text, text, n);
-
-  StatustextSend(&mavlink_out_statustext_struct, comp);
+  if (OSAL_SUCCESS != nvram_fs.mount())
+    nvram_fs.mkfs();
+  if (OSAL_SUCCESS != nvram_fs.mount())
+    osalSysHalt("Storage broken");
 }
+
+
+
+
+
+
+
+
+
+
+
 
 

@@ -14,6 +14,8 @@
     limitations under the License.
 */
 
+#define I2CD_SLOW               I2CD1
+
 /*
  * STM32F4xx drivers configuration.
  * The following settings override the default settings present in

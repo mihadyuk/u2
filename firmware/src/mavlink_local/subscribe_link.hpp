@@ -3,7 +3,7 @@
 
 #include "message.hpp"
 
-typedef void (*linkcb_t)(mavlink_message_t *msg);
+typedef void (&linkcb_t)(const mavlink_message_t &msg);
 
 class SubscribeLink {
   friend class MavSpammer;

@@ -7,8 +7,7 @@
 #include "mavdbg.hpp"
 #include "param_registry.hpp"
 #include "pack_unpack.hpp"
-#include "eeprom_file.hpp"
-#include "eeprom_file_tree.hpp"
+#include "array_len.hpp"
 
 /*
  ******************************************************************************
@@ -17,21 +16,16 @@
  */
 #define ADDITIONAL_WRITE_TMO    MS2ST(10)
 
-#define PARAM_CONFIRM_TMO       MS2ST(1000)
-#define PARAM_POST_TMO          MS2ST(50)
-
-#define SEND_VALUE_PAUSE        MS2ST(50)
-
 #define PARAM_VALUE_SIZE        (sizeof(*((GlobalParam[0]).valuep)))
 #define PARAM_RECORD_SIZE       (PARAM_ID_SIZE + PARAM_VALUE_SIZE)
+
+#define PARAM_FILE_NAME         ("param")
 
 /*
  ******************************************************************************
  * PROTOTYPES
  ******************************************************************************
  */
-static void acquire(void);
-static void release(void);
 
 /*
  ******************************************************************************
@@ -39,8 +33,6 @@ static void release(void);
  ******************************************************************************
  */
 ParamRegistry param_registry;
-
-extern EepromFile ParamFile;
 
 /*
  ******************************************************************************
@@ -52,7 +44,6 @@ extern EepromFile ParamFile;
 
 const GlobalParam_t *ParamRegistry::param_array = GlobalParam;
 static uint8_t eeprombuf[PARAM_RECORD_SIZE];
-static chibios_rt::BinarySemaphore sem(false);
 
 /*
  *******************************************************************************
@@ -64,15 +55,15 @@ static chibios_rt::BinarySemaphore sem(false);
 /**
  *
  */
-static void acquire(void){
-  sem.wait();
+void ParamRegistry::acquire(void){
+  this->sem.wait();
 }
 
 /**
  *
  */
-static void release(void){
-  sem.signal();
+void ParamRegistry::release(void){
+  this->sem.signal();
 }
 
 /**
@@ -92,32 +83,32 @@ int32_t ParamRegistry::key_index_search(const char* key){
 }
 
 void ParamRegistry::store_value(int32_t i, float **vp){
-  chDbgCheck(MAVLINK_TYPE_FLOAT == param_array[i].param_type, "type mismatch");
+  osalDbgCheck(MAVLINK_TYPE_FLOAT == param_array[i].param_type);
   *vp = &param_array[i].valuep->f32;
 }
 
 void ParamRegistry::store_value(int32_t i, int32_t **vp){
-  chDbgCheck(MAVLINK_TYPE_INT32_T == param_array[i].param_type, "type mismatch");
+  osalDbgCheck(MAVLINK_TYPE_INT32_T == param_array[i].param_type);
   *vp = &param_array[i].valuep->i32;
 }
 
 void ParamRegistry::store_value(int32_t i, uint32_t **vp){
-  chDbgCheck(MAVLINK_TYPE_UINT32_T == param_array[i].param_type, "type mismatch");
+  osalDbgCheck(MAVLINK_TYPE_UINT32_T == param_array[i].param_type);
   *vp = &param_array[i].valuep->u32;
 }
 
 void ParamRegistry::store_value(int32_t i, const float **vp){
-  chDbgCheck(MAVLINK_TYPE_FLOAT == param_array[i].param_type, "type mismatch");
+  osalDbgCheck(MAVLINK_TYPE_FLOAT == param_array[i].param_type);
   *vp = &param_array[i].valuep->f32;
 }
 
 void ParamRegistry::store_value(int32_t i, const int32_t **vp){
-  chDbgCheck(MAVLINK_TYPE_INT32_T == param_array[i].param_type, "type mismatch");
+  osalDbgCheck(MAVLINK_TYPE_INT32_T == param_array[i].param_type);
   *vp = &param_array[i].valuep->i32;
 }
 
 void ParamRegistry::store_value(int32_t i, const uint32_t **vp){
-  chDbgCheck(MAVLINK_TYPE_UINT32_T == param_array[i].param_type, "type mismatch");
+  osalDbgCheck(MAVLINK_TYPE_UINT32_T == param_array[i].param_type);
   *vp = &param_array[i].valuep->u32;
 }
 
@@ -134,19 +125,17 @@ bool ParamRegistry::load_extensive(void){
   v.u32 = 0;
   bool found = false;
 
-  chDbgCheck(GlobalFlags.i2c_ready == 1, "bus not ready");
-
   acquire();
 
   for (i = 0; i < this->paramCount(); i++){
-    ParamFile.setPosition(0);
+    ParamFile->setPosition(0);
     found = false;
 
     for (n=0; n<this->paramCount(); n++){
-      status = ParamFile.read(eeprombuf, PARAM_RECORD_SIZE);
+      status = ParamFile->read(eeprombuf, PARAM_RECORD_SIZE);
       if (status < PARAM_RECORD_SIZE){
-        chDbgPanic("");
-        return PARAM_FAILED;
+        osalSysHalt("");
+        return OSAL_FAILED;
       }
       if (strcmp((const char *)eeprombuf, param_array[i].name) == 0){
         found = true;
@@ -169,7 +158,7 @@ bool ParamRegistry::load_extensive(void){
 
   release();
   saveAll();
-  return PARAM_SUCCESS;
+  return OSAL_SUCCESS;
 }
 
 
@@ -183,7 +172,8 @@ bool ParamRegistry::load_extensive(void){
  *
  */
 ParamRegistry::ParamRegistry(void) :
-ready(false)
+ready(false),
+sem(false)
 {
   int32_t i = 0;
   int32_t n = 0;
@@ -191,7 +181,7 @@ ready(false)
 
   len = paramCount();
 
-  chDbgCheck((sizeof(gp_val) / sizeof(gp_val[0])) == len,
+  osalDbgAssert((sizeof(gp_val) / sizeof(gp_val[0])) == len,
       "sizes of volatile array and param array must be equal");
   val = gp_val;
 
@@ -205,14 +195,14 @@ ready(false)
   /* check hardcoded name lengths */
   for (i = 0; i<len; i++){
     if (sizeof (*(param_array[i].name)) > ONBOARD_PARAM_NAME_LENGTH)
-      chDbgPanic("name too long");
+      osalSysHalt("name too long");
   }
 
   /* check for keys' names collisions */
   for (n=0; n<len; n++){
     for (i=n+1; i<len; i++){
       if (0 == strcmp(param_array[i].name, param_array[n].name))
-        chDbgPanic("name collision detected");
+        osalSysHalt("name collision detected");
     }
   }
 }
@@ -226,31 +216,29 @@ bool ParamRegistry::syncParam(const char* key){
   uint32_t v = 0;
   uint8_t  tmpbuf[PARAM_RECORD_SIZE];
 
-  chDbgCheck(GlobalFlags.i2c_ready == 1, "bus not ready");
-
   i = key_index_search(key);
-  chDbgCheck(i != -1, "Not found");
+  osalDbgAssert(i != -1, "Not found");
 
   acquire();
-  ParamFile.setPosition(i * PARAM_RECORD_SIZE);
+  ParamFile->setPosition(i * PARAM_RECORD_SIZE);
 
   /* ensure we found exacly what needed */
-  status = ParamFile.read(tmpbuf, sizeof(tmpbuf));
-  chDbgCheck(status == sizeof(tmpbuf), "read failed");
-  chDbgCheck(strcmp((char *)tmpbuf, key) == 0, "param not found in EEPROM");
+  status = ParamFile->read(tmpbuf, sizeof(tmpbuf));
+  osalDbgAssert(status == sizeof(tmpbuf), "read failed");
+  osalDbgAssert(strcmp((char *)tmpbuf, key) == 0, "param not found in EEPROM");
 
   /* write only if value differ */
-  ParamFile.setPosition(ParamFile.getPosition() - PARAM_VALUE_SIZE);
-  v = ParamFile.readWord();
+  ParamFile->setPosition(ParamFile->getPosition() - PARAM_VALUE_SIZE);
+  v = ParamFile->getU32();
   if (v != GlobalParam[i].valuep->u32){
-    ParamFile.setPosition(ParamFile.getPosition() - PARAM_VALUE_SIZE);
-    status = ParamFile.writeWord(GlobalParam[i].valuep->u32);
-    chDbgCheck(status == sizeof(uint32_t), "read failed");
+    ParamFile->setPosition(ParamFile->getPosition() - PARAM_VALUE_SIZE);
+    status = ParamFile->putU32(GlobalParam[i].valuep->u32);
+    osalDbgAssert(status == sizeof(uint32_t), "read failed");
     chThdSleep(ADDITIONAL_WRITE_TMO);
   }
 
   release();
-  return PARAM_SUCCESS;
+  return OSAL_SUCCESS;
 }
 
 /**
@@ -263,25 +251,35 @@ bool ParamRegistry::load(void){
   floatint v;
   v.u32 = 0;
 
-  chDbgCheck(GlobalFlags.i2c_ready == 1, "bus not ready");
+  /* try to open file */
+  ParamFile = nvram_fs.open(PARAM_FILE_NAME);
+  if (NULL == ParamFile){
+    /* try to bootrstap */
+    if (nvram_fs.df() < BOOTSTRAP_PARAM_FILE_SIZE)
+      osalSysHalt("Not enough free space in nvram to create parameters file");
+    else{
+      ParamFile = nvram_fs.create(PARAM_FILE_NAME, BOOTSTRAP_PARAM_FILE_SIZE);
+      osalDbgCheck(NULL != ParamFile);
+    }
+  }
 
   /* check reserved space in EEPROM */
-  chDbgCheck(((PARAM_RECORD_SIZE * this->paramCount()) < ParamFile.getSize()),
+  osalDbgAssert(((PARAM_RECORD_SIZE * this->paramCount()) < ParamFile->getSize()),
           "not enough space in file");
 
   acquire();
-  ParamFile.setPosition(0);
+  ParamFile->setPosition(0);
 
   for (i = 0; i < this->paramCount(); i++){
 
     /* read field from EEPROM and check number of red bytes */
-    status = ParamFile.read(eeprombuf, PARAM_RECORD_SIZE);
+    status = ParamFile->read(eeprombuf, PARAM_RECORD_SIZE);
     if (status < PARAM_RECORD_SIZE){
-      chDbgPanic("");
-      return PARAM_FAILED;
+      osalSysHalt("");
+      return OSAL_FAILED;
     }
 
-    /* if no updates was previously in paramter structure than order of
+    /* if no updates was previously in parameter structure than order of
      * parameters in registry must be the same as in eeprom */
     cmpresult = strcmp(GlobalParam[i].name, (char *)eeprombuf);
     if (0 == cmpresult){   /* OK, this parameter already presents in EEPROM */
@@ -303,7 +301,7 @@ bool ParamRegistry::load(void){
   }
 
   release();
-  return PARAM_SUCCESS;
+  return OSAL_SUCCESS;
 }
 
 /**
@@ -315,10 +313,8 @@ bool ParamRegistry::saveAll(void){
   uint32_t v = 0;
   uint8_t tmpbuf[PARAM_RECORD_SIZE];
 
-  chDbgCheck(GlobalFlags.i2c_ready == 1, "bus not ready");
-
   acquire();
-  ParamFile.setPosition(0);
+  ParamFile->setPosition(0);
 
   for (i = 0; i < this->paramCount(); i++){
 
@@ -328,20 +324,20 @@ bool ParamRegistry::saveAll(void){
     /* now write data */
     v = GlobalParam[i].valuep->u32;
     unpack32to8be(v, &(eeprombuf[PARAM_ID_SIZE]));
-    status = ParamFile.write(eeprombuf, PARAM_RECORD_SIZE);
-    chDbgCheck(status == PARAM_RECORD_SIZE, "write failed");
+    status = ParamFile->write(eeprombuf, PARAM_RECORD_SIZE);
+    osalDbgAssert(status == PARAM_RECORD_SIZE, "write failed");
 
     /* check written data */
-    ParamFile.setPosition(ParamFile.getPosition() - PARAM_RECORD_SIZE);
-    status = ParamFile.read(tmpbuf, sizeof(tmpbuf));
+    ParamFile->setPosition(ParamFile->getPosition() - PARAM_RECORD_SIZE);
+    status = ParamFile->read(tmpbuf, sizeof(tmpbuf));
     if (0 != memcmp(tmpbuf, eeprombuf, (PARAM_ID_SIZE + sizeof(v))))
-      chDbgPanic("Verification failed");
+      osalSysHalt("Verification failed");
 
     chThdSleep(ADDITIONAL_WRITE_TMO);
   }
 
   release();
-  return PARAM_SUCCESS;
+  return OSAL_SUCCESS;
 }
 
 /**
@@ -355,7 +351,7 @@ param_status_t ParamRegistry::setParam(const floatint *value, const GlobalParam_
  *
  */
 int32_t ParamRegistry::paramCount(void){
-  return sizeof(GlobalParam)/sizeof(GlobalParam[0]);
+  return ArrayLen(GlobalParam);
 }
 
 /**

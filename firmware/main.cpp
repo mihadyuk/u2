@@ -50,7 +50,7 @@ Giovanni
 //#include "gps_eb500.hpp"
 //#include "sanity.hpp"
 #include "i2c_local.hpp"
-//#include "eeprom_file_tree.hpp"
+#include "nvram_local.hpp"
 #include "parameters.hpp"
 //#include "timekeeper.hpp"
 //#include "sensors.hpp"
@@ -154,7 +154,6 @@ GlobalFlags_t GlobalFlags = {0,0,0,0,0,0,0,0,
 //CmdExecutor cmd_executor(acs, attitude_unit);
 //
 ///**/
-//extern EepromFile MissionFile;
 //MissionPlanner mission_planner(&MissionFile);
 //
 //int64_t TimeUsGps;
@@ -211,11 +210,10 @@ int main(void) {
 //
   Exti.start();
 //  time_keeper.start();
-//  MsgInit();
 //  BlinkerInit();
 //  SanityControlInit();
   I2CInitLocal();
-//  EepromFileTreeInit();
+  NvramInit();
   ParametersInit();   /* read parameters from EEPROM via I2C */
 //  MavInit();          /* mavlink constants initialization must be called after parameters init */
 //  mission_planner.start(CONTROLLERPRIO);
@@ -245,7 +243,6 @@ int main(void) {
     green_led_off();
 
     //osalThreadSleepMilliseconds(100);
-
 
 //    if (ATTITUDE_UNIT_UPDATE_RESULT_OK == attitude_unit.update()){
 //      sins.update();

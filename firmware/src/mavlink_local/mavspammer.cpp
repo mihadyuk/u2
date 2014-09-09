@@ -96,7 +96,7 @@ MavSpammer::MavSpammer(void) {
   for (size_t i=0; i<link_registry::reg_len; i++){
     link_registry::link[i] = nullptr; // just to be safe
     id = link_registry::msg_id[i];
-    for (size_t n=i; n<link_registry::reg_len; n++){
+    for (size_t n=i+1; n<link_registry::reg_len; n++){
       osalDbgAssert(link_registry::msg_id[n] != id, "Duplicated IDs forbidden");
     }
   }
@@ -153,9 +153,9 @@ void MavSpammer::del_link(uint8_t msg_id, SubscribeLink *linkp){
 /**
  *
  */
-void MavSpammer::dispatch(mavlink_message_t *msg){
+void MavSpammer::dispatch(const mavlink_message_t &msg) {
   int idx;
-  idx = search(msg->msgid);
+  idx = search(msg.msgid);
 
   if(-1 != idx){
     SubscribeLink *head = link_registry::link[idx];

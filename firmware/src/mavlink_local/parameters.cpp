@@ -7,7 +7,7 @@
 #include "param_registry.hpp"
 #include "mavdbg.hpp"
 #include "this_comp_id.h"
-#include "memcpy_try.h"
+#include "subscribe_link.hpp"
 
 using namespace chibios_rt;
 
@@ -16,9 +16,10 @@ using namespace chibios_rt;
  * DEFINES
  ******************************************************************************
  */
-#define PARAM_CONFIRM_TMO   MS2ST(1000)
-#define PARAM_POST_TMO      MS2ST(50)
-#define SEND_VALUE_PAUSE    MS2ST(50)
+#define PARAM_CONFIRM_TMO     MS2ST(1000)
+#define PARAM_POST_TMO        MS2ST(50)
+#define SEND_VALUE_PAUSE      MS2ST(50)
+#define CHECK_FRESH_PERIOD    MS2ST(50)
 
 /*
  ******************************************************************************
@@ -27,14 +28,6 @@ using namespace chibios_rt;
  */
 
 extern mavlink_system_t               mavlink_system_struct;
-extern mavlink_param_value_t          mavlink_out_param_value_struct;
-extern mavlink_param_set_t            mavlink_in_param_set_struct;
-extern mavlink_param_request_read_t   mavlink_in_param_request_read_struct;
-extern mavlink_param_request_list_t   mavlink_in_param_request_list_struct;
-
-extern EvtSource event_mavlink_in_param_set;
-extern EvtSource event_mavlink_in_param_request_list;
-extern EvtSource event_mavlink_in_param_request_read;
 
 /*
  ******************************************************************************
@@ -47,6 +40,14 @@ extern EvtSource event_mavlink_in_param_request_read;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
+static mavlink_param_value_t          mavlink_out_param_value_struct;
+static mavlink_param_set_t            mavlink_in_param_set_struct;
+static mavlink_param_request_read_t   mavlink_in_param_request_read_struct;
+static mavlink_param_request_list_t   mavlink_in_param_request_list_struct;
+
+static bool param_set_fresh = false;
+static bool param_request_read_fresh = false;
+static bool param_request_list_fresh = false;
 
 /*
  ******************************************************************************
@@ -54,6 +55,39 @@ extern EvtSource event_mavlink_in_param_request_read;
  * LOCAL FUNCTIONS
  ******************************************************************************
  ******************************************************************************
+ */
+
+static void param_set_callback(const mavlink_message_t &msg);
+static void param_request_read_callback(const mavlink_message_t &msg);
+static void param_request_list_callback(const mavlink_message_t &msg);
+
+static SubscribeLink param_set_link(param_set_callback);
+static SubscribeLink param_request_read_link(param_request_read_callback);
+static SubscribeLink param_request_list_link(param_request_list_callback);
+
+static void param_set_callback(const mavlink_message_t &msg){
+  if (false == param_set_fresh){
+    mavlink_msg_param_set_decode(&msg, &mavlink_in_param_set_struct);
+    param_set_fresh = true;
+  }
+}
+
+static void param_request_read_callback(const mavlink_message_t &msg){
+  if (false == param_request_read_fresh){
+    mavlink_msg_param_request_read_decode(&msg, &mavlink_in_param_request_read_struct);
+    param_request_read_fresh = true;
+  }
+}
+
+static void param_request_list_callback(const mavlink_message_t &msg){
+  if (false == param_request_list_fresh){
+    mavlink_msg_param_request_list_decode(&msg, &mavlink_in_param_request_list_struct);
+    param_request_list_fresh = true;
+  }
+}
+
+/**
+ *
  */
 static void ParamValueSend(const mavlink_param_value_t *m, MAV_COMPONENT comp){
   (void)m;
@@ -67,7 +101,7 @@ static void ParamValueSend(const mavlink_param_value_t *m, MAV_COMPONENT comp){
  * @param[in] key   if NULL than perform search by index
  * @param[in] n     search index
  */
-static bool send_value(char *key, int32_t n){
+static bool send_value(const char *key, int32_t n){
   int32_t index = -1;
   const GlobalParam_t *p;
 
@@ -95,14 +129,14 @@ static bool send_value(char *key, int32_t n){
  *
  * @param[in] p   pointer to mavlink_param_set_t structure received from QGC
  */
-static void ignore_value(mavlink_param_set_t *p){
+static void ignore_value(const mavlink_param_set_t &p){
 
   /* fill all fields */
-  mavlink_out_param_value_struct.param_value = p->param_value;
-  mavlink_out_param_value_struct.param_type  = p->param_type;
+  mavlink_out_param_value_struct.param_value = p.param_value;
+  mavlink_out_param_value_struct.param_type  = p.param_type;
   mavlink_out_param_value_struct.param_count = param_registry.paramCount();
   mavlink_out_param_value_struct.param_index = param_registry.paramCount();
-  memcpy(mavlink_out_param_value_struct.param_id, p->param_id, ONBOARD_PARAM_NAME_LENGTH);
+  memcpy(mavlink_out_param_value_struct.param_id, p.param_id, ONBOARD_PARAM_NAME_LENGTH);
 
   /* inform sending thread */
   ParamValueSend(&mavlink_out_param_value_struct, MAV_COMP_ID_SYSTEM_CONTROL);
@@ -134,21 +168,20 @@ static void param_set_handler(void){
   floatint *valuep = NULL;
   const GlobalParam_t *paramp = NULL;
   param_status_t status;
-  mavlink_param_set_t param_set_msg; /* local copy for thread safety */
 
-  if (OSAL_SUCCESS != memcpy_try(&param_set_msg, &mavlink_in_param_set_struct, sizeof(param_set_msg), 4))
-    return;
-
-  valuep = (floatint *)&(param_set_msg.param_value);
-  paramp = param_registry.getParam(param_set_msg.param_id, -1, NULL);
+  valuep = (floatint *)&(mavlink_in_param_set_struct.param_value);
+  paramp = param_registry.getParam(mavlink_in_param_set_struct.param_id, -1, NULL);
   if (NULL == paramp){
-    ignore_value(&mavlink_in_param_set_struct);
+    ignore_value(mavlink_in_param_set_struct);
     return;
   }
-  else
+  else{
     status = param_registry.setParam(valuep, paramp);
+  }
 
   /* send confirmation */
+  osalSysHalt("debug print unrealized");
+  (void)status;
 //  switch(status){
 //  case PARAM_CLAMPED:
 //    mavlink_dbg_print(MAV_SEVERITY_WARNING, "PARAM: clamped", MAV_COMP_ID_SYSTEM_CONTROL);
@@ -168,23 +201,18 @@ static void param_set_handler(void){
 //  case PARAM_OK:
 //    break;
 //  }
-  osalSysHalt("Unrealized");
-  send_value(param_set_msg.param_id, 0);
+
+  send_value(mavlink_in_param_set_struct.param_id, 0);
 }
 
 /**
  *
  */
 static void param_request_read_handler(void){
-  mavlink_param_request_read_t p; /* local copy */
-
-  if (OSAL_SUCCESS != memcpy_try(&p, &mavlink_in_param_request_read_struct, sizeof(p), 4))
-    return;
-
-  if (p.param_index >= 0)
-    send_value(NULL, p.param_index);
+  if (mavlink_in_param_request_read_struct.param_index >= 0)
+    send_value(NULL, mavlink_in_param_request_read_struct.param_index);
   else
-    send_value(p.param_id, 0);
+    send_value(mavlink_in_param_request_read_struct.param_id, 0);
 }
 
 /**
@@ -207,15 +235,35 @@ static bool for_me(T *message){
  */
 static THD_WORKING_AREA(ParametersThreadWA, 512);
 static THD_FUNCTION(ParametersThread, arg){
-  chRegSetThreadName("Parameters");
+  chRegSetThreadName("ParamWorker");
   (void)arg;
 
-  while(GlobalFlags.messaging_ready == 0)
-    chThdSleepMilliseconds(50);
-
   while (!chThdShouldTerminateX()) {
-    osalThreadSleepMilliseconds(100);
+    /* set single parameter */
+    if (true == param_set_fresh){
+      if (for_me(&mavlink_in_param_set_struct))
+        param_set_handler();
+      param_set_fresh = false;
+    }
+
+    /* request all */
+    if (true == param_request_list_fresh){
+      if (for_me(&mavlink_in_param_request_list_struct))
+        send_all_values();
+      param_request_list_fresh = false;
+    }
+
+    /* request single */
+    if (true == param_request_read_fresh){
+      if (for_me(&mavlink_in_param_request_read_struct))
+        param_request_read_handler();
+      param_request_read_fresh = false;
+    }
+
+    osalThreadSleepMilliseconds(CHECK_FRESH_PERIOD);
   }
+
+  chThdExit(MSG_OK);
   return 0;
 }
 
@@ -230,8 +278,7 @@ static THD_FUNCTION(ParametersThread, arg){
  */
 void ParametersInit(void){
   /* read data from eeprom to memory mapped structure */
-  //param_registry.load();
-  osalSysHalt("Parameters loading unrealized");
+  param_registry.load();
 
   chThdCreateStatic(ParametersThreadWA,
           sizeof(ParametersThreadWA),

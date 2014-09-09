@@ -2,6 +2,7 @@
 #define PARAM_REGISTRY_H_
 
 #include "global_flags.h"
+#include "nvram_local.hpp"
 
 /* периодичность посылки данных в милисекундах */
 #define SEND_MIN                  20
@@ -16,10 +17,10 @@
  */
 typedef enum {
   PARAM_OK = 1,
-  PARAM_NOT_CHANGED = 2,    /* parameter allready contain this value */
-  PARAM_CLAMPED = 3,        /* value claped to limits */
+  PARAM_NOT_CHANGED = 2,    /* parameter already contains such value */
+  PARAM_CLAMPED = 3,        /* value clamped to limits */
   PARAM_INCONSISTENT = 4,   /* NaN or INF or something else bad value */
-  PARAM_WRONG_TYPE = 5,     /* unsuppoerted parameter type */
+  PARAM_WRONG_TYPE = 5,     /* unsupported parameter type */
   PARAM_UNKNOWN_ERROR = 6,  /* general error */
 } param_status_t;
 
@@ -41,7 +42,11 @@ typedef struct GlobalParam_t GlobalParam_t;
 /**
  * Combined data type for use in mavlink
  */
-typedef union{float f32; int32_t i32; uint32_t u32;} floatint;
+typedef union{
+  float f32;
+  int32_t i32;
+  uint32_t u32;
+} floatint;
 
 /**
  * Global parameter
@@ -112,10 +117,14 @@ private:
   void store_value(int32_t i, const int32_t **vp);
   void store_value(int32_t i, const uint32_t **vp);
   bool load_extensive(void);
+  void acquire(void);
+  void release(void);
   ParamValidator validator;
   static const GlobalParam_t *param_array;
   floatint *val;
   bool ready;
+  chibios_rt::BinarySemaphore sem;
+  NvramFile *ParamFile = NULL;
 };
 
 /**
