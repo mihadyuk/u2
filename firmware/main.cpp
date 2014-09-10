@@ -57,7 +57,7 @@ Giovanni
 //#include "pwr_mgmt.hpp"
 //#include "microsd.hpp"
 //#include "tlm_sender.hpp"
-#include "linkmgr.hpp"
+//#include "linkmgr.hpp"
 //#include "controller.hpp"
 //#include "mav_dispatcher.hpp"
 //#include "cmd_executor.hpp"
@@ -182,7 +182,18 @@ static float baro;
 static float quat[4];
 static float euler[3];
 
+static MailboxTypedBuffer<BinarySemaphore*, 8> mbtb_;
+static MailboxTypedBuffer<void*, 8> mbtb;
+
+msg_t f1(MailboxTyped<void*> &mb){
+  void *v = nullptr;
+  void *ret = nullptr;
+  mb.post(v, TIME_IMMEDIATE);
+  return mb.fetch(&ret, TIME_IMMEDIATE);
+}
+
 int main(void) {
+  f1(mbtb);
 
   halInit();
   System::init();
@@ -217,7 +228,7 @@ int main(void) {
 //  MavInit();          /* mavlink constants initialization must be called after parameters init */
 //  mission_planner.start(CONTROLLERPRIO);
 //  ControllerInit();
-  LinkMgrInit();      /* launch after controller to reduce memory fragmentation on thread creation */
+//  LinkMgrInit();      /* launch after controller to reduce memory fragmentation on thread creation */
 //  SensorsInit();      /* Note! Sensors depends on I2C */
 //  PwrMgmtInit();
 //  tlm_sender.start();

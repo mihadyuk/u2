@@ -338,7 +338,7 @@ void Adis::extiISR(EXTDriver *extp, expchannel_t channel){
  *
  */
 msg_t Adis::wait(systime_t timeout){
-  return adis_sem.waitTimeout(timeout);
+  return adis_sem.wait(timeout);
 }
 
 /**

@@ -54,7 +54,7 @@ volatile uint32_t fake;
 /**
  *
  */
-void prvGetRegistersFromStack(uint32_t *pulFaultStackAddress){
+void prvGetRegistersFromStack_(uint32_t *pulFaultStackAddress){
 
   r0  = pulFaultStackAddress[0];
   r1  = pulFaultStackAddress[1];

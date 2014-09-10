@@ -87,6 +87,7 @@ include $(CHIBIOS)/os/hal/ports/STM32/STM32F4xx/platform.mk
 include $(CHIBIOS)/os/hal/osal/rt/osal.mk
 include $(CHIBIOS)/os/rt/rt.mk
 include $(CHIBIOS)/os/rt/ports/ARMCMx/compilers/GCC/mk/port_stm32f4xx.mk
+include $(CHIBIOS)/os/various/cpp_wrappers/chcpp.mk
 
 # Define linker script file here
 LDSCRIPT= $(PORTLD)/STM32F407xG.ld
@@ -107,29 +108,30 @@ CSRC = $(PORTSRC) \
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
-NVRAM = lib/24aa/src
-CPPSRC = $(CHIBIOS)/os/various/cpp_wrappers/ch.cpp \
-         $(CHIBIOS)/os/various/cpp_wrappers/syscalls_cpp.cpp \
-         main.cpp \
-         drivers/adis.cpp \
-         drivers/exti_local.cpp \
-         $(NVRAM)/mtd.cpp \
-         $(NVRAM)/eeprom_mtd.cpp \
-         $(NVRAM)/fram_mtd.cpp \
-         $(NVRAM)/nvram_fs.cpp \
-         $(NVRAM)/nvram_file.cpp \
-         src/i2c_local.cpp \
-         src/message.cpp \
-         src/mavlink_local/parameters.cpp \
+NVRAMSRC = lib/24aa/src/mtd.cpp \
+         lib/24aa/src/eeprom_mtd.cpp \
+         lib/24aa/src/fram_mtd.cpp \
+         lib/24aa/src/nvram_fs.cpp \
+         lib/24aa/src/nvram_file.cpp
+
+MAVSRC = src/mavlink_local/parameters.cpp \
          src/mavlink_local/param_registry.cpp \
          src/mavlink_local/param_validator.cpp \
          src/mavlink_local/mavspammer.cpp \
          src/mavlink_local/mavworker.cpp \
          src/mavlink_local/mavmail.cpp \
-         src/mavlink_local/mavchannel_serial.cpp \
+         src/mavlink_local/mavchannel_serial.cpp
+
+CPPSRC = $(CHCPPSRC) \
+         $(NVRAMSRC) \
+         $(MAVSRC) \
+         main.cpp \
+         drivers/adis.cpp \
+         drivers/exti_local.cpp \
+         src/i2c_local.cpp \
+         src/message.cpp \
          src/proto.cpp \
          src/nvram_local.cpp \
-         src/linkmgr.cpp \
          lib/filters/fir_test.cpp \
 
 # C sources to be compiled in ARM mode regardless of the global setting.
@@ -163,7 +165,7 @@ INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
          drivers \
          lib/uav_utils \
          lib/filters \
-         $(NVRAM) \
+         lib/24aa/src \
          src \
          src/mavlink_local \
          lib/mavlink/C/lapwing \
