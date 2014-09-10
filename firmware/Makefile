@@ -105,7 +105,6 @@ CSRC = $(PORTSRC) \
        lib/uav_utils/endianness.c \
        src/fault_handlers.c \
 
-
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
 NVRAM = lib/24aa/src
@@ -126,9 +125,11 @@ CPPSRC = $(CHIBIOS)/os/various/cpp_wrappers/ch.cpp \
          src/mavlink_local/param_validator.cpp \
          src/mavlink_local/mavspammer.cpp \
          src/mavlink_local/mavworker.cpp \
+         src/mavlink_local/mavmail.cpp \
          src/mavlink_local/mavchannel_serial.cpp \
          src/proto.cpp \
          src/nvram_local.cpp \
+         src/linkmgr.cpp \
          lib/filters/fir_test.cpp \
 
 # C sources to be compiled in ARM mode regardless of the global setting.

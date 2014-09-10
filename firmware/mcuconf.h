@@ -15,6 +15,8 @@
 */
 
 #define I2CD_SLOW               I2CD1
+#define XBEESD                  SD2
+#define GPSSD                   SD1
 
 /*
  * STM32F4xx drivers configuration.

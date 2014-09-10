@@ -125,8 +125,6 @@ bool ParamRegistry::load_extensive(void){
   v.u32 = 0;
   bool found = false;
 
-  acquire();
-
   for (i = 0; i < this->paramCount(); i++){
     ParamFile->setPosition(0);
     found = false;
@@ -145,7 +143,7 @@ bool ParamRegistry::load_extensive(void){
 
     /* was parameter previously stored in eeprom */
     if (found){
-      v.u32 = pack8to32be(&(eeprombuf[PARAM_ID_SIZE]));
+      v.u32 = pack8to32ne(&(eeprombuf[PARAM_ID_SIZE]));
     }
     else{
       /* use hardcoded default */
@@ -156,12 +154,42 @@ bool ParamRegistry::load_extensive(void){
     validator.set(&v, &(param_array[i]));
   }
 
-  release();
-  saveAll();
-  return OSAL_SUCCESS;
+  return save_all();
 }
 
+/**
+ *
+ */
+bool ParamRegistry::save_all(void){
+  int32_t  i;
+  uint32_t status = 0;
+  uint32_t v = 0;
+  uint8_t tmpbuf[PARAM_RECORD_SIZE];
 
+  ParamFile->setPosition(0);
+
+  for (i = 0; i < this->paramCount(); i++){
+
+    /* first copy parameter name in buffer */
+    memcpy(eeprombuf, GlobalParam[i].name, PARAM_ID_SIZE);
+
+    /* now write data */
+    v = GlobalParam[i].valuep->u32;
+    unpack32to8ne(v, &(eeprombuf[PARAM_ID_SIZE]));
+    status = ParamFile->write(eeprombuf, PARAM_RECORD_SIZE);
+    osalDbgAssert(status == PARAM_RECORD_SIZE, "write failed");
+
+    /* check written data */
+    ParamFile->setPosition(ParamFile->getPosition() - PARAM_RECORD_SIZE);
+    status = ParamFile->read(tmpbuf, sizeof(tmpbuf));
+    if (0 != memcmp(tmpbuf, eeprombuf, (PARAM_ID_SIZE + sizeof(v))))
+      osalSysHalt("Verification failed");
+
+    chThdSleep(ADDITIONAL_WRITE_TMO);
+  }
+
+  return OSAL_SUCCESS;
+}
 
 /*
  *******************************************************************************
@@ -283,7 +311,7 @@ bool ParamRegistry::load(void){
      * parameters in registry must be the same as in eeprom */
     cmpresult = strcmp(GlobalParam[i].name, (char *)eeprombuf);
     if (0 == cmpresult){   /* OK, this parameter already presents in EEPROM */
-      v.u32 = pack8to32be(&(eeprombuf[PARAM_ID_SIZE]));
+      v.u32 = pack8to32ne(&(eeprombuf[PARAM_ID_SIZE]));
     }
     else{
       /* there is not such parameter in EEPROM. Possible reasons:
@@ -292,8 +320,9 @@ bool ParamRegistry::load(void){
        * To correctly fix this situation we just need to
        * save structure to EEPROM after loading of all parameters to RAM.
        */
+      bool ret = load_extensive();
       release();
-      return load_extensive();
+      return ret;
     }
 
     /* check value acceptability and set it */
@@ -308,42 +337,21 @@ bool ParamRegistry::load(void){
  *
  */
 bool ParamRegistry::saveAll(void){
-  int32_t  i;
-  uint32_t status = 0;
-  uint32_t v = 0;
-  uint8_t tmpbuf[PARAM_RECORD_SIZE];
+  bool ret;
+  osalDbgCheck(true == ready);
 
   acquire();
-  ParamFile->setPosition(0);
-
-  for (i = 0; i < this->paramCount(); i++){
-
-    /* first copy parameter name in buffer */
-    memcpy(eeprombuf, GlobalParam[i].name, PARAM_ID_SIZE);
-
-    /* now write data */
-    v = GlobalParam[i].valuep->u32;
-    unpack32to8be(v, &(eeprombuf[PARAM_ID_SIZE]));
-    status = ParamFile->write(eeprombuf, PARAM_RECORD_SIZE);
-    osalDbgAssert(status == PARAM_RECORD_SIZE, "write failed");
-
-    /* check written data */
-    ParamFile->setPosition(ParamFile->getPosition() - PARAM_RECORD_SIZE);
-    status = ParamFile->read(tmpbuf, sizeof(tmpbuf));
-    if (0 != memcmp(tmpbuf, eeprombuf, (PARAM_ID_SIZE + sizeof(v))))
-      osalSysHalt("Verification failed");
-
-    chThdSleep(ADDITIONAL_WRITE_TMO);
-  }
-
+  ret = this->save_all();
   release();
-  return OSAL_SUCCESS;
+
+  return ret;
 }
 
 /**
  *
  */
 param_status_t ParamRegistry::setParam(const floatint *value, const GlobalParam_t *param){
+  osalDbgCheck(true == ready);
   return validator.set(value, param);
 }
 
@@ -366,6 +374,7 @@ int32_t ParamRegistry::paramCount(void){
  */
 const GlobalParam_t *ParamRegistry::getParam(const char *key, int32_t n, int32_t *i){
   int32_t index = -1;
+  osalDbgCheck(true == ready);
 
   if (key != NULL){
     index = param_registry.key_index_search(key);

@@ -57,7 +57,7 @@ Giovanni
 //#include "pwr_mgmt.hpp"
 //#include "microsd.hpp"
 //#include "tlm_sender.hpp"
-//#include "linkmgr.hpp"
+#include "linkmgr.hpp"
 //#include "controller.hpp"
 //#include "mav_dispatcher.hpp"
 //#include "cmd_executor.hpp"
@@ -217,7 +217,7 @@ int main(void) {
 //  MavInit();          /* mavlink constants initialization must be called after parameters init */
 //  mission_planner.start(CONTROLLERPRIO);
 //  ControllerInit();
-//  LinkMgrInit();      /* launch after controller to reduce memory fragmentation on thread creation */
+  LinkMgrInit();      /* launch after controller to reduce memory fragmentation on thread creation */
 //  SensorsInit();      /* Note! Sensors depends on I2C */
 //  PwrMgmtInit();
 //  tlm_sender.start();

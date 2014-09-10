@@ -1,5 +1,6 @@
 #include "main.h"
 #include "mavworker.hpp"
+#include "mavspammer.hpp"
 
 using namespace chibios_rt;
 
@@ -135,3 +136,14 @@ void MavWorker::subscribe(uint8_t msg_id, SubscribeLink *sl){
 void MavWorker::unsubscribe(uint8_t msg_id, SubscribeLink *sl){
   mav_spammer.del_link(msg_id, sl);
 }
+
+/**
+ *
+ */
+msg_t MavWorker::post(mavMail &mail){
+  return txmb.post((msg_t)(&mail), TIME_IMMEDIATE);
+}
+
+
+
+

@@ -10,20 +10,25 @@
 class mavMail{
 public:
   mavMail(void);
-  mavMail(chibios_rt::BinarySemaphore *sem);
-  /* convenient function */
   void fill(const void *mavmsg, MAV_COMPONENT compid, uint8_t msgid);
-  void release(void);
+  virtual void release(void);
   bool free(void);
 
-public:
+protected:
   const void *mavmsg;
   MAV_COMPONENT compid;
   uint8_t msgid;
+};
 
-private:
-  void constructor_impl(chibios_rt::BinarySemaphore *sem);
-  chibios_rt::BinarySemaphore *sem;
+/**
+ * @brief     Mavlink mail class with synchronization mechanism
+ */
+class mavMailSync : public mavMail, public chibios_rt::BinarySemaphore {
+public:
+  mavMailSync(void) : chibios_rt::BinarySemaphore(true) {
+    return;
+  }
+  void release(void);
 };
 
 #endif /* MAVMAIL_HPP_ */

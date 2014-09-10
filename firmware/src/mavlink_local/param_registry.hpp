@@ -110,6 +110,7 @@ public:
   int32_t key_index_search(const char* key);
 
 private:
+  bool save_all(void);
   void store_value(int32_t i, float **vp);
   void store_value(int32_t i, int32_t **vp);
   void store_value(int32_t i, uint32_t **vp);
@@ -128,7 +129,7 @@ private:
 };
 
 /**
- * Return pointer to value. Hi level function.
+ * Return pointer to value. High level function.
  */
 template <typename T>
 int32_t ParamRegistry::valueSearch(const char *key, T **vp){

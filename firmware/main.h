@@ -12,12 +12,7 @@
 
 ///* Heap size for dynamic thread creation */
 //#define THREAD_HEAP_SIZE    (1024 * 4)
-//
-///* human readable names of serial drivers */
-//#define XBEESD    SD2
-//#define GPSSD     SD1
-//
-//#define BAUDRATE_XBEE 115200
+
 //
 /* Enable messages about unhandled mavlink messages received */
 #define MAVLINK_UNHANDLED_MSG_DEBUG     FALSE
@@ -46,19 +41,7 @@
 #define GPSPRIO           (NORMALPRIO - 2)
 #define TELEMTRYPRIO      (LINKPRIO - 1)
 #define SHELLPRIO         (NORMALPRIO - 10)
-//
-///* статусы возвращаемые разными подсистемами */
-//#define PARAM_SUCCESS     CH_SUCCESS
-//#define PARAM_FAILED      CH_FAILED
-//#define MISSION_SUCCESS   CH_SUCCESS
-//#define MISSION_FAILED    CH_FAILED
-//#define LINK_SUCCESS      CH_SUCCESS
-//#define LINK_FAILED       CH_FAILED
-//#define TLM_SUCCESS       CH_SUCCESS
-//#define TLM_FAILED        CH_FAILED
-//#define WP_SUCCESS        CH_SUCCESS
-//#define WP_FAILED         CH_FAILED
-//
+
 ///* константы для мавлинка */
 //#define GROUND_STATION_ID   255
 //

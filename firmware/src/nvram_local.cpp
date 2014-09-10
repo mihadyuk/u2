@@ -61,10 +61,12 @@ NvramFs nvram_fs(nvmtd);
 
 void NvramInit(void){
 
-  if (OSAL_SUCCESS != nvram_fs.mount())
+  if (OSAL_SUCCESS != nvram_fs.mount()){
     nvram_fs.mkfs();
-  if (OSAL_SUCCESS != nvram_fs.mount())
-    osalSysHalt("Storage broken");
+    if (OSAL_SUCCESS != nvram_fs.mount()){
+      osalSysHalt("Storage broken");
+    }
+  }
 }
 
 

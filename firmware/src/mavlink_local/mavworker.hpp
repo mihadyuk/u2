@@ -3,8 +3,8 @@
 
 #include "main.h"
 #include "mavchannel.hpp"
-#include "mavspammer.hpp"
-#include "multi_buffer.hpp"
+#include "subscribe_link.hpp"
+#include "mavmail.hpp"
 
 #if !MAVLINK_UNHANDLED_MSG_DEBUG
 #define WORKER_RX_THREAD_WA_SIZE  256
@@ -28,17 +28,13 @@ public:
   void stop(void);
   void subscribe(uint8_t msg_id, SubscribeLink *sl);
   void unsubscribe(uint8_t msg_id, SubscribeLink *sl);
+  msg_t post(mavMail &mail);
 private:
   mavChannel *channel = NULL;
   thread_t *rxworker = NULL;
   thread_t *txworker = NULL;
   bool ready = false;
-  chibios_rt::MailboxBuffer<MAVCHANNEL_BUF_CNT - 1> rxmb; //Box for storing pointer to buffer containing received bytes.
-  chibios_rt::MailboxBuffer<12> txmb; //Box for storing IDs of message scheduled to be sent via channel.
-  MultiBuffer<uint8_t, MAVCHANNEL_BUF_SIZE, MAVCHANNEL_BUF_CNT> multi_rxbuf;
-  /* staticstic counter */
-  size_t rxbytes = 0;
-  size_t txbytes = 0;
+  chibios_rt::MailboxBuffer<12> txmb;
 };
 
 #endif /* MAVWORKER_HPP_ */
