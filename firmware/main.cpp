@@ -194,9 +194,8 @@ int main(void) {
 
   /* enable softreset on panic */
   setGlobalFlag(GlobalFlags.allow_softreset);
-  if (was_softreset() || was_padreset()){
+  if (was_softreset() || was_padreset())
     chThdSleepMilliseconds(1);
-  }
   else
     chThdSleepMilliseconds(100);
 
@@ -237,7 +236,7 @@ int main(void) {
 
   osalDbgCheck(OSAL_SUCCESS == adis.start());
 
-  while (TRUE){
+  while (TRUE) {
     chDbgCheck(MSG_OK == adis.wait(MS2ST(200)));
     green_led_on();
     adis.get(acc, gyr, mag, &baro, quat, euler);
