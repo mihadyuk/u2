@@ -141,7 +141,7 @@ void MavWorker::unsubscribe(uint8_t msg_id, SubscribeLink *sl){
  *
  */
 msg_t MavWorker::post(mavMail &mail){
-  return txmb.post((msg_t)(&mail), TIME_IMMEDIATE);
+  return txmb.post(&mail, TIME_IMMEDIATE);
 }
 
 

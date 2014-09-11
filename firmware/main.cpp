@@ -182,18 +182,7 @@ static float baro;
 static float quat[4];
 static float euler[3];
 
-static MailboxTypedBuffer<BinarySemaphore*, 8> mbtb_;
-static MailboxTypedBuffer<void*, 8> mbtb;
-
-msg_t f1(MailboxTyped<void*> &mb){
-  void *v = nullptr;
-  void *ret = nullptr;
-  mb.post(v, TIME_IMMEDIATE);
-  return mb.fetch(&ret, TIME_IMMEDIATE);
-}
-
 int main(void) {
-  f1(mbtb);
 
   halInit();
   System::init();

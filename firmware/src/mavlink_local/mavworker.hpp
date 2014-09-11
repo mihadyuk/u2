@@ -34,7 +34,7 @@ private:
   thread_t *rxworker = NULL;
   thread_t *txworker = NULL;
   bool ready = false;
-  chibios_rt::MailboxBuffer<12> txmb;
+  chibios_rt::Mailbox<mavMail*, 12> txmb;
 };
 
 #endif /* MAVWORKER_HPP_ */
