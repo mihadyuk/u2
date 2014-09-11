@@ -1,6 +1,6 @@
 #include "main.h"
-#include "mavchannel_serial.hpp"
 
+using namespace chibios_rt;
 /*
  ******************************************************************************
  * DEFINES
@@ -38,48 +38,3 @@
  * EXPORTED FUNCTIONS
  ******************************************************************************
  */
-
-/**
- *
- */
-mavChannelSerial::mavChannelSerial(SerialDriver *sdp, const SerialConfig *ser_cfg) :
-sdp(sdp),
-ser_cfg(ser_cfg)
-{
-  chDbgCheck((NULL != sdp) && (NULL != ser_cfg));
-}
-
-/**
- *
- */
-void mavChannelSerial::start(void){
-  sdStart(sdp, ser_cfg);
-  this->ready = true;
-}
-
-/**
- *
- */
-void mavChannelSerial::stop(void){
-  if (true == this->ready){
-    sdStop(sdp);
-    this->ready = false;
-  }
-}
-
-/**
- *
- */
-void mavChannelSerial::write(const uint8_t *buf, size_t len) {
-  osalDbgCheck(true == this->ready);
-  sdWrite(sdp, buf, len);
-}
-
-/**
- *
- */
-msg_t mavChannelSerial::get(systime_t time) {
-  osalDbgCheck(true == this->ready);
-  return sdGetTimeout(sdp, time);
-}
-

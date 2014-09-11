@@ -48,7 +48,7 @@ static THD_FUNCTION(RxThread, arg) {
   mavChannel *channel = static_cast<mavChannel *>(arg);
 
   while (!chThdShouldTerminateX()){
-    c = channel->getTimeout(MS2ST(50));
+    c = channel->get(MS2ST(50));
     if (c != Q_TIMEOUT){
       if (mavlink_parse_char(MAVLINK_COMM_0, c, &msg, &status)) {
         mav_spammer.dispatch(msg);

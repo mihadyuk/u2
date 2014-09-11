@@ -18,13 +18,13 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _USBCFG_H_
-#define _USBCFG_H_
+#ifndef _USB_CFG_H_
+#define _USB_CFG_H_
 
-extern SerialUSBDriver SDU1;
+extern SerialUSBDriver SDU2;
 extern const USBConfig usbcfg;
 extern const SerialUSBConfig serusbcfg;
 
-#endif  /* _USBCFG_H_ */
+#endif  /* _USB_CFG_H_ */
 
 /** @} */

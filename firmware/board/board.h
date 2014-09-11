@@ -118,7 +118,7 @@
 
 #define GPIOE_GPS_PPS           0
 #define GPIOE_ADIS_INT          1
-#define GPIOE_PIN2              2
+#define GPIOE_USB_PRESENT              2
 #define GPIOE_MPU9150_INT       3
 #define GPIOE_BMP085_EOC        4
 #define GPIOE_MAG_INT           5
@@ -561,7 +561,7 @@
  */
 #define VAL_GPIOE_MODER        (PIN_MODE_INPUT(GPIOE_GPS_PPS) |               \
                                 PIN_MODE_INPUT(GPIOE_ADIS_INT) |              \
-                                PIN_MODE_INPUT(GPIOE_PIN2) |                  \
+                                PIN_MODE_INPUT(GPIOE_USB_PRESENT) |           \
                                 PIN_MODE_INPUT(GPIOE_MPU9150_INT) |           \
                                 PIN_MODE_INPUT(GPIOE_BMP085_EOC) |            \
                                 PIN_MODE_INPUT(GPIOE_MAG_INT) |               \
@@ -577,7 +577,7 @@
                                 PIN_MODE_OUTPUT(GPIOE_SDIO_PWR_EN))
 #define VAL_GPIOE_OTYPER       (PIN_OTYPE_PUSHPULL(GPIOE_GPS_PPS) |           \
                                 PIN_OTYPE_PUSHPULL(GPIOE_ADIS_INT) |          \
-                                PIN_OTYPE_PUSHPULL(GPIOE_PIN2) |              \
+                                PIN_OTYPE_PUSHPULL(GPIOE_USB_PRESENT) |       \
                                 PIN_OTYPE_PUSHPULL(GPIOE_MPU9150_INT) |       \
                                 PIN_OTYPE_PUSHPULL(GPIOE_BMP085_EOC) |        \
                                 PIN_OTYPE_PUSHPULL(GPIOE_MAG_INT) |           \
@@ -593,7 +593,7 @@
                                 PIN_OTYPE_OPENDRAIN(GPIOE_SDIO_PWR_EN))
 #define VAL_GPIOE_OSPEEDR      (PIN_OSPEED_2M(GPIOE_GPS_PPS) |                \
                                 PIN_OSPEED_2M(GPIOE_ADIS_INT) |               \
-                                PIN_OSPEED_2M(GPIOE_PIN2) |                   \
+                                PIN_OSPEED_2M(GPIOE_USB_PRESENT) |            \
                                 PIN_OSPEED_2M(GPIOE_MPU9150_INT) |            \
                                 PIN_OSPEED_2M(GPIOE_BMP085_EOC) |             \
                                 PIN_OSPEED_2M(GPIOE_MAG_INT) |                \
@@ -609,7 +609,7 @@
                                 PIN_OSPEED_2M(GPIOE_SDIO_PWR_EN))
 #define VAL_GPIOE_PUPDR        (PIN_PUPDR_PULLDOWN(GPIOE_GPS_PPS) |           \
                                 PIN_PUPDR_PULLDOWN(GPIOE_ADIS_INT) |          \
-                                PIN_PUPDR_FLOATING(GPIOE_PIN2) |              \
+                                PIN_PUPDR_PULLDOWN(GPIOE_USB_PRESENT) |       \
                                 PIN_PUPDR_PULLUP(GPIOE_MPU9150_INT) |         \
                                 PIN_PUPDR_PULLUP(GPIOE_BMP085_EOC) |          \
                                 PIN_PUPDR_PULLUP(GPIOE_MAG_INT) |             \
@@ -625,7 +625,7 @@
                                 PIN_PUPDR_FLOATING(GPIOE_SDIO_PWR_EN))
 #define VAL_GPIOE_ODR          (PIN_ODR_HIGH(GPIOE_GPS_PPS) |                 \
                                 PIN_ODR_HIGH(GPIOE_ADIS_INT) |                \
-                                PIN_ODR_HIGH(GPIOE_PIN2) |                    \
+                                PIN_ODR_HIGH(GPIOE_USB_PRESENT) |             \
                                 PIN_ODR_HIGH(GPIOE_MPU9150_INT) |             \
                                 PIN_ODR_HIGH(GPIOE_BMP085_EOC) |              \
                                 PIN_ODR_HIGH(GPIOE_MAG_INT) |                 \
@@ -641,7 +641,7 @@
                                 PIN_ODR_HIGH(GPIOE_SDIO_PWR_EN))
 #define VAL_GPIOE_AFRL         (PIN_AFIO_AF(GPIOE_GPS_PPS, 0) |               \
                                 PIN_AFIO_AF(GPIOE_ADIS_INT, 0) |              \
-                                PIN_AFIO_AF(GPIOE_PIN2, 0) |                  \
+                                PIN_AFIO_AF(GPIOE_USB_PRESENT, 0) |           \
                                 PIN_AFIO_AF(GPIOE_MPU9150_INT, 0) |           \
                                 PIN_AFIO_AF(GPIOE_BMP085_EOC, 0) |            \
                                 PIN_AFIO_AF(GPIOE_MAG_INT, 0) |               \

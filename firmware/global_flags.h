@@ -10,7 +10,7 @@ typedef struct GlobalFlags_t{
   //4
   uint32_t eeprom_failed:1;
   uint32_t tlm_link_ready:1;
-  uint32_t modem_ready:1;
+  uint32_t stub7:1;
   uint32_t logger_ready:1;
   //8
   uint32_t sighalt:1;

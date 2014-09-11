@@ -57,7 +57,7 @@ Giovanni
 //#include "pwr_mgmt.hpp"
 //#include "microsd.hpp"
 //#include "tlm_sender.hpp"
-//#include "linkmgr.hpp"
+#include "link_mgr.hpp"
 //#include "controller.hpp"
 //#include "mav_dispatcher.hpp"
 //#include "cmd_executor.hpp"
@@ -162,6 +162,8 @@ GlobalFlags_t GlobalFlags = {0,0,0,0,0,0,0,0,
 //
 //TlmSender tlm_sender;
 
+static LinkMgr link_mgr;
+
 /*
  ******************************************************************************
  * GLOBAL VARIABLES
@@ -206,7 +208,7 @@ int main(void) {
   osalThreadSleepMilliseconds(10);
 
 //  chHeapInit(&ThdHeap, (uint8_t *)MEM_ALIGN_NEXT(link_thd_buf), THREAD_HEAP_SIZE);
-//
+
   Exti.start();
 //  time_keeper.start();
 //  BlinkerInit();
@@ -217,7 +219,7 @@ int main(void) {
 //  MavInit();          /* mavlink constants initialization must be called after parameters init */
 //  mission_planner.start(CONTROLLERPRIO);
 //  ControllerInit();
-//  LinkMgrInit();      /* launch after controller to reduce memory fragmentation on thread creation */
+  link_mgr.start();      /* launch after controller to reduce memory fragmentation on thread creation */
 //  SensorsInit();      /* Note! Sensors depends on I2C */
 //  PwrMgmtInit();
 //  tlm_sender.start();

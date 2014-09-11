@@ -37,8 +37,8 @@
 /**
  *
  */
-UsbDebouncer::UsbDebouncer(void){
-  plugged_flag = false;
+UsbDebouncer::UsbDebouncer(void) : plugged_flag(false) {
+  return;
 }
 
 /**
@@ -47,10 +47,10 @@ UsbDebouncer::UsbDebouncer(void){
 bool UsbDebouncer::update(void){
   bool ret = false;
 
-  if (plugged_flag && (PAL_HIGH == palReadPad(GPIOB, GPIOB_USB_PRESENT)))
+  if (plugged_flag && (PAL_HIGH == palReadPad(GPIOE, GPIOE_USB_PRESENT)))
     ret = true;
 
-  plugged_flag = PAL_HIGH == palReadPad(GPIOB, GPIOB_USB_PRESENT);
+  plugged_flag = (PAL_HIGH == palReadPad(GPIOE, GPIOE_USB_PRESENT));
 
   return ret;
 }

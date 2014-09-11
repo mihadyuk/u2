@@ -1,5 +1,5 @@
 #include "main.h"
-#include "mavchannel_serial.hpp"
+#include "mavchannel_usbserial.hpp"
 
 /*
  ******************************************************************************
@@ -42,27 +42,26 @@
 /**
  *
  */
-mavChannelSerial::mavChannelSerial(SerialDriver *sdp, const SerialConfig *ser_cfg) :
-sdp(sdp),
-ser_cfg(ser_cfg)
-{
-  chDbgCheck((NULL != sdp) && (NULL != ser_cfg));
+mavChannelUsbSerial::mavChannelUsbSerial(SerialUSBDriver *sdp, const SerialUSBConfig *ser_cfg){
+  chDbgCheck((NULL != sdp) &&(NULL != ser_cfg));
+  this->sdp = sdp;
+  this->ser_cfg = ser_cfg;
 }
 
 /**
  *
  */
-void mavChannelSerial::start(void){
-  sdStart(sdp, ser_cfg);
+void mavChannelUsbSerial::start(void){
+  sduStart(sdp, ser_cfg);
   this->ready = true;
 }
 
 /**
  *
  */
-void mavChannelSerial::stop(void){
+void mavChannelUsbSerial::stop(void){
   if (true == this->ready){
-    sdStop(sdp);
+    sduStop(sdp);
     this->ready = false;
   }
 }
@@ -70,7 +69,7 @@ void mavChannelSerial::stop(void){
 /**
  *
  */
-void mavChannelSerial::write(const uint8_t *buf, size_t len) {
+void mavChannelUsbSerial::write(const uint8_t *buf, size_t len){
   osalDbgCheck(true == this->ready);
   sdWrite(sdp, buf, len);
 }
@@ -78,8 +77,9 @@ void mavChannelSerial::write(const uint8_t *buf, size_t len) {
 /**
  *
  */
-msg_t mavChannelSerial::get(systime_t time) {
+msg_t mavChannelUsbSerial::get(systime_t time){
   osalDbgCheck(true == this->ready);
   return sdGetTimeout(sdp, time);
 }
+
 

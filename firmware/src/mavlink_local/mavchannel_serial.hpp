@@ -13,7 +13,7 @@ public:
   void start(void);
   void stop(void);
   void write(const uint8_t *buf, size_t len);
-  msg_t getTimeout(systime_t time);
+  msg_t get(systime_t time);
 protected:
   SerialDriver *sdp;
   const SerialConfig *ser_cfg;

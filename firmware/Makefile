@@ -120,7 +120,8 @@ MAVSRC = src/mavlink_local/parameters.cpp \
          src/mavlink_local/mavspammer.cpp \
          src/mavlink_local/mavworker.cpp \
          src/mavlink_local/mavmail.cpp \
-         src/mavlink_local/mavchannel_serial.cpp
+         src/mavlink_local/mavchannel_serial.cpp \
+         src/mavlink_local/mavchannel_usbserial.cpp \
 
 CPPSRC = $(CHCPPSRC) \
          $(NVRAMSRC) \
@@ -132,6 +133,9 @@ CPPSRC = $(CHCPPSRC) \
          src/message.cpp \
          src/proto.cpp \
          src/nvram_local.cpp \
+         src/link_mgr.cpp \
+         src/shell.cpp \
+         src/usb_debouncer.cpp \
          lib/filters/fir_test.cpp \
 
 # C sources to be compiled in ARM mode regardless of the global setting.
@@ -255,3 +259,5 @@ MAKE_ALL_RULE_HOOK: res_usage
 res_usage: $(BUILDDIR)/$(PROJECT).bin $(BUILDDIR)/$(PROJECT).elf \
 			$(BUILDDIR)/$(PROJECT).hex $(BUILDDIR)/$(PROJECT).dmp
 	../tools/res_usage.sh	
+
+	
