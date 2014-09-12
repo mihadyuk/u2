@@ -1,6 +1,6 @@
 #include "main.h"
 #include "mavworker.hpp"
-#include "mavspammer.hpp"
+#include "mavpostman.hpp"
 
 using namespace chibios_rt;
 
