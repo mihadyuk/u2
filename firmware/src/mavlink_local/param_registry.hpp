@@ -32,7 +32,7 @@ typedef enum {
   PARAM_SEND_TMO = 2,
   PARAM_SORT_MTRX = 3,
   PARAM_POLARITY = 4,
-} param_check_function_t;
+} param_checker_t;
 
 /**
  *
@@ -46,27 +46,27 @@ typedef union{
   float f32;
   int32_t i32;
   uint32_t u32;
-} floatint;
+} param_union_t;
 
 /**
  * Global parameter
  */
-struct GlobalParam_t{
+struct GlobalParam_t {
   /**
    * Name of parameter
    */
   const char            *name;
-  const floatint        min;        /* allowed min */
-  const floatint        def;        /* default */
-  const floatint        max;        /* allowed max*/
+  const param_union_t   min;        /* allowed min */
+  const param_union_t   def;        /* default */
+  const param_union_t   max;        /* allowed max*/
   /**
    * Pointer to value stored in RAM
    */
-  floatint              *valuep;
+  param_union_t         *valuep;
   /**
    * Checker function type.
    */
-  const param_check_function_t func;
+  const param_checker_t func;
   /**
    * Parameter type like defined in mavlink headers.
    */
@@ -82,16 +82,16 @@ struct GlobalParam_t{
  */
 class ParamValidator{
 public:
-  param_status_t set(const floatint *value, const GlobalParam_t *param);
+  param_status_t set(const param_union_t *value, const GlobalParam_t *param);
 
 private:
-  param_status_t default_val(const floatint *value, const GlobalParam_t *param);
-  param_status_t uint_val(const floatint *value, const GlobalParam_t *param);
-  param_status_t int_val(const floatint *value, const GlobalParam_t *param);
-  param_status_t float_val(const floatint *value, const GlobalParam_t *param);
-  param_status_t sendtmo_val(const floatint *value, const GlobalParam_t *param);
-  param_status_t sortmtrx_val(const floatint *value, const GlobalParam_t *param);
-  param_status_t polarity_val(const floatint *value, const GlobalParam_t *param);
+  param_status_t default_val(const param_union_t *value, const GlobalParam_t *param);
+  param_status_t uint_val(const param_union_t *value, const GlobalParam_t *param);
+  param_status_t int_val(const param_union_t *value, const GlobalParam_t *param);
+  param_status_t float_val(const param_union_t *value, const GlobalParam_t *param);
+  param_status_t sendtmo_val(const param_union_t *value, const GlobalParam_t *param);
+  param_status_t sortmtrx_val(const param_union_t *value, const GlobalParam_t *param);
+  param_status_t polarity_val(const param_union_t *value, const GlobalParam_t *param);
 };
 
 /**
@@ -103,40 +103,39 @@ public:
   bool load(void);
   bool saveAll(void);
   bool syncParam(const char* key);
-  param_status_t setParam(const floatint *value, const GlobalParam_t *param);
-  template<typename T> int32_t valueSearch(const char *key, T **vp);
-  int32_t paramCount(void);
-  const GlobalParam_t *getParam(const char *key, int32_t n, int32_t *i);
-  int32_t key_index_search(const char* key);
+  param_status_t setParam(const param_union_t *value, const GlobalParam_t *param);
+  template<typename T> int valueSearch(const char *key, T **vp);
+  int paramCount(void);
+  const GlobalParam_t *getParam(const char *key, int n, int *i);
+  int key_index_search(const char* key);
 
 private:
   bool save_all(void);
-  void store_value(int32_t i, float **vp);
-  void store_value(int32_t i, int32_t **vp);
-  void store_value(int32_t i, uint32_t **vp);
-  void store_value(int32_t i, const float **vp);
-  void store_value(int32_t i, const int32_t **vp);
-  void store_value(int32_t i, const uint32_t **vp);
+  void store_value(int i, float **vp);
+  void store_value(int i, int32_t **vp);
+  void store_value(int i, uint32_t **vp);
+  void store_value(int i, const float **vp);
+  void store_value(int i, const int32_t **vp);
+  void store_value(int i, const uint32_t **vp);
   bool load_extensive(void);
   void acquire(void);
   void release(void);
   ParamValidator validator;
-  static const GlobalParam_t *param_array;
-  floatint *val;
-  bool ready;
-  chibios_rt::BinarySemaphore sem;
+  static const GlobalParam_t param_db[];
+  chibios_rt::BinarySemaphore mutual_sem;
   NvramFile *ParamFile = NULL;
+  bool ready;
 };
 
 /**
  * Return pointer to value. High level function.
  */
 template <typename T>
-int32_t ParamRegistry::valueSearch(const char *key, T **vp){
+int ParamRegistry::valueSearch(const char *key, T **vp){
 
   osalDbgCheck(true == this->ready);
 
-  int32_t i = -1;
+  int i = -1;
 
   i = this->key_index_search(key);
   if (i == -1){

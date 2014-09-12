@@ -126,7 +126,7 @@ static void _param_print_all(void){
  *
  */
 static param_status_t _param_cli_set(const char * val, uint32_t i){
-  floatint v;
+  param_union_t v;
   int sscanf_status;
   const GlobalParam_t *param_p = param_registry.getParam(NULL, i, NULL);
   if (NULL == param_p){

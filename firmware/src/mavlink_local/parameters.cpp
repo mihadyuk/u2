@@ -101,8 +101,8 @@ static void ParamValueSend(const mavlink_param_value_t *m, MAV_COMPONENT comp){
  * @param[in] key   if NULL than perform search by index
  * @param[in] n     search index
  */
-static bool send_value(const char *key, int32_t n){
-  int32_t index = -1;
+static bool send_value(const char *key, int n){
+  int index = -1;
   const GlobalParam_t *p;
 
   p = param_registry.getParam(key, n, &index);
@@ -165,11 +165,11 @@ static void send_all_values(void){
  * PARAM_VALUE value message with the newly written parameter value.
  */
 static void param_set_handler(void){
-  floatint *valuep = NULL;
+  param_union_t *valuep = NULL;
   const GlobalParam_t *paramp = NULL;
   param_status_t status;
 
-  valuep = (floatint *)&(mavlink_in_param_set_struct.param_value);
+  valuep = (param_union_t *)&(mavlink_in_param_set_struct.param_value);
   paramp = param_registry.getParam(mavlink_in_param_set_struct.param_id, -1, NULL);
   if (NULL == paramp){
     ignore_value(mavlink_in_param_set_struct);

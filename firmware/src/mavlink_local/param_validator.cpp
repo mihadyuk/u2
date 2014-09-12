@@ -50,8 +50,10 @@ static bool sortmtrx_good(uint32_t v){
 /**
  *
  */
-param_status_t ParamValidator::sortmtrx_val(const floatint *value, const GlobalParam_t *param){
+param_status_t ParamValidator::sortmtrx_val(const param_union_t *value,
+                                            const GlobalParam_t *param) {
   uint32_t v = param->valuep->u32;
+
   if ( ! sortmtrx_good(v))
     param->valuep->u32 = param->def.u32;
 
@@ -74,15 +76,15 @@ param_status_t ParamValidator::sortmtrx_val(const floatint *value, const GlobalP
  * Value must be 1 OR -1.
  * Only write and emit changes if there is actually a difference
  */
-static bool polarity_good(int32_t v){
+static bool polarity_good(int32_t v) {
   if ((v == 1) || (v == -1))
     return true;
   else
     return true;
 }
 
-param_status_t ParamValidator::polarity_val(const floatint *value, const GlobalParam_t *param){
-
+param_status_t ParamValidator::polarity_val(const param_union_t *value,
+                                            const GlobalParam_t *param) {
   int32_t v = param->valuep->i32;
   if ( ! polarity_good(v))
     param->valuep->i32 = param->def.i32;
@@ -104,8 +106,10 @@ param_status_t ParamValidator::polarity_val(const floatint *value, const GlobalP
  * Check send periods for different messages.
  * It must be zero OR between min and max.
  */
-param_status_t ParamValidator::sendtmo_val(const floatint *value, const GlobalParam_t *param){
-  uint32_t initial_value = *(uint32_t*)value;
+param_status_t ParamValidator::sendtmo_val(const param_union_t *value,
+                                           const GlobalParam_t *param) {
+
+  uint32_t initial_value = value->u32;
   uint32_t v = initial_value;
 
   /**/
@@ -131,8 +135,8 @@ param_status_t ParamValidator::sendtmo_val(const floatint *value, const GlobalPa
 /**
  * Uint32 boundary checker.
  */
-param_status_t ParamValidator::uint_val(const floatint *value, const GlobalParam_t *param){
-  uint32_t initial_value = *(uint32_t*)value;
+param_status_t ParamValidator::uint_val(const param_union_t *value, const GlobalParam_t *param){
+  uint32_t initial_value = value->u32;
   uint32_t v = initial_value;
 
   if (param->valuep->u32 == v)
@@ -150,8 +154,9 @@ param_status_t ParamValidator::uint_val(const floatint *value, const GlobalParam
 /**
  * Float boundary checker.
  */
-param_status_t ParamValidator::float_val(const floatint *value, const GlobalParam_t *param){
-  float initial_value = *(float*)value;
+param_status_t ParamValidator::float_val(const param_union_t *value,
+                                         const GlobalParam_t *param) {
+  float initial_value = value->f32;
   float v = initial_value;
 
   // AND only write if new value is NOT "not-a-number" AND is NOT infinity
@@ -173,8 +178,9 @@ param_status_t ParamValidator::float_val(const floatint *value, const GlobalPara
 /**
  * Int32 boundary checker.
  */
-param_status_t ParamValidator::int_val(const floatint *value, const GlobalParam_t *param){
-  int32_t initial_value = *(int32_t*)value;
+param_status_t ParamValidator::int_val(const param_union_t *value,
+                                       const GlobalParam_t *param) {
+  int32_t initial_value = value->i32;
   int32_t v = initial_value;
 
   if (param->valuep->i32 == v)
@@ -189,7 +195,8 @@ param_status_t ParamValidator::int_val(const floatint *value, const GlobalParam_
     return PARAM_CLAMPED;
 }
 
-param_status_t ParamValidator::default_val(const floatint *value, const GlobalParam_t *param){
+param_status_t ParamValidator::default_val(const param_union_t *value,
+                                           const GlobalParam_t *param) {
   switch(param->param_type){
   case MAVLINK_TYPE_FLOAT:
     return this->float_val(value, param);
@@ -219,8 +226,8 @@ param_status_t ParamValidator::default_val(const floatint *value, const GlobalPa
  *
  * @return            operation status.
  */
-param_status_t ParamValidator::set(const floatint *value, const GlobalParam_t *param){
-
+param_status_t ParamValidator::set(const param_union_t *value,
+                                   const GlobalParam_t *param) {
   switch(param->func){
   case PARAM_DEFAULT:
     return this->default_val(value, param);
