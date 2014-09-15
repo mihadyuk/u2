@@ -12,9 +12,9 @@
  *
  */
  const GlobalParam_t ParamRegistry::param_db[] = {
-{"SYS_ID", {.u32 = 1}, {.u32 = 20}, {.u32 = 255}, &gp_val[0], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, "System ID.\n This value MUST BE FIRST in param structure. Value 0 reserved for ground station."},
+{"SYS_id", {.u32 = 1}, {.u32 = 20}, {.u32 = 255}, &gp_val[0], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, "System ID.\n This value MUST BE FIRST in param structure. Value 0 reserved for ground station."},
 {"SYS_mavtype", {.u32 = 0}, {.u32 = 10}, {.u32 = 16}, &gp_val[1], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, "Autopilot type (0 - generic, 1 - fixed wing, 10 - ground rover).\nOther types you can found in enum MAV_TYPE \nNOTE! You MUST REBOOT device after changing it."},
-{"SH_on_modem", {.u32 = 0}, {.u32 = 0}, {.u32 = 1}, &gp_val[2], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, "When 1 than drop shell on xbee channel and telemetry on USB_CDC and vice versa."},
+{"SH_over_radio", {.u32 = 0}, {.u32 = 0}, {.u32 = 1}, &gp_val[2], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, "When 1 than drop shell on xbee channel and telemetry on USB_CDC and vice versa."},
 {"AHRS_accweight", {.f32 = 0.000000}, {.f32 = 0.005000}, {.f32 = 0.500000}, &gp_val[3], PARAM_DEFAULT, MAVLINK_TYPE_FLOAT,    NULL},
 {"AHRS_magweight", {.f32 = 0.000000}, {.f32 = 0.050000}, {.f32 = 0.900000}, &gp_val[4], PARAM_DEFAULT, MAVLINK_TYPE_FLOAT,    NULL},
 {"AHRS_gpsweight", {.f32 = 0.000000}, {.f32 = 0.050000}, {.f32 = 0.500000}, &gp_val[5], PARAM_DEFAULT, MAVLINK_TYPE_FLOAT,    NULL},

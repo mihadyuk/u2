@@ -37,13 +37,12 @@ static SerialConfig xbee_ser_cfg = {
     USART_CR3_CTSE | USART_CR3_RTSE,
 };
 
-static uint32_t const *sh_overxbee;
+static uint32_t *sh_overxbee;
 
 static UsbDebouncer debouncer;
 
 static mavChannelSerial channel_serial(&XBEESD, &xbee_ser_cfg);
 static mavChannelUsbSerial channel_usb_serial(&SDU2, &serusbcfg);
-static MavWorker mav_worker;
 
 static Shell shell;
 
@@ -64,6 +63,7 @@ static void boot_strap(bool plug_prev, uint32_t sh_prev) {
       sduStart(&SDU2, &serusbcfg);
       usbStart(serusbcfg.usbp, &usbcfg);
       usbConnectBus(serusbcfg.usbp);
+      osalThreadSleepMilliseconds(500);
       shell.start((SerialDriver *)&SDU2);
     }
   }
@@ -73,6 +73,7 @@ static void boot_strap(bool plug_prev, uint32_t sh_prev) {
     if (true == plug_prev){
       usbStart(serusbcfg.usbp, &usbcfg);
       usbConnectBus(serusbcfg.usbp);
+      osalThreadSleepMilliseconds(500);
       mav_worker.start(&channel_usb_serial);
     }
   }
@@ -114,8 +115,11 @@ static THD_FUNCTION(LinkMgrThread, arg) {
       mav_worker.stop();
       shell.stop();
       usbDisconnectBus(serusbcfg.usbp);
+      osalThreadSleep(DEBOUNCE_TIMEOUT);
       usbStop(serusbcfg.usbp);
+      osalThreadSleep(DEBOUNCE_TIMEOUT);
       sduStop(&SDU2);
+      osalThreadSleep(DEBOUNCE_TIMEOUT);
       sdStop(&XBEESD);
 
       boot_strap(plug_prev, sh_prev);
@@ -123,7 +127,7 @@ static THD_FUNCTION(LinkMgrThread, arg) {
     osalThreadSleep(DEBOUNCE_TIMEOUT);
   }
 
-  chThdExit(0);
+  chThdExit(MSG_OK);
   return MSG_OK;
 }
 
@@ -143,8 +147,9 @@ LinkMgr::LinkMgr(void){
  *
  */
 void LinkMgr::start(void){
-  param_registry.valueSearch("SH_overxbee", &sh_overxbee);
+  param_registry.valueSearch("SH_over_radio", &sh_overxbee);
   sduObjectInit(&SDU2);
+  sduStart(&SDU2, &serusbcfg); // workaround stopping not started driver
   this->worker = chThdCreateStatic(LinkMgrThreadWA, sizeof(LinkMgrThreadWA),
                                     LINKPRIO, LinkMgrThread, NULL);
   osalDbgAssert(NULL != this->worker, "can not allocate memory");

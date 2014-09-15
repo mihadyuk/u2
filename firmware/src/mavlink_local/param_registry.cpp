@@ -6,7 +6,7 @@
 #include "message.hpp"
 #include "mavdbg.hpp"
 #include "param_registry.hpp"
-#include "pack_unpack.hpp"
+#include "pack_unpack.h"
 #include "array_len.hpp"
 
 /*

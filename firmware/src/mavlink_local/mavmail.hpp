@@ -14,7 +14,6 @@ public:
   virtual void release(void);
   bool free(void);
 
-protected:
   const void *mavmsg;
   MAV_COMPONENT compid;
   uint8_t msgid;

@@ -7,7 +7,7 @@
 #include "mavmail.hpp"
 
 #if !MAVLINK_UNHANDLED_MSG_DEBUG
-#define WORKER_RX_THREAD_WA_SIZE  256
+#define WORKER_RX_THREAD_WA_SIZE  512
 #else
 #define WORKER_RX_THREAD_WA_SIZE  2048
 #endif
@@ -34,7 +34,8 @@ private:
   thread_t *rxworker = NULL;
   thread_t *txworker = NULL;
   bool ready = false;
-  chibios_rt::Mailbox<mavMail*, 12> txmb;
 };
+
+extern MavWorker mav_worker;
 
 #endif /* MAVWORKER_HPP_ */

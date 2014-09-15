@@ -12,9 +12,9 @@ ONBOARD_PARAM_NAME_LENGTH = 15
 
 #    key            min     default max     type checker    help
 param = [
-("SYS_ID",          1,      20,     255,    "u", "default",     "System ID.\\n This value MUST BE FIRST in param structure. Value 0 reserved for ground station."),
+("SYS_id",          1,      20,     255,    "u", "default",     "System ID.\\n This value MUST BE FIRST in param structure. Value 0 reserved for ground station."),
 ("SYS_mavtype",     0,      10,     16,     "u", "default",     "Autopilot type (0 - generic, 1 - fixed wing, 10 - ground rover).\\nOther types you can found in enum MAV_TYPE \\nNOTE! You MUST REBOOT device after changing it."),
-("SH_on_modem",     0,      0,      1,      "u", "default",     "When 1 than drop shell on xbee channel and telemetry on USB_CDC and vice versa."),
+("SH_over_radio",   0,      0,      1,      "u", "default",     "When 1 than drop shell on xbee channel and telemetry on USB_CDC and vice versa."),
 
 #/* veights of different components */
 ("AHRS_accweight",  0.0,    0.005,  0.5,    "f", "default",     "NULL"),

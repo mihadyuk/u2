@@ -4,9 +4,15 @@
 class Shell {
 public:
   Shell(void){return;}
-  void start(SerialDriver *sdp){this->sdp = sdp;}
-  void stop(void){sdStop(this->sdp);}
+  void start(SerialDriver *sdp){this->sdp = sdp; ready = true;}
+  void stop(void){
+    if (true == ready){
+      sdStop(this->sdp);
+      ready = false;
+    }
+  }
 private:
+  bool ready = false;
   SerialDriver *sdp = nullptr;
 };
 

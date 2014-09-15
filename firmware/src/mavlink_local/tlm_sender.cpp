@@ -338,8 +338,8 @@ static msg_t TlmSenderThread(void *arg) {
   }
 
   clearGlobalFlag(GlobalFlags.tlm_link_ready);
-  chThdExit(0);
-  return 0;
+  chThdExit(MSG_OK);
+  return MSG_OK;
 }
 
 /** 

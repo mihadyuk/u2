@@ -48,7 +48,7 @@ Giovanni
 #include "fault_handlers.h"
 //#include "message.hpp"
 //#include "gps_eb500.hpp"
-//#include "sanity.hpp"
+#include "sanity.hpp"
 #include "i2c_local.hpp"
 #include "nvram_local.hpp"
 #include "parameters.hpp"
@@ -62,7 +62,7 @@ Giovanni
 //#include "mav_dispatcher.hpp"
 //#include "cmd_executor.hpp"
 //#include "benchmark.hpp"
-//#include "blinker.hpp"
+#include "blinker.hpp"
 //#include "waypoint_db.hpp"
 //#include "mission_planner.hpp"
 //#include "mavlocal.hpp"
@@ -210,8 +210,8 @@ int main(void) {
 
   Exti.start();
 //  time_keeper.start();
-//  BlinkerInit();
-//  SanityControlInit();
+  blinker.start();
+  SanityControlInit();
   I2CInitLocal();
   NvramInit();
   ParametersInit();   /* read parameters from EEPROM via I2C */
@@ -238,9 +238,7 @@ int main(void) {
 
   while (TRUE) {
     chDbgCheck(MSG_OK == adis.wait(MS2ST(200)));
-    green_led_on();
     adis.get(acc, gyr, mag, &baro, quat, euler);
-    green_led_off();
 
     //osalThreadSleepMilliseconds(100);
 

@@ -75,8 +75,8 @@ static msg_t ShellManagerThread(void *arg){
   }
 
   /* cleaning */
-  chThdExit(0);
-  return 0;
+  chThdExit(MSG_OK);
+  return MSG_OK;
 }
 
 /*

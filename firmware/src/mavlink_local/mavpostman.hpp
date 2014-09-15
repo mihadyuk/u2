@@ -16,6 +16,6 @@ private:
   int search(uint8_t msg_id);
 };
 
-extern MavPostman mav_spammer;
+extern MavPostman mav_postman;
 
 #endif /* MAV_POSTMAN_HPP_ */
