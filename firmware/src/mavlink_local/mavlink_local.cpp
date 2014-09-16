@@ -40,6 +40,7 @@ mavlink_highres_imu_t           mavlink_out_highres_imu_struct;
 mavlink_rc_channels_raw_t       mavlink_out_rc_channels_raw_struct;
 mavlink_rc_channels_scaled_t    mavlink_out_rc_channels_scaled_struct;
 mavlink_hil_state_t             mavlink_out_hil_state_struct;
+mavlink_local_position_ned_t    mavlink_out_local_position_ned_struct;
 
 mavlink_manual_control_t        mavlink_in_manual_control_struct;
 mavlink_set_mode_t              mavlink_in_set_mode_struct;
@@ -77,6 +78,8 @@ mavlink_heartbeat_t             mavlink_in_heartbeat_struct;
  */
 EvtSource event_mission_updated;
 
+
+
 /*
  ******************************************************************************
  * GLOBAL VARIABLES
@@ -113,8 +116,6 @@ void MavlinkInit(void){
   mavlink_system_struct.state  = MAV_STATE_BOOT;
   mavlink_system_struct.mode   = MAV_MODE_PREFLIGHT;
   mavlink_system_struct.type   = *(uint8_t *)param_registry.getParam("SYS_mavtype", 0, NULL);
-
-
 }
 
 

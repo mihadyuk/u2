@@ -6,7 +6,6 @@
 #include "mavlink_local.hpp"
 #include "param_registry.hpp"
 #include "mav_dbg.hpp"
-#include "this_comp_id.h"
 #include "mav_postman.hpp"
 #include "mav_mail.hpp"
 
@@ -227,7 +226,7 @@ template <typename T>
 static bool for_me(T *message){
   if (message->target_system != mavlink_system_struct.sysid)
     return FALSE;
-  if (THIS_COMP_ID == message->target_component)
+  if (mavlink_system_struct.compid == message->target_component)
     return TRUE;
   else if (MAV_COMP_ID_ALL == message->target_component)
     return TRUE;

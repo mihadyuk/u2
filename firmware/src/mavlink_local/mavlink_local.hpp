@@ -13,5 +13,7 @@
 /* other events */
 #define EVMSK_MISSION_UPDATED                               (1UL << 31)
 
+void MavlinkInit(void);
+
 #endif /* MAVLINK_LOCAL_H_ */
 

@@ -9,9 +9,7 @@ public:
   void resume(void);
   void stop(void);
 private:
-  Thread *worker;
+  thread_t *worker;
 };
-
-void TlmSenderInit(void);
 
 #endif /* TLM_SENDER_HPP_ */

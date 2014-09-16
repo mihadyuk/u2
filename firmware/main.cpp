@@ -46,7 +46,7 @@ Giovanni
 
 #include "global_flags.h"
 #include "fault_handlers.h"
-//#include "message.hpp"
+#include "mavlink_local.hpp"
 //#include "gps_eb500.hpp"
 #include "sanity.hpp"
 #include "i2c_local.hpp"
@@ -56,7 +56,7 @@ Giovanni
 //#include "sensors.hpp"
 //#include "pwr_mgmt.hpp"
 //#include "microsd.hpp"
-//#include "tlm_sender.hpp"
+#include "tlm_sender.hpp"
 #include "link_mgr.hpp"
 //#include "controller.hpp"
 //#include "mav_dispatcher.hpp"
@@ -159,8 +159,8 @@ GlobalFlags_t GlobalFlags = {0,0,0,0,0,0,0,0,
 //int64_t TimeUsGps;
 //
 //TimeKeeper time_keeper;
-//
-//TlmSender tlm_sender;
+
+TlmSender tlm_sender;
 
 static LinkMgr link_mgr;
 
@@ -215,15 +215,15 @@ int main(void) {
   I2CInitLocal();
   NvramInit();
   ParametersInit();   /* read parameters from EEPROM via I2C */
-//  MavInit();          /* mavlink constants initialization must be called after parameters init */
+  MavlinkInit();      /* mavlink constants initialization must be called after parameters init */
 //  mission_planner.start(CONTROLLERPRIO);
 //  ControllerInit();
   link_mgr.start();      /* launch after controller to reduce memory fragmentation on thread creation */
 //  SensorsInit();      /* Note! Sensors depends on I2C */
 //  PwrMgmtInit();
-//  tlm_sender.start();
+  tlm_sender.start();
 //  StorageInit();
-//
+
 //  /**/
 //  LastResetFlags = RCC->CSR;
 //  clear_reset_flags();

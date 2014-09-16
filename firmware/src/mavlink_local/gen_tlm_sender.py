@@ -4,36 +4,10 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Description will be here.')
 
-parser.add_argument('-n', '--name', metavar='N', type=str,required=True,
-                   help='name of used values array')
-parser.add_argument('-c', '--channel', metavar='C', type=str, required=True,
-                   help='channel where telemetry to be send')
 parser.add_argument('-f', '--filename', metavar='F', type=str, required=True,
                    help='file to store results')
 
 args = parser.parse_args()
-
-
-names_acs = [
-#   T_name          Mavlink name
-    ["attitude",    "attitude"],
-    ["gps_int",     "global_position_int"],
-    ["highres_imu", "highres_imu"],
-    ["hil_state",   "hil_state"],
-    ["nav_output",  "nav_controller_output"],
-    ["raw_imu",     "raw_imu"],
-    ["raw_press",   "raw_pressure"],
-    ["rc_raw",      "rc_channels_raw"],
-    ["rc_scaled",   "rc_channels_scaled"],
-    ["scal_imu",    "scaled_imu"],
-    ["scal_press",  "scaled_pressure"],
-    ["sys_status",  "sys_status"],
-    ["vfr_hud",     "vfr_hud"],
-]
-
-names_ns = [
-    ["vfr_hud", "vfr_hud"],
-]
 
 names_uav = [
     ["raw_imu", "raw_imu"],
@@ -48,23 +22,16 @@ names_uav = [
     ["scal_press", "scaled_pressure"],
 ]
 
-# check what we have to use as parameter array
-if args.name == "ns":
-    names = names_ns
-elif args.name == "acs":
-    names = names_acs
-elif args.name == "uav":
-    names = names_uav
-else:
-    raise ValueError("Wrong name")
+names = names_uav
 
 head = """
 #include "main.h"
-#include "message.hpp"
+#include "mavlink_local.hpp"
 #include "param_registry.hpp"
 #include "global_flags.h"
-#include "this_comp_id.h"
 #include "tlm_sender.hpp"
+#include "mav_mail.hpp"
+#include "mav_postman.hpp"
 
 /*
  ******************************************************************************
@@ -98,7 +65,7 @@ void TlmSender::start(void){
                  TELEMTRYPRIO,
                  TlmSenderThread,
                  NULL);
-  chDbgCheck(NULL != this->worker, "can not allocate memory");
+  osalDbgCheck(NULL != this->worker);
 
   pause_flag = false;
 }
@@ -220,19 +187,14 @@ thread_loop = """
 /**
  * Listen events with new parameters
  */
-static WORKING_AREA(TlmSenderThreadWA, 200);
-static msg_t TlmSenderThread(void *arg) {
+static THD_WORKING_AREA(TlmSenderThreadWA, 200);
+static THD_FUNCTION(TlmSenderThread, arg) {
   chRegSetThreadName("TLM_Scheduler");
   (void)arg;
   systime_t t; /* milliseconds to sleep to next deadline */
 
-  while (!GlobalFlags.messaging_ready)
-    chThdSleepMilliseconds(50);
-
-  setGlobalFlag(GlobalFlags.tlm_link_ready);
-
   /* main loop */
-  while (!chThdShouldTerminate()){
+  while (!chThdShouldTerminateX()){
     if (true == pause_flag)
       chThdSleepMilliseconds(100);
     else{
@@ -242,7 +204,6 @@ static msg_t TlmSenderThread(void *arg) {
     }
   }
 
-  clearGlobalFlag(GlobalFlags.tlm_link_ready);
   chThdExit(0);
   return 0;
 }
@@ -257,11 +218,8 @@ def gen(names):
 
     # externs
     f.write(externs_sep)
-    i = args.channel
-    f.write("#include \"" + i + "_channel.hpp\"\n")
-    f.write("extern mavChannel" + str.upper(i[0]) + i[1:] + " " + i + "_channel;\n\n")
     for i in names:
-        f.write("extern mavlink_" + i[1] + "_t mavlink_out_" + i[1] + "_struct;\n")
+        f.write("extern const mavlink_" + i[1] + "_t mavlink_out_" + i[1] + "_struct;\n")
     f.write("\n")
 
     # prototypes
@@ -272,7 +230,7 @@ def gen(names):
     # global_vars
     f.write(global_vars_sep)
     for n in names:
-        f.write("static mavMail " + n[1] + "_mail(NULL);\n")
+        f.write("static mavMail " + n[1] + "_mail;\n")
     f.write("\n")
 
     # parameter registry
@@ -287,14 +245,12 @@ def gen(names):
     # local functions
     f.write(local_func_sep)
     for i in names:
-        c = args.channel
-
         f.write("static void send_" +i[0]+ "(void){\n")
-        f.write("  msg_t status = RDY_RESET;\n")
+        f.write("  msg_t status = MSG_RESET;\n")
         f.write("  if ("+i[1]+"_mail.free()){\n")
-        f.write("    "+i[1]+"_mail.fill(&mavlink_out_" + i[1] + "_struct, COMP_ID, MAVLINK_MSG_ID_" + str.upper(i[1]) + ");\n")
-        f.write("    status = " + c + "_channel.post(&"+i[1]+"_mail, TIME_IMMEDIATE);\n")
-        f.write("    if (status != RDY_OK)\n")
+        f.write("    "+i[1]+"_mail.fill(&mavlink_out_" + i[1] + "_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_" + str.upper(i[1]) + ");\n")
+        f.write("    status = mav_postman.post("+i[1]+"_mail);\n")
+        f.write("    if (status != MSG_OK)\n")
         f.write("      mailbox_overflow++;\n")
         f.write("  }\n")
         f.write("  else\n")
