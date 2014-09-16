@@ -106,6 +106,7 @@ CSRC = $(PORTSRC) \
        lib/uav_utils/endianness.c \
        lib/uav_utils/cpu_load.c \
        src/fault_handlers.c \
+       benchmark/memcpy_bench.c \
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -132,8 +133,8 @@ CPPSRC = $(CHCPPSRC) \
          main.cpp \
          drivers/adis.cpp \
          drivers/exti_local.cpp \
+         drivers/i2c_sensor.cpp \
          src/i2c_local.cpp \
-         src/i2c_sensor.cpp \
          src/proto.cpp \
          src/nvram_local.cpp \
          src/link_mgr.cpp \
@@ -179,6 +180,7 @@ INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
          src \
          src/mavlink_local \
          lib/mavlink/C/lapwing \
+         benchmark \
 
 #
 # Project, sources and paths
