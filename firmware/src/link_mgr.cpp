@@ -6,9 +6,9 @@
 #include "link_mgr.hpp"
 
 #include "shell.hpp"
-#include "mavchannel_serial.hpp"
-#include "mavchannel_usbserial.hpp"
-#include "mavworker.hpp"
+#include "mav_channel_serial.hpp"
+#include "mav_channel_usbserial.hpp"
+#include "mav_postman.hpp"
 
 /*
  ******************************************************************************
@@ -58,7 +58,7 @@ static Shell shell;
  */
 static void boot_strap(bool plug_prev, uint32_t sh_prev) {
   if (0 == sh_prev){
-    mav_worker.start(&channel_serial);
+    mav_postman.start(&channel_serial);
     if (true == plug_prev){
       sduStart(&SDU2, &serusbcfg);
       usbStart(serusbcfg.usbp, &usbcfg);
@@ -74,7 +74,7 @@ static void boot_strap(bool plug_prev, uint32_t sh_prev) {
       usbStart(serusbcfg.usbp, &usbcfg);
       usbConnectBus(serusbcfg.usbp);
       osalThreadSleepMilliseconds(500);
-      mav_worker.start(&channel_usb_serial);
+      mav_postman.start(&channel_usb_serial);
     }
   }
 }
@@ -112,7 +112,7 @@ static THD_FUNCTION(LinkMgrThread, arg) {
       plug_prev = tmp_plug;
       sh_prev = tmp_sh;
 
-      mav_worker.stop();
+      mav_postman.stop();
       shell.stop();
       usbDisconnectBus(serusbcfg.usbp);
       osalThreadSleep(DEBOUNCE_TIMEOUT);

@@ -1,10 +1,11 @@
-#ifndef MAVWORKER_HPP_
-#define MAVWORKER_HPP_
+#ifndef MAV_POSTMAN_HPP_
+#define MAV_POSTMAN_HPP_
 
 #include "main.h"
-#include "mavchannel.hpp"
+#include "mav_channel.hpp"
 #include "subscribe_link.hpp"
-#include "mavmail.hpp"
+#include "mav_mail.hpp"
+#include "mav_spam_list.hpp"
 
 #if !MAVLINK_UNHANDLED_MSG_DEBUG
 #define WORKER_RX_THREAD_WA_SIZE  512
@@ -21,12 +22,15 @@
 #error "Buffer count can not be less than 2"
 #endif
 
-class MavWorker {
+class MavPostman {
 public:
-  MavWorker(void);
+  MavPostman(void);
   void start(mavChannel *channel);
   void stop(void);
   msg_t post(mavMail &mail);
+  void subscribe(uint8_t msg_id, SubscribeLink *sl);
+  void unsubscribe(uint8_t msg_id, SubscribeLink *sl);
+  static MavSpamList spam_list;
 private:
   mavChannel *channel = NULL;
   thread_t *rxworker = NULL;
@@ -34,6 +38,6 @@ private:
   bool ready = false;
 };
 
-extern MavWorker mav_worker;
+extern MavPostman mav_postman;
 
-#endif /* MAVWORKER_HPP_ */
+#endif /* MAV_POSTMAN_HPP_ */

@@ -1,5 +1,5 @@
 #include "main.h"
-#include "mavpostman.hpp"
+#include "mav_spam_list.hpp"
 
 /*
  ******************************************************************************
@@ -12,7 +12,6 @@
  * EXTERNS
  ******************************************************************************
  */
-MavPostman mav_postman;
 
 /*
  ******************************************************************************
@@ -74,7 +73,7 @@ typedef LinkRegistry <
 /**
  *
  */
-int MavPostman::search(const uint8_t msg_id){
+int MavSpamList::search(const uint8_t msg_id){
   for (size_t i=0; i<link_registry::reg_len; i++){
     if (msg_id == link_registry::msg_id[i])
       return i;
@@ -91,7 +90,7 @@ int MavPostman::search(const uint8_t msg_id){
 /**
  *
  */
-MavPostman::MavPostman(void) {
+MavSpamList::MavSpamList(void) {
   uint8_t id;
 
   for (size_t i=0; i<link_registry::reg_len; i++){
@@ -106,7 +105,7 @@ MavPostman::MavPostman(void) {
 /**
  * @brief     Insert new link in the very begin of chain
  */
-void MavPostman::subscribe(uint8_t msg_id, SubscribeLink *new_link){
+void MavSpamList::subscribe(uint8_t msg_id, SubscribeLink *new_link){
   int idx;
   idx = search(msg_id);
   osalDbgAssert(-1 != idx,
@@ -121,7 +120,7 @@ void MavPostman::subscribe(uint8_t msg_id, SubscribeLink *new_link){
 /**
  *
  */
-void MavPostman::unsubscribe(uint8_t msg_id, SubscribeLink *linkp){
+void MavSpamList::unsubscribe(uint8_t msg_id, SubscribeLink *linkp){
   int idx;
   idx = search(msg_id);
   osalDbgAssert(-1 != idx, "This message ID unregistered");
@@ -154,7 +153,7 @@ void MavPostman::unsubscribe(uint8_t msg_id, SubscribeLink *linkp){
 /**
  *
  */
-void MavPostman::dispatch(const mavlink_message_t &msg) {
+void MavSpamList::dispatch(const mavlink_message_t &msg) {
   int idx;
   idx = search(msg.msgid);
 

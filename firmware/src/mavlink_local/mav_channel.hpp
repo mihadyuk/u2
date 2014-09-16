@@ -1,5 +1,5 @@
-#ifndef MAVCHANNEL_H_
-#define MAVCHANNEL_H_
+#ifndef MAV_CHANNEL_H_
+#define MAV_CHANNEL_H_
 
 #include "main.h"
 
@@ -17,4 +17,4 @@ protected:
   bool ready = false;
 };
 
-#endif /* MAVCHANNEL_H_ */
+#endif /* MAV_CHANNEL_H_ */

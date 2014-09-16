@@ -1,7 +1,5 @@
 #include "main.h"
-#include "mavlogger.hpp"
-
-using namespace chibios_rt;
+#include "mav_channel_usbserial.hpp"
 
 /*
  ******************************************************************************
@@ -40,26 +38,48 @@ using namespace chibios_rt;
  * EXPORTED FUNCTIONS
  ******************************************************************************
  */
+
 /**
  *
  */
-MavLogger::MavLogger(void){
-  ;
+mavChannelUsbSerial::mavChannelUsbSerial(SerialUSBDriver *sdp, const SerialUSBConfig *ser_cfg){
+  chDbgCheck((NULL != sdp) &&(NULL != ser_cfg));
+  this->sdp = sdp;
+  this->ser_cfg = ser_cfg;
 }
 
 /**
- * @note    just drop message if logger not ready
+ *
  */
-msg_t MavLogger::post(mavMail* msg){
-  msg_t ret = MSG_RESET;
-
-  if (true == ready){
-    ret = this->mb.post(msg, TIME_IMMEDIATE);
-    if (MSG_OK != ret)
-      this->drop_cnt++;
-  }
-  return ret;
+void mavChannelUsbSerial::start(void){
+  sduStart(sdp, ser_cfg);
+  this->ready = true;
 }
 
-void MavLogger::start(void){;}
-void MavLogger::stop(void){;}
+/**
+ *
+ */
+void mavChannelUsbSerial::stop(void){
+  if (true == this->ready){
+    sduStop(sdp);
+    this->ready = false;
+  }
+}
+
+/**
+ *
+ */
+void mavChannelUsbSerial::write(const uint8_t *buf, size_t len){
+  osalDbgCheck(true == this->ready);
+  sdWrite(sdp, buf, len);
+}
+
+/**
+ *
+ */
+msg_t mavChannelUsbSerial::get(systime_t time){
+  osalDbgCheck(true == this->ready);
+  return sdGetTimeout(sdp, time);
+}
+
+

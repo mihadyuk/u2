@@ -1,5 +1,5 @@
-#ifndef MAVENCODE_H_
-#define MAVENCODE_H_
+#ifndef MAV_ENCODE_H_
+#define MAV_ENCODE_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -9,4 +9,4 @@ extern "C" {
 }
 #endif
 
-#endif /* MAVENCODE_H_ */
+#endif /* MAV_ENCODE_H_ */

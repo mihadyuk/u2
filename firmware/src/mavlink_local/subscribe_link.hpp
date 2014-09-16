@@ -6,7 +6,7 @@
 typedef void (&linkcb_t)(const mavlink_message_t &msg);
 
 class SubscribeLink {
-  friend class MavPostman;
+  friend class MavSpamList;
 public:
   SubscribeLink(linkcb_t f) :
   callback(f),

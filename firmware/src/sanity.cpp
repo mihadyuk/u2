@@ -2,10 +2,10 @@
 #include "fault_handlers.h"
 #include "pads.h"
 
-#include "mavworker.hpp"
+#include "mav_postman.hpp"
 #include "mavlink_local.hpp"
 #include "bkp.hpp"
-#include "mavlogger.hpp"
+#include "mav_logger.hpp"
 #include "blinker.hpp"
 #include "cpu_load.h"
 #include "sanity.hpp"
@@ -86,7 +86,7 @@ static THD_FUNCTION(SanityControlThread, arg) {
 
     /* schedule sending over telemetry channel */
     hearbeat_mail.fill(&mavlink_out_heartbeat_struct, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_HEARTBEAT);
-    mav_worker.post(hearbeat_mail);
+    mav_postman.post(hearbeat_mail);
 
     mavlink_out_sys_status_struct.load = getCpuLoad();
     /* how many times device was soft reseted */

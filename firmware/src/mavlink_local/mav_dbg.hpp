@@ -1,8 +1,8 @@
-#ifndef MAVLINK_DBG_H_
-#define MAVLINK_DBG_H_
+#ifndef MAV_DBG_H_
+#define MAV_DBG_H_
 
-#include "mavmail.hpp"
-#include "mavworker.hpp"
+#include "mav_mail.hpp"
+#include "mav_postman.hpp"
 
 static mavlink_statustext_t mavlink_out_statustext_struct;
 static mavMail dbg_mail;
@@ -22,8 +22,8 @@ static void mavlink_dbg_print(uint8_t severity, const char *text, MAV_COMPONENT 
 
   if (dbg_mail.free()) {
     dbg_mail.fill(&mavlink_out_statustext_struct, comp, MAVLINK_MSG_ID_STATUSTEXT);
-    mav_worker.post(dbg_mail);
+    mav_postman.post(dbg_mail);
   }
 }
 
-#endif /* MAVLINK_DBG_H_ */
+#endif /* MAV_DBG_H_ */

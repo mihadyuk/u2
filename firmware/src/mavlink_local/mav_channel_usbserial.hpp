@@ -1,8 +1,8 @@
-#ifndef MAVCHANNEL_USBSERIAL_H_
-#define MAVCHANNEL_USBSERIAL_H_
+#ifndef MAV_CHANNEL_USBSERIAL_H_
+#define MAV_CHANNEL_USBSERIAL_H_
 
 #include "main.h"
-#include "mavchannel.hpp"
+#include "mav_channel.hpp"
 
 /**
  *
@@ -19,4 +19,4 @@ protected:
   const SerialUSBConfig *ser_cfg;
 };
 
-#endif /* MAVCHANNEL_USBSERIAL_H_ */
+#endif /* MAV_CHANNEL_USBSERIAL_H_ */

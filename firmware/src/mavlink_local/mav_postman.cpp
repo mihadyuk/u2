@@ -1,8 +1,8 @@
 #include "main.h"
-#include "mavworker.hpp"
-#include "mavpostman.hpp"
+#include "mav_postman.hpp"
+#include "mav_spam_list.hpp"
 #include "multi_buffer.hpp"
-#include "mavencode.h"
+#include "mav_encode.h"
 
 using namespace chibios_rt;
 
@@ -18,8 +18,7 @@ using namespace chibios_rt;
  ******************************************************************************
  */
 
-extern mavlink_system_t mavlink_system_struct;
-MavWorker mav_worker;
+MavPostman mav_postman;
 
 /*
  ******************************************************************************
@@ -34,6 +33,7 @@ MavWorker mav_worker;
  */
 static mavlink_status_t status;
 static chibios_rt::Mailbox<mavMail*, 12> txmb;
+MavSpamList MavPostman::spam_list;
 
 /*
  ******************************************************************************
@@ -57,7 +57,7 @@ static THD_FUNCTION(RxThread, arg) {
     c = channel->get(MS2ST(50));
     if (c != Q_TIMEOUT){
       if (mavlink_parse_char(MAVLINK_COMM_0, c, &mavlink_message_struct, &status)) {
-        mav_postman.dispatch(mavlink_message_struct);
+        MavPostman::spam_list.dispatch(mavlink_message_struct);
       }
     }
   }
@@ -99,14 +99,14 @@ static THD_FUNCTION(TxThread, arg) {
 /**
  *
  */
-MavWorker::MavWorker(void){
+MavPostman::MavPostman(void){
   return;
 }
 
 /**
  *
  */
-void MavWorker::start(mavChannel *chan){
+void MavPostman::start(mavChannel *chan){
 
   this->channel = chan;
   this->channel->start();
@@ -124,7 +124,7 @@ void MavWorker::start(mavChannel *chan){
 /**
  *
  */
-void MavWorker::stop(void){
+void MavPostman::stop(void){
 
   ready = false;
 
@@ -144,7 +144,7 @@ void MavWorker::stop(void){
 /**
  *
  */
-msg_t MavWorker::post(mavMail &mail){
+msg_t MavPostman::post(mavMail &mail){
   msg_t ret = MSG_RESET;
 
   if (ready == true){
@@ -154,6 +154,16 @@ msg_t MavWorker::post(mavMail &mail){
   return ret;
 }
 
+/**
+ *
+ */
+void MavPostman::subscribe(uint8_t msg_id, SubscribeLink *sl){
+  spam_list.subscribe(msg_id, sl);
+}
 
-
-
+/**
+ *
+ */
+void MavPostman::unsubscribe(uint8_t msg_id, SubscribeLink *sl){
+  spam_list.unsubscribe(msg_id, sl);
+}

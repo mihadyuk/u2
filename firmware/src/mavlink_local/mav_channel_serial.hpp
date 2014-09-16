@@ -1,8 +1,8 @@
-#ifndef MAVCHANNEL_SERIAL_H_
-#define MAVCHANNEL_SERIAL_H_
+#ifndef MAV_CHANNEL_SERIAL_H_
+#define MAV_CHANNEL_SERIAL_H_
 
 #include "main.h"
-#include "mavchannel.hpp"
+#include "mav_channel.hpp"
 
 /**
  *
@@ -19,4 +19,4 @@ protected:
   const SerialConfig *ser_cfg;
 };
 
-#endif /* MAVCHANNEL_SERIAL_H_ */
+#endif /* MAV_CHANNEL_SERIAL_H_ */

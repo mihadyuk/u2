@@ -1,5 +1,5 @@
 #include "main.h"
-#include "mavchannel_serial.hpp"
+#include "mav_channel_serial.hpp"
 
 /*
  ******************************************************************************

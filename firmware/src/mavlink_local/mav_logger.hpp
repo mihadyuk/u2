@@ -1,7 +1,7 @@
-#ifndef MAVLOGGER_HPP_
-#define MAVLOGGER_HPP_
+#ifndef MAV_LOGGER_HPP_
+#define MAV_LOGGER_HPP_
 
-#include "mavmail.hpp"
+#include "mav_mail.hpp"
 
 class MavLogger {
 public:
@@ -16,4 +16,4 @@ private:
   bool ready = false;
 };
 
-#endif /* MAVLOGGER_HPP_ */
+#endif /* MAV_LOGGER_HPP_ */

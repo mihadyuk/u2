@@ -5,11 +5,10 @@
 
 #include "mavlink_local.hpp"
 #include "param_registry.hpp"
-#include "mavdbg.hpp"
+#include "mav_dbg.hpp"
 #include "this_comp_id.h"
-#include "mavpostman.hpp"
-#include "mavmail.hpp"
-#include "mavworker.hpp"
+#include "mav_postman.hpp"
+#include "mav_mail.hpp"
 
 using namespace chibios_rt;
 
@@ -97,7 +96,7 @@ static void param_request_list_callback(const mavlink_message_t &msg){
 static void param_value_send(const mavlink_param_value_t &m) {
   if (param_mail.free()) {
     param_mail.fill(&m, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_PARAM_VALUE);
-    mav_worker.post(param_mail);
+    mav_postman.post(param_mail);
   }
   else
     param_drop++;
