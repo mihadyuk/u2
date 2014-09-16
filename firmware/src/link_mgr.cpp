@@ -34,10 +34,10 @@ static SerialConfig xbee_ser_cfg = {
     BAUDRATE_XBEE,
     0,
     0,
-    USART_CR3_CTSE | USART_CR3_RTSE,
+    0//USART_CR3_CTSE | USART_CR3_RTSE,
 };
 
-static uint32_t *sh_overxbee;
+static const uint32_t *sh_overxbee;
 
 static UsbDebouncer debouncer;
 
