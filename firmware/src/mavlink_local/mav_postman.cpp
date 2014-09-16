@@ -84,6 +84,7 @@ static THD_FUNCTION(TxThread, arg) {
         len = mavlink_msg_to_send_buffer(sendbuf, &mavlink_message_struct);
         channel->write(sendbuf, len);
       }
+      mail->release();
     }
   }
 

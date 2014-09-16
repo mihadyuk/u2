@@ -110,12 +110,15 @@ EvtSource event_mission_updated;
  *
  */
 void MavlinkInit(void){
+  uint32_t *type = NULL;
+  param_registry.valueSearch("SYS_mavtype", &type);
+
   /* mavlink initial values */
   mavlink_system_struct.sysid  = 20;
   mavlink_system_struct.compid = MAV_COMP_ID_ALL;
   mavlink_system_struct.state  = MAV_STATE_BOOT;
   mavlink_system_struct.mode   = MAV_MODE_PREFLIGHT;
-  mavlink_system_struct.type   = *(uint8_t *)param_registry.getParam("SYS_mavtype", 0, NULL);
+  mavlink_system_struct.type   = *type;
 }
 
 
