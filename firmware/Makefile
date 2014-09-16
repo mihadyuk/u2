@@ -133,6 +133,7 @@ CPPSRC = $(CHCPPSRC) \
          drivers/adis.cpp \
          drivers/exti_local.cpp \
          src/i2c_local.cpp \
+         src/i2c_sensor.cpp \
          src/proto.cpp \
          src/nvram_local.cpp \
          src/link_mgr.cpp \

@@ -3,7 +3,6 @@
 #include "mavpostman.hpp"
 #include "multi_buffer.hpp"
 
-#include "this_comp_id.h"
 #include "encode_table.h"
 
 using namespace chibios_rt;
