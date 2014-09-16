@@ -27,7 +27,8 @@ using namespace chibios_rt;
  ******************************************************************************
  */
 
-extern mavlink_system_t               mavlink_system_struct;
+extern mavlink_system_t mavlink_system_struct;
+extern EvtSource event_parameters_updated;
 
 /*
  ******************************************************************************
@@ -206,6 +207,8 @@ static void param_set_handler(void) {
   case PARAM_OK:
     break;
   }
+
+  event_parameters_updated.broadcastFlags(EVMSK_PARAMETERS_UPDATED);
   send_value(mavlink_in_param_set_struct.param_id, 0);
 }
 

@@ -1,5 +1,5 @@
-#ifndef PROTO_HPP_
-#define PROTO_HPP_
+#ifndef INSTANTIATOR_HPP_
+#define INSTANTIATOR_HPP_
 
 
 template<typename ... Types> struct TypeList {};
@@ -9,4 +9,4 @@ using InstTypes = TypeList<int, float, double>;
 template<typename T> T foo(T arg);
 
 
-#endif /* PROTO_HPP_ */
+#endif /* INSTANTIATOR_HPP_ */

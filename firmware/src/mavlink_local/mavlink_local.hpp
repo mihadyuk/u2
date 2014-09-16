@@ -10,8 +10,8 @@
 #include "mavlink.h"
 #pragma GCC diagnostic pop
 
-/* other events */
-#define EVMSK_MISSION_UPDATED                               (1UL << 31)
+#define EVMSK_PARAMETERS_UPDATED                            (1UL << 0)
+#define EVMSK_MISSION_UPDATED                               (1UL << 1)
 
 void MavlinkInit(void);
 

@@ -105,6 +105,7 @@ CSRC = $(PORTSRC) \
        $(CHIBIOS)/os/various/syscalls.c \
        lib/uav_utils/endianness.c \
        lib/uav_utils/cpu_load.c \
+       lib/uav_utils/crc.c \
        src/fault_handlers.c \
        src/mavlink_local/mav_encode.c \
        benchmark/memcpy_bench.c \
@@ -137,7 +138,7 @@ CPPSRC = $(CHCPPSRC) \
          drivers/exti_local.cpp \
          drivers/i2c_sensor.cpp \
          src/i2c_local.cpp \
-         src/proto.cpp \
+         src/instantiator.cpp \
          src/nvram_local.cpp \
          src/link_mgr.cpp \
          src/shell.cpp \
@@ -145,7 +146,6 @@ CPPSRC = $(CHCPPSRC) \
          src/blinker.cpp \
          src/sanity.cpp \
          lib/filters/fir_test.cpp \
-
 
 # C sources to be compiled in ARM mode regardless of the global setting.
 # NOTE: Mixing ARM and THUMB mode enables the -mthumb-interwork compiler

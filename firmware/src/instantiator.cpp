@@ -1,4 +1,4 @@
-#include "proto.hpp"
+#include "instantiator.hpp"
 
 template<typename T> T foo(T arg)
 {
