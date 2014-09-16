@@ -106,6 +106,7 @@ CSRC = $(PORTSRC) \
        lib/uav_utils/endianness.c \
        lib/uav_utils/cpu_load.c \
        src/fault_handlers.c \
+       src/mavlink_local/mavencode.c \
        benchmark/memcpy_bench.c \
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
@@ -125,7 +126,7 @@ MAVSRC = src/mavlink_local/parameters.cpp \
          src/mavlink_local/mavlogger.cpp \
          src/mavlink_local/mavchannel_serial.cpp \
          src/mavlink_local/mavchannel_usbserial.cpp \
-         src/mavlink_local/message.cpp \
+         src/mavlink_local/mavlink_local.cpp \
 
 CPPSRC = $(CHCPPSRC) \
          $(NVRAMSRC) \

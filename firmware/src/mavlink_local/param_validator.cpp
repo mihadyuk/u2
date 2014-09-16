@@ -1,4 +1,4 @@
-#include "message.hpp"
+#include "mavlink_local.hpp"
 #include "param_registry.hpp"
 #include "putinrange.hpp"
 

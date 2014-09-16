@@ -26,8 +26,6 @@ public:
   MavWorker(void);
   void start(mavChannel *channel);
   void stop(void);
-  void subscribe(uint8_t msg_id, SubscribeLink *sl);
-  void unsubscribe(uint8_t msg_id, SubscribeLink *sl);
   msg_t post(mavMail &mail);
 private:
   mavChannel *channel = NULL;

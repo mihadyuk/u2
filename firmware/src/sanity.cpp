@@ -3,7 +3,7 @@
 #include "pads.h"
 
 #include "mavworker.hpp"
-#include "message.hpp"
+#include "mavlink_local.hpp"
 #include "bkp.hpp"
 #include "mavlogger.hpp"
 #include "blinker.hpp"

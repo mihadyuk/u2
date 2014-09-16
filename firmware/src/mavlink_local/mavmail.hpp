@@ -2,7 +2,7 @@
 #define MAVMAIL_HPP_
 
 #include "main.h"
-#include "message.hpp"
+#include "mavlink_local.hpp"
 
 /**
  *

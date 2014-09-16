@@ -1,6 +1,7 @@
 #include "main.h"
-#include "global_flags.h"
-#include "message.hpp"
+
+#include "mavlink_local.hpp"
+#include "param_registry.hpp"
 
 using namespace chibios_rt;
 
@@ -75,22 +76,6 @@ mavlink_heartbeat_t             mavlink_in_heartbeat_struct;
  * @brief   Event sources.
  */
 EvtSource event_mission_updated;
-EvtSource event_mavlink_in_heartbeat;
-EvtSource event_mavlink_in_command_long;
-EvtSource event_mavlink_in_param_set;
-EvtSource event_mavlink_in_param_request_list;
-EvtSource event_mavlink_in_param_request_read;
-EvtSource event_mavlink_in_manual_control;
-EvtSource event_mavlink_in_set_mode;
-EvtSource event_mavlink_in_mission_set_current;
-EvtSource event_mavlink_in_mission_request_list;
-EvtSource event_mavlink_in_mission_clear_all;
-EvtSource event_mavlink_in_mission_count;   // it has output counterpart
-EvtSource event_mavlink_in_mission_item; // it has output counterpart
-EvtSource event_mavlink_in_mission_request;// it has output counterpart
-EvtSource event_mavlink_in_mission_ack;// it has output counterpart
-
-/* lapwing specific */
 
 /*
  ******************************************************************************
@@ -117,6 +102,21 @@ EvtSource event_mavlink_in_mission_ack;// it has output counterpart
  * EXPORTED FUNCTIONS
  *******************************************************************************
  */
+
+/**
+ *
+ */
+void MavlinkInit(void){
+  /* mavlink initial values */
+  mavlink_system_struct.sysid  = 20;
+  mavlink_system_struct.compid = MAV_COMP_ID_ALL;
+  mavlink_system_struct.state  = MAV_STATE_BOOT;
+  mavlink_system_struct.mode   = MAV_MODE_PREFLIGHT;
+  mavlink_system_struct.type   = *(uint8_t *)param_registry.getParam("SYS_mavtype", 0, NULL);
+
+
+}
+
 
 
 

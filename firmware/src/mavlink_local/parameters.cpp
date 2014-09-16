@@ -3,11 +3,13 @@
 #include "main.h"
 #include "global_flags.h"
 
-#include "message.hpp"
+#include "mavlink_local.hpp"
 #include "param_registry.hpp"
 #include "mavdbg.hpp"
 #include "this_comp_id.h"
-#include "subscribe_link.hpp"
+#include "mavpostman.hpp"
+#include "mavmail.hpp"
+#include "mavworker.hpp"
 
 using namespace chibios_rt;
 
@@ -35,12 +37,19 @@ extern mavlink_system_t               mavlink_system_struct;
  ******************************************************************************
  */
 
+static void param_set_callback(const mavlink_message_t &msg);
+static void param_request_read_callback(const mavlink_message_t &msg);
+static void param_request_list_callback(const mavlink_message_t &msg);
+
 /*
  ******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************
  */
+static mavMail                        param_mail;
 static mavlink_param_value_t          mavlink_out_param_value_struct;
+static unsigned int                   param_drop = 0;
+
 static mavlink_param_set_t            mavlink_in_param_set_struct;
 static mavlink_param_request_read_t   mavlink_in_param_request_read_struct;
 static mavlink_param_request_list_t   mavlink_in_param_request_list_struct;
@@ -49,6 +58,10 @@ static bool param_set_fresh = false;
 static bool param_request_read_fresh = false;
 static bool param_request_list_fresh = false;
 
+static SubscribeLink param_set_link(param_set_callback);
+static SubscribeLink param_request_read_link(param_request_read_callback);
+static SubscribeLink param_request_list_link(param_request_list_callback);
+
 /*
  ******************************************************************************
  ******************************************************************************
@@ -56,14 +69,6 @@ static bool param_request_list_fresh = false;
  ******************************************************************************
  ******************************************************************************
  */
-
-static void param_set_callback(const mavlink_message_t &msg);
-static void param_request_read_callback(const mavlink_message_t &msg);
-static void param_request_list_callback(const mavlink_message_t &msg);
-
-static SubscribeLink param_set_link(param_set_callback);
-static SubscribeLink param_request_read_link(param_request_read_callback);
-static SubscribeLink param_request_list_link(param_request_list_callback);
 
 static void param_set_callback(const mavlink_message_t &msg){
   if (false == param_set_fresh){
@@ -89,10 +94,13 @@ static void param_request_list_callback(const mavlink_message_t &msg){
 /**
  *
  */
-static void ParamValueSend(const mavlink_param_value_t *m, MAV_COMPONENT comp){
-  (void)m;
-  (void)comp;
-  osalSysHalt("Unported yet");
+static void param_value_send(const mavlink_param_value_t &m) {
+  if (param_mail.free()) {
+    param_mail.fill(&m, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_PARAM_VALUE);
+    mav_worker.post(param_mail);
+  }
+  else
+    param_drop++;
 }
 
 /**
@@ -116,7 +124,7 @@ static bool send_value(const char *key, int n){
     memcpy(mavlink_out_param_value_struct.param_id, p->name, ONBOARD_PARAM_NAME_LENGTH);
 
     /* inform sending thread */
-    ParamValueSend(&mavlink_out_param_value_struct, MAV_COMP_ID_SYSTEM_CONTROL);
+    param_value_send(mavlink_out_param_value_struct);
     osalThreadSleep(SEND_VALUE_PAUSE);
     return OSAL_SUCCESS;
   }
@@ -139,7 +147,7 @@ static void ignore_value(const mavlink_param_set_t &p){
   memcpy(mavlink_out_param_value_struct.param_id, p.param_id, ONBOARD_PARAM_NAME_LENGTH);
 
   /* inform sending thread */
-  ParamValueSend(&mavlink_out_param_value_struct, MAV_COMP_ID_SYSTEM_CONTROL);
+  param_value_send(mavlink_out_param_value_struct);
   chThdSleep(SEND_VALUE_PAUSE);
 }
 
@@ -164,7 +172,8 @@ static void send_all_values(void){
  * The MAV has to acknowledge the write operation by emitting a
  * PARAM_VALUE value message with the newly written parameter value.
  */
-static void param_set_handler(void){
+static void param_set_handler(void) {
+
   param_union_t *valuep = NULL;
   const GlobalParam_t *paramp = NULL;
   param_status_t status;
@@ -180,28 +189,25 @@ static void param_set_handler(void){
   }
 
   /* send confirmation */
-  osalSysHalt("debug print unrealized");
-  (void)status;
-//  switch(status){
-//  case PARAM_CLAMPED:
-//    mavlink_dbg_print(MAV_SEVERITY_WARNING, "PARAM: clamped", MAV_COMP_ID_SYSTEM_CONTROL);
-//    break;
-//  case PARAM_NOT_CHANGED:
-//    mavlink_dbg_print(MAV_SEVERITY_WARNING, "PARAM: not changed", MAV_COMP_ID_SYSTEM_CONTROL);
-//    break;
-//  case PARAM_INCONSISTENT:
-//    mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: inconsistent", MAV_COMP_ID_SYSTEM_CONTROL);
-//    break;
-//  case PARAM_WRONG_TYPE:
-//    mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: wrong type", MAV_COMP_ID_SYSTEM_CONTROL);
-//    break;
-//  case PARAM_UNKNOWN_ERROR:
-//    mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: unknown error", MAV_COMP_ID_SYSTEM_CONTROL);
-//    break;
-//  case PARAM_OK:
-//    break;
-//  }
-
+  switch(status){
+  case PARAM_CLAMPED:
+    mavlink_dbg_print(MAV_SEVERITY_WARNING, "PARAM: clamped", MAV_COMP_ID_SYSTEM_CONTROL);
+    break;
+  case PARAM_NOT_CHANGED:
+    mavlink_dbg_print(MAV_SEVERITY_WARNING, "PARAM: not changed", MAV_COMP_ID_SYSTEM_CONTROL);
+    break;
+  case PARAM_INCONSISTENT:
+    mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: inconsistent", MAV_COMP_ID_SYSTEM_CONTROL);
+    break;
+  case PARAM_WRONG_TYPE:
+    mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: wrong type", MAV_COMP_ID_SYSTEM_CONTROL);
+    break;
+  case PARAM_UNKNOWN_ERROR:
+    mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: unknown error", MAV_COMP_ID_SYSTEM_CONTROL);
+    break;
+  case PARAM_OK:
+    break;
+  }
   send_value(mavlink_in_param_set_struct.param_id, 0);
 }
 
@@ -238,6 +244,10 @@ static THD_FUNCTION(ParametersThread, arg){
   chRegSetThreadName("ParamWorker");
   (void)arg;
 
+  mav_postman.subscribe(MAVLINK_MSG_ID_PARAM_SET, &param_set_link);
+  mav_postman.subscribe(MAVLINK_MSG_ID_PARAM_REQUEST_READ, &param_request_read_link);
+  mav_postman.subscribe(MAVLINK_MSG_ID_PARAM_REQUEST_LIST, &param_request_list_link);
+
   while (!chThdShouldTerminateX()) {
     /* set single parameter */
     if (true == param_set_fresh){
@@ -263,6 +273,9 @@ static THD_FUNCTION(ParametersThread, arg){
     osalThreadSleepMilliseconds(CHECK_FRESH_PERIOD);
   }
 
+  mav_postman.unsubscribe(MAVLINK_MSG_ID_PARAM_SET, &param_set_link);
+  mav_postman.unsubscribe(MAVLINK_MSG_ID_PARAM_REQUEST_READ, &param_request_read_link);
+  mav_postman.unsubscribe(MAVLINK_MSG_ID_PARAM_REQUEST_LIST, &param_request_list_link);
   chThdExit(MSG_OK);
   return 0;
 }

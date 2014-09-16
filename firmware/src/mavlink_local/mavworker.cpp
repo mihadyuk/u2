@@ -2,8 +2,7 @@
 #include "mavworker.hpp"
 #include "mavpostman.hpp"
 #include "multi_buffer.hpp"
-
-#include "encode_table.h"
+#include "mavencode.h"
 
 using namespace chibios_rt;
 
@@ -12,7 +11,6 @@ using namespace chibios_rt;
  * DEFINES
  ******************************************************************************
  */
-#define THIS_SYS_ID     20
 
 /*
  ******************************************************************************
@@ -20,6 +18,7 @@ using namespace chibios_rt;
  ******************************************************************************
  */
 
+extern mavlink_system_t mavlink_system_struct;
 MavWorker mav_worker;
 
 /*
@@ -81,7 +80,7 @@ static THD_FUNCTION(TxThread, arg) {
 
   while (!chThdShouldTerminateX()){
     if (MSG_OK == txmb.fetch(&mail, MS2ST(20))){
-      if (0 != mavlink_encode_table[mail->msgid](THIS_SYS_ID, mail->compid, &mavlink_message_struct, mail->mavmsg)){
+      if (0 != mavlink_encode(mail->msgid, &mavlink_message_struct,  mail->mavmsg)){
         len = mavlink_msg_to_send_buffer(sendbuf, &mavlink_message_struct);
         channel->write(sendbuf, len);
       }
@@ -140,22 +139,6 @@ void MavWorker::stop(void){
 
   channel->stop();
   channel = NULL;
-}
-
-/**
- *
- */
-void MavWorker::subscribe(uint8_t msg_id, SubscribeLink *sl){
-  osalDbgCheck(ready == true);
-  mav_postman.add_link(msg_id, sl);
-}
-
-/**
- *
- */
-void MavWorker::unsubscribe(uint8_t msg_id, SubscribeLink *sl){
-  osalDbgCheck(ready == true);
-  mav_postman.del_link(msg_id, sl);
 }
 
 /**

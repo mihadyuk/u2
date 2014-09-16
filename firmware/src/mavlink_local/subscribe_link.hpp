@@ -1,7 +1,7 @@
 #ifndef SUBSCRIBE_LINK_HPP_
 #define SUBSCRIBE_LINK_HPP_
 
-#include "message.hpp"
+#include "mavlink_local.hpp"
 
 typedef void (&linkcb_t)(const mavlink_message_t &msg);
 

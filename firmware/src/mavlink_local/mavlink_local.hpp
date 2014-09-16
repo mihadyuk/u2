@@ -1,5 +1,5 @@
-#ifndef MESSAGE_H_
-#define MESSAGE_H_
+#ifndef MAVLINK_LOCAL_H_
+#define MAVLINK_LOCAL_H_
 
 #ifndef MAVLINK_CHECK_MESSAGE_LENGTH
 #define MAVLINK_CHECK_MESSAGE_LENGTH    TRUE
@@ -13,5 +13,5 @@
 /* other events */
 #define EVMSK_MISSION_UPDATED                               (1UL << 31)
 
-#endif /* MESSAGE_H_ */
+#endif /* MAVLINK_LOCAL_H_ */
 

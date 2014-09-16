@@ -3,8 +3,7 @@
 #include <limits.h>
 
 #include "main.h"
-#include "message.hpp"
-#include "mavdbg.hpp"
+#include "mavlink_local.hpp"
 #include "param_registry.hpp"
 #include "pack_unpack.h"
 #include "array_len.hpp"

@@ -60,7 +60,8 @@ typedef LinkRegistry <
     MAVLINK_MSG_ID_PARAM_REQUEST_LIST,
     MAVLINK_MSG_ID_PARAM_REQUEST_READ,
     MAVLINK_MSG_ID_PARAM_SET,
-    MAVLINK_MSG_ID_SET_MODE
+    MAVLINK_MSG_ID_SET_MODE,
+    MAVLINK_MSG_ID_STATUSTEXT
 > link_registry;
 
 /*
@@ -105,7 +106,7 @@ MavPostman::MavPostman(void) {
 /**
  * @brief     Insert new link in the very begin of chain
  */
-void MavPostman::add_link(uint8_t msg_id, SubscribeLink *new_link){
+void MavPostman::subscribe(uint8_t msg_id, SubscribeLink *new_link){
   int idx;
   idx = search(msg_id);
   osalDbgAssert(-1 != idx,
@@ -120,7 +121,7 @@ void MavPostman::add_link(uint8_t msg_id, SubscribeLink *new_link){
 /**
  *
  */
-void MavPostman::del_link(uint8_t msg_id, SubscribeLink *linkp){
+void MavPostman::unsubscribe(uint8_t msg_id, SubscribeLink *linkp){
   int idx;
   idx = search(msg_id);
   osalDbgAssert(-1 != idx, "This message ID unregistered");
