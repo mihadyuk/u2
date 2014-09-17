@@ -24,6 +24,12 @@ static const I2CConfig i2cfg = {
     FAST_DUTY_CYCLE_2,
 };
 
+//static const I2CConfig i2cfg = {
+//    OPMODE_I2C,
+//    100000,
+//    STD_DUTY_CYCLE,
+//};
+
 /*
  *******************************************************************************
  * EXPORTED FUNCTIONS
@@ -33,6 +39,6 @@ static const I2CConfig i2cfg = {
  *
  */
 void I2CInitLocal(void){
-  i2cStart(&I2CD2, &i2cfg);
-  i2cStart(&I2CD1, &i2cfg);
+  i2cStart(&I2CD_FAST, &i2cfg);
+  i2cStart(&I2CD_SLOW, &i2cfg);
 }

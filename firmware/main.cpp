@@ -179,6 +179,8 @@ static float baro;
 static float quat[4];
 static float euler[3];
 
+#include "mpu6050_worker.hpp"
+
 int main(void) {
 
   halInit();
@@ -229,6 +231,7 @@ int main(void) {
 //  drivetrain.start();
 //  sins.start(&state_vector);
 
+  Mpu6050Init();
   osalDbgCheck(OSAL_SUCCESS == adis.start());
 
   while (TRUE) {

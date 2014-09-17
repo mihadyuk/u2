@@ -1,8 +1,7 @@
 #include <math.h>
 
 #include "main.h"
-#include "lsm303_acc_ll.hpp"
-#include "pack_unpack.hpp"
+#include "lsm303_acc.hpp"
 
 /*
  ******************************************************************************
@@ -36,27 +35,29 @@
  ******************************************************************************
  */
 
-/**
- *
- */
-void LSM303_acc_LL::pickle(int16_t *result){
-
-  result[0] = pack8to16be(&rxbuf[0]);
-  result[1] = pack8to16be(&rxbuf[2]);
-  result[2] = pack8to16be(&rxbuf[4]);
-}
+///**
+// *
+// */
+//void LSM303_acc_LL::pickle(int16_t *result){
+//
+//  result[0] = pack8to16be(&rxbuf[0]);
+//  result[1] = pack8to16be(&rxbuf[2]);
+//  result[2] = pack8to16be(&rxbuf[4]);
+//}
 
 /**
  *
  */
 msg_t LSM303_acc_LL::hw_init_fast(void){
-  return RDY_RESET;
+  return MSG_RESET;
 }
 
 /**
  *
  */
 msg_t LSM303_acc_LL::hw_init_full(void){
+
+  msg_t ret = MSG_RESET;
 
   txbuf[0] = CTRL_REG1_A | 0b10000000;
 
@@ -71,7 +72,7 @@ msg_t LSM303_acc_LL::hw_init_full(void){
   txbuf[3] = 0b0;
 
   /* REG4:
-   * continiouse update
+   * continuous update
    * net byte order
    * 8g full scale
    * high resolution */
@@ -83,7 +84,9 @@ msg_t LSM303_acc_LL::hw_init_full(void){
   /* REG6: */
   txbuf[6] = 0b0;
 
-  return transmit(txbuf, 7, NULL, 0);
+  ret = transmit(txbuf, 7, NULL, 0);
+  osalDbgCheck(MSG_OK == ret);
+  return ret;
 }
 
 /*
@@ -113,7 +116,7 @@ void LSM303_acc_LL::stop(void){
  */
 msg_t LSM303_acc_LL::update(int16_t *result){
 
-  chDbgCheck((true == ready), "not ready");
+  chDbgCheck(true == ready);
 
   msg_t ret;
 

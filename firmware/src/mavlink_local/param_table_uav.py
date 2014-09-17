@@ -199,8 +199,10 @@ param = [
 ("XTRACK_dGain",    -10000.0, 0, 10000.0,   "f", "default",    "NULL"),
 ("XTRACK_iMin",     -10000.0, 0, 10000.0,   "f", "default",    "NULL"),
 ("XTRACK_iMax",     -10000.0, 0, 10000.0,   "f", "default",    "NULL"),
+# MPU6050 tuning
+("MPU_dlpf",        1,      1,      6,      "u", "default",    "NULL"),
 
-#/**** Variables for debugging purposes ****/
+#/**** Variables for debugging purpose ****/
 ("DBG_lat",         -360,   0,      360,    "f", "default",    "NULL"),
 ("DBG_lon",         -360,   0,      360,    "f", "default",    "NULL"),
 ("DBG_reserved2",   0,      0,      10000,  "f", "default",    "NULL"),

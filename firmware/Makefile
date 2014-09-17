@@ -137,6 +137,9 @@ CPPSRC = $(CHCPPSRC) \
          drivers/adis.cpp \
          drivers/exti_local.cpp \
          drivers/i2c_sensor.cpp \
+         drivers/mpu6050_worker.cpp \
+         drivers/mpu6050.cpp \
+         drivers/lsm303_acc.cpp \
          src/i2c_local.cpp \
          src/instantiator.cpp \
          src/nvram_local.cpp \

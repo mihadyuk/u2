@@ -2,6 +2,7 @@
 
 #include "exti_local.hpp"
 #include "adis.hpp"
+#include "mpu6050_worker.hpp"
 
 /*
  ******************************************************************************
@@ -60,7 +61,7 @@ static const EXTConfig extcfg = {
     {EXT_CH_MODE_DISABLED, NULL},
     {EXT_CH_MODE_FALLING_EDGE | EXT_MODE_GPIOE, Adis::extiISR},
     {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_RISING_EDGE | EXT_MODE_GPIOE, Mpu6050ISR},
     {EXT_CH_MODE_DISABLED, NULL},//4
     {EXT_CH_MODE_DISABLED, NULL},
     {EXT_CH_MODE_DISABLED, NULL},
@@ -144,10 +145,21 @@ void ExtiPnc::stop(void){
 /**
  * Enables interrupts from ADIS
  */
-void ExtiPnc::adis(bool flag){
+void ExtiPnc::adis_enable(bool flag){
   osalDbgCheck(ready == true);
   if (flag)
     extChannelEnable(&EXTD1, GPIOE_ADIS_INT);
   else
     extChannelDisable(&EXTD1, GPIOE_ADIS_INT);
+}
+
+/**
+ * Enables interrupts from ADIS
+ */
+void ExtiPnc::mpu6050_enable(bool flag){
+  osalDbgCheck(ready == true);
+  if (flag)
+    extChannelEnable(&EXTD1, GPIOE_MPU9150_INT);
+  else
+    extChannelDisable(&EXTD1, GPIOE_MPU9150_INT);
 }

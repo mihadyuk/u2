@@ -6,7 +6,8 @@ public:
   ExtiPnc(void);
   void start(void);
   void stop(void);
-  void adis(bool);
+  void adis_enable(bool);
+  void mpu6050_enable(bool);
 private:
   bool ready;
 };

@@ -15,6 +15,8 @@
 */
 
 #define I2CD_SLOW               I2CD1
+#define I2CD_FAST               I2CD2
+
 #define XBEESD                  SD3
 #define GPSSD                   SD1
 

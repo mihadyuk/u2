@@ -1,19 +1,27 @@
 #include "main.h"
-#include "mpu6050_ll.hpp"
-#include "pack_unpack.hpp"
-#include "utils.hpp"
-#include "message.hpp"
-#include "timekeeper.hpp"
-
-#if MPU6050_1KHZ
-#include "mpu6050_ll_fir_taps.h"
-#endif
+#include "mpu6050.hpp"
+#include "pack_unpack.h"
+#include "param_registry.hpp"
+#include "mavlink_local.hpp"
 
 /*
  ******************************************************************************
  * DEFINES
  ******************************************************************************
  */
+#define MPU_ACCEL_OFFSET  1
+#define MPU_TEMP_OFFSET   7
+#define MPU_GYRO_OFFSET   9
+
+#define MPU_SMPLRT_DIV    0x19
+#define MPU_CONFIG        0x1A
+#define MPU_GYRO_CONFIG   0x1B
+#define MPU_ACCEL_CONFIG  0x1C
+#define MPU_INT_PIN_CFG   0x37
+#define MPU_INT_ENABLE    0x38
+#define MPU_INT_STATUS    0x3A /* 1 status bite and 14 bytes of data */
+#define MPU_PWR_MGMT1     0x6B
+#define MPU_PWR_MGMT2     0x6C
 
 /*
  ******************************************************************************
@@ -21,7 +29,7 @@
  ******************************************************************************
  */
 extern mavlink_raw_imu_t    mavlink_out_raw_imu_struct;
-extern TimeKeeper time_keeper;
+//extern TimeKeeper time_keeper;
 
 /*
  ******************************************************************************
@@ -40,112 +48,83 @@ extern TimeKeeper time_keeper;
 /**
  *
  */
-void MPU6050_LL::pickle_gyr(int16_t *result){
+void MPU6050::pickle_gyr(float *result){
   uint8_t *b;
 
   // temperature
-  b = &mpu_rxbuf[MPU_TEMP_OFFSET];
-  result[3] = pack8to16be(b);
+//  b = &mpu_rxbuf[MPU_TEMP_OFFSET];
+//  result[3] = pack8to16be(b);
 
   // angular rate values
   b = &mpu_rxbuf[MPU_GYRO_OFFSET];
-#if MPU6050_1KHZ
-  int16_t tmp;
-  for (size_t i=0; i<3; i++){
-    tmp = pack8to16be(&b[i*2]);
-    result[i] = gyr_fir[i].update(tmp);
-  }
-#else
   result[0] = pack8to16be(&b[0]);
   result[1] = pack8to16be(&b[2]);
   result[2] = pack8to16be(&b[4]);
-#endif
+
   mavlink_out_raw_imu_struct.xgyro = result[0];
   mavlink_out_raw_imu_struct.ygyro = result[1];
   mavlink_out_raw_imu_struct.zgyro = result[2];
-  mavlink_out_raw_imu_struct.zmag  = result[3]; // temperature hack
-  mavlink_out_raw_imu_struct.time_usec = time_keeper.utc();
 }
 
 /**
  *
  */
-void MPU6050_LL::pickle_acc(int16_t *result){
+void MPU6050::pickle_acc(float *result){
   uint8_t *b;
 
   // temperature
-  b = &mpu_rxbuf[MPU_TEMP_OFFSET];
-  result[3] = pack8to16be(b);
+//  b = &mpu_rxbuf[MPU_TEMP_OFFSET];
+//  result[3] = pack8to16be(b);
 
   //
   b = &mpu_rxbuf[MPU_ACCEL_OFFSET];
-#if MPU6050_1KHZ
-  int16_t tmp;
-  for (size_t i=0; i<3; i++){
-    tmp = pack8to16be(&b[i*2]);
-    result[i] = acc_fir[i].update(tmp);
-  }
-#else
   result[0] = pack8to16be(&b[0]);
   result[1] = pack8to16be(&b[2]);
   result[2] = pack8to16be(&b[4]);
-#endif
+
   mavlink_out_raw_imu_struct.xacc = result[0];
   mavlink_out_raw_imu_struct.yacc = result[1];
   mavlink_out_raw_imu_struct.zacc = result[2];
 }
 
-/*
- *******************************************************************************
- * EXPORTED FUNCTIONS
- *******************************************************************************
- */
-
 /**
  *
  */
-MPU6050_LL::MPU6050_LL(I2CDriver *i2cdp, i2caddr_t addr):
-I2CSensor(i2cdp, addr)
-{
-  #if MPU6050_1KHZ
-  FIR<float, int16_t, ArrayLen(taps)> temp(taps, ArrayLen(taps));
-  acc_fir[0] = temp;
-  acc_fir[1] = temp;
-  acc_fir[2] = temp;
-  gyr_fir[0] = temp;
-  gyr_fir[1] = temp;
-  gyr_fir[2] = temp;
-  #endif
-
-  ready = false;
-  hw_initialized = false;
+void MPU6050::set_dlpf(void){
+   mpu_txbuf[0] = MPU_SMPLRT_DIV;
+   mpu_txbuf[1] = 9; /* val */
+   mpu_txbuf[2] = *dlpf;
+   transmit(mpu_txbuf, 3, NULL, 0);
 }
 
 /**
  *
  */
-msg_t MPU6050_LL::hw_init_fast(void){
+msg_t MPU6050::hw_init_fast(void){
   ready = true;
-  return RDY_OK; /* unimplemented */
+  return MSG_OK; /* unimplemented */
 }
 
 /**
  *
  */
-msg_t MPU6050_LL::hw_init_full(void){
+msg_t MPU6050::hw_init_full(void){
 
-  msg_t ret = RDY_RESET;
+  msg_t ret = MSG_RESET;
+
+  param_registry.valueSearch("MPU_dlpf", &this->dlpf);
+  dlpf_prev = *dlpf;
 
   mpu_txbuf[0] = MPU_PWR_MGMT1;
   mpu_txbuf[1] = 0b10000000; /* soft reset */
   ret = transmit(mpu_txbuf, 2, NULL, 0);
-  chDbgCheck(RDY_OK == ret, "MPU6050 does not responding");
+  osalDbgAssert(MSG_OK == ret, "MPU6050 does not responding");
   chThdSleepMilliseconds(60);
 
   mpu_txbuf[0] = MPU_PWR_MGMT1;
   mpu_txbuf[1] = 1; /* select X gyro as clock source */
   ret = transmit(mpu_txbuf, 2, NULL, 0);
-  chDbgCheck(RDY_OK == ret, "MPU6050 does not responding");
+  osalDbgAssert(MSG_OK == ret, "MPU6050 does not responding");
   chThdSleepMilliseconds(5);
 
   mpu_txbuf[0] = MPU_GYRO_CONFIG;
@@ -154,7 +133,7 @@ msg_t MPU6050_LL::hw_init_full(void){
 //  mpu_txbuf[1] = 0b10000; // 1000 deg/s
 //  mpu_txbuf[1] = 0b11000; // 2000 deg/s
   ret = transmit(mpu_txbuf, 2, NULL, 0);
-  chDbgCheck(RDY_OK == ret, "MPU6050 does not responding");
+  osalDbgAssert(MSG_OK == ret, "MPU6050 does not responding");
   chThdSleepMilliseconds(1);
 
   mpu_txbuf[0] = MPU_ACCEL_CONFIG;
@@ -163,7 +142,7 @@ msg_t MPU6050_LL::hw_init_full(void){
 //  mpu_txbuf[1] = 0b10000; // 8g
   mpu_txbuf[1] = 0b11000; // 16g
   ret = transmit(mpu_txbuf, 2, NULL, 0);
-  chDbgCheck(RDY_OK == ret, "MPU6050 does not responding");
+  osalDbgAssert(MSG_OK == ret, "MPU6050 does not responding");
   chThdSleepMilliseconds(1);
 
 #if !MPU6050_1KHZ
@@ -181,7 +160,7 @@ msg_t MPU6050_LL::hw_init_full(void){
   5         10      13.4
   6         5       18.6
   7   reserved*/
-  mpu_txbuf[2] = 1; /* LPF */
+  mpu_txbuf[2] = *dlpf; /* LPF */
   transmit(mpu_txbuf, 3, NULL, 0);
   chThdSleepMilliseconds(5);
 #else
@@ -196,24 +175,40 @@ msg_t MPU6050_LL::hw_init_full(void){
   mpu_txbuf[0] = MPU_INT_PIN_CFG;
   mpu_txbuf[1] = 0b00001000; /* clear int flag in register on any read operation */
   ret = transmit(mpu_txbuf, 2, NULL, 0);
-  chDbgCheck(RDY_OK == ret, "MPU6050 does not responding");
+  osalDbgAssert(MSG_OK == ret, "MPU6050 does not responding");
   chThdSleepMilliseconds(1);
 
   mpu_txbuf[0] = MPU_INT_ENABLE;
   mpu_txbuf[1] = 1; /* enable data ready interrupts */
   ret = transmit(mpu_txbuf, 2, NULL, 0);
-  chDbgCheck(RDY_OK == ret, "MPU6050 does not responding");
+  osalDbgAssert(MSG_OK == ret, "MPU6050 does not responding");
   chThdSleepMilliseconds(1);
 
   ready = true;
 
-  return RDY_OK;
+  return MSG_OK;
+}
+
+/*
+ *******************************************************************************
+ * EXPORTED FUNCTIONS
+ *******************************************************************************
+ */
+
+/**
+ *
+ */
+MPU6050::MPU6050(I2CDriver *i2cdp, i2caddr_t addr):
+I2CSensor(i2cdp, addr)
+{
+  ready = false;
+  hw_initialized = false;
 }
 
 /**
  *
  */
-msg_t MPU6050_LL::start(void){
+msg_t MPU6050::start(void){
   /* init hardware */
   if (! hw_initialized){
     if (need_full_init())
@@ -223,13 +218,13 @@ msg_t MPU6050_LL::start(void){
     hw_initialized = true;
   }
 
-  return RDY_OK;
+  return MSG_OK;
 }
 
 /**
  *
  */
-void MPU6050_LL::stop(void){
+void MPU6050::stop(void){
   hw_initialized = false;
   ready = false;
 }
@@ -237,25 +232,25 @@ void MPU6050_LL::stop(void){
 /**
  *
  */
-msg_t MPU6050_LL::update_gyr(int16_t *result){
-  chDbgCheck((true == ready), "not ready");
-  msg_t ret;
+msg_t MPU6050::get(float *acc, float *gyr) {
+  osalDbgCheck(true == ready);
+  msg_t ret = MSG_RESET;
 
   mpu_txbuf[0] = MPU_INT_STATUS;
   ret = transmit(mpu_txbuf, 1, mpu_rxbuf, sizeof(mpu_rxbuf));
-  this->pickle_gyr(result);
+
+  if (nullptr != gyr)
+    pickle_gyr(gyr);
+
+  if (nullptr != acc)
+    pickle_acc(acc);
+
+  if (dlpf_prev != *dlpf){
+    set_dlpf();
+    dlpf_prev = *dlpf;
+  }
 
   return ret;
-}
-
-/**
- *
- */
-msg_t MPU6050_LL::update_acc(int16_t *result){
-  chDbgCheck((true == ready), "not ready");
-
-  this->pickle_acc(result);
-  return RDY_OK;
 }
 
 
