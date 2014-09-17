@@ -13,7 +13,7 @@
  * DEFINES
  ******************************************************************************
  */
-#define ADDITIONAL_WRITE_TMO    MS2ST(10)
+#define ADDITIONAL_WRITE_TMO    MS2ST(5)
 
 #define PARAM_VALUE_SIZE        (sizeof(param_union_t))
 #define PARAM_RECORD_SIZE       (PARAM_ID_SIZE + PARAM_VALUE_SIZE)
@@ -182,10 +182,29 @@ bool ParamRegistry::save_all(void) {
     if (0 != memcmp(tmpbuf, eeprombuf, (PARAM_ID_SIZE + sizeof(v))))
       osalSysHalt("Verification failed");
 
-    chThdSleep(ADDITIONAL_WRITE_TMO);
+    osalThreadSleep(ADDITIONAL_WRITE_TMO);
   }
 
   return OSAL_SUCCESS;
+}
+
+/**
+ *
+ */
+void ParamRegistry::open_file(void) {
+
+  /* try to open file */
+  ParamFile = nvram_fs.open(PARAM_FILE_NAME);
+
+  if (NULL == ParamFile){
+    /* bootrstapping when firs run */
+    if (nvram_fs.df() < BOOTSTRAP_PARAM_FILE_SIZE)
+      osalSysHalt("Not enough free space in nvram to create parameters file");
+    else{
+      ParamFile = nvram_fs.create(PARAM_FILE_NAME, BOOTSTRAP_PARAM_FILE_SIZE);
+      osalDbgCheck(NULL != ParamFile);
+    }
+  }
 }
 
 /*
@@ -254,7 +273,7 @@ bool ParamRegistry::syncParam(const char* key) {
     ParamFile->setPosition(ParamFile->getPosition() - PARAM_VALUE_SIZE);
     status = ParamFile->putU32(param_db[i].valuep->u32);
     osalDbgAssert(status == sizeof(uint32_t), "read failed");
-    chThdSleep(ADDITIONAL_WRITE_TMO);
+    osalThreadSleep(ADDITIONAL_WRITE_TMO);
   }
 
   release();
@@ -264,24 +283,12 @@ bool ParamRegistry::syncParam(const char* key) {
 /**
  *
  */
-bool ParamRegistry::load(void) {
+bool ParamRegistry::loadToRam(void) {
   int i = 0;
   int cmpresult = -1;
   size_t status = 0;
   param_union_t v;
   v.u32 = 0;
-
-  /* try to open file */
-  ParamFile = nvram_fs.open(PARAM_FILE_NAME);
-  if (NULL == ParamFile){
-    /* bootrstapping when firs run */
-    if (nvram_fs.df() < BOOTSTRAP_PARAM_FILE_SIZE)
-      osalSysHalt("Not enough free space in nvram to create parameters file");
-    else{
-      ParamFile = nvram_fs.create(PARAM_FILE_NAME, BOOTSTRAP_PARAM_FILE_SIZE);
-      osalDbgCheck(NULL != ParamFile);
-    }
-  }
 
   /* check reserved space in EEPROM */
   osalDbgAssert(((PARAM_RECORD_SIZE * this->paramCount()) < ParamFile->getSize()),
@@ -331,6 +338,22 @@ FAIL:
   ready = false;
   release();
   return OSAL_FAILED;
+}
+
+/**
+ *
+ */
+void ParamRegistry::start(void) {
+  this->open_file();
+  this->loadToRam();
+}
+
+/**
+ *
+ */
+void ParamRegistry::stop(void) {
+  this->ready = false;
+  nvram_fs.close(this->ParamFile);
 }
 
 /**

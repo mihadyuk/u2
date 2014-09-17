@@ -107,7 +107,7 @@ GlobalFlags_t GlobalFlags = {0,0,0,0,0,0,0,0,
 ///**/
 //uint8_t currWpFrame = MAV_FRAME_GLOBAL;
 //
-///* new waypoint number for overwrite current */
+///* new waypoint number for overwriting of the current one */
 //uint16_t WpSeqNew = 0;
 //
 ///* save here flags before clear them from MCU register */
@@ -119,9 +119,6 @@ GlobalFlags_t GlobalFlags = {0,0,0,0,0,0,0,0,
 //chibios_rt::BinarySemaphore imu_sync_sem(true);
 //chibios_rt::BinarySemaphore lsm303_sem(true);
 //chibios_rt::BinarySemaphore imu_sem(true);
-//
-//chibios_rt::MailboxBuffer<2> red_blink_mb;
-//chibios_rt::MailboxBuffer<2> blue_blink_mb;
 //
 ///* waypoint DB interface */
 //WpDB wpdb;

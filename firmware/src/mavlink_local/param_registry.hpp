@@ -100,7 +100,9 @@ private:
 class ParamRegistry{
 public:
   ParamRegistry(void);
-  bool load(void);
+  void start(void);
+  void stop(void);
+  bool loadToRam(void);
   bool saveAll(void);
   bool syncParam(const char* key);
   param_status_t setParam(const param_union_t *value, const GlobalParam_t *param);
@@ -110,6 +112,7 @@ public:
   int key_index_search(const char* key);
 
 private:
+  void open_file(void);
   bool save_all(void);
   void store_value(int i, float **vp);
   void store_value(int i, int32_t **vp);
