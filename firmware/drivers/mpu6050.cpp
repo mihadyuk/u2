@@ -90,16 +90,6 @@ void MPU6050::pickle_acc(float *result){
 /**
  *
  */
-void MPU6050::set_dlpf(void){
-   mpu_txbuf[0] = MPU_SMPLRT_DIV;
-   mpu_txbuf[1] = 9; /* val */
-   mpu_txbuf[2] = *dlpf;
-   transmit(mpu_txbuf, 3, NULL, 0);
-}
-
-/**
- *
- */
 msg_t MPU6050::hw_init_fast(void){
   ready = true;
   return MSG_OK; /* unimplemented */
@@ -111,9 +101,6 @@ msg_t MPU6050::hw_init_fast(void){
 msg_t MPU6050::hw_init_full(void){
 
   msg_t ret = MSG_RESET;
-
-  param_registry.valueSearch("MPU_dlpf", &this->dlpf);
-  dlpf_prev = *dlpf;
 
   mpu_txbuf[0] = MPU_PWR_MGMT1;
   mpu_txbuf[1] = 0b10000000; /* soft reset */
@@ -160,7 +147,7 @@ msg_t MPU6050::hw_init_full(void){
   5         10      13.4
   6         5       18.6
   7   reserved*/
-  mpu_txbuf[2] = *dlpf; /* LPF */
+  mpu_txbuf[2] = 5; /* LPF */
   transmit(mpu_txbuf, 3, NULL, 0);
   chThdSleepMilliseconds(5);
 #else
@@ -244,11 +231,6 @@ msg_t MPU6050::get(float *acc, float *gyr) {
 
   if (nullptr != acc)
     pickle_acc(acc);
-
-  if (dlpf_prev != *dlpf){
-    set_dlpf();
-    dlpf_prev = *dlpf;
-  }
 
   return ret;
 }

@@ -24,8 +24,6 @@ private:
   uint8_t mpu_rxbuf[MPU_RX_DEPTH];
   uint8_t mpu_txbuf[MPU_TX_DEPTH];
   bool hw_initialized;
-  const uint32_t *dlpf;
-  uint32_t dlpf_prev;
 };
 
 #endif /* MPU6050_HPP_ */

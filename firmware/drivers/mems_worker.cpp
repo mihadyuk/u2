@@ -65,7 +65,7 @@ static THD_FUNCTION(Mpu6050Thread, arg) {
 /**
  *
  */
-void Mpu6050Init(void){
+void MemsWorkerStart(void){
   chThdCreateStatic(Mpu6050ThreadWA, sizeof(Mpu6050ThreadWA),
                             NORMALPRIO, Mpu6050Thread, NULL);
   //lsm303acc.start();
@@ -76,7 +76,7 @@ void Mpu6050Init(void){
 /**
  *
  */
-void Mpu6050ISR(EXTDriver *extp, expchannel_t channel) {
+void MPU6050ISR(EXTDriver *extp, expchannel_t channel) {
   (void)extp;
   (void)channel;
 
@@ -84,5 +84,3 @@ void Mpu6050ISR(EXTDriver *extp, expchannel_t channel) {
   sync_sem.signalI();
   osalSysUnlockFromISR();
 }
-
-

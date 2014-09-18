@@ -2,7 +2,7 @@
 
 #include "exti_local.hpp"
 #include "adis.hpp"
-#include "mpu6050_worker.hpp"
+#include "mems_worker.hpp"
 
 /*
  ******************************************************************************
@@ -61,7 +61,7 @@ static const EXTConfig extcfg = {
     {EXT_CH_MODE_DISABLED, NULL},
     {EXT_CH_MODE_FALLING_EDGE | EXT_MODE_GPIOE, Adis::extiISR},
     {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_RISING_EDGE | EXT_MODE_GPIOE, Mpu6050ISR},
+    {EXT_CH_MODE_RISING_EDGE | EXT_MODE_GPIOE, MPU6050ISR},
     {EXT_CH_MODE_DISABLED, NULL},//4
     {EXT_CH_MODE_DISABLED, NULL},
     {EXT_CH_MODE_DISABLED, NULL},
