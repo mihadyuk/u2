@@ -12,7 +12,7 @@
  *
  */
 template<typename T>
-T deg2rad(T deg){
+static inline T deg2rad(T deg){
   return deg * static_cast<T>(DEG_TO_RAD);
 }
 

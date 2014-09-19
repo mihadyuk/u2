@@ -36,7 +36,7 @@ void firTest(void){
     f1t1 = chSysGetRealtimeCounterX() - f1t0;
     time_us_test[N] = f1t1;
 
-    osalDbgAssert(fabsf(filter1-filter2) < 0.001, "FIR test failed");
+    osalDbgAssert(fabsf(filter1-filter2) < 0.001f, "FIR test failed");
     sample += 32;
     N++;
   }

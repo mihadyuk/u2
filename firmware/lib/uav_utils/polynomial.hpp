@@ -6,7 +6,7 @@
  *
  * @param[in] poly    Array of polynomial coefficients (MSB first). For example
  *                    polynomial x^3 + 3x^2 + 12
- *                    must be represented as int p[4] = {1, 3, 0, 12}
+ *                    must be represented as p[4] = {1, 3, 0, 12}
  * @param[in] len     Length of polynomial array
  * @param[in] val     This value will be multiplied by polynomial
  *

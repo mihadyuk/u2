@@ -31,9 +31,9 @@ MavPostman mav_postman;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-static mavlink_status_t status;
+//static mavlink_status_t status;
 static chibios_rt::Mailbox<mavMail*, 12> txmb;
-MavSpamList MavPostman::spam_list;
+//MavSpamList MavPostman::spam_list;
 
 /*
  ******************************************************************************
@@ -43,6 +43,8 @@ MavSpamList MavPostman::spam_list;
  ******************************************************************************
  */
 
+void mavPostmanRxLoop(uint8_t c);
+
 /**
  *
  */
@@ -51,14 +53,15 @@ static THD_FUNCTION(RxThread, arg) {
   chRegSetThreadName("MavRx");
   msg_t c = Q_TIMEOUT;
   mavChannel *channel = static_cast<mavChannel *>(arg);
-  mavlink_message_t mavlink_message_struct;
+//  mavlink_message_t rx_msg;
 
   while (!chThdShouldTerminateX()){
-    c = channel->get(MS2ST(50));
+    c = channel->get(MS2ST(20));
     if (c != Q_TIMEOUT){
-      if (mavlink_parse_char(MAVLINK_COMM_0, c, &mavlink_message_struct, &status)) {
-        MavPostman::spam_list.dispatch(mavlink_message_struct);
-      }
+      mavPostmanRxLoop(c);
+//      if (mavlink_parse_char(MAVLINK_COMM_0, c, &rx_msg, &status)) {
+//        MavPostman::spam_list.dispatch(rx_msg);
+//      }
     }
   }
 
@@ -69,20 +72,38 @@ static THD_FUNCTION(RxThread, arg) {
 /**
  *
  */
+static mavlink_message_t selftest_msg;
+static mavlink_status_t selftest_status;
+
 static THD_WORKING_AREA(TxThreadWA, WORKER_TX_THREAD_WA_SIZE);
 static THD_FUNCTION(TxThread, arg) {
   chRegSetThreadName("MavTx");
   mavChannel *channel = static_cast<mavChannel *>(arg);
   mavMail *mail;
   size_t len;
-  mavlink_message_t mavlink_message_struct;
+  mavlink_message_t tx_msg;
   uint8_t sendbuf[MAVLINK_SENDBUF_SIZE];
 
   while (!chThdShouldTerminateX()){
-    if (MSG_OK == txmb.fetch(&mail, MS2ST(20))){
-      if (0 != mavlink_encode(mail->msgid, &mavlink_message_struct,  mail->mavmsg)){
-        len = mavlink_msg_to_send_buffer(sendbuf, &mavlink_message_struct);
+    if (MSG_OK == txmb.fetch(&mail, MS2ST(100))){
+      if (0 != mavlink_encode(mail->msgid, &tx_msg,  mail->mavmsg)){
+        len = mavlink_msg_to_send_buffer(sendbuf, &tx_msg);
+
+        uint8_t ret2 = 0;
+        for (size_t i=0; i<len; i++){
+          ret2 = mavlink_parse_char(MAVLINK_COMM_0, sendbuf[i], &selftest_msg, &selftest_status);
+        }
+        osalDbgCheck(1 == ret2);
+
         channel->write(sendbuf, len);
+
+        uint8_t ret = 0;
+        for (size_t i=0; i<len; i++){
+          ret = mavlink_parse_char(MAVLINK_COMM_0, sendbuf[i], &selftest_msg, &selftest_status);
+        }
+        osalDbgCheck(1 == ret);
+
+
       }
       mail->release();
     }
@@ -148,9 +169,8 @@ void MavPostman::stop(void){
 msg_t MavPostman::post(mavMail &mail){
   msg_t ret = MSG_RESET;
 
-  if (ready == true){
+  if (ready == true)
     ret = txmb.post(&mail, TIME_IMMEDIATE);
-  }
 
   return ret;
 }

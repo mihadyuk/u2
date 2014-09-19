@@ -109,8 +109,10 @@ static void send_raw_imu(void){
   if (raw_imu_mail.free()){
     raw_imu_mail.fill(&mavlink_out_raw_imu_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_RAW_IMU);
     status = mav_postman.post(raw_imu_mail);
-    if (status != MSG_OK)
+    if (status != MSG_OK){
       mailbox_overflow++;
+      raw_imu_mail.release();
+    }
   }
   else
     mail_undelivered++;
@@ -121,8 +123,10 @@ static void send_scal_imu(void){
   if (scaled_imu_mail.free()){
     scaled_imu_mail.fill(&mavlink_out_scaled_imu_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_SCALED_IMU);
     status = mav_postman.post(scaled_imu_mail);
-    if (status != MSG_OK)
+    if (status != MSG_OK){
       mailbox_overflow++;
+      scaled_imu_mail.release();
+    }
   }
   else
     mail_undelivered++;
@@ -133,8 +137,10 @@ static void send_sys_status(void){
   if (sys_status_mail.free()){
     sys_status_mail.fill(&mavlink_out_sys_status_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_SYS_STATUS);
     status = mav_postman.post(sys_status_mail);
-    if (status != MSG_OK)
+    if (status != MSG_OK){
       mailbox_overflow++;
+      sys_status_mail.release();
+    }
   }
   else
     mail_undelivered++;
@@ -145,8 +151,10 @@ static void send_gps_int(void){
   if (global_position_int_mail.free()){
     global_position_int_mail.fill(&mavlink_out_global_position_int_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_GLOBAL_POSITION_INT);
     status = mav_postman.post(global_position_int_mail);
-    if (status != MSG_OK)
+    if (status != MSG_OK){
       mailbox_overflow++;
+      global_position_int_mail.release();
+    }
   }
   else
     mail_undelivered++;
@@ -157,8 +165,10 @@ static void send_attitude(void){
   if (attitude_mail.free()){
     attitude_mail.fill(&mavlink_out_attitude_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_ATTITUDE);
     status = mav_postman.post(attitude_mail);
-    if (status != MSG_OK)
+    if (status != MSG_OK){
       mailbox_overflow++;
+      attitude_mail.release();
+    }
   }
   else
     mail_undelivered++;
@@ -169,8 +179,10 @@ static void send_vfr_hud(void){
   if (vfr_hud_mail.free()){
     vfr_hud_mail.fill(&mavlink_out_vfr_hud_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_VFR_HUD);
     status = mav_postman.post(vfr_hud_mail);
-    if (status != MSG_OK)
+    if (status != MSG_OK){
       mailbox_overflow++;
+      vfr_hud_mail.release();
+    }
   }
   else
     mail_undelivered++;
@@ -181,8 +193,10 @@ static void send_position_ned(void){
   if (local_position_ned_mail.free()){
     local_position_ned_mail.fill(&mavlink_out_local_position_ned_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_LOCAL_POSITION_NED);
     status = mav_postman.post(local_position_ned_mail);
-    if (status != MSG_OK)
+    if (status != MSG_OK){
       mailbox_overflow++;
+      local_position_ned_mail.release();
+    }
   }
   else
     mail_undelivered++;
@@ -193,8 +207,10 @@ static void send_nav_output(void){
   if (nav_controller_output_mail.free()){
     nav_controller_output_mail.fill(&mavlink_out_nav_controller_output_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT);
     status = mav_postman.post(nav_controller_output_mail);
-    if (status != MSG_OK)
+    if (status != MSG_OK){
       mailbox_overflow++;
+      nav_controller_output_mail.release();
+    }
   }
   else
     mail_undelivered++;
@@ -205,8 +221,10 @@ static void send_raw_press(void){
   if (raw_pressure_mail.free()){
     raw_pressure_mail.fill(&mavlink_out_raw_pressure_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_RAW_PRESSURE);
     status = mav_postman.post(raw_pressure_mail);
-    if (status != MSG_OK)
+    if (status != MSG_OK){
       mailbox_overflow++;
+      raw_pressure_mail.release();
+    }
   }
   else
     mail_undelivered++;
@@ -217,8 +235,10 @@ static void send_scal_press(void){
   if (scaled_pressure_mail.free()){
     scaled_pressure_mail.fill(&mavlink_out_scaled_pressure_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_SCALED_PRESSURE);
     status = mav_postman.post(scaled_pressure_mail);
-    if (status != MSG_OK)
+    if (status != MSG_OK){
       mailbox_overflow++;
+      scaled_pressure_mail.release();
+    }
   }
   else
     mail_undelivered++;

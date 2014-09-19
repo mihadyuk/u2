@@ -15,13 +15,6 @@
 
 #define WORKER_TX_THREAD_WA_SIZE  1024
 
-#define MAVCHANNEL_BUF_SIZE     MAVLINK_SENDBUF_SIZE
-#define MAVCHANNEL_BUF_CNT      3
-
-#if (MAVCHANNEL_BUF_CNT < 2)
-#error "Buffer count can not be less than 2"
-#endif
-
 class MavPostman {
 public:
   MavPostman(void);

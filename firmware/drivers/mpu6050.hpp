@@ -15,12 +15,18 @@ public:
   msg_t get(float *acc, float *gyr);
   msg_t start(void);
   void stop(void);
+  float update_perod(void);
 private:
+  float gyr_sens(void);
+  float acc_sens(void);
+  void gyro_thermo_comp(float *result);
+  void acc_egg_comp(float *result);
   void pickle_gyr(float *result);
   void pickle_acc(float *result);
+  void pickle_temp(float *result);
+  float temp;
   msg_t hw_init_full(void);
   msg_t hw_init_fast(void);
-  void set_dlpf(void);
   uint8_t mpu_rxbuf[MPU_RX_DEPTH];
   uint8_t mpu_txbuf[MPU_TX_DEPTH];
   bool hw_initialized;

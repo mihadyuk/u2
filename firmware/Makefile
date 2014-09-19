@@ -124,6 +124,7 @@ MAVSRC = src/mavlink_local/parameters.cpp \
          src/mavlink_local/tlm_sender.cpp \
          src/mavlink_local/mavlink_local.cpp \
          src/mavlink_local/mav_postman.cpp \
+         src/mavlink_local/mav_postman_rx_loop.cpp \
          src/mavlink_local/mav_spam_list.cpp \
          src/mavlink_local/mav_mail.cpp \
          src/mavlink_local/mav_logger.cpp \
@@ -139,7 +140,9 @@ CPPSRC = $(CHCPPSRC) \
          drivers/i2c_sensor.cpp \
          drivers/mems_worker.cpp \
          drivers/mpu6050.cpp \
+         drivers/ak8975.cpp \
          drivers/lsm303_acc.cpp \
+         drivers/lsm303_mag.cpp \
          src/i2c_local.cpp \
          src/instantiator.cpp \
          src/nvram_local.cpp \
