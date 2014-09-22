@@ -18,10 +18,14 @@ except ImportError:
 # import pymavlink.dialects.v10.griffon as mavlink
 from pymavlink import mavutil
 
+tprev = 0.0
 def dbg_print(msg):
-    pass
-    # if msg._type == "BAD_DATA":
-    #     print (msg)
+    #pass
+    global tprev
+    if msg._type == "RAW_IMU":
+        dt = msg._timestamp - tprev
+        print (dt)
+        tprev = msg._timestamp
 
 class ParserThread(Process):
     """ Class writes simulated data to navigation system and
