@@ -123,7 +123,7 @@ GlobalFlags_t GlobalFlags = {0,0,0,0,0,0,0,0,
 ///* waypoint DB interface */
 //WpDB wpdb;
 //
-///* State vector of system. Caclculated mostly in IMU, used mostly in ACS */
+///* State vector of system. Calculated mostly in IMU, used mostly in ACS */
 //StateVector state_vector;
 //
 ///* Structure to pass impacts from IMU to ACS */

@@ -3,14 +3,14 @@
 
 #include "i2c_sensor.hpp"
 
-#define lsm303accaddr       0b0011001
+#define lsm303accaddr           0b0011001
 
-#define LSM_ACC_RX_DEPTH    8
-#define LSM_ACC_TX_DEPTH    8
+#define LSM_ACC_RX_DEPTH        8
+#define LSM_ACC_TX_DEPTH        8
 
-#define CTRL_REG1_A         0x20
-#define CTRL_REG2_A         0x21
-#define OUT_X_L_A           0x28
+#define CTRL_REG1_A             0x20
+#define CTRL_REG2_A             0x21
+#define OUT_X_L_A               0x28
 
 class LSM303_acc_LL: private I2CSensor{
 public:

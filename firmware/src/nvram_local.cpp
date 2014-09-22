@@ -29,9 +29,9 @@ static const MtdConfig mtd_cfg = {
   FRAM_I2C_ADDR,
 };
 
-static FramMtd nvmtd(&mtd_cfg, &fram_cfg);
+static FramMtd nvram_mtd(&mtd_cfg, &fram_cfg);
 
-NvramFs nvram_fs(nvmtd);
+NvramFs nvram_fs(nvram_mtd);
 
 /*
  ******************************************************************************
