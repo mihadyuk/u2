@@ -1,5 +1,5 @@
-#ifndef FIR_H_
-#define FIR_H_
+#ifndef FIR_HPP_
+#define FIR_HPP_
 
 /**
  * @brief   FIR filter.
@@ -12,37 +12,48 @@ public:
    * @brief   Default constructor
    */
   FIR(void):
-  core(NULL)
+  kernel(NULL)
   {
     return;
   }
 
   /**
    * @brief     Constructor.
-   * @details   Calls constructor implementation with zero as initial value
+   * @details   Call constructor implementation with zero as initial value
    *            for sample array.
    *
-   * @param[in] taps            pointer to transformation core
+   * @param[in] tapsp           pointer to transformation core
    * @param[in] len             length of filter
    */
   FIR(const T *tapsp, size_t len):
-  core(tapsp)
+  kernel(tapsp)
   {
     ctor_impl(tapsp, len, 0);
   }
 
   /**
    * @brief     Constructor.
-   * @details   Calls constructor implementation with for sample array.
+   * @details   Call constructor implementation with for sample array.
    *
-   * @param[in] taps            pointer to transformation core
+   * @param[in] tapsp           pointer to transformation core
    * @param[in] len             length of filter
    * @param[in] initial_value   initial value for gapless filter start
    */
   FIR(const T *tapsp, size_t len, dataT initial_value):
-  core(tapsp)
+  kernel(tapsp)
   {
     ctor_impl(tapsp, len, initial_value);
+  }
+
+  /**
+   * @brief     Change filter kernel on the fly
+   *
+   * @param[in] tapsp           pointer to transformation core
+   * @param[in] len             length of filter
+   */
+  void setTaps(const T *tapsp, size_t len) {
+    osalDbgCheck(N == len);
+    kernel = tapsp;
   }
 
   /**
@@ -62,7 +73,7 @@ public:
     /* filter */
     T s = 0;
     for (size_t k=0; k<N; k++)
-      s += X[k] * core[k];
+      s += X[k] * kernel[k];
 
     return s;
   }
@@ -76,8 +87,8 @@ public:
     tip--;
     X[tip] = sample;
 
-    s = convolution_engine(core, &X[tip], N - tip)
-      + convolution_engine(&core[N - tip], X, tip);
+    s = convolution_engine(kernel, &X[tip], N - tip)
+      + convolution_engine(&kernel[N - tip], X, tip);
 
     if(0 == tip)
       tip = N;
@@ -98,7 +109,7 @@ private:
     for (size_t i=0; i<N; i++)
       tapsum += tapsp[i];
 
-    osalDbgAssert((tapsum > 0.99) && (tapsum < 1.01), "Kernel must be normalized");
+    osalDbgAssert((tapsum > 0.999) && (tapsum < 1.001), "Kernel must be normalized");
 
     for (size_t i=0; i<N; i++)
       X[i] = initial_value;
@@ -148,7 +159,7 @@ private:
   /**
    * Pointer to filter core
    */
-  const T *core;
+  const T *kernel;
 
   /**
    * Filter state
@@ -161,4 +172,4 @@ private:
   size_t tip;
 };
 
-#endif /* FIR_H_ */
+#endif /* FIR_HPP_ */

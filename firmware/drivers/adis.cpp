@@ -255,7 +255,7 @@ bool Adis::start(void){
   write(0x0C, ADIS_SAMPLE_RATE_DIV - 1);
   select_page(0);
 
-  Exti.adis_enable(true);
+  Exti.adis(true);
   ready = true;
   return OSAL_SUCCESS;
 }

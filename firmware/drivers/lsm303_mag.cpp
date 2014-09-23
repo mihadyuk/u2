@@ -2,6 +2,7 @@
 #include "lsm303_mag.hpp"
 #include "pack_unpack.h"
 #include "marg2mavlink.hpp"
+#include "param_registry.hpp"
 
 /*
  ******************************************************************************
@@ -14,6 +15,7 @@
 #define LSM_REG_MAG_OUT       0x03
 #define LSM_REG_ID            0x0A
 #define LSM_REG_TEMP_OUT      0x31
+#define GAIN_BITS_SHIFT       5
 
 /**
  * @brief   Magnetometer gain (LSB/Gauss)
@@ -46,6 +48,7 @@ typedef enum {
  * GLOBAL VARIABLES
  ******************************************************************************
  */
+
 static const float mag_sens_array[8] = {
     1.0f / 1370,
     1.0f / 1090,
@@ -69,7 +72,7 @@ static const float mag_sens_array[8] = {
  * @brief   convert parrots to Gauss.
  */
 float LSM303_mag::mag_sens(void) {
-  return mag_sens_array[LSM_MAG_GAIN_1370];
+  return mag_sens_array[*gain];
 }
 
 /**
@@ -94,9 +97,9 @@ void LSM303_mag::pickle(float *result){
   int16_t raw[3];
   float sens = this->mag_sens();
 
-  raw[0] = static_cast<int16_t>(pack8to16be(&rxbuf[1]));
-  raw[1] = static_cast<int16_t>(pack8to16be(&rxbuf[3]));
-  raw[2] = static_cast<int16_t>(pack8to16be(&rxbuf[5]));
+  raw[0] = static_cast<int16_t>(pack8to16be(&rxbuf[0]));
+  raw[1] = static_cast<int16_t>(pack8to16be(&rxbuf[2]));
+  raw[2] = static_cast<int16_t>(pack8to16be(&rxbuf[4]));
   mag2raw_imu(raw);
 
   /* */
@@ -122,7 +125,7 @@ msg_t LSM303_mag::hw_init_full(void){
   msg_t ret = MSG_RESET;
 
   txbuf[0] = LSM_REG_ID;
-  ret = transmit(txbuf, 4, rxbuf, 3);
+  ret = transmit(txbuf, 1, rxbuf, 3);
   osalDbgAssert(MSG_OK == ret, "LSM303 magnetometer not responding");
   osalDbgAssert(0 == memcmp("H43", rxbuf, 3), "LSM303 magnetometer incorrect ID");
 
@@ -131,7 +134,7 @@ msg_t LSM303_mag::hw_init_full(void){
   txbuf[1] = 0b10011100;
   /* Set gain. 001 is documented for LSM303 and 000 is for HMC5883.
    * 000 looks working for LSM303 too - lets use it. */
-  txbuf[2] = LSM_MAG_GAIN_1370 << 5;
+  txbuf[2] = *gain << GAIN_BITS_SHIFT;
   /* single conversion mode */
   txbuf[3] = 0b00000001;
 
@@ -150,6 +153,30 @@ msg_t LSM303_mag::start_single_measurement(void) {
   txbuf[0] = LSM_REG_MR;
   txbuf[1] = 0b00000001;
   return transmit(txbuf, 2, NULL, 0);
+}
+
+/**
+ *
+ */
+msg_t LSM303_mag::set_gain(uint8_t val) {
+  txbuf[0] = LSM_REG_CRB;
+  txbuf[1] = val;
+  return transmit(txbuf, 2, NULL, 0);
+}
+
+/**
+ *
+ */
+msg_t LSM303_mag::refresh_gain(void) {
+
+  uint8_t tmp = *gain;
+
+  if (tmp != gain_prev) {
+    gain_prev = tmp;
+    return set_gain(tmp << GAIN_BITS_SHIFT);
+  }
+  else
+    return MSG_OK;
 }
 
 /*
@@ -198,14 +225,17 @@ msg_t LSM303_mag::get(float *result){
     return ret;
 
   if (nullptr != result){
-    if (1 == (rxbuf[6] & 1)) { /* if data ready bit set */
-      pickle(result);
-      ret = start_single_measurement();
-    }
-    else{
-      memcpy(result, cache, sizeof(cache));
-    }
+    pickle(result);
+//    if (1 == (rxbuf[6] & 1)) { /* if data ready bit set */
+//      pickle(result);
+//    }
+//    else{
+//      memcpy(result, cache, sizeof(cache));
+//    }
+    ret = start_single_measurement();
   }
+
+  refresh_gain();
 
   return ret;
 }
@@ -215,6 +245,9 @@ msg_t LSM303_mag::get(float *result){
  */
 msg_t LSM303_mag::start(void){
   msg_t ret;
+
+  param_registry.valueSearch("LSMM_gain",  &gain);
+  gain_prev = *gain;
 
   if (need_full_init())
     ret = hw_init_full();

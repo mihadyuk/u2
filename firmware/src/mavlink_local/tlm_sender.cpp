@@ -23,7 +23,7 @@ Do not edit it manually.
  ******************************************************************************
  */
 extern const mavlink_raw_imu_t mavlink_out_raw_imu_struct;
-extern const mavlink_scaled_imu_t mavlink_out_scaled_imu_struct;
+extern const mavlink_highres_imu_t mavlink_out_highres_imu_struct;
 extern const mavlink_sys_status_t mavlink_out_sys_status_struct;
 extern const mavlink_global_position_int_t mavlink_out_global_position_int_struct;
 extern const mavlink_attitude_t mavlink_out_attitude_struct;
@@ -52,7 +52,7 @@ typedef struct tlm_registry_t {
 }tlm_registry_t;
 
 static void send_raw_imu(void);
-static void send_scal_imu(void);
+static void send_highres_imu(void);
 static void send_sys_status(void);
 static void send_gps_int(void);
 static void send_attitude(void);
@@ -73,7 +73,7 @@ static uint32_t mail_undelivered = 0;
 static bool pause_flag = false;
 
 static mavMail raw_imu_mail;
-static mavMail scaled_imu_mail;
+static mavMail highres_imu_mail;
 static mavMail sys_status_mail;
 static mavMail global_position_int_mail;
 static mavMail attitude_mail;
@@ -86,7 +86,7 @@ static mavMail scaled_pressure_mail;
 /* autoinitialized array */
 static tlm_registry_t Registry[] = {
     {11, NULL, send_raw_imu},
-    {12, NULL, send_scal_imu},
+    {12, NULL, send_highres_imu},
     {13, NULL, send_sys_status},
     {14, NULL, send_gps_int},
     {15, NULL, send_attitude},
@@ -118,14 +118,14 @@ static void send_raw_imu(void){
     mail_undelivered++;
 }
 
-static void send_scal_imu(void){
+static void send_highres_imu(void){
   msg_t status = MSG_RESET;
-  if (scaled_imu_mail.free()){
-    scaled_imu_mail.fill(&mavlink_out_scaled_imu_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_SCALED_IMU);
-    status = mav_postman.post(scaled_imu_mail);
+  if (highres_imu_mail.free()){
+    highres_imu_mail.fill(&mavlink_out_highres_imu_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_HIGHRES_IMU);
+    status = mav_postman.post(highres_imu_mail);
     if (status != MSG_OK){
       mailbox_overflow++;
-      scaled_imu_mail.release();
+      highres_imu_mail.release();
     }
   }
   else
@@ -311,7 +311,7 @@ static THD_FUNCTION(TlmSenderThread, arg) {
  */
 static void load_parameters(void) {
   param_registry.valueSearch("T_raw_imu", &(Registry[0].sleepperiod));
-  param_registry.valueSearch("T_scal_imu", &(Registry[1].sleepperiod));
+  param_registry.valueSearch("T_highres_imu", &(Registry[1].sleepperiod));
   param_registry.valueSearch("T_sys_status", &(Registry[2].sleepperiod));
   param_registry.valueSearch("T_gps_int", &(Registry[3].sleepperiod));
   param_registry.valueSearch("T_attitude", &(Registry[4].sleepperiod));

@@ -1,13 +1,23 @@
-#include <math.h>
-
 #include "main.h"
+
 #include "lsm303_acc.hpp"
+#include "pack_unpack.h"
+#include "marg2mavlink.hpp"
 
 /*
  ******************************************************************************
  * DEFINES
  ******************************************************************************
  */
+/**
+ * @brief   Accel full scale in g
+ */
+typedef enum {
+  LSM_ACC_FULL_SCALE_2 = 0,
+  LSM_ACC_FULL_SCALE_4,
+  LSM_ACC_FULL_SCALE_8,
+  LSM_ACC_FULL_SCALE_16
+} acc_sens_t;
 
 /*
  ******************************************************************************
@@ -27,6 +37,13 @@
  ******************************************************************************
  */
 
+static const float acc_sens_array[4] = {
+    (2 * 9.81)  / 32768.0,
+    (4 * 9.81)  / 32768.0,
+    (8 * 9.81)  / 32768.0,
+    (16 * 9.81) / 32768.0
+};
+
 /*
  ******************************************************************************
  ******************************************************************************
@@ -35,27 +52,43 @@
  ******************************************************************************
  */
 
-///**
-// *
-// */
-//void LSM303_acc_LL::pickle(int16_t *result){
-//
-//  result[0] = pack8to16be(&rxbuf[0]);
-//  result[1] = pack8to16be(&rxbuf[2]);
-//  result[2] = pack8to16be(&rxbuf[4]);
-//}
+/**
+ *
+ */
+float LSM303_acc::acc_sens(void){
+  return acc_sens_array[LSM_ACC_FULL_SCALE_8];
+}
 
 /**
  *
  */
-msg_t LSM303_acc_LL::hw_init_fast(void){
+void LSM303_acc::pickle(float *result){
+
+  int16_t raw[3];
+  float sens = this->acc_sens();
+
+  raw[0] = static_cast<int16_t>(pack8to16be(&rxbuf[0]));
+  raw[1] = static_cast<int16_t>(pack8to16be(&rxbuf[2]));
+  raw[2] = static_cast<int16_t>(pack8to16be(&rxbuf[4]));
+  acc2raw_imu(raw);
+
+  /* */
+  result[0] = sens * raw[0];
+  result[1] = sens * raw[1];
+  result[2] = sens * raw[2];
+}
+
+/**
+ *
+ */
+msg_t LSM303_acc::hw_init_fast(void){
   return MSG_RESET;
 }
 
 /**
  *
  */
-msg_t LSM303_acc_LL::hw_init_full(void){
+msg_t LSM303_acc::hw_init_full(void){
 
   msg_t ret = MSG_RESET;
 
@@ -74,9 +107,11 @@ msg_t LSM303_acc_LL::hw_init_full(void){
   /* REG4:
    * continuous update
    * net byte order
-   * 8g full scale
    * high resolution */
-  txbuf[4] = 0b01101000;
+  uint8_t tmp;
+  tmp = 0b01001000;
+  tmp |= LSM_ACC_FULL_SCALE_8 << 4;
+  txbuf[4] = tmp;
 
   /* REG5: */
   txbuf[5] = 0b0;
@@ -97,7 +132,7 @@ msg_t LSM303_acc_LL::hw_init_full(void){
 /**
  *
  */
-LSM303_acc_LL::LSM303_acc_LL(I2CDriver *i2cdp, i2caddr_t addr):
+LSM303_acc::LSM303_acc(I2CDriver *i2cdp, i2caddr_t addr):
 I2CSensor(i2cdp, addr)
 {
   ready = false;
@@ -106,7 +141,7 @@ I2CSensor(i2cdp, addr)
 /**
  *
  */
-void LSM303_acc_LL::stop(void){
+void LSM303_acc::stop(void){
   // TODO: power down sensor here
   ready = false;
 }
@@ -114,7 +149,7 @@ void LSM303_acc_LL::stop(void){
 /**
  *
  */
-msg_t LSM303_acc_LL::update(int16_t *result){
+msg_t LSM303_acc::get(float *result){
 
   chDbgCheck(true == ready);
 
@@ -131,7 +166,7 @@ msg_t LSM303_acc_LL::update(int16_t *result){
 /**
  *
  */
-msg_t LSM303_acc_LL::start(void){
+msg_t LSM303_acc::start(void){
 
   msg_t ret;
 

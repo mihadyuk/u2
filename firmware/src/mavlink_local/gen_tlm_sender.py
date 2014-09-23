@@ -11,7 +11,7 @@ args = parser.parse_args()
 
 names_uav = [
     ["raw_imu", "raw_imu"],
-    ["scal_imu", "scaled_imu"],
+    ["highres_imu", "highres_imu"],
     ["sys_status", "sys_status"],
     ["gps_int", "global_position_int"],
     ["attitude", "attitude"],

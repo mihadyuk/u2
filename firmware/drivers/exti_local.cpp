@@ -146,7 +146,7 @@ void ExtiPnc::stop(void){
 /**
  * Enables interrupts from ADIS
  */
-void ExtiPnc::adis_enable(bool flag){
+void ExtiPnc::adis(bool flag){
   osalDbgCheck(ready == true);
   if (flag)
     extChannelEnable(&EXTD1, GPIOE_ADIS_INT);
@@ -155,9 +155,9 @@ void ExtiPnc::adis_enable(bool flag){
 }
 
 /**
- * Enables interrupts from ADIS
+ * Enables interrupts from MPU
  */
-void ExtiPnc::mpu6050_enable(bool flag){
+void ExtiPnc::mpu6050(bool flag){
   osalDbgCheck(ready == true);
   if (flag)
     extChannelEnable(&EXTD1, GPIOE_MPU9150_INT);

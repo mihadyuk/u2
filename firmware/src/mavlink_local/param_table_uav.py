@@ -10,49 +10,55 @@ SEND_MAX    = 5000
 
 ONBOARD_PARAM_NAME_LENGTH = 15
 
-#    key            min     default max     type checker    help
+#    key            min         default     max         type checker        help
 param = [
-("SYS_id",          1,      20,     255,    "u", "default",     "System ID.\\n This value MUST BE FIRST in param structure. Value 0 reserved for ground station."),
-("SYS_mavtype",     0,      10,     16,     "u", "default",     "Autopilot type (0 - generic, 1 - fixed wing, 10 - ground rover).\\nOther types you can found in enum MAV_TYPE \\nNOTE! You MUST REBOOT device after changing it."),
-("SH_over_radio",   0,      0,      1,      "u", "default",     "When 1 than drop shell on xbee channel and telemetry on USB_CDC and vice versa."),
+("SYS_id",          1,          20,         255,        "u", "default",     "System ID.\\n This value MUST BE FIRST in param structure. Value 0 reserved for ground station."),
+("SYS_mavtype",     0,          10,         16,         "u", "default",     "Autopilot type (0 - generic, 1 - fixed wing, 10 - ground rover).\\nOther types you can found in enum MAV_TYPE \\nNOTE! You MUST REBOOT device after changing it."),
+("SH_over_radio",   0,          0,          1,          "u", "default",     "When 1 than drop shell on xbee channel and telemetry on USB_CDC and vice versa."),
 
 #/* veights of different components */
-("AHRS_accweight",  0.0,    0.005,  0.5,    "f", "default",     "NULL"),
-("AHRS_magweight",  0.0,    0.05,   0.9,    "f", "default",     "NULL"),
-("AHRS_gpsweight",  0.0,    0.05,   0.5,    "f", "default",     "NULL"),
-("AHRS_beta",       0.0,    1.0,    20.0,   "f", "default",     "Error rate of gyro in degrees"),
-("AHRS_zeta",       0.0,    1.0,    20.0,   "f", "default",     "NULL"),
-("AHRS_ahrsmode",   0,      0,      1,      "u", "default",     "0 - Starlino, 1 - Madgwick"),
+("AHRS_accweight",  0.0,        0.005,      0.5,        "f", "default",     "NULL"),
+("AHRS_magweight",  0.0,        0.05,       0.9,        "f", "default",     "NULL"),
+("AHRS_gpsweight",  0.0,        0.05,       0.5,        "f", "default",     "NULL"),
+("AHRS_beta",       0.0,        1.0,        20.0,       "f", "default",     "Error rate of gyro in degrees"),
+("AHRS_zeta",       0.0,        1.0,        20.0,       "f", "default",     "NULL"),
+("AHRS_ahrsmode",   0,          0,          1,          "u", "default",     "0 - Starlino, 1 - Madgwick"),
 
-# /**** Magnetometer ****/
-# /* zero offsets */
-("MAG_xoffset",     -500,   0,      500,   "f", "default",     "Offset in uT"),
-("MAG_yoffset",     -500,   0,      500,   "f", "default",     "Offset in uT"),
-("MAG_zoffset",     -500,   0,      500,   "f", "default",     "Offset in uT"),
-# /* axis sensitivity */
-("MAG_xsens",       0.001,  0.1,    100.0,  "f", "default",     "Divide by this value to acquire uT"),
-("MAG_ysens",       0.001,  0.1,    100.0,  "f", "default",     "Divide by this value to acquire uT"),
-("MAG_zsens",       0.001,  0.1,    100.0,  "f", "default",     "Divide by this value to acquire uT"),
-# /* axis polarities. Relative to device axis */
-("MAG_xpol",        -1,     1,      1,      "i", "polarity",    "NULL"),
-("MAG_ypol",        -1,     1,      1,      "i", "polarity",    "NULL"),
-("MAG_zpol",        -1,     1,      1,      "i", "polarity",    "NULL"),
-#
-("MAG_declinate",   -90,    7,      90,     "f", "default",     "Magnetic declination. \\nThe declination is positive when the magnetic north is east of true north. \\nhttp://www.ngdc.noaa.gov/geomagmodels/Declination.jsp"),
-("MAG_still_thr",    0,     1,      20,     "f", "default",     "Device immobility threshold in parrots"),
-("MAG_still_flen",  1,    256,      2048,   "i", "default",     "Length of filter used in immobility detector"),
-# /* count of samples to zero calibration */
-("MAG_zeroflen",    1,    256,      2048,   "i", "default",     "Length of filter used in immobility detector"),
-("MAG_zerocnt",     256,    512,    4096,   "u", "default",     "NULL"),
-("MAG_sortmtrx",    0, 0b100010001, 1,      "u", "sort_mtrx",   "Sorting matrix for acquired gyro values\\nto correspond with real device axis"),
-("MAG_vectorlen",   0,      10,     512,    "f", "default",     "Length of magnetic flux vector in uT acquired during sphere offset calculation"),
+########### MARG ##############
+("MARG_acc_src",    0,          0,          3,          "u", "default",     "Accelerometer measurement source for MARG (see enum acc_src_t)"),
+("MARG_gyr_src",    0,          0,          2,          "u", "default",     "Angular rate measurement source for MARG (see enum gyr_src_t)"),
+("MARG_mag_src",    0,          0,          3,          "u", "default",     "Magnetometer measurement source for MARG (see enum mag_src_t)"),
+
+########### LSM303 ###############
+("LSMM_gain",       0,          0,          7,          "u", "default",     "LSM magnetometer gain (see enum mag_sens_t)"),
+# offsets for spherical hard iron compensation
+("LSMM_xoffset",    -500,       0,          500,        "f", "default",     "NULL"),
+("LSMM_yoffset",    -500,       0,          500,        "f", "default",     "NULL"),
+("LSMM_zoffset",    -500,       0,          500,        "f", "default",     "NULL"),
+("LSMM_vectorlen",   0,         10,         512,        "f", "default",     "Length of magnetic flux vector in uT acquired during sphere offset calculation"),
+# sensitivity correction
+("LSMM_xsens",      0.9,        1,          1.1,        "f", "default",     "NULL"),
+("LSMM_ysens",      0.9,        1,          1.1,        "f", "default",     "NULL"),
+("LSMM_zsens",      0.9,        1,          1.1,        "f", "default",     "NULL"),
+# axis polarities. Relative to device axis
+("LSMM_xpol",       -1,         1,          1,          "i", "polarity",    "NULL"),
+("LSMM_ypol",       -1,         1,          1,          "i", "polarity",    "NULL"),
+("LSMM_zpol",       -1,         1,          1,          "i", "polarity",    "NULL"),
+("LSMM_sortmtrx",   0,          0b100010001,1,          "u", "sort_mtrx",   "Sorting matrix for acquired gyro values\\nto correspond with real device axis"),
+("LSMM_calmode",    0,          0,          1,          "u", "default",     "0 - simple spherical shift, 1 - egg compensate"),
 # ellipsoid correction coefficients
-("MAG_ellip_1",    -5.0,   1.0,      5.0,    "f", "default",     "ellipsoid correction coefficient"),
-("MAG_ellip_2",    -5.0,   1.0,      5.0,    "f", "default",     "ellipsoid correction coefficient"),
-("MAG_ellip_3",    -5.0,   1.0,      5.0,    "f", "default",     "ellipsoid correction coefficient"),
-("MAG_ellip_4",    -5.0,   0.0,      5.0,    "f", "default",     "ellipsoid correction coefficient"),
-("MAG_ellip_5",    -5.0,   0.0,      5.0,    "f", "default",     "ellipsoid correction coefficient"),
-("MAG_ellip_6",    -5.0,   0.0,      5.0,    "f", "default",     "ellipsoid correction coefficient"),
+("LSMM_ellip1",     -5.0,        1.0,       5.0,        "f", "default",     "ellipsoid correction coefficient"),
+("LSMM_ellip2",     -5.0,        1.0,       5.0,        "f", "default",     "ellipsoid correction coefficient"),
+("LSMM_ellip3",     -5.0,        1.0,       5.0,        "f", "default",     "ellipsoid correction coefficient"),
+("LSMM_ellip4",     -5.0,        0.0,       5.0,        "f", "default",     "ellipsoid correction coefficient"),
+("LSMM_ellip5",     -5.0,        0.0,       5.0,        "f", "default",     "ellipsoid correction coefficient"),
+("LSMM_ellip6",     -5.0,        0.0,       5.0,        "f", "default",     "ellipsoid correction coefficient"),
+#
+("MAG_declinate",   -90,        7,      90,     "f", "default",     "Magnetic declination. \\nThe declination is positive when the magnetic north is east of true north. \\nhttp://www.ngdc.noaa.gov/geomagmodels/Declination.jsp"),
+("MAG_still_thr",   0,          1,      20,     "f", "default",     "Device immobility threshold in parrots"),
+("MAG_still_flen",  1,          256,      2048,   "i", "default",     "Length of filter used in immobility detector"),
+("MAG_zeroflen",    1,          256,      2048,   "i", "default",     "Length of filter used in immobility detector"),
+("MAG_zerocnt",     256,        512,    4096,   "u", "default",     "NULL"),
 # rotation matrix to align magnetometers and accelerometers
 #("MAG_dcm_00",      -1.0,   1.0,    1.0,    "f", "default",     "NULL"),
 #("MAG_dcm_01",      -1.0,   0.0,    1.0,    "f", "default",     "NULL"),
@@ -63,7 +69,6 @@ param = [
 #("MAG_dcm_20",      -1.0,   0.0,    1.0,    "f", "default",     "NULL"),
 #("MAG_dcm_21",      -1.0,   0.0,    1.0,    "f", "default",     "NULL"),
 #("MAG_dcm_22",      -1.0,   1.0,    1.0,    "f", "default",     "NULL"),
-# ("MAG_picklmode",   0,      0,      1,      "u", "default",     "0 - simple spherical shift, 1 - egg compensate"),
 
 #/**** accelerometer ****/
 #/* zero offsets */
@@ -82,25 +87,37 @@ param = [
 ("ACC_still_thr",   0,  0.006,      0.1,    "f", "default",     "Device immobility threshold in g"),
 ("ACC_still_flen",  1,    256,      2048,   "i", "default",     "Length of filter used in immobility detector"),
 
-#/* Gyroscope */
-#/* sens (LSB/(deg/s)) */
-("GYRO_xsens",      7.0,    14.375, 30.0,   "f", "default",     "NULL"),
-("GYRO_ysens",      7.0,    14.375, 30.0,   "f", "default",     "NULL"),
-("GYRO_zsens",      7.0,    14.375, 30.0,   "f", "default",     "NULL"),
-#/* polarities */
-("GYRO_xpol",       -1,     1,      1,      "i", "polarity",    "NULL"),
-("GYRO_ypol",       -1,     1,      1,      "i", "polarity",    "NULL"),
-("GYRO_zpol",       -1,     1,      1,      "i", "polarity",    "NULL"),
-# offsets in parrots
-("GYRO_xoffset",   -2000,   0,      2000,   "f", "default",     "Cached zero offset for faster startup"),
-("GYRO_yoffset",   -2000,   0,      2000,   "f", "default",     "Cached zero offset for faster startup"),
-("GYRO_zoffset",   -2000,   0,      2000,   "f", "default",     "Cached zero offset for faster startup"),
-# other
-("GYRO_zerocnt",    512,    2048,   16384,  "i", "default",     "Sample count for zeroing procedure"),
-("GYRO_sortmtrx",   0,  0b100010001,1,      "u", "sort_mtrx",   "Sorting matrix for acquired gyro values\\nto correspond with real device axis"),
-("GYRO_zeroflen",   2,      512,    2048,   "i", "default",     "Filter length used in zero calibration routine"),
-("GYRO_sendangle",  0,      1,      1,      "u", "default",     "1 - send intergrated angles, 0 - angular rates"),
-("GYRO_stillthr",   0,      0.1,    1,      "f", "default",     "Rad/S"),
+#/* MPU6050 */
+("MPU_smpl_div",    1,          10,         50,         "u", "default",     "Divider for MPU's 1kHz sample rate"),
+("MPU_fir_f",       -1,         1,          6,          "i", "default",     "Cut off frequency of the external FIR filter (F = 2^N). Set -1 to disable filter at all."),
+
+("MPU_gyr_fs",      0,          1,          3,          "u", "default",     "MPU gyroscope full scale (0 - 250, 1 - 500, 2 - 1000, 3 - 2000) deg/s"),
+("MPU_acc_fs",      0,          3,          3,          "u", "default",     "MPU accelerometer full scale (0 - 2, 1 - 4, 2 - 8, 3 - 16) g"),
+
+("MPUG_xc0",        -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+("MPUG_xc1",        -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+("MPUG_xc2",        -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+
+("MPUG_yc0",        -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+("MPUG_yc1",        -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+("MPUG_yc2",        -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+
+("MPUG_zc0",        -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+("MPUG_zc1",        -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+("MPUG_zc2",        -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+
+("MPUG_xsens",      0.9,        1,          1.1,        "f", "default",     "Sensitivity correction"),
+("MPUG_ysens",      0.9,        1,          1.1,        "f", "default",     "Sensitivity correction"),
+("MPUG_zsens",      0.9,        1,          1.1,        "f", "default",     "Sensitivity correction"),
+
+("MPUG_xpol",       -1,         1,          1,          "i", "polarity",    "NULL"),
+("MPUG_ypol",       -1,         1,          1,          "i", "polarity",    "NULL"),
+("MPUG_zpol",       -1,         1,          1,          "i", "polarity",    "NULL"),
+("MPUG_sortmtrx",   0,          0b100010001,1,          "u", "sort_mtrx",   "Sorting matrix for acquired gyro values\\nto correspond with real device axis"),
+
+("MPUG_zerocnt",    512,        2048,       16384,      "i", "default",     "Sample count for zeroing procedure"),
+("MPUG_zeroflen",   2,          512,        2048,       "i", "default",     "Filter length used in zero calibration routine"),
+("MPUG_stillthr",   0,          0.1,        1,          "f", "default",     "Stillness threshold Rad/S"),
 
 #/**** PMU - pressure measurement unit ****/
 #// coefficients for thermal compensation
@@ -199,8 +216,6 @@ param = [
 ("XTRACK_dGain",    -10000.0, 0, 10000.0,   "f", "default",    "NULL"),
 ("XTRACK_iMin",     -10000.0, 0, 10000.0,   "f", "default",    "NULL"),
 ("XTRACK_iMax",     -10000.0, 0, 10000.0,   "f", "default",    "NULL"),
-# MPU6050 tuning
-("MPU_dlpf",        1,      1,      6,      "u", "default",    "NULL"),
 
 #/**** Variables for debugging purpose ****/
 ("DBG_lat",         -360,   0,      360,    "f", "default",    "NULL"),

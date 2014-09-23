@@ -1,5 +1,5 @@
-#ifndef LSM303_MAG_LL_H_
-#define LSM303_MAG_LL_H_
+#ifndef LSM303_MAG_HPP_
+#define LSM303_MAG_HPP_
 
 #include "i2c_sensor.hpp"
 
@@ -16,6 +16,8 @@ public:
   void stop(void);
 
 private:
+  msg_t set_gain(uint8_t val);
+  msg_t refresh_gain(void);
   msg_t start_single_measurement(void);
   void thermo_comp(float *result);
   void iron_comp(float *result);
@@ -26,8 +28,9 @@ private:
   uint8_t rxbuf[LSM_MAG_RX_DEPTH];
   uint8_t txbuf[LSM_MAG_TX_DEPTH];
   size_t sample_cnt;
+  const uint32_t *gain = NULL;
   float cache[3];
+  uint8_t gain_prev;
 };
 
-
-#endif /* LSM303_MAG_LL_H_ */
+#endif /* LSM303_MAG_HPP_ */
