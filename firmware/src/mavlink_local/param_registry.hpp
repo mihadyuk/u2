@@ -5,7 +5,7 @@
 #include "nvram_local.hpp"
 
 /* периодичность посылки данных в милисекундах */
-#define SEND_MIN                  20
+#define SEND_MIN                  10
 #define SEND_MAX                  5000
 #define SEND_OFF                  0
 

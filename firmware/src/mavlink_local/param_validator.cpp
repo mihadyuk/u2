@@ -221,8 +221,8 @@ param_status_t ParamValidator::default_val(const param_union_t *value,
 /**
  * @brief   Global boundary checker.
  *
- * @param[in] value   input value that must be checked and saved into
- * @param[in] param   appropriate parameter in array
+ * @param[in] value   input value that must be checked and saved into...
+ * @param[in] param   ...appropriate parameter in array
  *
  * @return            operation status.
  */
