@@ -64,7 +64,7 @@ Giovanni
 #include "blinker.hpp"
 //#include "waypoint_db.hpp"
 //#include "mission_planner.hpp"
-//#include "mavlocal.hpp"
+#include "mavlink_local.hpp"
 #include "pads.h"
 #include "endianness.h"
 //#include "attitude_unit_rover.hpp"
@@ -75,6 +75,7 @@ Giovanni
 //#include "marg_rover.hpp"
 //#include "drivetrain.hpp"
 #include "exti_local.hpp"
+#include "marg_worker.hpp"
 
 using namespace chibios_rt;
 
@@ -179,8 +180,6 @@ static float baro;
 static float quat[4];
 static float euler[3];
 
-#include "mems_worker.hpp"
-
 int main(void) {
 
   halInit();
@@ -231,7 +230,7 @@ int main(void) {
 //  drivetrain.start();
 //  sins.start(&state_vector);
 
-  MemsWorkerStart();
+  MargWorkerStart();
   osalDbgCheck(OSAL_SUCCESS == adis.start());
 
   while (TRUE) {

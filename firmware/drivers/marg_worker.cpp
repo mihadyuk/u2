@@ -147,7 +147,7 @@ static THD_FUNCTION(Mpu6050Thread, arg) {
 /**
  *
  */
-void MemsWorkerStart(void){
+void MargWorkerStart(void){
   chThdCreateStatic(Mpu6050ThreadWA, sizeof(Mpu6050ThreadWA),
                             NORMALPRIO, Mpu6050Thread, NULL);
   mpu6050.start();

@@ -1,7 +1,7 @@
 #include "main.h"
 #include "ak8975.hpp"
 #include "pack_unpack.h"
-#include "mavlink_local.hpp"
+#include "marg2mavlink.hpp"
 
 /*
  ******************************************************************************
@@ -25,8 +25,6 @@
  ******************************************************************************
  */
 
-extern mavlink_raw_imu_t        mavlink_out_raw_imu_struct;
-
 /*
  ******************************************************************************
  * GLOBAL VARIABLES
@@ -40,15 +38,6 @@ extern mavlink_raw_imu_t        mavlink_out_raw_imu_struct;
  *******************************************************************************
  *******************************************************************************
  */
-/**
- *
- */
-static void mag2mavlink(int16_t *raw){
-  mavlink_out_raw_imu_struct.xmag = raw[0];
-  mavlink_out_raw_imu_struct.ymag = raw[1];
-  mavlink_out_raw_imu_struct.zmag = raw[2];
-  //mavlink_out_raw_imu_struct.time_usec = TimeKeeper::utc();
-}
 
 /**
  * @brief   convert parrots to Gauss.
@@ -82,7 +71,7 @@ void AK8975::pickle(float *result){
   raw[0] = static_cast<int16_t>(pack8to16le(&rxbuf[1]));
   raw[1] = static_cast<int16_t>(pack8to16le(&rxbuf[3]));
   raw[2] = static_cast<int16_t>(pack8to16le(&rxbuf[5]));
-  mag2mavlink(raw);
+  mag2raw_imu(raw);
 
   /* */
   result[0] = sens * raw[0];

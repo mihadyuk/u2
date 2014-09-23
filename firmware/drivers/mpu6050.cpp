@@ -1,17 +1,21 @@
 #include "main.h"
 #include "mpu6050.hpp"
 #include "pack_unpack.h"
-#include "mavlink_local.hpp"
+#include "geometry.hpp"
+#include "marg2mavlink.hpp"
 
 /*
  ******************************************************************************
  * DEFINES
  ******************************************************************************
  */
-#define MPU_ACCEL_OFFSET  1
-#define MPU_TEMP_OFFSET   7
-#define MPU_GYRO_OFFSET   9
 
+/* offsets in received data array */
+#define MPU_ACCEL_OFFSET      1
+#define MPU_TEMP_OFFSET       7
+#define MPU_GYRO_OFFSET       9
+
+/* registers address */
 #define MPUREG_SMPLRT_DIV       0x19
 #define MPUREG_CONFIG           0x1A
 #define MPUREG_GYRO_CONFIG      0x1B
@@ -62,25 +66,12 @@ typedef enum {
  ******************************************************************************
  */
 
-extern mavlink_raw_imu_t        mavlink_out_raw_imu_struct;
-
 /*
  ******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************
  */
 
-/*
- *******************************************************************************
- *******************************************************************************
- * LOCAL FUNCTIONS
- *******************************************************************************
- *******************************************************************************
- */
-/**
- *
- */
-#include "geometry.hpp"
 static const float gyro_sens_array[4] = {
     deg2rad(250.0f  / 32768),
     deg2rad(500.0f  / 32768),
@@ -95,6 +86,16 @@ static const float acc_sens_array[4] = {
     (16 * 9.81) / 32768.0
 };
 
+/*
+ *******************************************************************************
+ *******************************************************************************
+ * LOCAL FUNCTIONS
+ *******************************************************************************
+ *******************************************************************************
+ */
+/**
+ *
+ */
 float MPU6050::gyr_sens(void){
   return gyro_sens_array[MPU_GYRO_FULL_SCALE_500];
 }
@@ -104,26 +105,6 @@ float MPU6050::gyr_sens(void){
  */
 float MPU6050::acc_sens(void){
   return acc_sens_array[MPU_ACC_FULL_SCALE_16];
-}
-
-/**
- *
- */
-static void acc2mavlink(int16_t *raw){
-  mavlink_out_raw_imu_struct.xacc = raw[0];
-  mavlink_out_raw_imu_struct.yacc = raw[1];
-  mavlink_out_raw_imu_struct.zacc = raw[2];
-  //mavlink_out_raw_imu_struct.time_usec = TimeKeeper::utc();
-}
-
-/**
- *
- */
-static void gyr2mavlink(int16_t *raw){
-  mavlink_out_raw_imu_struct.xgyro = raw[0];
-  mavlink_out_raw_imu_struct.ygyro = raw[1];
-  mavlink_out_raw_imu_struct.zgyro = raw[2];
-  //mavlink_out_raw_imu_struct.time_usec = TimeKeeper::utc();
 }
 
 /**
@@ -162,7 +143,7 @@ void MPU6050::pickle_gyr(float *result){
   raw[0] = static_cast<int16_t>(pack8to16be(&b[0]));
   raw[1] = static_cast<int16_t>(pack8to16be(&b[2]));
   raw[2] = static_cast<int16_t>(pack8to16be(&b[4]));
-  gyr2mavlink(raw);
+  gyr2raw_imu(raw);
 
   result[0] = sens * raw[0];
   result[1] = sens * raw[1];
@@ -183,7 +164,7 @@ void MPU6050::pickle_acc(float *result){
   raw[0] = static_cast<int16_t>(pack8to16be(&b[0]));
   raw[1] = static_cast<int16_t>(pack8to16be(&b[2]));
   raw[2] = static_cast<int16_t>(pack8to16be(&b[4]));
-  acc2mavlink(raw);
+  acc2raw_imu(raw);
 
   result[0] = sens * raw[0];
   result[1] = sens * raw[1];

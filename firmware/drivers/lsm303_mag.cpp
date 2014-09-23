@@ -1,7 +1,7 @@
 #include "main.h"
 #include "lsm303_mag.hpp"
 #include "pack_unpack.h"
-#include "mavlink_local.hpp"
+#include "marg2mavlink.hpp"
 
 /*
  ******************************************************************************
@@ -35,8 +35,6 @@ typedef enum {
  ******************************************************************************
  */
 
-extern mavlink_raw_imu_t        mavlink_out_raw_imu_struct;
-
 /*
  ******************************************************************************
  * PROTOTYPES
@@ -66,16 +64,6 @@ static const float mag_sens_array[8] = {
  ******************************************************************************
  ******************************************************************************
  */
-
-/**
- *
- */
-static void mag2mavlink(int16_t *raw){
-  mavlink_out_raw_imu_struct.xmag = raw[0];
-  mavlink_out_raw_imu_struct.ymag = raw[1];
-  mavlink_out_raw_imu_struct.zmag = raw[2];
-  //mavlink_out_raw_imu_struct.time_usec = TimeKeeper::utc();
-}
 
 /**
  * @brief   convert parrots to Gauss.
@@ -109,7 +97,7 @@ void LSM303_mag::pickle(float *result){
   raw[0] = static_cast<int16_t>(pack8to16be(&rxbuf[1]));
   raw[1] = static_cast<int16_t>(pack8to16be(&rxbuf[3]));
   raw[2] = static_cast<int16_t>(pack8to16be(&rxbuf[5]));
-  mag2mavlink(raw);
+  mag2raw_imu(raw);
 
   /* */
   result[0] = sens * raw[0];

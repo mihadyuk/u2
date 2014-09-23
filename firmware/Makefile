@@ -137,7 +137,8 @@ CPPSRC = $(CHCPPSRC) \
          drivers/adis.cpp \
          drivers/exti_local.cpp \
          drivers/i2c_sensor.cpp \
-         drivers/mems_worker.cpp \
+         drivers/marg_worker.cpp \
+         drivers/marg2mavlink.cpp \
          drivers/mpu6050.cpp \
          drivers/ak8975.cpp \
          drivers/lsm303_acc.cpp \
