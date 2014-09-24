@@ -5,6 +5,7 @@
 #include "lsm303_acc.hpp"
 #include "lsm303_mag.hpp"
 #include "mavlink_local.hpp"
+#include "marg2mavlink.hpp"
 
 using namespace chibios_rt;
 
@@ -55,10 +56,6 @@ typedef enum {
  ******************************************************************************
  */
 
-extern mavlink_highres_imu_t    mavlink_out_highres_imu_struct;
-
-//extern TimeKeeper time_keeper;
-
 /*
  ******************************************************************************
  * PROTOTYPES
@@ -89,33 +86,6 @@ static float mag_data[3];
  ******************************************************************************
  ******************************************************************************
  */
-/**
- *
- */
-static void marg2mavlink(float *acc, float *gyr, float *mag){
-
-  if (nullptr != acc){
-    mavlink_out_highres_imu_struct.xacc = acc[0];
-    mavlink_out_highres_imu_struct.yacc = acc[1];
-    mavlink_out_highres_imu_struct.zacc = acc[2];
-  }
-
-  if (nullptr != gyr){
-    mavlink_out_highres_imu_struct.xgyro = gyr[0];
-    mavlink_out_highres_imu_struct.ygyro = gyr[1];
-    mavlink_out_highres_imu_struct.zgyro = gyr[2];
-  }
-
-  if (nullptr != mag){
-    mavlink_out_highres_imu_struct.xmag = mag[0];
-    mavlink_out_highres_imu_struct.ymag = mag[1];
-    mavlink_out_highres_imu_struct.zmag = mag[2];
-  }
-
-  if ((nullptr != acc) || (nullptr != gyr) || (nullptr != mag)){
-    //mavlink_out_highres_imu_struct.time_usec = TimeKeeper::utc();
-  }
-}
 
 /**
  *
@@ -130,8 +100,9 @@ static THD_FUNCTION(Mpu6050Thread, arg) {
 
     mpu6050.get(acc_data, gyr_data);
     lsm303mag.get(mag_data);
+    //ak8975.get(mag_data);
 
-    marg2mavlink(acc_data, gyr_data, mag_data);
+    marg2highres_imu(acc_data, gyr_data, mag_data);
   }
 
   chThdExit(MSG_OK);
@@ -147,13 +118,15 @@ static THD_FUNCTION(Mpu6050Thread, arg) {
  *
  */
 void MargWorkerStart(void){
-  chThdCreateStatic(Mpu6050ThreadWA, sizeof(Mpu6050ThreadWA),
-                            NORMALPRIO, Mpu6050Thread, NULL);
+
   mpu6050.start();
   Exti.mpu6050(true);
   ak8975.start();
   lsm303mag.start();
   lsm303acc.start();
+
+  chThdCreateStatic(Mpu6050ThreadWA, sizeof(Mpu6050ThreadWA),
+                              NORMALPRIO, Mpu6050Thread, NULL);
 }
 
 /**

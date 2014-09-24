@@ -3,6 +3,7 @@
 #include "exti_local.hpp"
 #include "adis.hpp"
 #include "marg_worker.hpp"
+#include "lsm303_mag.hpp"
 
 /*
  ******************************************************************************
@@ -64,7 +65,7 @@ static const EXTConfig extcfg = {
     {EXT_CH_MODE_DISABLED, NULL},
     {EXT_CH_MODE_RISING_EDGE | EXT_MODE_GPIOE, MPU6050ISR},
     {EXT_CH_MODE_DISABLED, NULL},//4
-    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_FALLING_EDGE | EXT_MODE_GPIOE, LSM303_mag::extiISR},
     {EXT_CH_MODE_DISABLED, NULL},
     {EXT_CH_MODE_DISABLED, NULL},
     {EXT_CH_MODE_DISABLED, NULL},//8
@@ -163,4 +164,15 @@ void ExtiPnc::mpu6050(bool flag){
     extChannelEnable(&EXTD1, GPIOE_MPU9150_INT);
   else
     extChannelDisable(&EXTD1, GPIOE_MPU9150_INT);
+}
+
+/**
+ * Enables interrupts from MPU
+ */
+void ExtiPnc::lsm303(bool flag){
+  osalDbgCheck(ready == true);
+  if (flag)
+    extChannelEnable(&EXTD1, GPIOE_MAG_INT);
+  else
+    extChannelDisable(&EXTD1, GPIOE_MAG_INT);
 }

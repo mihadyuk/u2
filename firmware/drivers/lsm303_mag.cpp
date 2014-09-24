@@ -3,6 +3,7 @@
 #include "pack_unpack.h"
 #include "marg2mavlink.hpp"
 #include "param_registry.hpp"
+#include "exti_local.hpp"
 
 /*
  ******************************************************************************
@@ -59,6 +60,8 @@ static const float mag_sens_array[8] = {
     1.0f / 330,
     1.0f / 230
 };
+
+static bool mag_data_fresh = true;
 
 /*
  ******************************************************************************
@@ -130,8 +133,8 @@ msg_t LSM303_mag::hw_init_full(void){
   osalDbgAssert(0 == memcmp("H43", rxbuf, 3), "LSM303 magnetometer incorrect ID");
 
   txbuf[0] = LSM_REG_CRA;
-  /* enable thermometer and set maximum output rate */
-  txbuf[1] = 0b10011100;
+  //txbuf[1] = 0b10011100; /* enable thermometer and set maximum output rate */
+  txbuf[1] = 0;
   /* Set gain. 001 is documented for LSM303 and 000 is for HMC5883.
    * 000 looks working for LSM303 too - lets use it. */
   txbuf[2] = *gain << GAIN_BITS_SHIFT;
@@ -141,7 +144,7 @@ msg_t LSM303_mag::hw_init_full(void){
   ret = transmit(txbuf, 4, NULL, 0);
   osalDbgCheck(MSG_OK == ret);
 
-  ret = start_single_measurement();
+  Exti.lsm303(true);
 
   return ret;
 }
@@ -206,33 +209,24 @@ void LSM303_mag::stop(void){
  *
  */
 msg_t LSM303_mag::get(float *result){
-  msg_t ret;
+
+  msg_t ret = MSG_OK;
 
   chDbgCheck(true == ready);
 
-  if ((sample_cnt % 128) == 0){
-    txbuf[0] = LSM_REG_TEMP_OUT;
-    ret = transmit(txbuf, 1, rxbuf+6, 2);
-    if (MSG_OK != ret)
-      return ret;
-  }
-  sample_cnt++;
+  if (nullptr != result) {
+    if (true == mag_data_fresh) {
+      txbuf[0] = LSM_REG_MAG_OUT;
+      transmit(txbuf, 1, rxbuf, 6);
+      pickle(result);
+      memcpy(cache, result, sizeof(cache));
 
-  /* read previous measurement results */
-  txbuf[0] = LSM_REG_MAG_OUT;
-  ret = transmit(txbuf, 1, rxbuf, 7);
-  if (MSG_OK != ret)
-    return ret;
-
-  if (nullptr != result){
-    pickle(result);
-//    if (1 == (rxbuf[6] & 1)) { /* if data ready bit set */
-//      pickle(result);
-//    }
-//    else{
-//      memcpy(result, cache, sizeof(cache));
-//    }
-    ret = start_single_measurement();
+      mag_data_fresh = false;
+      ret = start_single_measurement();
+    }
+    else{
+      memcpy(result, cache, sizeof(cache));
+    }
   }
 
   refresh_gain();
@@ -256,4 +250,14 @@ msg_t LSM303_mag::start(void){
   ready = true;
 
   return ret;
+}
+
+/**
+ *
+ */
+void LSM303_mag::extiISR(EXTDriver *extp, expchannel_t channel) {
+  (void)extp;
+  (void)channel;
+
+  mag_data_fresh = true;
 }

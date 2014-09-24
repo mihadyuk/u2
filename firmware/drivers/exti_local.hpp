@@ -8,6 +8,7 @@ public:
   void stop(void);
   void adis(bool);
   void mpu6050(bool);
+  void lsm303(bool flag);
 private:
   bool ready;
 };

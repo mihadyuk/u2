@@ -14,6 +14,7 @@ public:
   msg_t get(float *result);
   msg_t start(void);
   void stop(void);
+  static void extiISR(EXTDriver *extp, expchannel_t channel);
 
 private:
   msg_t set_gain(uint8_t val);
