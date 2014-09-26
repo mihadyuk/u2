@@ -90,7 +90,8 @@ include $(CHIBIOS)/os/rt/ports/ARMCMx/compilers/GCC/mk/port_stm32f4xx.mk
 include $(CHIBIOS)/os/various/cpp_wrappers/chcpp.mk
 
 # Define linker script file here
-LDSCRIPT= $(PORTLD)/STM32F407xG.ld
+#LDSCRIPT= $(PORTLD)/STM32F407xG.ld
+LDSCRIPT= STM32F407xG_ccm.ld
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -137,7 +138,7 @@ CPPSRC = $(CHCPPSRC) \
          drivers/adis.cpp \
          drivers/exti_local.cpp \
          drivers/i2c_sensor.cpp \
-         drivers/marg_worker.cpp \
+         drivers/marg.cpp \
          drivers/marg2mavlink.cpp \
          drivers/mpu6050.cpp \
          drivers/ak8975.cpp \

@@ -6,7 +6,7 @@
 
 #define mpu6050addr         0b1101000
 
-#define MPU_RX_DEPTH        15  /* 1 status bite and 14 bytes of data */
+#define MPU_RX_DEPTH        16  /* 1 status bite and 14 bytes of data */
 #define MPU_TX_DEPTH        4
 
 #define MPU6050_1KHZ        FALSE
@@ -22,7 +22,8 @@ public:
 private:
   msg_t set_gyr_fs(uint8_t fs);
   msg_t set_acc_fs(uint8_t fs);
-  msg_t refresh_fs(void);
+  msg_t set_dlpf_smplrt(uint8_t lpf, uint8_t smplrt);
+  msg_t refresh_settings(void);
   float gyr_sens(void);
   float acc_sens(void);
   void gyro_thermo_comp(float *result);
@@ -35,14 +36,18 @@ private:
   float temperature;
   const uint32_t *gyr_fs = NULL;
   const uint32_t *acc_fs = NULL;
+  const uint32_t *dlpf = NULL;
+  const uint32_t *smplrt_div = NULL;
   const int32_t  *fir_f = NULL;
-  uint8_t gyr_fs_prev;
-  uint8_t acc_fs_prev;
   bool hw_initialized;
   FIR<float, int16_t, MPU6050_FIR_LEN> acc_fir[3];
   FIR<float, int16_t, MPU6050_FIR_LEN> gyr_fir[3];
   uint8_t rxbuf[MPU_RX_DEPTH];
   uint8_t txbuf[MPU_TX_DEPTH];
+  uint8_t gyr_fs_prev;
+  uint8_t acc_fs_prev;
+  uint8_t dlpf_prev;
+  uint8_t smplrt_prev;
 };
 
 #endif /* MPU6050_HPP_ */

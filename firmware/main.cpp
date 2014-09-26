@@ -75,7 +75,7 @@ Giovanni
 //#include "marg_rover.hpp"
 //#include "drivetrain.hpp"
 #include "exti_local.hpp"
-#include "marg_worker.hpp"
+#include "marg.hpp"
 
 using namespace chibios_rt;
 
@@ -230,7 +230,7 @@ int main(void) {
 //  drivetrain.start();
 //  sins.start(&state_vector);
 
-  MargWorkerStart();
+  MargStart();
   osalDbgCheck(OSAL_SUCCESS == adis.start());
 
   while (TRUE) {

@@ -6,6 +6,7 @@
 #include "lsm303_mag.hpp"
 #include "mavlink_local.hpp"
 #include "marg2mavlink.hpp"
+#include "param_registry.hpp"
 
 using namespace chibios_rt;
 
@@ -79,6 +80,16 @@ static float acc_data[3];
 static float gyr_data[3];
 static float mag_data[3];
 
+static thread_t *worker = NULL;
+
+static const uint32_t *gyr_src = NULL;
+static const uint32_t *acc_src = NULL;
+static const uint32_t *mag_src = NULL;
+
+static const uint32_t *mpu_dlpf = NULL;
+static const uint32_t *mpu_smplrt_div = NULL;
+static uint32_t mpu_int_counter = 0;
+
 /*
  ******************************************************************************
  ******************************************************************************
@@ -98,10 +109,23 @@ static THD_FUNCTION(Mpu6050Thread, arg) {
   while (!chThdShouldTerminateX()) {
     marg_sem.wait();
 
+    /* accelerometer and gyroscope acquisition */
     mpu6050.get(acc_data, gyr_data);
-    lsm303mag.get(mag_data);
-    //ak8975.get(mag_data);
 
+    /* magnetic data acquisition */
+    switch (*mag_src){
+    case MARG_MAG_SRC_LSM303:
+      lsm303mag.get(mag_data);
+      break;
+    case MARG_MAG_SRC_AK8975:
+      ak8975.get(mag_data);
+      break;
+    default:
+      osalSysHalt("Unhandled case");
+      break;
+    }
+
+    /* mavlink message fill */
     marg2highres_imu(acc_data, gyr_data, mag_data);
   }
 
@@ -117,7 +141,14 @@ static THD_FUNCTION(Mpu6050Thread, arg) {
 /**
  *
  */
-void MargWorkerStart(void){
+void MargStart(void) {
+
+  param_registry.valueSearch("MPU_dlpf",      &mpu_dlpf);
+  param_registry.valueSearch("MPU_smplrt_div",&mpu_smplrt_div);
+
+  param_registry.valueSearch("MARG_acc_src",  &acc_src);
+  param_registry.valueSearch("MARG_gyr_src",  &gyr_src);
+  param_registry.valueSearch("MARG_mag_src",  &mag_src);
 
   mpu6050.start();
   Exti.mpu6050(true);
@@ -125,8 +156,25 @@ void MargWorkerStart(void){
   lsm303mag.start();
   lsm303acc.start();
 
-  chThdCreateStatic(Mpu6050ThreadWA, sizeof(Mpu6050ThreadWA),
-                              NORMALPRIO, Mpu6050Thread, NULL);
+  worker = chThdCreateStatic(Mpu6050ThreadWA, sizeof(Mpu6050ThreadWA),
+                             NORMALPRIO, Mpu6050Thread, NULL);
+  osalDbgAssert(NULL != worker, "Can not allocate RAM");
+}
+
+/**
+ *
+ */
+void MargStop(void) {
+
+  Exti.mpu6050(false);
+
+  chThdTerminate(worker);
+  chThdWait(worker);
+
+  mpu6050.stop();
+  ak8975.stop();
+  lsm303mag.stop();
+  lsm303acc.stop();
 }
 
 /**
@@ -136,7 +184,20 @@ void MPU6050ISR(EXTDriver *extp, expchannel_t channel) {
   (void)extp;
   (void)channel;
 
-  osalSysLockFromISR();
-  marg_sem.signalI();
-  osalSysUnlockFromISR();
+  if (0 == *mpu_dlpf){ /* we need software rate divider */
+    mpu_int_counter++;
+    if (mpu_int_counter >= *mpu_smplrt_div){
+      osalSysLockFromISR();
+      mpu_int_counter = 0;
+      marg_sem.signalI();
+      osalSysUnlockFromISR();
+    }
+  }
+  else { /* signal semaphore every interrupt pulse */
+    osalSysLockFromISR();
+    marg_sem.signalI();
+    osalSysUnlockFromISR();
+  }
 }
+
+

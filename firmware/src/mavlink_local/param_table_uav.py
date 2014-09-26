@@ -47,12 +47,12 @@ param = [
 ("LSMM_sortmtrx",   0,          0b100010001,1,          "u", "sort_mtrx",   "Sorting matrix for acquired gyro values\\nto correspond with real device axis"),
 ("LSMM_calmode",    0,          0,          1,          "u", "default",     "0 - simple spherical shift, 1 - egg compensate"),
 # ellipsoid correction coefficients
-("LSMM_ellip1",     -5.0,        1.0,       5.0,        "f", "default",     "ellipsoid correction coefficient"),
-("LSMM_ellip2",     -5.0,        1.0,       5.0,        "f", "default",     "ellipsoid correction coefficient"),
-("LSMM_ellip3",     -5.0,        1.0,       5.0,        "f", "default",     "ellipsoid correction coefficient"),
-("LSMM_ellip4",     -5.0,        0.0,       5.0,        "f", "default",     "ellipsoid correction coefficient"),
-("LSMM_ellip5",     -5.0,        0.0,       5.0,        "f", "default",     "ellipsoid correction coefficient"),
-("LSMM_ellip6",     -5.0,        0.0,       5.0,        "f", "default",     "ellipsoid correction coefficient"),
+("LSMM_ellip1",     -5.0,       1.0,        5.0,        "f", "default",     "ellipsoid correction coefficient"),
+("LSMM_ellip2",     -5.0,       1.0,        5.0,        "f", "default",     "ellipsoid correction coefficient"),
+("LSMM_ellip3",     -5.0,       1.0,        5.0,        "f", "default",     "ellipsoid correction coefficient"),
+("LSMM_ellip4",     -5.0,       0.0,        5.0,        "f", "default",     "ellipsoid correction coefficient"),
+("LSMM_ellip5",     -5.0,       0.0,        5.0,        "f", "default",     "ellipsoid correction coefficient"),
+("LSMM_ellip6",     -5.0,       0.0,        5.0,        "f", "default",     "ellipsoid correction coefficient"),
 #
 ("MAG_declinate",   -90,        7,      90,     "f", "default",     "Magnetic declination. \\nThe declination is positive when the magnetic north is east of true north. \\nhttp://www.ngdc.noaa.gov/geomagmodels/Declination.jsp"),
 ("MAG_still_thr",   0,          1,      20,     "f", "default",     "Device immobility threshold in parrots"),
@@ -70,8 +70,41 @@ param = [
 #("MAG_dcm_21",      -1.0,   0.0,    1.0,    "f", "default",     "NULL"),
 #("MAG_dcm_22",      -1.0,   1.0,    1.0,    "f", "default",     "NULL"),
 
-#/**** accelerometer ****/
-#/* zero offsets */
+
+# common MPU6050 settings
+("MPU_dlpf",        0,          5,          6,          "u", "default",     "If dlpf>0 than use internal LPF and internal sample rate divider.\nOtherwise use 1kHz sample rate with external FIR and external decimator"),
+("MPU_smplrt_div",  1,          10,         50,         "u", "default",     "Divider for MPU's 1kHz sample rate"),
+("MPU_fir_f",       -1,         0,          6,          "i", "default",     "Cut off frequency of the external FIR filter (F = 2^N). Set -1 to disable filter at all."),
+("MPU_gyr_fs",      0,          1,          3,          "u", "default",     "MPU gyroscope full scale (0 - 250, 1 - 500, 2 - 1000, 3 - 2000) deg/s"),
+("MPU_acc_fs",      0,          3,          3,          "u", "default",     "MPU accelerometer full scale (0 - 2, 1 - 4, 2 - 8, 3 - 16) g"),
+
+# MPU6050 gyroscopes' settings
+("MPUG_xt_c0",      -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+("MPUG_xt_c1",      -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+("MPUG_xt_c2",      -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+
+("MPUG_yt_c0",      -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+("MPUG_yt_c1",      -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+("MPUG_yt_c2",      -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+
+("MPUG_zt_c0",      -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+("MPUG_zt_c1",      -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+("MPUG_zt_c2",      -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+
+("MPUG_xsens",      0.9,        1,          1.1,        "f", "default",     "Sensitivity correction"),
+("MPUG_ysens",      0.9,        1,          1.1,        "f", "default",     "Sensitivity correction"),
+("MPUG_zsens",      0.9,        1,          1.1,        "f", "default",     "Sensitivity correction"),
+
+("MPUG_xpol",       -1,         1,          1,          "i", "polarity",    "NULL"),
+("MPUG_ypol",       -1,         1,          1,          "i", "polarity",    "NULL"),
+("MPUG_zpol",       -1,         1,          1,          "i", "polarity",    "NULL"),
+("MPUG_sortmtrx",   0,          0b100010001,1,          "u", "sort_mtrx",   "Sorting matrix for acquired gyro values\\nto correspond with real device axis"),
+
+("MPUG_zerocnt",    512,        2048,       16384,      "i", "default",     "Sample count for zeroing procedure"),
+("MPUG_zeroflen",   2,          512,        2048,       "i", "default",     "Filter length used in zero calibration routine"),
+("MPUG_stillthr",   0,          0.1,        1,          "f", "default",     "Stillness threshold Rad/S"),
+
+# MPU6050 accelerometers' settings
 ("ACC_xoffset",     -100,   0,      100,    "i", "default",     "NULL"),
 ("ACC_yoffset",     -100,   0,      100,    "i", "default",     "NULL"),
 ("ACC_zoffset",     -100,   0,      100,    "i", "default",     "NULL"),
@@ -86,38 +119,6 @@ param = [
 ("ACC_sortmtrx",    0, 0b100010001, 1,      "u", "sort_mtrx",   "Sorting matrix for acquired gyro values\\nto correspond with real device axis"),
 ("ACC_still_thr",   0,  0.006,      0.1,    "f", "default",     "Device immobility threshold in g"),
 ("ACC_still_flen",  1,    256,      2048,   "i", "default",     "Length of filter used in immobility detector"),
-
-#/* MPU6050 */
-("MPU_smpl_div",    1,          10,         50,         "u", "default",     "Divider for MPU's 1kHz sample rate"),
-("MPU_fir_f",       -1,         1,          6,          "i", "default",     "Cut off frequency of the external FIR filter (F = 2^N). Set -1 to disable filter at all."),
-
-("MPU_gyr_fs",      0,          1,          3,          "u", "default",     "MPU gyroscope full scale (0 - 250, 1 - 500, 2 - 1000, 3 - 2000) deg/s"),
-("MPU_acc_fs",      0,          3,          3,          "u", "default",     "MPU accelerometer full scale (0 - 2, 1 - 4, 2 - 8, 3 - 16) g"),
-
-("MPUG_xc0",        -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
-("MPUG_xc1",        -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
-("MPUG_xc2",        -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
-
-("MPUG_yc0",        -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
-("MPUG_yc1",        -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
-("MPUG_yc2",        -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
-
-("MPUG_zc0",        -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
-("MPUG_zc1",        -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
-("MPUG_zc2",        -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
-
-("MPUG_xsens",      0.9,        1,          1.1,        "f", "default",     "Sensitivity correction"),
-("MPUG_ysens",      0.9,        1,          1.1,        "f", "default",     "Sensitivity correction"),
-("MPUG_zsens",      0.9,        1,          1.1,        "f", "default",     "Sensitivity correction"),
-
-("MPUG_xpol",       -1,         1,          1,          "i", "polarity",    "NULL"),
-("MPUG_ypol",       -1,         1,          1,          "i", "polarity",    "NULL"),
-("MPUG_zpol",       -1,         1,          1,          "i", "polarity",    "NULL"),
-("MPUG_sortmtrx",   0,          0b100010001,1,          "u", "sort_mtrx",   "Sorting matrix for acquired gyro values\\nto correspond with real device axis"),
-
-("MPUG_zerocnt",    512,        2048,       16384,      "i", "default",     "Sample count for zeroing procedure"),
-("MPUG_zeroflen",   2,          512,        2048,       "i", "default",     "Filter length used in zero calibration routine"),
-("MPUG_stillthr",   0,          0.1,        1,          "f", "default",     "Stillness threshold Rad/S"),
 
 #/**** PMU - pressure measurement unit ****/
 #// coefficients for thermal compensation

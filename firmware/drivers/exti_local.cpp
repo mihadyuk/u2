@@ -2,7 +2,7 @@
 
 #include "exti_local.hpp"
 #include "adis.hpp"
-#include "marg_worker.hpp"
+#include "marg.hpp"
 #include "lsm303_mag.hpp"
 
 /*

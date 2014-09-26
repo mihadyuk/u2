@@ -33,7 +33,7 @@
 #define MPUREG_INT_ENABLE       0x38
 #define MPUREG_INT_STATUS       0x3A /* 1 status bite and 14 bytes of data */
 #define MPUREG_TEMP_OUT         0x41  /* MSB. Next byte is LSB */
-#define MPUREG_USRE_CTRL        0x6A
+#define MPUREG_USER_CTRL        0x6A
   #define FIFO_EN               (1 << 6)
   #define I2C_MST_EN            (1 << 5) /* clear this bit to use I2C bypass mode */
   #define FIFO_RESET            (1 << 2)
@@ -90,6 +90,8 @@ static const float acc_sens_array[4] = {
     (8 * 9.81)  / 32768.0,
     (16 * 9.81) / 32768.0
 };
+
+uint8_t buf[2] __attribute__((section(".ccm")));
 
 /*
  *******************************************************************************
@@ -207,6 +209,65 @@ msg_t MPU6050::set_acc_fs(uint8_t fs) {
 /**
  *
  */
+msg_t MPU6050::set_dlpf_smplrt(uint8_t lpf, uint8_t smplrt) {
+
+  msg_t ret1 = MSG_OK;
+  msg_t ret2 = MSG_OK;
+
+  /* */
+  txbuf[0] = MPUREG_SMPLRT_DIV;
+  if (lpf > 0){
+    /* sample rate. If (LPF > 0): (1000 / (val + 1))
+     *                      else: (8000 / (val + 1)) */
+    txbuf[1] = smplrt - 1; /* val */
+    /*    Bandwidth   Delay
+    DLPF      (Hz)    (ms)
+    1         188     1.9
+    2         98      2.8
+    3         42      4.8
+    4         20      8.3
+    5         10      13.4
+    6         5       18.6
+    7   reserved*/
+    txbuf[2] = lpf; /* LPF */
+  }
+  else{
+    txbuf[1] = 7; /* 8000 / (val + 1) */
+    txbuf[2] = 0; /* LPF */
+  }
+  if (MSG_OK != transmit(txbuf, 3, NULL, 0))
+    return MSG_RESET;
+
+  /* FIFO settings */
+  if (lpf > 0){
+    txbuf[0] = MPUREG_FIFO_EN;
+    txbuf[1] = 0;
+    ret1 = transmit(txbuf, 2, NULL, 0);
+
+    txbuf[0] = MPUREG_USER_CTRL;
+    txbuf[1] = FIFO_RESET;
+    ret2 = transmit(txbuf, 2, NULL, 0);
+  }
+  else {
+    txbuf[0] = MPUREG_FIFO_EN;
+    txbuf[1] = FIFO_DATA_BITS;
+    ret1 = transmit(txbuf, 2, NULL, 0);
+
+    txbuf[0] = MPUREG_USER_CTRL;
+    txbuf[1] = FIFO_EN;
+    ret2 = transmit(txbuf, 2, NULL, 0);
+  }
+
+  /**/
+  if ((MSG_OK == ret1) && (MSG_OK == ret2))
+    return MSG_OK;
+  else
+    return MSG_RESET;
+}
+
+/**
+ *
+ */
 msg_t MPU6050::hw_init_full(void){
 
   msg_t ret = MSG_RESET;
@@ -237,48 +298,13 @@ msg_t MPU6050::hw_init_full(void){
   osalDbgAssert(MSG_OK == ret, "MPU6050 does not responding");
   osalThreadSleepMilliseconds(1);
 
-#if !MPU6050_1KHZ
-  txbuf[0] = MPUREG_SMPLRT_DIV;
-  /* sample rate. If (LPF > 0): (1000 / (val + 1))
-   *                      else: (8000 / (val + 1)) */
-  txbuf[1] = 9; /* val */
-
-  /*    Bandwidth   Delay
-  DLPF      (Hz)    (ms)
-  1         188     1.9
-  2         98      2.8
-  3         42      4.8
-  4         20      8.3
-  5         10      13.4
-  6         5       18.6
-  7   reserved*/
-  txbuf[2] = 5; /* LPF */
-  transmit(txbuf, 3, NULL, 0);
-  osalThreadSleepMilliseconds(5);
-#else
-  txbuf[0] = MPUREG_SMPLRT_DIV;
-  txbuf[1] = 7; /* val */
-  txbuf[2] = 0; /* LPF */
-  ret = transmit(txbuf, 3, NULL, 0);
-  osalDbgAssert(MSG_OK == ret, "MPU6050 does not responding");
-  osalThreadSleepMilliseconds(5);
-#endif
-
   txbuf[0] = MPUREG_INT_PIN_CFG;
   txbuf[1] = INT_RD_CLEAR | I2C_BYPASS_EN;
   ret = transmit(txbuf, 2, NULL, 0);
   osalDbgAssert(MSG_OK == ret, "MPU6050 does not responding");
   osalThreadSleepMilliseconds(1);
 
-  txbuf[0] = MPUREG_FIFO_EN;
-  txbuf[1] = FIFO_DATA_BITS;
-  ret = transmit(txbuf, 2, NULL, 0);
-  osalDbgAssert(MSG_OK == ret, "MPU6050 does not responding");
-  osalThreadSleepMilliseconds(1);
-
-  txbuf[0] = MPUREG_USRE_CTRL;
-  txbuf[1] = FIFO_EN;
-  ret = transmit(txbuf, 2, NULL, 0);
+  ret = set_dlpf_smplrt(*this->dlpf, *this->smplrt_div);
   osalDbgAssert(MSG_OK == ret, "MPU6050 does not responding");
   osalThreadSleepMilliseconds(1);
 
@@ -295,25 +321,38 @@ msg_t MPU6050::hw_init_full(void){
 /**
  *
  */
-msg_t MPU6050::refresh_fs(void) {
+msg_t MPU6050::refresh_settings(void) {
 
-  uint8_t tmp;
+  uint8_t fs, lpf, smplrt;
+
   msg_t ret1 = MSG_OK;
   msg_t ret2 = MSG_OK;
+  msg_t ret3 = MSG_OK;
 
-  tmp = *gyr_fs;
-  if (tmp != gyr_fs_prev){
-    ret1 = set_gyr_fs(tmp);
-    gyr_fs_prev = tmp;
+  /* gyr full scale */
+  fs = *gyr_fs;
+  if (fs != gyr_fs_prev){
+    ret1 = set_gyr_fs(fs);
+    gyr_fs_prev = fs;
   }
 
-  tmp = *acc_fs;
-  if (tmp != acc_fs_prev){
-    ret2 = set_acc_fs(tmp);
-    acc_fs_prev = tmp;
+  /* acc full scale */
+  fs = *acc_fs;
+  if (fs != acc_fs_prev){
+    ret2 = set_acc_fs(fs);
+    acc_fs_prev = fs;
   }
 
-  if ((MSG_OK == ret1) && (MSG_OK == ret2))
+  /* low pass filter and sample rate */
+  lpf = *dlpf;
+  smplrt = *smplrt_div;
+  if ((lpf != dlpf_prev) || (smplrt != smplrt_prev)){
+    ret3 = set_dlpf_smplrt(lpf, smplrt);
+    dlpf_prev = lpf;
+    smplrt_prev = smplrt;
+  }
+
+  if ((MSG_OK == ret1) && (MSG_OK == ret2) && (MSG_OK == ret3))
     return MSG_OK;
   else
     return MSG_RESET;
@@ -348,11 +387,16 @@ I2CSensor(i2cdp, addr)
  */
 msg_t MPU6050::start(void) {
 
-  param_registry.valueSearch("MPU_gyr_fs",  &gyr_fs);
-  param_registry.valueSearch("MPU_acc_fs",  &acc_fs);
-  param_registry.valueSearch("MPU_fir_f",   &fir_f);
+  param_registry.valueSearch("MPU_gyr_fs",    &gyr_fs);
+  param_registry.valueSearch("MPU_acc_fs",    &acc_fs);
+  param_registry.valueSearch("MPU_fir_f",     &fir_f);
+  param_registry.valueSearch("MPU_dlpf",      &dlpf);
+  param_registry.valueSearch("MPU_smplrt_div",&smplrt_div);
+
   gyr_fs_prev = *gyr_fs;
   acc_fs_prev = *acc_fs;
+  dlpf_prev   = *dlpf;
+  smplrt_prev = *smplrt_div;
 
   /* init hardware */
   if (! hw_initialized){
@@ -378,9 +422,11 @@ void MPU6050::stop(void){
  *
  */
 msg_t MPU6050::get(float *acc, float *gyr) {
-  osalDbgCheck(true == ready);
+
   msg_t ret1 = MSG_RESET;
   msg_t ret2 = MSG_RESET;
+
+  osalDbgCheck(true == ready);
 
   txbuf[0] = MPUREG_INT_STATUS;
   ret1 = transmit(txbuf, 1, rxbuf, sizeof(rxbuf));
@@ -393,7 +439,7 @@ msg_t MPU6050::get(float *acc, float *gyr) {
   if (nullptr != acc)
     pickle_acc(acc);
 
-  ret2 = refresh_fs();
+  ret2 = refresh_settings();
 
   if ((MSG_OK == ret1) && (MSG_OK == ret2))
     return MSG_OK;
