@@ -8,6 +8,7 @@
 
 #include "mpu6050_fir_taps.h"
 #include "array_len.hpp"
+#include "putinrange.hpp"
 
 /*
  ******************************************************************************
@@ -26,7 +27,8 @@
 #define MPUREG_GYRO_CONFIG      0x1B
 #define MPUREG_ACCEL_CONFIG     0x1C
 #define MPUREG_FIFO_EN          0x23
-  #define FIFO_DATA_BITS          0b1111000 /* accel and gyro */
+  #define FIFO_DATA_BITS        0b1111000 /* accel and gyro */
+  #define FIFO_MODE             (1 << 6)
 #define MPUREG_INT_PIN_CFG      0x37
   #define I2C_BYPASS_EN         (1 << 1)
   #define INT_RD_CLEAR          (1 << 4) /* clear int flag in register on any read operation */
@@ -141,15 +143,29 @@ void MPU6050::acc_egg_comp(float *result){
 /**
  *
  */
+static void toggle_endiannes16(uint8_t *data, const size_t len){
+
+  osalDbgCheck(0 == (len % 2));
+  uint8_t tmp;
+
+  for (size_t i=0; i<len; i+=2){
+    tmp = data[i];
+    data[i] = data[i+1];
+    data[i+1] = tmp;
+  }
+}
+
+/**
+ *
+ */
 void MPU6050::pickle_gyr(float *result){
 
   int16_t raw[3];
   uint8_t *b = &rxbuf[MPU_GYRO_OFFSET];
   float sens = this->gyr_sens();
 
-  raw[0] = static_cast<int16_t>(pack8to16be(&b[0]));
-  raw[1] = static_cast<int16_t>(pack8to16be(&b[2]));
-  raw[2] = static_cast<int16_t>(pack8to16be(&b[4]));
+  toggle_endiannes16(b, 6);
+  memcpy(raw, b, sizeof(raw));
   gyr2raw_imu(raw);
 
   result[0] = sens * raw[0];
@@ -229,11 +245,11 @@ msg_t MPU6050::set_dlpf_smplrt(uint8_t lpf, uint8_t smplrt) {
     5         10      13.4
     6         5       18.6
     7   reserved*/
-    txbuf[2] = lpf; /* LPF */
+    txbuf[2] = lpf | FIFO_MODE; /* LPF */
   }
   else{
     txbuf[1] = 7; /* 8000 / (val + 1) */
-    txbuf[2] = 0; /* LPF */
+    txbuf[2] = 0 | FIFO_MODE; /* LPF */
   }
   if (MSG_OK != transmit(txbuf, 3, NULL, 0))
     return MSG_RESET;
@@ -358,6 +374,74 @@ msg_t MPU6050::refresh_settings(void) {
     return MSG_RESET;
 }
 
+/**
+ *
+ */
+msg_t MPU6050::get_simple(float *acc, float *gyr) {
+
+  msg_t ret = MSG_RESET;
+
+  txbuf[0] = MPUREG_INT_STATUS;
+  ret = transmit(txbuf, 1, rxbuf, sizeof(rxbuf));
+  pickle_temp(&temperature);
+  if (nullptr != gyr)
+    pickle_gyr(gyr);
+  if (nullptr != acc)
+    pickle_acc(acc);
+  fifo_remainder = 0;
+
+  return ret;
+}
+
+/**
+ *
+ */
+void MPU6050::pickle_fifo(float *acc, float *gyr, const size_t sample_cnt) {
+
+  (void)acc;
+  (void)sample_cnt;
+
+  int16_t raw[3];
+  float sens = this->gyr_sens();
+
+  memcpy(raw, &rxbuf_fifo[3], sizeof(raw));
+  gyr2raw_imu(raw);
+
+  gyr[0] = sens * raw[0];
+  gyr[1] = sens * raw[1];
+  gyr[2] = sens * raw[2];
+
+  gyro_thermo_comp(gyr);
+}
+
+/**
+ *
+ */
+static uint16_t fifo_cnt[256];
+static uint8_t i = 0;
+msg_t MPU6050::get_fifo(float *acc, float *gyr) {
+
+  msg_t ret = MSG_RESET;
+  size_t recvd;
+  size_t sample_cnt;
+
+  txbuf[0] = MPUREG_FIFO_CNT;
+  ret = transmit(txbuf, 1, rxbuf, 2);
+  recvd = rxbuf[0] * 256 + rxbuf[1];
+  fifo_cnt[i] = recvd;
+  i++;
+  recvd = putinrange(recvd, 0, sizeof(rxbuf_fifo));
+  sample_cnt = (recvd/(2*6)) * 12;
+
+  txbuf[0] = MPUREG_FIFO_DATA;
+  ret = transmit(txbuf, 1, (uint8_t *)rxbuf_fifo, sample_cnt);
+  toggle_endiannes16((uint8_t *)rxbuf_fifo, sample_cnt * 2);
+
+  pickle_fifo(acc, gyr, 10);
+
+  return ret;
+}
+
 /*
  *******************************************************************************
  * EXPORTED FUNCTIONS
@@ -428,16 +512,10 @@ msg_t MPU6050::get(float *acc, float *gyr) {
 
   osalDbgCheck(true == ready);
 
-  txbuf[0] = MPUREG_INT_STATUS;
-  ret1 = transmit(txbuf, 1, rxbuf, sizeof(rxbuf));
-
-  pickle_temp(&temperature);
-
-  if (nullptr != gyr)
-    pickle_gyr(gyr);
-
-  if (nullptr != acc)
-    pickle_acc(acc);
+  if (*dlpf > 0)
+    ret1 = get_simple(acc, gyr);
+  else
+    ret1 = get_fifo(acc, gyr);
 
   ret2 = refresh_settings();
 

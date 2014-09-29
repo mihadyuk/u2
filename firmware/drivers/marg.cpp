@@ -184,20 +184,20 @@ void MPU6050ISR(EXTDriver *extp, expchannel_t channel) {
   (void)extp;
   (void)channel;
 
+  osalSysLockFromISR();
+
   if (0 == *mpu_dlpf){ /* we need software rate divider */
     mpu_int_counter++;
     if (mpu_int_counter >= *mpu_smplrt_div){
-      osalSysLockFromISR();
       mpu_int_counter = 0;
       marg_sem.signalI();
-      osalSysUnlockFromISR();
     }
   }
   else { /* signal semaphore every interrupt pulse */
-    osalSysLockFromISR();
     marg_sem.signalI();
-    osalSysUnlockFromISR();
   }
+
+  osalSysUnlockFromISR();
 }
 
 

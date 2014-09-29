@@ -10,7 +10,7 @@
 #define MPU_TX_DEPTH        4
 
 #define MPU6050_1KHZ        FALSE
-#define MPU6050_FIR_LEN     65
+#define MPU6050_FIR_LEN     257
 
 class MPU6050: protected I2CSensor{
 public:
@@ -20,6 +20,8 @@ public:
   void stop(void);
   float update_perod(void);
 private:
+  msg_t get_simple(float *acc, float *gyr);
+  msg_t get_fifo(float *acc, float *gyr);
   msg_t set_gyr_fs(uint8_t fs);
   msg_t set_acc_fs(uint8_t fs);
   msg_t set_dlpf_smplrt(uint8_t lpf, uint8_t smplrt);
@@ -29,6 +31,7 @@ private:
   void gyro_thermo_comp(float *result);
   void acc_egg_comp(float *result);
   void pickle_gyr(float *result);
+  void pickle_fifo(float *acc, float *gyr, const size_t sample_cnt);
   void pickle_acc(float *result);
   void pickle_temp(float *result);
   msg_t hw_init_full(void);
@@ -42,6 +45,8 @@ private:
   bool hw_initialized;
   FIR<float, int16_t, MPU6050_FIR_LEN> acc_fir[3];
   FIR<float, int16_t, MPU6050_FIR_LEN> gyr_fir[3];
+  uint16_t fifo_remainder = 0;
+  int16_t rxbuf_fifo[1 + 6 * 40];
   uint8_t rxbuf[MPU_RX_DEPTH];
   uint8_t txbuf[MPU_TX_DEPTH];
   uint8_t gyr_fs_prev;
