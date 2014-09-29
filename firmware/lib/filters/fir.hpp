@@ -102,8 +102,8 @@ public:
   }
 
   /**
-   * @brief   this variant works twice faster for double precision type
-   *          because it uses reduced number of multiplication operations
+   * @brief   this variant works twice faster for MCU without hardware
+   *          multiplication
    */
   T update_half(dataT sample){
 
