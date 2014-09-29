@@ -41,7 +41,7 @@ void firTest(void){
     samplef[4] = sample;
     samplef[5] = sample;
     f1t0 = chSysGetRealtimeCounterX();
-    fir_test.update_unroll(filter3, samplef);
+    fir_test.update_reference(filter3, samplef);
     f1t1 = chSysGetRealtimeCounterX() - f1t0;
     time_us_test[N] = f1t1;
 

@@ -102,18 +102,18 @@ public:
   }
 
   /**
-   *
+   * @brief   this variant works twice faster for double precision type
+   *          because it uses reduced number of multiplication operations
    */
   T update_half(dataT sample){
 
-    /* shift */
-    for (size_t i=L-1; i>0; i--)
-      X[i] = X[i-1];
-    X[0] = sample;
-
+    T s = 0;
 
     const size_t Nblock = (L - (L % 8)) / 2;
-    T s = 0;
+
+    /* shift */
+    memmove(X, &X[1], sizeof(X) - sizeof(dataT));
+    X[L-1] = sample;
 
     /* main filter */
     for (size_t k=0; k<Nblock; k+=4) {
@@ -141,6 +141,7 @@ public:
       s += (X[k] + X[L-1-k]) * kernel[k];
     }
 
+    /* tail of tail */
     if (L % 2 == 1)
       s += X[L/2 + 1] * kernel[L/2 + 1];
 

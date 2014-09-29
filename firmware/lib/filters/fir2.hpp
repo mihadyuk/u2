@@ -15,7 +15,8 @@ public:
    * @brief   Default constructor
    */
   FIR2(void):
-  kernel(nullptr)
+  kernel(nullptr),
+  tip(L)
   {
     return;
   }
@@ -29,7 +30,8 @@ public:
    * @param[in] len             length of filter
    */
   FIR2(const T *tapsp, size_t len):
-  kernel(tapsp)
+  kernel(tapsp),
+  tip(L)
   {
     ctor_impl(tapsp, len, 0);
   }
@@ -43,7 +45,8 @@ public:
    * @param[in] initial_value   initial value for gapless filter start
    */
   FIR2(const T *tapsp, size_t len, dataT initial_value):
-  kernel(tapsp)
+  kernel(tapsp),
+  tip(L)
   {
     ctor_impl(tapsp, len, initial_value);
   }
@@ -80,8 +83,6 @@ public:
     }
   }
 
-
-
   /**
    * @brief     Slow filter implementation for reference and self test purpose.
    *
@@ -107,6 +108,28 @@ public:
     }
   }
 
+  /**
+   *
+   */
+  void update_no_move(T *result, const dataT *sample) {
+
+    tip--;
+    memcpy(&X[tip], sample, sizeof(dataT) * N);
+
+    /* prepare working area */
+    for (size_t n=0; n<N; n++)
+      result[n] = 0;
+
+    convolution_engine(result, kernel,           &X[tip*N], L - tip);
+    convolution_engine(result, &kernel[L - tip], X,         tip);
+
+    if(0 == tip)
+      tip = L;
+  }
+
+  /**
+   *
+   */
   void update_unroll(T *result, const dataT *sample){
 
     /* shift and add new sample */
@@ -168,6 +191,50 @@ private:
   }
 
   /**
+   *
+   */
+  void convolution_engine(T *ret, const T *core, const dataT *data,
+                                      const size_t len){
+
+    T tmp[N] = {0};
+
+//    for (size_t n=0; n<N; n++)
+//      tmp[n] = 0;
+
+    /* main filter */
+    const size_t Nblock = len & ~3;
+    for (size_t k=0; k<Nblock; k+=4) {
+      T t0, t1, t2, t3;
+
+      t0 = core[k];
+      t1 = core[k+1];
+      t2 = core[k+2];
+      t3 = core[k+3];
+
+      for (size_t n=0; n<N; n++) {
+        T x0, x1, x2, x3;
+
+        x0 = data[(k+0)*N+n];
+        x1 = data[(k+1)*N+n];
+        x2 = data[(k+2)*N+n];
+        x3 = data[(k+3)*N+n];
+
+        tmp[n] += x0*t0 + x1*t1 + x2*t2 + x3*t3;
+      }
+    }
+
+    /* tail */
+    for (size_t k=Nblock; k<len; k++){
+      for (size_t n=0; n<N; n++) {
+        tmp[n] += data[k*N+n] * core[k];
+      }
+    }
+
+    for (size_t n=0; n<N; n++)
+      ret[n] = tmp[n];
+  }
+
+  /**
    * Pointer to filter kernel
    */
   const T *kernel;
@@ -176,6 +243,11 @@ private:
    * Filter state(s)
    */
   dataT X[L*N];
+
+  /**
+   * Buffer head for shift avoidance
+   */
+  size_t tip;
 };
 
 #endif /* FIR2_HPP_ */
