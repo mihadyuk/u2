@@ -12,7 +12,8 @@ public:
    * @brief   Default constructor
    */
   FIR(void):
-  kernel(NULL)
+  kernel(NULL),
+  tip(N)
   {
     return;
   }
@@ -26,7 +27,8 @@ public:
    * @param[in] len             length of filter
    */
   FIR(const T *tapsp, size_t len):
-  kernel(tapsp)
+  kernel(tapsp),
+  tip(N)
   {
     ctor_impl(tapsp, len, 0);
   }
@@ -40,7 +42,8 @@ public:
    * @param[in] initial_value   initial value for gapless filter start
    */
   FIR(const T *tapsp, size_t len, dataT initial_value):
-  kernel(tapsp)
+  kernel(tapsp),
+  tip(N)
   {
     ctor_impl(tapsp, len, initial_value);
   }
@@ -113,8 +116,6 @@ private:
 
     for (size_t i=0; i<N; i++)
       X[i] = initial_value;
-
-    tip = N;
   }
 
   /**
