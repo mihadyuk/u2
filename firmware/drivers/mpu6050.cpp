@@ -38,7 +38,7 @@
 #define MPUREG_USER_CTRL        0x6A
   #define FIFO_EN               (1 << 6)
   #define I2C_MST_EN            (1 << 5) /* clear this bit to use I2C bypass mode */
-  #define FIFO_RESET            (1 << 2)
+  #define FIFO_RST            (1 << 2)
 #define MPUREG_PWR_MGMT1        0x6B
   #define DEVICE_RESET          (1 << 7)
 #define MPUREG_PWR_MGMT2        0x6C
@@ -66,6 +66,12 @@ typedef enum {
   MPU_ACC_FULL_SCALE_8,
   MPU_ACC_FULL_SCALE_16
 } acc_sens_t;
+
+/* reset fifo if it contains such amount of bytes */
+#define FIFO_RESET_THRESHOLD  1024
+
+/* how many bytes in single fifo sample */
+#define BYTES_IN_SAMPLE       12
 
 /*
  ******************************************************************************
@@ -261,7 +267,7 @@ msg_t MPU6050::set_dlpf_smplrt(uint8_t lpf, uint8_t smplrt) {
     ret1 = transmit(txbuf, 2, NULL, 0);
 
     txbuf[0] = MPUREG_USER_CTRL;
-    txbuf[1] = FIFO_RESET;
+    txbuf[1] = FIFO_RST;
     ret2 = transmit(txbuf, 2, NULL, 0);
   }
   else {
@@ -288,17 +294,17 @@ msg_t MPU6050::hw_init_full(void){
 
   msg_t ret = MSG_RESET;
 
-  txbuf[0] = MPUREG_PWR_MGMT1;
-  txbuf[1] = 0b10000000; /* soft reset */
-  ret = transmit(txbuf, 2, NULL, 0);
-  osalDbgAssert(MSG_OK == ret, "MPU6050 does not responding");
-  osalThreadSleepMilliseconds(60);
-
   txbuf[0] = MPUREG_WHO_AM_I;
   ret = transmit(txbuf, 1, rxbuf, 1);
   osalDbgAssert(MSG_OK == ret, "MPU6050 does not responding");
   osalDbgAssert(WHO_AM_I_VAL == rxbuf[0], "MPU6050 wrong id");
   osalThreadSleepMilliseconds(1);
+
+  txbuf[0] = MPUREG_PWR_MGMT1;
+  txbuf[1] = 0b10000000; /* soft reset */
+  ret = transmit(txbuf, 2, NULL, 0);
+  osalDbgAssert(MSG_OK == ret, "MPU6050 does not responding");
+  osalThreadSleepMilliseconds(60);
 
   txbuf[0] = MPUREG_PWR_MGMT1;
   txbuf[1] = 1; /* select X gyro as clock source */
@@ -396,48 +402,71 @@ msg_t MPU6050::get_simple(float *acc, float *gyr) {
 /**
  *
  */
+static time_measurement_t fir_tmu;
+
 void MPU6050::pickle_fifo(float *acc, float *gyr, const size_t sample_cnt) {
 
-  (void)acc;
-  (void)sample_cnt;
+  float sens;
+  const size_t acc_fifo_offset = 0;
+  const size_t gyr_fifo_offset = 3;
 
-  int16_t raw[3];
-  float sens = this->gyr_sens();
+  acc2raw_imu(&rxbuf_fifo[acc_fifo_offset]);
+  gyr2raw_imu(&rxbuf_fifo[gyr_fifo_offset]);
 
-  memcpy(raw, &rxbuf_fifo[3], sizeof(raw));
-  gyr2raw_imu(raw);
+  if (sample_cnt == 10)
+    chTMStartMeasurementX(&fir_tmu);
+  for (size_t n=0; n<sample_cnt; n++) {
+    for (size_t i=0; i<3; i++){
+      size_t shift = n * BYTES_IN_SAMPLE / 2 + i;
+      acc[i] = acc_fir[i].update(rxbuf_fifo[shift + acc_fifo_offset]);
+      gyr[i] = gyr_fir[i].update(rxbuf_fifo[shift + gyr_fifo_offset]);
+    }
+  }
+  if (sample_cnt == 10)
+    chTMStopMeasurementX(&fir_tmu);
 
-  gyr[0] = sens * raw[0];
-  gyr[1] = sens * raw[1];
-  gyr[2] = sens * raw[2];
+  /* acc */
+  sens = this->acc_sens();
+  acc[0] *= sens;
+  acc[1] *= sens;
+  acc[2] *= sens;
+  acc_egg_comp(acc);
 
+  /* gyr */
+  sens = this->gyr_sens();
+  gyr[0] *= sens;
+  gyr[1] *= sens;
+  gyr[2] *= sens;
   gyro_thermo_comp(gyr);
 }
 
 /**
  *
  */
-static uint16_t fifo_cnt[256];
-static uint8_t i = 0;
 msg_t MPU6050::get_fifo(float *acc, float *gyr) {
 
   msg_t ret = MSG_RESET;
   size_t recvd;
-  size_t sample_cnt;
 
   txbuf[0] = MPUREG_FIFO_CNT;
   ret = transmit(txbuf, 1, rxbuf, 2);
-  recvd = rxbuf[0] * 256 + rxbuf[1];
-  fifo_cnt[i] = recvd;
-  i++;
-  recvd = putinrange(recvd, 0, sizeof(rxbuf_fifo));
-  sample_cnt = (recvd/(2*6)) * 12;
 
-  txbuf[0] = MPUREG_FIFO_DATA;
-  ret = transmit(txbuf, 1, (uint8_t *)rxbuf_fifo, sample_cnt);
-  toggle_endiannes16((uint8_t *)rxbuf_fifo, sample_cnt * 2);
+  recvd = pack8to16be(rxbuf);
+  if (recvd >= FIFO_RESET_THRESHOLD) {
+    txbuf[0] = MPUREG_USER_CTRL;
+    txbuf[1] = FIFO_RST | FIFO_EN;
+    return transmit(txbuf, 2, NULL, 0);
+  }
+  else {
+    recvd = putinrange(recvd, 0, sizeof(rxbuf_fifo));
+    recvd = (recvd / BYTES_IN_SAMPLE) * BYTES_IN_SAMPLE;
 
-  pickle_fifo(acc, gyr, 10);
+    txbuf[0] = MPUREG_FIFO_DATA;
+    ret = transmit(txbuf, 1, (uint8_t*)rxbuf_fifo, recvd);
+    toggle_endiannes16((uint8_t*)rxbuf_fifo, recvd);
+
+    pickle_fifo(acc, gyr, recvd/BYTES_IN_SAMPLE);
+  }
 
   return ret;
 }
@@ -454,6 +483,8 @@ msg_t MPU6050::get_fifo(float *acc, float *gyr) {
 MPU6050::MPU6050(I2CDriver *i2cdp, i2caddr_t addr):
 I2CSensor(i2cdp, addr)
 {
+  chTMObjectInit(&fir_tmu);
+
   ready = false;
   hw_initialized = false;
 
@@ -531,4 +562,5 @@ msg_t MPU6050::get(float *acc, float *gyr) {
 float MPU6050::update_perod(void){
   return 0.01;
 }
+
 

@@ -46,7 +46,7 @@ private:
   FIR<float, int16_t, MPU6050_FIR_LEN> acc_fir[3];
   FIR<float, int16_t, MPU6050_FIR_LEN> gyr_fir[3];
   uint16_t fifo_remainder = 0;
-  int16_t rxbuf_fifo[1 + 6 * 40];
+  int16_t rxbuf_fifo[960 / 2];
   uint8_t rxbuf[MPU_RX_DEPTH];
   uint8_t txbuf[MPU_TX_DEPTH];
   uint8_t gyr_fs_prev;
