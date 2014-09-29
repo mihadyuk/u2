@@ -3,6 +3,7 @@
 
 #include "i2c_sensor.hpp"
 #include "fir.hpp"
+#include "fir2.hpp"
 
 #define mpu6050addr         0b1101000
 
