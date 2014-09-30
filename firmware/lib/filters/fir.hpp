@@ -53,11 +53,11 @@ public:
   /**
    * @brief     Change filter kernel on the fly
    *
-   * @param[in] tapsp           pointer to transformation core
+   * @param[in] tapsp           pointer to transformation kernel
    * @param[in] len             length of filter
    */
-  void setTaps(const T *tapsp, size_t len) {
-    osalDbgCheck(L == len);
+  void setKernel(const T *tapsp, size_t len) {
+    osalDbgCheck((L == len) && (nullptr != tapsp));
     kernel = tapsp;
   }
 
@@ -84,31 +84,11 @@ public:
   }
 
   /**
-   *
+   * @brief   this variant works faster for MCUs without hardware multiplication
    */
-  T update(dataT sample){
-    T s;
-
-    tip--;
-    X[tip] = sample;
-
-    s = convolution_engine(kernel, &X[tip], L - tip)
-      + convolution_engine(&kernel[L - tip], X, tip);
-
-    if(0 == tip)
-      tip = L;
-
-    return s;
-  }
-
-  /**
-   * @brief   this variant works twice faster for MCU without hardware
-   *          multiplication
-   */
-  T update_half(dataT sample){
+  T update_half_mul(dataT sample) {
 
     T s = 0;
-
     const size_t Nblock = (L - (L % 8)) / 2;
 
     /* shift */
@@ -143,7 +123,25 @@ public:
 
     /* tail of tail */
     if (L % 2 == 1)
-      s += X[L/2 + 1] * kernel[L/2 + 1];
+      s += X[L/2] * kernel[L/2];
+
+    return s;
+  }
+
+  /**
+   *
+   */
+  T update(dataT sample){
+    T s;
+
+    tip--;
+    X[tip] = sample;
+
+    s = convolution_engine(kernel, &X[tip], L - tip)
+      + convolution_engine(&kernel[L - tip], X, tip);
+
+    if(0 == tip)
+      tip = L;
 
     return s;
   }

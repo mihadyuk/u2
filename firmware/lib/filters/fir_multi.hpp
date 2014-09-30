@@ -1,5 +1,5 @@
-#ifndef FIR2_HPP_
-#define FIR2_HPP_
+#ifndef FIR_MULTI_HPP_
+#define FIR_MULTI_HPP_
 
 /**
  * @brief   FIR filter.
@@ -120,8 +120,8 @@ public:
     for (size_t n=0; n<N; n++)
       result[n] = 0;
 
-    convolution_engine(result, kernel,           &X[tip*N], L - tip);
-    convolution_engine(result, &kernel[L - tip], X,         tip);
+    convolution_engine(result, kernel, &X[tip*N], L - tip);
+    convolution_engine(result, &kernel[L - tip], X, tip);
 
     if(0 == tip)
       tip = L;
@@ -193,13 +193,8 @@ private:
   /**
    *
    */
-  void convolution_engine(T *ret, const T *core, const dataT *data,
+  void convolution_engine(T *result, const T *core, const dataT *data,
                                       const size_t len){
-
-    T tmp[N] = {0};
-
-//    for (size_t n=0; n<N; n++)
-//      tmp[n] = 0;
 
     /* main filter */
     const size_t Nblock = len & ~3;
@@ -219,19 +214,16 @@ private:
         x2 = data[(k+2)*N+n];
         x3 = data[(k+3)*N+n];
 
-        tmp[n] += x0*t0 + x1*t1 + x2*t2 + x3*t3;
+        result[n] += x0*t0 + x1*t1 + x2*t2 + x3*t3;
       }
     }
 
     /* tail */
     for (size_t k=Nblock; k<len; k++){
       for (size_t n=0; n<N; n++) {
-        tmp[n] += data[k*N+n] * core[k];
+        result[n] += data[k*N+n] * core[k];
       }
     }
-
-    for (size_t n=0; n<N; n++)
-      ret[n] = tmp[n];
   }
 
   /**
@@ -250,4 +242,4 @@ private:
   size_t tip;
 };
 
-#endif /* FIR2_HPP_ */
+#endif /* FIR_MULTI_HPP_ */

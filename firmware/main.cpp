@@ -180,22 +180,11 @@ static float baro;
 static float quat[4];
 static float euler[3];
 
-#include "fir_test.hpp"
-
 int main(void) {
 
   halInit();
   System::init();
   chThdSleepMilliseconds(1);
-
-
-
-
-  firTest();
-
-
-
-
 
   endianness_test();
 

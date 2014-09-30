@@ -47,10 +47,10 @@ UsbDebouncer::UsbDebouncer(void) : plugged_flag(false) {
 bool UsbDebouncer::update(void){
   bool ret = false;
 
-  if (plugged_flag && (PAL_HIGH == palReadPad(GPIOE, GPIOE_USB_PRESENT)))
+  if (plugged_flag && usb_lld_is_plug_inserted())
     ret = true;
 
-  plugged_flag = (PAL_HIGH == palReadPad(GPIOE, GPIOE_USB_PRESENT));
+  plugged_flag = usb_lld_is_plug_inserted();
 
   return ret;
 }

@@ -3,7 +3,6 @@
 
 #include "i2c_sensor.hpp"
 #include "fir.hpp"
-#include "fir2.hpp"
 
 #define mpu6050addr         0b1101000
 
@@ -11,7 +10,7 @@
 #define MPU_TX_DEPTH        4
 
 #define MPU6050_1KHZ        FALSE
-#define MPU6050_FIR_LEN     257
+#define MPU6050_FIR_LEN     65
 
 class MPU6050: protected I2CSensor{
 public:
@@ -44,8 +43,8 @@ private:
   const uint32_t *smplrt_div = NULL;
   const int32_t  *fir_f = NULL;
   bool hw_initialized;
-  FIR<float, int16_t, MPU6050_FIR_LEN> acc_fir[3];
-  FIR<float, int16_t, MPU6050_FIR_LEN> gyr_fir[3];
+  FIR<float, float, MPU6050_FIR_LEN> *acc_fir;
+  FIR<float, float, MPU6050_FIR_LEN> *gyr_fir;
   uint16_t fifo_remainder = 0;
   int16_t rxbuf_fifo[960 / 2];
   uint8_t rxbuf[MPU_RX_DEPTH];

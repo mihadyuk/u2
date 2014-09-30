@@ -118,7 +118,7 @@
 
 #define GPIOE_GPS_PPS           0
 #define GPIOE_ADIS_INT          1
-#define GPIOE_USB_PRESENT              2
+#define GPIOE_USB_PRESENCE      2
 #define GPIOE_MPU9150_INT       3
 #define GPIOE_BMP085_EOC        4
 #define GPIOE_MAG_INT           5
@@ -126,7 +126,7 @@
 #define GPIOE_PIN7              7
 #define GPIOE_PIN8              8
 #define GPIOE_TIM1_PWM1         9
-#define GPIOE_PIN10             10
+#define GPIOE_USB_DISCOVERY     10
 #define GPIOE_TIM1_PWM2         11
 #define GPIOE_SDIO_DETECT       12
 #define GPIOE_TIM1_PWM3         13
@@ -161,7 +161,7 @@
  * GPIOA setup
  */
 #define VAL_GPIOA_MODER        (PIN_MODE_OUTPUT(GPIOA_GPS_ENABLE) |           \
-                                PIN_MODE_OUTPUT(GPIOA_NVRAM_PWR_EN) |        \
+                                PIN_MODE_OUTPUT(GPIOA_NVRAM_PWR_EN) |         \
                                 PIN_MODE_ALTERNATE(GPIOA_SONAR_PWM) |         \
                                 PIN_MODE_OUTPUT(GPIOA_AD_CLK) |               \
                                 PIN_MODE_OUTPUT(GPIOA_ADIS_NSS) |             \
@@ -177,7 +177,7 @@
                                 PIN_MODE_ALTERNATE(GPIOA_JTCK) |              \
                                 PIN_MODE_ALTERNATE(GPIOA_JTDI))
 #define VAL_GPIOA_OTYPER       (PIN_OTYPE_PUSHPULL(GPIOA_GPS_ENABLE) |        \
-                                PIN_OTYPE_OPENDRAIN(GPIOA_NVRAM_PWR_EN) |    \
+                                PIN_OTYPE_OPENDRAIN(GPIOA_NVRAM_PWR_EN) |     \
                                 PIN_OTYPE_PUSHPULL(GPIOA_SONAR_PWM) |         \
                                 PIN_OTYPE_PUSHPULL(GPIOA_AD_CLK) |            \
                                 PIN_OTYPE_PUSHPULL(GPIOA_ADIS_NSS) |          \
@@ -193,7 +193,7 @@
                                 PIN_OTYPE_PUSHPULL(GPIOA_JTCK) |              \
                                 PIN_OTYPE_PUSHPULL(GPIOA_JTDI))
 #define VAL_GPIOA_OSPEEDR      (PIN_OSPEED_2M(GPIOA_GPS_ENABLE) |             \
-                                PIN_OSPEED_2M(GPIOA_NVRAM_PWR_EN) |          \
+                                PIN_OSPEED_2M(GPIOA_NVRAM_PWR_EN) |           \
                                 PIN_OSPEED_2M(GPIOA_SONAR_PWM) |              \
                                 PIN_OSPEED_2M(GPIOA_AD_CLK) |                 \
                                 PIN_OSPEED_2M(GPIOA_ADIS_NSS) |               \
@@ -209,7 +209,7 @@
                                 PIN_OSPEED_100M(GPIOA_JTCK) |                 \
                                 PIN_OSPEED_100M(GPIOA_JTDI))
 #define VAL_GPIOA_PUPDR        (PIN_PUPDR_PULLUP(GPIOA_GPS_ENABLE) |          \
-                                PIN_PUPDR_FLOATING(GPIOA_NVRAM_PWR_EN) |     \
+                                PIN_PUPDR_FLOATING(GPIOA_NVRAM_PWR_EN) |      \
                                 PIN_PUPDR_PULLDOWN(GPIOA_SONAR_PWM) |         \
                                 PIN_PUPDR_PULLUP(GPIOA_AD_CLK) |              \
                                 PIN_PUPDR_PULLUP(GPIOA_ADIS_NSS) |            \
@@ -225,7 +225,7 @@
                                 PIN_PUPDR_FLOATING(GPIOA_JTCK) |              \
                                 PIN_PUPDR_FLOATING(GPIOA_JTDI))
 #define VAL_GPIOA_ODR          (PIN_ODR_HIGH(GPIOA_GPS_ENABLE) |              \
-                                PIN_ODR_LOW(GPIOA_NVRAM_PWR_EN) |            \
+                                PIN_ODR_LOW(GPIOA_NVRAM_PWR_EN) |             \
                                 PIN_ODR_HIGH(GPIOA_SONAR_PWM) |               \
                                 PIN_ODR_HIGH(GPIOA_AD_CLK) |                  \
                                 PIN_ODR_HIGH(GPIOA_ADIS_NSS) |                \
@@ -241,7 +241,7 @@
                                 PIN_ODR_HIGH(GPIOA_JTCK) |                    \
                                 PIN_ODR_HIGH(GPIOA_JTDI))
 #define VAL_GPIOA_AFRL         (PIN_AFIO_AF(GPIOA_GPS_ENABLE, 0) |            \
-                                PIN_AFIO_AF(GPIOA_NVRAM_PWR_EN, 0) |         \
+                                PIN_AFIO_AF(GPIOA_NVRAM_PWR_EN, 0) |          \
                                 PIN_AFIO_AF(GPIOA_SONAR_PWM, 1) |             \
                                 PIN_AFIO_AF(GPIOA_AD_CLK, 0) |                \
                                 PIN_AFIO_AF(GPIOA_ADIS_NSS, 0) |              \
@@ -561,7 +561,7 @@
  */
 #define VAL_GPIOE_MODER        (PIN_MODE_INPUT(GPIOE_GPS_PPS) |               \
                                 PIN_MODE_INPUT(GPIOE_ADIS_INT) |              \
-                                PIN_MODE_INPUT(GPIOE_USB_PRESENT) |           \
+                                PIN_MODE_INPUT(GPIOE_USB_PRESENCE) |          \
                                 PIN_MODE_INPUT(GPIOE_MPU9150_INT) |           \
                                 PIN_MODE_INPUT(GPIOE_BMP085_EOC) |            \
                                 PIN_MODE_INPUT(GPIOE_MAG_INT) |               \
@@ -569,7 +569,7 @@
                                 PIN_MODE_INPUT(GPIOE_PIN7) |                  \
                                 PIN_MODE_INPUT(GPIOE_PIN8) |                  \
                                 PIN_MODE_ALTERNATE(GPIOE_TIM1_PWM1) |         \
-                                PIN_MODE_INPUT(GPIOE_PIN10) |                 \
+                                PIN_MODE_INPUT(GPIOE_USB_DISCOVERY) |         \
                                 PIN_MODE_ALTERNATE(GPIOE_TIM1_PWM2) |         \
                                 PIN_MODE_INPUT(GPIOE_SDIO_DETECT) |           \
                                 PIN_MODE_ALTERNATE(GPIOE_TIM1_PWM3) |         \
@@ -577,7 +577,7 @@
                                 PIN_MODE_OUTPUT(GPIOE_SDIO_PWR_EN))
 #define VAL_GPIOE_OTYPER       (PIN_OTYPE_PUSHPULL(GPIOE_GPS_PPS) |           \
                                 PIN_OTYPE_PUSHPULL(GPIOE_ADIS_INT) |          \
-                                PIN_OTYPE_PUSHPULL(GPIOE_USB_PRESENT) |       \
+                                PIN_OTYPE_PUSHPULL(GPIOE_USB_PRESENCE) |      \
                                 PIN_OTYPE_PUSHPULL(GPIOE_MPU9150_INT) |       \
                                 PIN_OTYPE_PUSHPULL(GPIOE_BMP085_EOC) |        \
                                 PIN_OTYPE_PUSHPULL(GPIOE_MAG_INT) |           \
@@ -585,7 +585,7 @@
                                 PIN_OTYPE_PUSHPULL(GPIOE_PIN7) |              \
                                 PIN_OTYPE_PUSHPULL(GPIOE_PIN8) |              \
                                 PIN_OTYPE_PUSHPULL(GPIOE_TIM1_PWM1) |         \
-                                PIN_OTYPE_PUSHPULL(GPIOE_PIN10) |             \
+                                PIN_OTYPE_PUSHPULL(GPIOE_USB_DISCOVERY) |     \
                                 PIN_OTYPE_PUSHPULL(GPIOE_TIM1_PWM2) |         \
                                 PIN_OTYPE_PUSHPULL(GPIOE_SDIO_DETECT) |       \
                                 PIN_OTYPE_PUSHPULL(GPIOE_TIM1_PWM3) |         \
@@ -593,7 +593,7 @@
                                 PIN_OTYPE_OPENDRAIN(GPIOE_SDIO_PWR_EN))
 #define VAL_GPIOE_OSPEEDR      (PIN_OSPEED_2M(GPIOE_GPS_PPS) |                \
                                 PIN_OSPEED_2M(GPIOE_ADIS_INT) |               \
-                                PIN_OSPEED_2M(GPIOE_USB_PRESENT) |            \
+                                PIN_OSPEED_2M(GPIOE_USB_PRESENCE) |           \
                                 PIN_OSPEED_2M(GPIOE_MPU9150_INT) |            \
                                 PIN_OSPEED_2M(GPIOE_BMP085_EOC) |             \
                                 PIN_OSPEED_2M(GPIOE_MAG_INT) |                \
@@ -601,7 +601,7 @@
                                 PIN_OSPEED_2M(GPIOE_PIN7) |                   \
                                 PIN_OSPEED_2M(GPIOE_PIN8) |                   \
                                 PIN_OSPEED_2M(GPIOE_TIM1_PWM1) |              \
-                                PIN_OSPEED_2M(GPIOE_PIN10) |                  \
+                                PIN_OSPEED_2M(GPIOE_USB_DISCOVERY) |          \
                                 PIN_OSPEED_2M(GPIOE_TIM1_PWM2) |              \
                                 PIN_OSPEED_2M(GPIOE_SDIO_DETECT) |            \
                                 PIN_OSPEED_2M(GPIOE_TIM1_PWM3) |              \
@@ -609,7 +609,7 @@
                                 PIN_OSPEED_2M(GPIOE_SDIO_PWR_EN))
 #define VAL_GPIOE_PUPDR        (PIN_PUPDR_PULLDOWN(GPIOE_GPS_PPS) |           \
                                 PIN_PUPDR_PULLDOWN(GPIOE_ADIS_INT) |          \
-                                PIN_PUPDR_PULLDOWN(GPIOE_USB_PRESENT) |       \
+                                PIN_PUPDR_PULLDOWN(GPIOE_USB_PRESENCE) |      \
                                 PIN_PUPDR_PULLUP(GPIOE_MPU9150_INT) |         \
                                 PIN_PUPDR_PULLUP(GPIOE_BMP085_EOC) |          \
                                 PIN_PUPDR_PULLUP(GPIOE_MAG_INT) |             \
@@ -617,7 +617,7 @@
                                 PIN_PUPDR_FLOATING(GPIOE_PIN7) |              \
                                 PIN_PUPDR_FLOATING(GPIOE_PIN8) |              \
                                 PIN_PUPDR_PULLDOWN(GPIOE_TIM1_PWM1) |         \
-                                PIN_PUPDR_FLOATING(GPIOE_PIN10) |             \
+                                PIN_PUPDR_FLOATING(GPIOE_USB_DISCOVERY) |     \
                                 PIN_PUPDR_PULLDOWN(GPIOE_TIM1_PWM2) |         \
                                 PIN_PUPDR_PULLUP(GPIOE_SDIO_DETECT) |         \
                                 PIN_PUPDR_PULLDOWN(GPIOE_TIM1_PWM3) |         \
@@ -625,7 +625,7 @@
                                 PIN_PUPDR_FLOATING(GPIOE_SDIO_PWR_EN))
 #define VAL_GPIOE_ODR          (PIN_ODR_HIGH(GPIOE_GPS_PPS) |                 \
                                 PIN_ODR_HIGH(GPIOE_ADIS_INT) |                \
-                                PIN_ODR_HIGH(GPIOE_USB_PRESENT) |             \
+                                PIN_ODR_HIGH(GPIOE_USB_PRESENCE) |            \
                                 PIN_ODR_HIGH(GPIOE_MPU9150_INT) |             \
                                 PIN_ODR_HIGH(GPIOE_BMP085_EOC) |              \
                                 PIN_ODR_HIGH(GPIOE_MAG_INT) |                 \
@@ -633,7 +633,7 @@
                                 PIN_ODR_HIGH(GPIOE_PIN7) |                    \
                                 PIN_ODR_HIGH(GPIOE_PIN8) |                    \
                                 PIN_ODR_LOW(GPIOE_TIM1_PWM1) |                \
-                                PIN_ODR_HIGH(GPIOE_PIN10) |                   \
+                                PIN_ODR_HIGH(GPIOE_USB_DISCOVERY) |           \
                                 PIN_ODR_LOW(GPIOE_TIM1_PWM2) |                \
                                 PIN_ODR_HIGH(GPIOE_SDIO_DETECT) |             \
                                 PIN_ODR_LOW(GPIOE_TIM1_PWM3) |                \
@@ -641,7 +641,7 @@
                                 PIN_ODR_HIGH(GPIOE_SDIO_PWR_EN))
 #define VAL_GPIOE_AFRL         (PIN_AFIO_AF(GPIOE_GPS_PPS, 0) |               \
                                 PIN_AFIO_AF(GPIOE_ADIS_INT, 0) |              \
-                                PIN_AFIO_AF(GPIOE_USB_PRESENT, 0) |           \
+                                PIN_AFIO_AF(GPIOE_USB_PRESENCE, 0) |          \
                                 PIN_AFIO_AF(GPIOE_MPU9150_INT, 0) |           \
                                 PIN_AFIO_AF(GPIOE_BMP085_EOC, 0) |            \
                                 PIN_AFIO_AF(GPIOE_MAG_INT, 0) |               \
@@ -649,7 +649,7 @@
                                 PIN_AFIO_AF(GPIOE_PIN7, 0))
 #define VAL_GPIOE_AFRH         (PIN_AFIO_AF(GPIOE_PIN8, 0) |                  \
                                 PIN_AFIO_AF(GPIOE_TIM1_PWM1, 1) |             \
-                                PIN_AFIO_AF(GPIOE_PIN10, 0) |                 \
+                                PIN_AFIO_AF(GPIOE_USB_DISCOVERY, 0) |         \
                                 PIN_AFIO_AF(GPIOE_TIM1_PWM2, 1) |             \
                                 PIN_AFIO_AF(GPIOE_SDIO_DETECT, 0) |           \
                                 PIN_AFIO_AF(GPIOE_TIM1_PWM3, 1) |             \
@@ -705,6 +705,7 @@
 extern "C" {
 #endif
   void boardInit(void);
+  bool usb_lld_is_plug_inserted(void);
 #ifdef __cplusplus
 }
 #endif

@@ -89,3 +89,29 @@ bool sdc_lld_is_write_protected(SDCDriver *sdcp) {
   return FALSE;
 }
 #endif /* HAL_USE_SDC */
+
+#if HAL_USE_USB
+
+bool usb_lld_is_plug_inserted(void) {
+  return PAL_HIGH == palReadPad(GPIOE, GPIOE_USB_PRESENCE);
+}
+
+void usb_lld_connect(void) {
+  palSetPad(GPIOE, GPIOE_USB_DISCOVERY);
+  palSetPadMode(GPIOE, GPIOE_USB_DISCOVERY, PAL_MODE_OUTPUT_PUSHPULL);
+}
+
+void usb_lld_disconnect(void) {
+  palSetPadMode(GPIOE, GPIOE_USB_DISCOVERY, PAL_MODE_INPUT);
+}
+
+#endif /* HAL_USE_USB */
+
+
+
+
+
+
+
+
+

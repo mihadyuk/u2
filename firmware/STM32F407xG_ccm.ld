@@ -29,12 +29,12 @@ MEMORY
     ccmram : org = 0x10000000, len = 64k
 }
 
-INCLUDE rules.ld
-
 __ccmram_start__	= ORIGIN(ccmram);
 __ccmram_size__		= LENGTH(ccmram);
 __ccmram_end__		= __ccmram_start__ + __ccmram_size__;
 
+INCLUDE rules.ld
+/*
 SECTIONS {
     .ccm :
     {
@@ -43,4 +43,17 @@ SECTIONS {
         __ccmram_end__ = . ;
     } > ccmram
 }
+*/
 
+SECTIONS {
+    .ccm :
+    {
+      __ccmram_start__ = .;
+        PROVIDE(_cmm_start = .);
+        . = ALIGN(4);
+        *(.ccm)
+        . = ALIGN(4);
+        PROVIDE(_cmm_end = .);
+        __ccmram_end__ = .;
+    } > ccmram
+}

@@ -99,7 +99,14 @@ static const float acc_sens_array[4] = {
     (16 * 9.81) / 32768.0
 };
 
-uint8_t buf[2] __attribute__((section(".ccm")));
+//static FIR<float, float, MPU6050_FIR_LEN> acc_fir_array[3];
+//static FIR<float, float, MPU6050_FIR_LEN> gyr_fir_array[3];
+
+//FIR<float, float, MPU6050_FIR_LEN> acc_fir_array[3] __attribute__((section(".bss.ccm_ram")));
+//FIR<float, float, MPU6050_FIR_LEN> gyr_fir_array[3] __attribute__((section(".bss.ccm_ram")));
+
+FIR<float, float, MPU6050_FIR_LEN> acc_fir_array[3] __attribute__((section(".ccm")));
+FIR<float, float, MPU6050_FIR_LEN> gyr_fir_array[3] __attribute__((section(".ccm")));
 
 /*
  *******************************************************************************
@@ -481,20 +488,22 @@ msg_t MPU6050::get_fifo(float *acc, float *gyr) {
  *
  */
 MPU6050::MPU6050(I2CDriver *i2cdp, i2caddr_t addr):
-I2CSensor(i2cdp, addr)
+I2CSensor(i2cdp, addr),
+acc_fir(acc_fir_array),
+gyr_fir(gyr_fir_array)
 {
   chTMObjectInit(&fir_tmu);
-
+  //buf[0] = 10;
   ready = false;
   hw_initialized = false;
 
-  acc_fir[0].setTaps(taps, ArrayLen(taps));
-  acc_fir[1].setTaps(taps, ArrayLen(taps));
-  acc_fir[2].setTaps(taps, ArrayLen(taps));
+  acc_fir[0].setKernel(taps, ArrayLen(taps));
+  acc_fir[1].setKernel(taps, ArrayLen(taps));
+  acc_fir[2].setKernel(taps, ArrayLen(taps));
 
-  gyr_fir[0].setTaps(taps, ArrayLen(taps));
-  gyr_fir[1].setTaps(taps, ArrayLen(taps));
-  gyr_fir[2].setTaps(taps, ArrayLen(taps));
+  gyr_fir[0].setKernel(taps, ArrayLen(taps));
+  gyr_fir[1].setKernel(taps, ArrayLen(taps));
+  gyr_fir[2].setKernel(taps, ArrayLen(taps));
 }
 
 /**
@@ -562,5 +571,6 @@ msg_t MPU6050::get(float *acc, float *gyr) {
 float MPU6050::update_perod(void){
   return 0.01;
 }
+
 
 
