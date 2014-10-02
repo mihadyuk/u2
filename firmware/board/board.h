@@ -267,7 +267,7 @@
                                 PIN_MODE_OUTPUT(GPIOB_LED_B) |                \
                                 PIN_MODE_ALTERNATE(GPIOB_I2C_SLOW_SCL) |      \
                                 PIN_MODE_ALTERNATE(GPIOB_I2C_SLOW_SDA) |      \
-                                PIN_MODE_INPUT(GPIOB_TACHOMETER) |            \
+                                PIN_MODE_ALTERNATE(GPIOB_TACHOMETER) |                        \
                                 PIN_MODE_INPUT(GPIOB_RECEIVER_PPM) |          \
                                 PIN_MODE_ALTERNATE(GPIOB_I2C_FAST_SCL) |      \
                                 PIN_MODE_ALTERNATE(GPIOB_I2C_FAST_SDA) |      \
@@ -283,7 +283,7 @@
                                 PIN_OTYPE_OPENDRAIN(GPIOB_LED_B) |            \
                                 PIN_OTYPE_OPENDRAIN(GPIOB_I2C_SLOW_SCL) |     \
                                 PIN_OTYPE_OPENDRAIN(GPIOB_I2C_SLOW_SDA) |     \
-                                PIN_OTYPE_PUSHPULL(GPIOB_TACHOMETER) |        \
+                                PIN_OTYPE_OPENDRAIN(GPIOB_TACHOMETER) |        \
                                 PIN_OTYPE_PUSHPULL(GPIOB_RECEIVER_PPM) |      \
                                 PIN_OTYPE_OPENDRAIN(GPIOB_I2C_FAST_SCL) |     \
                                 PIN_OTYPE_OPENDRAIN(GPIOB_I2C_FAST_SDA) |     \
@@ -315,7 +315,7 @@
                                 PIN_PUPDR_FLOATING(GPIOB_LED_B) |             \
                                 PIN_PUPDR_FLOATING(GPIOB_I2C_SLOW_SCL) |      \
                                 PIN_PUPDR_FLOATING(GPIOB_I2C_SLOW_SDA) |      \
-                                PIN_PUPDR_PULLDOWN(GPIOB_TACHOMETER) |        \
+                                PIN_PUPDR_PULLUP(GPIOB_TACHOMETER) |        \
                                 PIN_PUPDR_PULLDOWN(GPIOB_RECEIVER_PPM) |      \
                                 PIN_PUPDR_FLOATING(GPIOB_I2C_FAST_SCL) |      \
                                 PIN_PUPDR_FLOATING(GPIOB_I2C_FAST_SDA) |      \
@@ -347,7 +347,7 @@
                                 PIN_AFIO_AF(GPIOB_LED_B, 0) |                 \
                                 PIN_AFIO_AF(GPIOB_I2C_SLOW_SCL, 4) |          \
                                 PIN_AFIO_AF(GPIOB_I2C_SLOW_SDA, 4))
-#define VAL_GPIOB_AFRH         (PIN_AFIO_AF(GPIOB_TACHOMETER, 0) |            \
+#define VAL_GPIOB_AFRH         (PIN_AFIO_AF(GPIOB_TACHOMETER, 2) |            \
                                 PIN_AFIO_AF(GPIOB_RECEIVER_PPM, 0) |          \
                                 PIN_AFIO_AF(GPIOB_I2C_FAST_SCL, 4) |          \
                                 PIN_AFIO_AF(GPIOB_I2C_FAST_SDA, 4) |          \
@@ -706,6 +706,8 @@ extern "C" {
 #endif
   void boardInit(void);
   bool usb_lld_is_plug_inserted(void);
+  void usb_lld_dp_pullup(void);
+  void usb_lld_dp_release(void);
 #ifdef __cplusplus
 }
 #endif

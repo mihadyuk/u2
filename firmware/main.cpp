@@ -1,8 +1,3 @@
-/*                      WARNINGS!
- *
- * cmpilation without -fomit-frame-pointer cause stack overflows.
- */
-
 /*
 Hi,
 I also had the same problem interfacing to an I2C device. However I solved the issue by changing the relevant outputs to open drain by editing the board.h file. Therefore palSetPadMode(i2c_gpio->sda_gpio_port, i2c_gpio->sda_gpio, PAL_MODE_ALTERNATE(4)); is still correct if your board.h file configurse these pins as opendrain.
@@ -180,6 +175,8 @@ static float baro;
 static float quat[4];
 static float euler[3];
 
+#include "onewire.h"
+
 int main(void) {
 
   halInit();
@@ -187,6 +184,11 @@ int main(void) {
   chThdSleepMilliseconds(1);
 
   endianness_test();
+
+
+  onewireObjectInit();
+
+
 
   /* enable softreset on panic */
   setGlobalFlag(GlobalFlags.allow_softreset);

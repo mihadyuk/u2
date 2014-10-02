@@ -92,6 +92,8 @@ static THD_FUNCTION(LinkMgrThread, arg) {
   bool plug_prev;
   bool tmp_plug;
 
+  usb_lld_dp_pullup();
+
   plug_prev = debouncer.update();
   /* Activates the USB driver and then the USB bus pull-up on D+.
      Note, a delay is inserted in order to not have to disconnect the cable
@@ -149,7 +151,7 @@ LinkMgr::LinkMgr(void){
 void LinkMgr::start(void){
   param_registry.valueSearch("SH_over_radio", &sh_overxbee);
   sduObjectInit(&SDU2);
-  sduStart(&SDU2, &serusbcfg); // workaround stopping not started driver
+  sduStart(&SDU2, &serusbcfg); // workaround against stopping of non started driver
   this->worker = chThdCreateStatic(LinkMgrThreadWA, sizeof(LinkMgrThreadWA),
                                     LINKPRIO, LinkMgrThread, NULL);
   osalDbgAssert(NULL != this->worker, "can not allocate memory");

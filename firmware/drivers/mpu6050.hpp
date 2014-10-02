@@ -13,12 +13,14 @@
 #define MPU6050_FIR_LEN     65
 
 class MPU6050: protected I2CSensor{
+
 public:
   MPU6050(I2CDriver *i2cdp, i2caddr_t addr);
   msg_t get(float *acc, float *gyr);
   msg_t start(void);
   void stop(void);
   float update_perod(void);
+
 private:
   msg_t get_simple(float *acc, float *gyr);
   msg_t get_fifo(float *acc, float *gyr);
@@ -36,6 +38,7 @@ private:
   void pickle_temp(float *result);
   msg_t hw_init_full(void);
   msg_t hw_init_fast(void);
+
   float temperature;
   const uint32_t *gyr_fs = NULL;
   const uint32_t *acc_fs = NULL;
