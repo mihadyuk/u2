@@ -35,8 +35,8 @@ static void pwmc4_presence_cb(PWMDriver *pwmp) {
 }
 
 static const PWMConfig pwmcfg_reset = {
-  1000000,                                    /* PWM clock frequency.   */
-  960,                                        /* Initial PWM period        */
+  1000000,
+  960,
   NULL,
   {
    {PWM_OUTPUT_DISABLED, NULL},
