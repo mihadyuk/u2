@@ -10,6 +10,11 @@
  * DEFINES
  ******************************************************************************
  */
+
+/* Swaps Y Z axis for specially LSM303DLHC. LSM303DLH and HMC5843 does not need
+   this hack */
+#define LSM_SWAP_Y_Z          TRUE
+
 #define LSM_REG_CRA           0x00
 #define LSM_REG_CRB           0x01
 #define LSM_REG_MR            0x02
@@ -103,6 +108,13 @@ void LSM303_mag::pickle(float *result){
   raw[0] = static_cast<int16_t>(pack8to16be(&rxbuf[0]));
   raw[1] = static_cast<int16_t>(pack8to16be(&rxbuf[2]));
   raw[2] = static_cast<int16_t>(pack8to16be(&rxbuf[4]));
+
+  #if LSM_SWAP_Y_Z
+  float tmp = raw[2];
+  raw[2] = raw[1];
+  raw[1] = tmp;
+  #endif
+
   mag2raw_imu(raw);
 
   /* */
