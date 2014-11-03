@@ -34,6 +34,11 @@ MavPostman mav_postman;
 static chibios_rt::Mailbox<mavMail*, 12> txmb;
 MavSpamList MavPostman::spam_list;
 
+static mavlink_message_t rx_msg __attribute__((section(".ccm")));
+static mavlink_status_t rx_status __attribute__((section(".ccm")));
+static mavlink_message_t tx_msg __attribute__((section(".ccm")));
+static uint8_t sendbuf[MAVLINK_SENDBUF_SIZE];
+
 /*
  ******************************************************************************
  ******************************************************************************
@@ -50,13 +55,11 @@ static THD_FUNCTION(RxThread, arg) {
   chRegSetThreadName("MavRx");
   msg_t c = Q_TIMEOUT;
   mavChannel *channel = static_cast<mavChannel *>(arg);
-  mavlink_message_t rx_msg;
-  mavlink_status_t status;
 
   while (!chThdShouldTerminateX()){
     c = channel->get(MS2ST(20));
     if (c != Q_TIMEOUT){
-      if (mavlink_parse_char(MAVLINK_COMM_0, c, &rx_msg, &status)) {
+      if (mavlink_parse_char(MAVLINK_COMM_0, c, &rx_msg, &rx_status)) {
         MavPostman::spam_list.dispatch(rx_msg);
       }
     }
@@ -75,8 +78,6 @@ static THD_FUNCTION(TxThread, arg) {
   mavChannel *channel = static_cast<mavChannel *>(arg);
   mavMail *mail;
   size_t len;
-  mavlink_message_t tx_msg;
-  uint8_t sendbuf[MAVLINK_SENDBUF_SIZE];
 
   while (!chThdShouldTerminateX()){
     if (MSG_OK == txmb.fetch(&mail, MS2ST(100))){

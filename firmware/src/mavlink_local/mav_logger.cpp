@@ -2,14 +2,10 @@
 #include <time.h>
 
 #include "main.h"
-
 #include "chprintf.h"
-#include "ff.h"
 
 #include "mav_logger.hpp"
-#include "global_flags.h"
-#include "param_registry.hpp"
-//#include "message.hpp"
+#include "mav_encode.h"
 
 using namespace chibios_rt;
 
@@ -20,7 +16,7 @@ using namespace chibios_rt;
  */
 #define SDC_POLLING_INTERVAL            100
 #define SDC_POLLING_DELAY               5
-#define SYNC_PERIOD                     5000
+#define SYNC_PERIOD                     MS2ST(5000)
 
 /* buffer size for file name string */
 #define MAX_FILENAME_SIZE               32
@@ -28,7 +24,7 @@ using namespace chibios_rt;
 /*
  * Проверяет вёрнутый статус.
  */
-#define err_check()   if(err != FR_OK){return MSG_RESET;}
+#define err_check()   {if(err != FR_OK){return MSG_RESET;}}
 
 /*
  ******************************************************************************
@@ -137,7 +133,7 @@ static size_t name_from_time(char *buf) {
 static void sync_cb(void *par){
   (void)par;
   osalSysLockFromISR();
-  chVTSetI(&sync_vt, MS2ST(SYNC_PERIOD), &sync_cb, NULL);
+  chVTSetI(&sync_vt, SYNC_PERIOD, &sync_cb, NULL);
   sync_tmo = TRUE;
   osalSysUnlockFromISR();
 }
@@ -163,43 +159,52 @@ static FRESULT fs_sync(FIL *Log){
  * Store to FS buffer
  * Raise bool flag if fresh data available
  */
-static FRESULT WriteLog(FIL *Log, mavMail *mail, bool *fresh_data){
-  //uint32_t bytes_written;
-  //uint8_t *fs_buf;
+FRESULT MavLogger::WriteLog(FIL *Log, mavMail *mail, bool *fresh_data) {
+  uint32_t bytes_written;
+  uint8_t *fs_buf;
   FRESULT err = FR_OK;
-  (void)err;
-  (void)Log;
-  (void)mail;
-  *fresh_data = false;
+  size_t len;
 
-#if 0
-  /* some buffers for mavlink handling */
+
   mavlink_message_t mavlink_msgbuf_log;
-  uint8_t recordbuf[RECORD_LEN];
+  uint8_t recordbuf[MAVLINK_SENDBUF_SIZE];
 
-  mavencoder(id, mavlink_system_struct.sysid, recordbuf, &mavlink_msgbuf_log);
 
-#if MAVLINK_LOG_FORMAT
-#if CH_DBG_ENABLE_CHECKS
-  /* fill buffer with zeros except the timestamp region. Probably not necessary */
-  memset(recordbuf + TIME_LEN, 0, RECORD_LEN - TIME_LEN);
-#endif
-  uint64_t timestamp = pnsGetTimeUnixUsec();
-  mavlink_msg_to_send_buffer(recordbuf + TIME_LEN, &mavlink_msgbuf_log);
-  memcpy(recordbuf, &timestamp, TIME_LEN);
-  fs_buf = bufferize(recordbuf, RECORD_LEN);
-#else /* MAVLINK_LOG_FORMAT */
-  uint16_t len = 0;
+
+  mavlink_encode(mail->msgid, &mavlink_msgbuf_log, mail->mavmsg);
+  mail->free();
+
   len = mavlink_msg_to_send_buffer(recordbuf, &mavlink_msgbuf_log);
-  fs_buf = bufferize(recordbuf, len);
-#endif /* MAVLINK_LOG_FORMAT */
-
-  if (fs_buf != NULL){
-    err = f_write(Log, fs_buf, BUFF_SIZE, (UINT *)&bytes_written);
+  fs_buf = double_buf.append(recordbuf, len);
+  if (fs_buf != nullptr) {
+    err = f_write(Log, fs_buf, double_buf.size(), (UINT *)&bytes_written);
     if (err == FR_OK)
-      *fresh_data = TRUE;
+      *fresh_data = true;
   }
-#endif
+
+
+
+//#if MAVLINK_LOG_FORMAT
+//#if CH_DBG_ENABLE_CHECKS
+//  /* fill buffer with zeros except the timestamp region. Probably not necessary */
+//  memset(recordbuf + TIME_LEN, 0, RECORD_LEN - TIME_LEN);
+//#endif
+//  uint64_t timestamp = pnsGetTimeUnixUsec();
+//  mavlink_msg_to_send_buffer(recordbuf + TIME_LEN, &mavlink_msgbuf_log);
+//  memcpy(recordbuf, &timestamp, TIME_LEN);
+//  fs_buf = bufferize(recordbuf, RECORD_LEN);
+//#else /* MAVLINK_LOG_FORMAT */
+//  uint16_t len = 0;
+//  len = mavlink_msg_to_send_buffer(recordbuf, &mavlink_msgbuf_log);
+//  fs_buf = bufferize(recordbuf, len);
+//#endif /* MAVLINK_LOG_FORMAT */
+//
+//  if (fs_buf != NULL){
+//    err = f_write(Log, fs_buf, BUFF_SIZE, (UINT *)&bytes_written);
+//    if (err == FR_OK)
+//      *fresh_data = TRUE;
+//  }
+//
   return err;
 }
 
@@ -213,7 +218,6 @@ msg_t MavLogger::main(void){
   FRESULT err;
   uint32_t clusters;
   FATFS *fsp;
-  FIL Log;
 
   mavMail *mail;
 
@@ -243,22 +247,21 @@ NOT_READY:
   /* open file for writing log */
   char namebuf[MAX_FILENAME_SIZE];
   name_from_time(namebuf);
-  err = f_open(&Log, namebuf, FA_WRITE | FA_CREATE_ALWAYS);
+  err = f_open(&log_file, namebuf, FA_WRITE | FA_CREATE_ALWAYS);
   err_check();
 
   while (this->shouldTerminate()) {
     /* wait ID */
     if (logwriter_mb.fetch(&mail, TIME_INFINITE) == MSG_OK){
       if (!sdcIsCardInserted(&SDCD1)){
-        clearGlobalFlag(GlobalFlags.logger_ready);
         remove_handler();
         goto NOT_READY;
       }
-      err = WriteLog(&Log, mail, &fresh_data);
+      err = WriteLog(&log_file, mail, &fresh_data);
       err_check();
     }
 
-    err = fs_sync(&Log);
+    err = fs_sync(&log_file);
     err_check();
   }
 
@@ -287,21 +290,10 @@ msg_t MavLogger::post(mavMail* msg) {
   return ret;
 }
 
-///**
-// *
-// */
-//void MavLogger::start(void) {
-//  this->worker = chThdCreateStatic(MicroSdThreadWA,
-//          sizeof(MicroSdThreadWA), NORMALPRIO, MicroSdThread, NULL);
-//  osalDbgCheck(NULL != worker);
-//}
-
 /**
  *
  */
 void MavLogger::stop(void) {
   this->requestTerminate();
   this->wait();
-//  chThdTerminate(this->worker);
-//  chThdWait(this->worker);
 }
