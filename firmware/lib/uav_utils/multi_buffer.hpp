@@ -1,8 +1,8 @@
 #ifndef MULTI_BUFFER_HPP_
 #define MULTI_BUFFER_HPP_
 
-template <typename T, int Size, int Count>
-class MultiBuffer{
+template <typename T, int Len, int Count>
+class MultiBuffer {
 public:
 
   /**
@@ -26,21 +26,21 @@ public:
     head++;
     if (head == Count)
       head = 0;
-    return &(internal_buf[head * Size]);
+    return &(internal_buf[head * Len]);
   }
 
   /**
    *
    */
   T *current(void){
-    return &(internal_buf[head * Size]);
+    return &(internal_buf[head * Len]);
   }
 
   /**
    *
    */
   int len(void){
-    return Size;
+    return Len;
   }
 
   /**
@@ -59,7 +59,7 @@ private:
     memset(internal_buf, pattern, sizeof(internal_buf));
   }
 
-  T internal_buf[Count * Size];
+  T internal_buf[Count * Len];
   typeof(Count) head;
 };
 
