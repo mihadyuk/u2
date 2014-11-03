@@ -3,17 +3,19 @@
 
 #include "mav_mail.hpp"
 
-class MavLogger {
+/*
+ *
+ */
+class MavLogger : public chibios_rt::BaseStaticThread<2048> {
 public:
-  MavLogger(void);
   msg_t post(mavMail* msg);
-  void start(void);
   void stop(void);
+
 private:
-  thread_t *worker = NULL;
-  chibios_rt::Mailbox<mavMail*, 8> mb;
+  msg_t main(void);
   size_t drop_cnt = 0;
   bool ready = false;
+  chibios_rt::Mailbox<mavMail*, 12> logwriter_mb;
 };
 
 #endif /* MAV_LOGGER_HPP_ */

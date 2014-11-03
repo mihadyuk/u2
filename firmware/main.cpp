@@ -71,6 +71,7 @@ Giovanni
 //#include "drivetrain.hpp"
 #include "exti_local.hpp"
 #include "marg.hpp"
+#include "mav_logger.hpp"
 
 using namespace chibios_rt;
 
@@ -155,6 +156,8 @@ TlmSender tlm_sender;
 
 static LinkMgr link_mgr;
 
+MavLogger mav_logger;
+
 /*
  ******************************************************************************
  * GLOBAL VARIABLES
@@ -185,11 +188,6 @@ int main(void) {
 
   endianness_test();
 
-
-  onewireObjectInit();
-
-
-
   /* enable softreset on panic */
   setGlobalFlag(GlobalFlags.allow_softreset);
   if (was_softreset() || was_padreset())
@@ -217,10 +215,8 @@ int main(void) {
 //  mission_planner.start(CONTROLLERPRIO);
 //  ControllerInit();
   link_mgr.start();      /* launch after controller to reduce memory fragmentation on thread creation */
-//  SensorsInit();      /* Note! Sensors depends on I2C */
 //  PwrMgmtInit();
   tlm_sender.start();
-//  StorageInit();
 
 //  /**/
 //  LastResetFlags = RCC->CSR;
@@ -231,6 +227,7 @@ int main(void) {
 //  //acs.start();
 //  drivetrain.start();
 //  sins.start(&state_vector);
+  mav_logger.start(NORMALPRIO);
 
   MargStart();
   osalDbgCheck(OSAL_SUCCESS == adis.start());

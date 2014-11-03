@@ -135,7 +135,6 @@ void SanityControlInit(void){
           NORMALPRIO,
           SanityControlThread,
           NULL);
-
 }
 
 
