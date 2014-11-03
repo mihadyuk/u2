@@ -90,7 +90,7 @@ static void insert_handler(void) {
     sdcStop(&SDCD1);
     return;
   }
-  fs_ready = TRUE;
+  fs_ready = false;
 }
 
 /*
@@ -98,16 +98,16 @@ static void insert_handler(void) {
  */
 static void remove_handler(void) {
 
-  if (fs_ready == TRUE){
+  if (fs_ready == false){
     f_mount(NULL, 0, 0);
-    fs_ready = FALSE;
+    fs_ready = false;
   }
 
   if ((&SDCD1)->state == BLK_ACTIVE){
     sdcDisconnect(&SDCD1);
     sdcStop(&SDCD1);
   }
-  fs_ready = FALSE;
+  fs_ready = false;
 }
 
 /**
@@ -159,52 +159,36 @@ static FRESULT fs_sync(FIL *Log){
  * Store to FS buffer
  * Raise bool flag if fresh data available
  */
-FRESULT MavLogger::WriteLog(FIL *Log, mavMail *mail, bool *fresh_data) {
-  uint32_t bytes_written;
+FRESULT MavLogger::append_log(mavMail *mail, bool *fresh_data) {
+  UINT bytes_written;
   uint8_t *fs_buf;
   FRESULT err = FR_OK;
   size_t len;
-
-
   mavlink_message_t mavlink_msgbuf_log;
-  uint8_t recordbuf[MAVLINK_SENDBUF_SIZE];
+  uint8_t recordbuf[MAVLINK_SENDBUF_SIZE + sizeof(uint64_t)];
 
-
-
+  /**/
   mavlink_encode(mail->msgid, &mavlink_msgbuf_log, mail->mavmsg);
   mail->free();
 
+  memset(recordbuf, 0, sizeof(recordbuf));
+#if MAVLINK_LOG_FORMAT
+  uint64_t timestamp = 0;
+  len = mavlink_msg_to_send_buffer(recordbuf + sizeof(timestamp), &mavlink_msgbuf_log);
+  memcpy(recordbuf, &timestamp, sizeof(timestamp));
+  fs_buf = double_buf.append(recordbuf, len + sizeof(timestamp));
+#else /* MAVLINK_LOG_FORMAT */
   len = mavlink_msg_to_send_buffer(recordbuf, &mavlink_msgbuf_log);
   fs_buf = double_buf.append(recordbuf, len);
+#endif /* MAVLINK_LOG_FORMAT */
+
+  /* write data to file */
   if (fs_buf != nullptr) {
-    err = f_write(Log, fs_buf, double_buf.size(), (UINT *)&bytes_written);
+    err = f_write(&log_file, fs_buf, double_buf.size(), &bytes_written);
     if (err == FR_OK)
       *fresh_data = true;
   }
 
-
-
-//#if MAVLINK_LOG_FORMAT
-//#if CH_DBG_ENABLE_CHECKS
-//  /* fill buffer with zeros except the timestamp region. Probably not necessary */
-//  memset(recordbuf + TIME_LEN, 0, RECORD_LEN - TIME_LEN);
-//#endif
-//  uint64_t timestamp = pnsGetTimeUnixUsec();
-//  mavlink_msg_to_send_buffer(recordbuf + TIME_LEN, &mavlink_msgbuf_log);
-//  memcpy(recordbuf, &timestamp, TIME_LEN);
-//  fs_buf = bufferize(recordbuf, RECORD_LEN);
-//#else /* MAVLINK_LOG_FORMAT */
-//  uint16_t len = 0;
-//  len = mavlink_msg_to_send_buffer(recordbuf, &mavlink_msgbuf_log);
-//  fs_buf = bufferize(recordbuf, len);
-//#endif /* MAVLINK_LOG_FORMAT */
-//
-//  if (fs_buf != NULL){
-//    err = f_write(Log, fs_buf, BUFF_SIZE, (UINT *)&bytes_written);
-//    if (err == FR_OK)
-//      *fresh_data = TRUE;
-//  }
-//
   return err;
 }
 
@@ -257,7 +241,7 @@ NOT_READY:
         remove_handler();
         goto NOT_READY;
       }
-      err = WriteLog(&log_file, mail, &fresh_data);
+      err = append_log(mail, &fresh_data);
       err_check();
     }
 

@@ -14,7 +14,7 @@ public:
   void stop(void);
 
 private:
-  FRESULT WriteLog(FIL *Log, mavMail *mail, bool *fresh_data);
+  FRESULT append_log(mavMail *mail, bool *fresh_data);
   msg_t main(void);
   size_t drop_cnt = 0;
   bool ready = false;
