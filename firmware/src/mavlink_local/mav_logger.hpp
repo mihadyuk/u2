@@ -16,6 +16,7 @@ private:
   size_t drop_cnt = 0;
   bool ready = false;
   chibios_rt::Mailbox<mavMail*, 12> logwriter_mb;
+  MultiBuffer<uint8_t, 8192, 2> double_buf;
 };
 
 #endif /* MAV_LOGGER_HPP_ */
