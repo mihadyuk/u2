@@ -399,11 +399,11 @@
                                 PIN_OSPEED_2M(GPIOC_AN_RESERVED) |            \
                                 PIN_OSPEED_2M(GPIOC_USART6_TX_UEXT) |         \
                                 PIN_OSPEED_2M(GPIOC_USART6_RX_UEXT) |         \
-                                PIN_OSPEED_25M(GPIOC_SDIO_D0) |               \
-                                PIN_OSPEED_25M(GPIOC_SDIO_D1) |               \
-                                PIN_OSPEED_25M(GPIOC_SDIO_D2) |               \
-                                PIN_OSPEED_25M(GPIOC_SDIO_D3) |               \
-                                PIN_OSPEED_25M(GPIOC_SDIO_CK) |               \
+                                PIN_OSPEED_100M(GPIOC_SDIO_D0) |               \
+                                PIN_OSPEED_100M(GPIOC_SDIO_D1) |               \
+                                PIN_OSPEED_100M(GPIOC_SDIO_D2) |               \
+                                PIN_OSPEED_100M(GPIOC_SDIO_D3) |               \
+                                PIN_OSPEED_100M(GPIOC_SDIO_CK) |               \
                                 PIN_OSPEED_2M(GPIOC_TAMPER_RTC) |             \
                                 PIN_OSPEED_2M(GPIOC_OSC32_IN) |               \
                                 PIN_OSPEED_2M(GPIOC_OSC32_OUT))
@@ -706,8 +706,6 @@ extern "C" {
 #endif
   void boardInit(void);
   bool usb_lld_is_plug_inserted(void);
-  void usb_lld_dp_pullup(void);
-  void usb_lld_dp_release(void);
 #ifdef __cplusplus
 }
 #endif

@@ -178,8 +178,6 @@ static float baro;
 static float quat[4];
 static float euler[3];
 
-static RTCDateTime timespec;
-
 int main(void) {
 
   halInit();
@@ -187,9 +185,6 @@ int main(void) {
   chThdSleepMilliseconds(1);
 
   endianness_test();
-  rtcGetTime(&RTCD1, &timespec);
-  timespec.year = 34;
-  rtcSetTime(&RTCD1, &timespec);
 
   /* enable softreset on panic */
   setGlobalFlag(GlobalFlags.allow_softreset);
@@ -197,30 +192,6 @@ int main(void) {
     chThdSleepMilliseconds(1);
   else
     chThdSleepMilliseconds(100);
-
-
-
-  uint8_t d0, d1, d2, d3;
-
-  microsd_power_off();
-  chThdSleepMilliseconds(300);
-  d0 = palReadPad(GPIOC, GPIOC_SDIO_D0);
-  d1 = palReadPad(GPIOC, GPIOC_SDIO_D1);
-  d2 = palReadPad(GPIOC, GPIOC_SDIO_D2);
-  d3 = palReadPad(GPIOC, GPIOC_SDIO_D3);
-
-  microsd_power_on();
-  chThdSleepMilliseconds(300);
-  d0 = palReadPad(GPIOC, GPIOC_SDIO_D0);
-  d1 = palReadPad(GPIOC, GPIOC_SDIO_D1);
-  d2 = palReadPad(GPIOC, GPIOC_SDIO_D2);
-  d3 = palReadPad(GPIOC, GPIOC_SDIO_D3);
-
-
-
-
-
-
 
   /* give power to all needys */
 //  pwr5v_power_on(); // TODO: check main voltage first using internal ADC
