@@ -419,7 +419,7 @@
                                 PIN_PUPDR_PULLUP(GPIOC_SDIO_D1) |             \
                                 PIN_PUPDR_PULLUP(GPIOC_SDIO_D2) |             \
                                 PIN_PUPDR_PULLUP(GPIOC_SDIO_D3) |             \
-                                PIN_PUPDR_PULLUP(GPIOC_SDIO_CK) |             \
+                                PIN_PUPDR_PULLDOWN(GPIOC_SDIO_CK) |           \
                                 PIN_PUPDR_FLOATING(GPIOC_TAMPER_RTC) |        \
                                 PIN_PUPDR_FLOATING(GPIOC_OSC32_IN) |          \
                                 PIN_PUPDR_FLOATING(GPIOC_OSC32_OUT))
@@ -493,7 +493,7 @@
                                 PIN_OTYPE_PUSHPULL(GPIOD_TIM4_PWM4))
 #define VAL_GPIOD_OSPEEDR      (PIN_OSPEED_2M(GPIOD_AD_CS) |                  \
                                 PIN_OSPEED_2M(GPIOD_AD_SDI) |                 \
-                                PIN_OSPEED_25M(GPIOD_SDIO_CMD) |              \
+                                PIN_OSPEED_100M(GPIOD_SDIO_CMD) |             \
                                 PIN_OSPEED_2M(GPIOD_USART2_CTS) |             \
                                 PIN_OSPEED_2M(GPIOD_USART2_RTS) |             \
                                 PIN_OSPEED_2M(GPIOD_USART2_TX) |              \
@@ -619,7 +619,7 @@
                                 PIN_PUPDR_PULLDOWN(GPIOE_TIM1_PWM1) |         \
                                 PIN_PUPDR_FLOATING(GPIOE_USB_DISCOVERY) |     \
                                 PIN_PUPDR_PULLDOWN(GPIOE_TIM1_PWM2) |         \
-                                PIN_PUPDR_PULLUP(GPIOE_SDIO_DETECT) |         \
+                                PIN_PUPDR_FLOATING(GPIOE_SDIO_DETECT) |       \
                                 PIN_PUPDR_PULLDOWN(GPIOE_TIM1_PWM3) |         \
                                 PIN_PUPDR_PULLDOWN(GPIOE_TIM1_PWM4) |         \
                                 PIN_PUPDR_FLOATING(GPIOE_SDIO_PWR_EN))

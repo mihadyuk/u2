@@ -2,6 +2,7 @@
 #include <time.h>
 
 #include "main.h"
+#include "pads.h"
 #include "chprintf.h"
 
 #include "mav_logger.hpp"
@@ -16,6 +17,7 @@ using namespace chibios_rt;
  */
 #define SDC_POLLING_INTERVAL            100
 #define SDC_POLLING_DELAY               5
+#define SDC_POWER_TIMEOUT               MS2ST(400)
 #define SYNC_PERIOD                     MS2ST(5000)
 
 /* buffer size for file name string */
@@ -78,19 +80,22 @@ static void insert_handler(void) {
   FRESULT err;
 
   sdcStart(&SDCD1, &sdccfg);
-  /*
-   * On insertion SDC initialization and FS mount.
-   */
-  if (sdcConnect(&SDCD1))
+  microsd_power_on();
+  osalThreadSleep(SDC_POWER_TIMEOUT);
+
+  /* On insertion SDC initialization and FS mount. */
+  if (HAL_FAILED == sdcConnect(&SDCD1))
     return;
 
-  err = f_mount(&SDC_FS, 0, 0);
+  err = f_mount(&SDC_FS, "/", 1);
   if (err != FR_OK) {
     sdcDisconnect(&SDCD1);
     sdcStop(&SDCD1);
+    fs_ready = false;
     return;
   }
-  fs_ready = false;
+
+  fs_ready = true;
 }
 
 /*
@@ -236,7 +241,7 @@ NOT_READY:
 
   while (this->shouldTerminate()) {
     /* wait ID */
-    if (logwriter_mb.fetch(&mail, TIME_INFINITE) == MSG_OK){
+    if (logwriter_mb.fetch(&mail, MS2ST(100)) == MSG_OK){
       if (!sdcIsCardInserted(&SDCD1)){
         remove_handler();
         goto NOT_READY;
@@ -280,4 +285,5 @@ msg_t MavLogger::post(mavMail* msg) {
 void MavLogger::stop(void) {
   this->requestTerminate();
   this->wait();
+  microsd_power_off();
 }

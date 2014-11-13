@@ -72,7 +72,7 @@ void boardInit(void) {
 bool sdc_lld_is_card_inserted(SDCDriver *sdcp) {
 
   (void)sdcp;
-  return !palReadPad(GPIOE, GPIOE_SDIO_DETECT);
+  return PAL_HIGH == palReadPad(GPIOE, GPIOE_SDIO_DETECT);
 }
 
 /**
