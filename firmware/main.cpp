@@ -178,7 +178,8 @@ static float baro;
 static float quat[4];
 static float euler[3];
 
-#include "onewire.h"
+#include "onewire2.h"
+
 int main(void) {
 
   halInit();
@@ -189,10 +190,7 @@ int main(void) {
 
 
 
-
-  onewireObjectInit();
-
-
+  onewireTest();
 
 
 
