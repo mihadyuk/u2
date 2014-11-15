@@ -214,6 +214,7 @@ void onewireObjectInit(void){
     //pwmEnableChannelNotification(&PWMD4, SAMPLE_CHANNEL);
 
     while (1) {
+      onewireReset();
       osalThreadSleepMilliseconds(2);
 
       pwmStart(&PWMD4, &pwmcfg_tx);
@@ -250,6 +251,7 @@ void onewireObjectInit(void){
       rx_data = 0;
       onewireGetByte();
       osalThreadSleepMilliseconds(2);
+      rx_data = 0;
 
       pwmStop(&PWMD4);
     }
