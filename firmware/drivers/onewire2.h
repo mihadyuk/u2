@@ -12,14 +12,15 @@ typedef struct {
 } OWConfig;
 
 typedef struct {
-  bool                      slave_present;
-  onewirestate_t            state;
-  const OWConfig            *config;
-  uint8_t                   txbyte;
-  uint8_t                   txbit;
-
-  uint8_t   rxbyte;
-  uint8_t   rxbit;
+  bool              slave_present;
+  onewirestate_t    state;
+  const OWConfig    *config;
+  size_t            txbytes;
+  size_t            txbit;
+  uint8_t           *txbuf;
+  size_t            rxbytes;
+  size_t            rxbit;
+  uint8_t           *rxbuf;
 
   /**
    * @brief   Thread waiting for I/O completion.

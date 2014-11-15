@@ -1,6 +1,7 @@
 #include "main.h"
 #include "onewire2.h"
 #include "pads.h"
+#include "string.h"
 
 /*
  ******************************************************************************
@@ -37,17 +38,17 @@ OWDriver OWD1;
  ******************************************************************************
  */
 
-static void ow_reset_cb(OWDriver *owp) {
+static void ow_presece_cb(OWDriver *owp) {
   owp->slave_present = (PAL_LOW == palReadPad(GPIOB, GPIOB_TACHOMETER));
   osalSysLockFromISR();
   osalThreadResumeI(&(owp)->thread, MSG_OK);
   osalSysUnlockFromISR();
 }
 
-static void presence_cb(PWMDriver *pwmp) {
+static void pwm_presence_cb(PWMDriver *pwmp) {
   (void)pwmp;
 
-  ow_reset_cb(&OWD1);
+  ow_presece_cb(&OWD1);
 }
 
 /*
@@ -61,7 +62,7 @@ static const PWMConfig pwmcfg_presence = {
    {PWM_OUTPUT_DISABLED, NULL},
    {PWM_OUTPUT_DISABLED, NULL},
    {PWM_OUTPUT_ACTIVE_LOW, NULL},
-   {PWM_OUTPUT_ACTIVE_LOW, presence_cb}
+   {PWM_OUTPUT_ACTIVE_LOW, pwm_presence_cb}
   },
   0,
   0
@@ -74,15 +75,30 @@ static void ow_tx_cb(PWMDriver *pwmp, OWDriver *owp) {
 
   osalSysLockFromISR();
 
-  if (8 == owp->txbit){
-    pwmDisableChannelI(pwmp, MASTER_CHANNEL);
+  if (8 == owp->txbit) {
+    owp->txbuf++;
+    owp->txbit = 0;
+    owp->txbytes--;
+
+    if (0 == owp->txbytes) {
+      pwmDisableChannelI(pwmp, MASTER_CHANNEL);
+      /* special value to signalize premature stop protector
+         FIXME: use special driver state for it */
+      owp->txbit = 9;
+      osalSysUnlockFromISR();
+      return;
+    }
+  }
+
+  /* prevent premature timer stop */
+  if (9 == owp->txbit) {
     pwm_lld_disable_periodic_notification(pwmp);
     osalThreadResumeI(&(owp)->thread, MSG_OK);
     osalSysUnlockFromISR();
     return;
   }
 
-  if ((owp->txbyte & (1 << owp->txbit)) > 0)
+  if ((*owp->txbuf & (1 << owp->txbit)) > 0)
     pwmEnableChannelI(pwmp, MASTER_CHANNEL, ONE_WIDTH);
   else
     pwmEnableChannelI(pwmp, MASTER_CHANNEL, ZERO_WIDTH);
@@ -114,14 +130,9 @@ static const PWMConfig pwmcfg_tx = {
   0
 };
 
-
-
-
-
-
-
-
-
+/**
+ *
+ */
 static void pwm_start_rx_cb(PWMDriver *pwmp) {
 
   osalSysLockFromISR();
@@ -134,22 +145,33 @@ static void pwm_start_rx_cb(PWMDriver *pwmp) {
   osalSysUnlockFromISR();
 }
 
+/**
+ *
+ */
 static void ow_read_bit_cb(PWMDriver *pwmp, OWDriver *owp) {
 
   osalSysLockFromISR();
 
-  owp->rxbyte |= palReadPad(GPIOB, GPIOB_TACHOMETER) << owp->rxbit;
+  *owp->rxbuf |= palReadPad(GPIOB, GPIOB_TACHOMETER) << owp->rxbit;
   owp->rxbit++;
-  if (8 == owp->rxbit){
-    pwmDisableChannelI(pwmp, MASTER_CHANNEL);
-    pwmDisableChannelI(pwmp, SAMPLE_CHANNEL);
-    pwm_lld_disable_channel_notification(pwmp, SAMPLE_CHANNEL);
-    osalThreadResumeI(&(owp)->thread, MSG_OK);
+  if (8 == owp->rxbit) {
+    owp->rxbit = 0;
+    owp->rxbuf++;
+    owp->rxbytes--;
+    if (0 == owp->rxbytes) {
+      pwmDisableChannelI(pwmp, MASTER_CHANNEL);
+      pwmDisableChannelI(pwmp, SAMPLE_CHANNEL);
+      pwm_lld_disable_channel_notification(pwmp, SAMPLE_CHANNEL);
+      osalThreadResumeI(&(owp)->thread, MSG_OK);
+    }
   }
 
   osalSysUnlockFromISR();
 }
 
+/**
+ *
+ */
 static void pwm_read_bit_cb(PWMDriver *pwmp) {
 
   ow_read_bit_cb(pwmp, &OWD1);
@@ -172,22 +194,12 @@ static const PWMConfig pwmcfg_rx = {
   0
 };
 
-
-
-
-
-
-
-
-
 /*
  *
  */
 static const OWConfig ow_cfg = {
   &PWMD4
 };
-
-
 
 /*
  ******************************************************************************
@@ -210,11 +222,13 @@ void onewireObjectInit(OWDriver *owp) {
   owp->state = OW_STOP;
   owp->thread = NULL;
 
+  owp->txbytes = 0;
   owp->txbit = 0;
-  owp->txbyte = 0;
+  owp->txbuf = NULL;
 
-  owp->rxbyte = 0;
+  owp->rxbytes = 0;
   owp->rxbit = 0;
+  owp->rxbuf = NULL;
 }
 
 void onewireStart(OWDriver *owp, const OWConfig *config) {
@@ -244,9 +258,11 @@ bool onewireReset(OWDriver *owp) {
 /**
  *
  */
-void onewireWriteByte(OWDriver *owp, uint8_t data) {
-  owp->txbyte = data;
+void onewireWriteData(OWDriver *owp, uint8_t *txbuf, size_t txbytes) {
+
+  owp->txbuf = txbuf;
   owp->txbit = 0;
+  owp->txbytes = txbytes;
 
   pwmStart(&PWMD4, &pwmcfg_tx);
   pwmEnablePeriodicNotification(&PWMD4);
@@ -261,12 +277,15 @@ void onewireWriteByte(OWDriver *owp, uint8_t data) {
 /**
  *
  */
-uint8_t onewireReadByte(OWDriver *owp) {
+void onewireReadData(OWDriver *owp, uint8_t *rxbuf, size_t rxbytes) {
+
+  /* Buffer zeroing this is important because of driver collects
+     bits using |= operation.*/
+  memset(rxbuf, 0, rxbytes);
 
   owp->rxbit = 0;
-
-  /* this is important because of bits collects using |= operation */
-  owp->rxbyte = 0;
+  owp->rxbuf = rxbuf;
+  owp->rxbytes = rxbytes;
 
   pwmStart(&PWMD4, &pwmcfg_rx);
   pwmEnablePeriodicNotification(&PWMD4);
@@ -276,13 +295,13 @@ uint8_t onewireReadByte(OWDriver *owp) {
   osalSysUnlock();
 
   pwmStop(&PWMD4);
-  return owp->rxbyte;
 }
 
 /**
  *
  */
 static uint8_t id_buf[8];
+static uint8_t txbuf[8];
 void onewireTest(void) {
 
   onewireObjectInit(&OWD1);
@@ -291,16 +310,14 @@ void onewireTest(void) {
   while (true) {
     if (true == onewireReset(&OWD1)){
       red_led_on();
-      osalThreadSleepMilliseconds(2);
-      onewireWriteByte(&OWD1, READ_ROM_CMD);
-      osalThreadSleepMilliseconds(2);
-      for (size_t i=0; i<8; i++){
-        id_buf[i] = onewireReadByte(&OWD1);
-        osalThreadSleepMilliseconds(2);
-      }
+      txbuf[0] = READ_ROM_CMD;
+      onewireWriteData(&OWD1, txbuf, 1);
+      onewireReadData(&OWD1, id_buf, 8);
     }
-    else
+    else {
       red_led_off();
+    }
+
     osalThreadSleepMilliseconds(1);
   }
 }
