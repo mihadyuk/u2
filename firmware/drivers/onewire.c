@@ -26,12 +26,10 @@
 
 static bool slave_present = false;
 
-static void pwmc4_presence_cb(PWMDriver *pwmp) {
+static void presence_cb(PWMDriver *pwmp) {
   (void)pwmp;
 
-  osalSysLockFromISR();
   slave_present = (PAL_LOW == palReadPad(GPIOB, GPIOB_TACHOMETER));
-  osalSysUnlockFromISR();
 }
 
 static const PWMConfig pwmcfg_reset = {
@@ -42,19 +40,17 @@ static const PWMConfig pwmcfg_reset = {
    {PWM_OUTPUT_DISABLED, NULL},
    {PWM_OUTPUT_DISABLED, NULL},
    {PWM_OUTPUT_ACTIVE_LOW, NULL},
-   {PWM_OUTPUT_ACTIVE_LOW, pwmc4_presence_cb}
+   {PWM_OUTPUT_ACTIVE_LOW, presence_cb}
   },
   0,
   0
 };
 
 
-
-
-
 #define ZERO_WIDTH        60
 #define ONE_WIDTH         6
 #define SAMPLE_WIDTH      15
+#define RECOVERY_TIME     10
 
 #define MASTER_CHANNEL    2
 #define SAMPLE_CHANNEL    3
@@ -93,8 +89,8 @@ static void pwmpcb_tx(PWMDriver *pwmp) {
 }
 
 static const PWMConfig pwmcfg_tx = {
-  1000000,                                    /* PWM clock frequency.   */
-  70,                                    /* Initial PWM period        */
+  1000000,                                   /* PWM clock frequency.   */
+  (ZERO_WIDTH + RECOVERY_TIME),              /* Initial PWM period        */
   pwmpcb_tx,
   {
    {PWM_OUTPUT_DISABLED, NULL},
@@ -124,7 +120,6 @@ static uint8_t rx_data;
 static void pwmc4_read_cb(PWMDriver *pwmp) {
 
   osalSysLockFromISR();
-  palTogglePad(GPIOB, GPIOB_LED_R);
   rx_data |= palReadPad(GPIOB, GPIOB_TACHOMETER) << bit;
   bit++;
   if (bit == 8){
@@ -139,7 +134,7 @@ static void pwmc4_read_cb(PWMDriver *pwmp) {
 
 static const PWMConfig pwmcfg_rx = {
   1000000,                                    /* PWM clock frequency.   */
-  70,                                    /* Initial PWM period        */
+  (ZERO_WIDTH + RECOVERY_TIME),               /* Initial PWM period        */
   pwmpcb_rx,
   {
    {PWM_OUTPUT_DISABLED, NULL},

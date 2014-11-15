@@ -112,7 +112,7 @@ CSRC = $(PORTSRC) \
        src/fault_handlers.c \
        src/mavlink_local/mav_encode.c \
        benchmark/memcpy_bench.c \
-       drivers/onewire.c \
+       drivers/onewire2.c \
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
