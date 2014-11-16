@@ -178,7 +178,7 @@ static float baro;
 static float quat[4];
 static float euler[3];
 
-#include "onewire2.h"
+#include <onewire.h>
 
 int main(void) {
 

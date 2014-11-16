@@ -2,34 +2,54 @@
 #define ONEWIRE_H_
 
 typedef enum {
-  DUMMY = 0,
+  OW_STOP = 0,
+  OW_READY = 1,
+  OW_RESET = 2
 } onewirestate_t;
 
 typedef struct {
   PWMDriver *pwmd;
-  pwmchannel_t master_channel;
-  pwmchannel_t sample_channel;
-} onewireConfig;
+} OWConfig;
 
-struct onewireDriver {
-  bool                      slave_present;
-  onewirestate_t            state;
-  const onewireConfig       *config;
-};
+typedef struct {
+  bool              slave_present;
+  onewirestate_t    state;
+  const OWConfig    *config;
+  size_t            txbytes;
+  size_t            txbit;
+  uint8_t           *txbuf;
+  size_t            rxbytes;
+  size_t            rxbit;
+  uint8_t           *rxbuf;
+
+  uint64_t    rom;
+  uint8_t     rombit;
+  uint8_t     searchbit;
+  uint8_t     searchbuf;
+  uint8_t     last_collision;
+
+  /**
+   * @brief   Thread waiting for I/O completion.
+   */
+  thread_reference_t        thread;
+} OWDriver;
 
 
 
-
+extern OWDriver OWD1;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
   void onewireInit(void);
-  void onewireObjectInit(onewireDriver *onewirep);
-  void onewireStart(onewireDriver *onewirep, const onewireConfig *config);
-  void onewireStop(onewireDriver *onewirep);
+  void onewireObjectInit(OWDriver *owp);
+  void onewireStart(OWDriver *owp, const OWConfig *config);
+  void onewireStop(OWDriver *owp);
+  bool onewireReset(OWDriver *owp);
+  void onewireWriteByte(OWDriver *owp, uint8_t data);
 
+  void onewireTest(void);
 #ifdef __cplusplus
 }
 #endif
