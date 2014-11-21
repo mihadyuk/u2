@@ -178,8 +178,6 @@ static float baro;
 static float quat[4];
 static float euler[3];
 
-#include <onewire.h>
-
 int main(void) {
 
   halInit();
@@ -187,12 +185,6 @@ int main(void) {
   chThdSleepMilliseconds(1);
 
   endianness_test();
-
-
-
-  onewireTest();
-
-
 
   /* enable softreset on panic */
   setGlobalFlag(GlobalFlags.allow_softreset);
