@@ -1,7 +1,7 @@
 #include "main.h"
 
 #include "param_registry.hpp"
-#include "usb_cfg.cpp"
+#include "usbcfg.h"
 #include "usb_debouncer.hpp"
 #include "link_mgr.hpp"
 
@@ -24,6 +24,9 @@
  ******************************************************************************
  */
 
+/* Virtual serial port over USB.*/
+SerialUSBDriver SDU1;
+
 /*
  ******************************************************************************
  * GLOBAL VARIABLES
@@ -42,7 +45,7 @@ static const uint32_t *sh_overxbee;
 static UsbDebouncer debouncer;
 
 static mavChannelSerial channel_serial(&XBEESD, &xbee_ser_cfg);
-static mavChannelUsbSerial channel_usb_serial(&SDU2, &serusbcfg);
+static mavChannelUsbSerial channel_usb_serial(&SDU1, &serusbcfg);
 
 static Shell shell;
 
@@ -60,11 +63,11 @@ static void boot_strap(bool plug_prev, uint32_t sh_prev) {
   if (0 == sh_prev){
     mav_postman.start(&channel_serial);
     if (true == plug_prev){
-      sduStart(&SDU2, &serusbcfg);
+      sduStart(&SDU1, &serusbcfg);
       usbStart(serusbcfg.usbp, &usbcfg);
       usbConnectBus(serusbcfg.usbp);
       osalThreadSleepMilliseconds(500);
-      shell.start((SerialDriver *)&SDU2);
+      shell.start((SerialDriver *)&SDU1);
     }
   }
   else{
@@ -118,7 +121,7 @@ static THD_FUNCTION(LinkMgrThread, arg) {
       osalThreadSleep(DEBOUNCE_TIMEOUT);
       usbStop(serusbcfg.usbp);
       osalThreadSleep(DEBOUNCE_TIMEOUT);
-      sduStop(&SDU2);
+      sduStop(&SDU1);
       osalThreadSleep(DEBOUNCE_TIMEOUT);
       sdStop(&XBEESD);
 
@@ -148,8 +151,8 @@ LinkMgr::LinkMgr(void){
  */
 void LinkMgr::start(void){
   param_registry.valueSearch("SH_over_radio", &sh_overxbee);
-  sduObjectInit(&SDU2);
-  sduStart(&SDU2, &serusbcfg); // workaround against stopping of non started driver
+  sduObjectInit(&SDU1);
+  sduStart(&SDU1, &serusbcfg); // workaround against stopping of non started driver
   this->worker = chThdCreateStatic(LinkMgrThreadWA, sizeof(LinkMgrThreadWA),
                                     LINKPRIO, LinkMgrThread, NULL);
   osalDbgAssert(NULL != this->worker, "can not allocate memory");
@@ -161,6 +164,6 @@ void LinkMgr::start(void){
 void LinkMgr::stop(void){
   chThdTerminate(this->worker);
   chThdWait(this->worker);
-  sduStop(&SDU2);
+  sduStop(&SDU1);
   sdStop(&XBEESD);
 }
