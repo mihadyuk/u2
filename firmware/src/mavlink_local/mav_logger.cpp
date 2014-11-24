@@ -238,8 +238,10 @@ NOT_READY:
   name_from_time(namebuf);
   err = f_open(&log_file, namebuf, FA_WRITE | FA_CREATE_ALWAYS);
   err_check();
+  err = f_sync(&log_file);
+  err_check();
 
-  while (this->shouldTerminate()) {
+  while (!this->shouldTerminate()) {
     /* wait ID */
     if (logwriter_mb.fetch(&mail, MS2ST(100)) == MSG_OK){
       if (!sdcIsCardInserted(&SDCD1)){
