@@ -228,13 +228,13 @@ int main(void) {
   mav_logger.start(NORMALPRIO);
 
   MargStart();
-  osalDbgCheck(OSAL_SUCCESS == adis.start());
+//  osalDbgCheck(OSAL_SUCCESS == adis.start());
 
   while (TRUE) {
-    chDbgCheck(MSG_OK == adis.wait(MS2ST(200)));
-    adis.get(acc, gyr, mag, &baro, quat, euler);
+//    chDbgCheck(MSG_OK == adis.wait(MS2ST(200)));
+//    adis.get(acc, gyr, mag, &baro, quat, euler);
 
-    //osalThreadSleepMilliseconds(100);
+    osalThreadSleepMilliseconds(100);
 
 //    if (ATTITUDE_UNIT_UPDATE_RESULT_OK == attitude_unit.update()){
 //      sins.update();

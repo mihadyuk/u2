@@ -96,6 +96,14 @@ bool usb_lld_is_plug_inserted(void) {
   return PAL_HIGH == palReadPad(GPIOE, GPIOE_USB_PRESENCE);
 }
 
+void usb_lld_connect_bus_workaround(void) {
+  palSetPadMode(GPIOE, GPIOE_USB_DISCOVERY, PAL_MODE_OUTPUT_PUSHPULL);
+}
+
+void usb_lld_disconnect_bus_workaround(void) {
+  palSetPadMode(GPIOE, GPIOE_USB_DISCOVERY, PAL_MODE_INPUT);
+}
+
 #endif /* HAL_USE_USB */
 
 

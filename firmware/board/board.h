@@ -706,6 +706,8 @@ extern "C" {
 #endif
   void boardInit(void);
   bool usb_lld_is_plug_inserted(void);
+  void usb_lld_connect_bus_workaround(void);
+  void usb_lld_disconnect_bus_workaround(void);
 #ifdef __cplusplus
 }
 #endif

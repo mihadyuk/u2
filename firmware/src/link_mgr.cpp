@@ -65,6 +65,7 @@ static void boot_strap(bool plug_prev, uint32_t sh_prev) {
     if (true == plug_prev){
       sduStart(&SDU1, &serusbcfg);
       usbStart(serusbcfg.usbp, &usbcfg);
+      usb_lld_connect_bus_workaround();
       usbConnectBus(serusbcfg.usbp);
       osalThreadSleepMilliseconds(500);
       shell.start((SerialDriver *)&SDU1);
@@ -75,6 +76,7 @@ static void boot_strap(bool plug_prev, uint32_t sh_prev) {
     shell.start(&XBEESD);
     if (true == plug_prev){
       usbStart(serusbcfg.usbp, &usbcfg);
+      usb_lld_connect_bus_workaround();
       usbConnectBus(serusbcfg.usbp);
       osalThreadSleepMilliseconds(500);
       mav_postman.start(&channel_usb_serial);
@@ -99,6 +101,7 @@ static THD_FUNCTION(LinkMgrThread, arg) {
   /* Activates the USB driver and then the USB bus pull-up on D+.
      Note, a delay is inserted in order to not have to disconnect the cable
      after a reset. */
+  usb_lld_disconnect_bus_workaround();
   usbDisconnectBus(serusbcfg.usbp);
   osalThreadSleepMilliseconds(1000);
 
@@ -117,6 +120,7 @@ static THD_FUNCTION(LinkMgrThread, arg) {
 
       mav_postman.stop();
       shell.stop();
+      usb_lld_disconnect_bus_workaround();
       usbDisconnectBus(serusbcfg.usbp);
       osalThreadSleep(DEBOUNCE_TIMEOUT);
       usbStop(serusbcfg.usbp);
