@@ -1,8 +1,6 @@
+#ifndef PARAM_CLI_HPP_
+#define PARAM_CLI_HPP_
 
-#ifndef PARAM_CLI_H_
-#define PARAM_CLI_H_
+thread_t* param_clicmd(int argc, const char * const * argv, SerialDriver *sdp);
 
-Thread* param_clicmd(int argc, const char * const * argv, SerialDriver *sdp);
-
-
-#endif /* PARAM_CLI_H_ */
+#endif /* PARAM_CLI_HPP_ */

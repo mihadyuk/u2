@@ -103,13 +103,13 @@ f.write("""
 /*
  * volatile array of parameters in RAM
  */
- """)
-f.write("static param_union_t " + arr + "[ONBOARD_PARAM_CNT];\n")
+""")
+f.write("static param_union_t " + arr + "[ONBOARD_PARAM_CNT] __attribute__((section(\".ccm\")));\n")
 f.write("""
 /**
  *
  */
- """)
+""")
 f.write("const GlobalParam_t ParamRegistry::param_db[] = {\n")
 
 
