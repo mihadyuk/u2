@@ -37,7 +37,6 @@ Giovanni
 #include <time.h>
 
 #include "main.h"
-#include "adis.hpp"
 
 #include "global_flags.h"
 #include "fault_handlers.h"
@@ -50,7 +49,6 @@ Giovanni
 //#include "timekeeper.hpp"
 //#include "sensors.hpp"
 //#include "pwr_mgmt.hpp"
-//#include "microsd.hpp"
 #include "tlm_sender.hpp"
 #include "link_mgr.hpp"
 //#include "controller.hpp"
@@ -60,7 +58,6 @@ Giovanni
 //#include "waypoint_db.hpp"
 //#include "mission_planner.hpp"
 #include "mavlink_local.hpp"
-#include "pads.h"
 #include "endianness.h"
 //#include "attitude_unit_rover.hpp"
 //#include "acs.hpp"
@@ -96,11 +93,11 @@ GlobalFlags_t GlobalFlags = {0,0,0,0,0,0,0,0,
                              0,0,0,0,0,0,0,0,
                              0,0,0,0,0,0,0,0,
                              0,0,0,0,0,0,0,0};
-//
-///* heap for some threads */
-//MemoryHeap ThdHeap;
-//static uint8_t link_thd_buf[THREAD_HEAP_SIZE + sizeof(stkalign_t)];
-//
+
+/* heap for temporarily threads */
+memory_heap_t ThdHeap;
+static uint8_t link_thd_buf[THREAD_HEAP_SIZE + sizeof(stkalign_t)];
+
 ///**/
 //uint8_t currWpFrame = MAV_FRAME_GLOBAL;
 //
@@ -171,12 +168,6 @@ MavLogger mav_logger;
  *******************************************************************************
  *******************************************************************************
  */
-static float acc[3];
-static float gyr[3];
-static float mag[3];
-static float baro;
-static float quat[4];
-static float euler[3];
 
 int main(void) {
 
@@ -200,7 +191,7 @@ int main(void) {
   eeprom_power_on();
   osalThreadSleepMilliseconds(10);
 
-//  chHeapInit(&ThdHeap, (uint8_t *)MEM_ALIGN_NEXT(link_thd_buf), THREAD_HEAP_SIZE);
+  chHeapObjectInit(&ThdHeap, (uint8_t *)MEM_ALIGN_NEXT(link_thd_buf), THREAD_HEAP_SIZE);
 
   Exti.start();
 //  time_keeper.start();
@@ -228,12 +219,8 @@ int main(void) {
   mav_logger.start(NORMALPRIO);
 
   MargStart();
-//  osalDbgCheck(OSAL_SUCCESS == adis.start());
 
   while (TRUE) {
-//    chDbgCheck(MSG_OK == adis.wait(MS2ST(200)));
-//    adis.get(acc, gyr, mag, &baro, quat, euler);
-
     osalThreadSleepMilliseconds(100);
 
 //    if (ATTITUDE_UNIT_UPDATE_RESULT_OK == attitude_unit.update()){

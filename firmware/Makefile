@@ -109,6 +109,7 @@ CSRC = $(PORTSRC) \
        lib/uav_utils/endianness.c \
        lib/uav_utils/cpu_load.c \
        lib/uav_utils/crc.c \
+       lib/microrl/src/microrl.c \
        src/fault_handlers.c \
        src/mavlink_local/mav_encode.c \
        benchmark/memcpy_bench.c \
@@ -134,11 +135,16 @@ MAVSRC = src/mavlink_local/parameters.cpp \
          src/mavlink_local/mav_channel_serial.cpp \
          src/mavlink_local/mav_channel_usbserial.cpp \
 
+CLISRC = src/cli/cli.cpp \
+         src/cli/cli_cmd.cpp \
+
 CPPSRC = $(CHCPPSRC) \
          $(NVRAMSRC) \
          $(MAVSRC) \
+         $(CLISRC) \
          main.cpp \
          drivers/adis.cpp \
+         drivers/adis_test.cpp \
          drivers/exti_local.cpp \
          drivers/i2c_sensor.cpp \
          drivers/marg.cpp \
@@ -186,6 +192,7 @@ INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
          $(CHIBIOS)/os/various \
          $(CHIBIOS)/os/various/cpp_wrappers \
          drivers \
+         lib/microrl/src \
          lib/uav_utils \
          lib/filters \
          lib/24aa/src \

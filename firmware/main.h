@@ -10,8 +10,8 @@
 
 #include "hal.h"
 
-///* Heap size for dynamic thread creation */
-//#define THREAD_HEAP_SIZE    (1024 * 4)
+/* Heap size for dynamic thread creation */
+#define THREAD_HEAP_SIZE    (1024 * 4)
 
 //
 /* Enable messages about unhandled mavlink messages received */
