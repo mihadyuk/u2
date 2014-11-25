@@ -3,6 +3,7 @@
 
 #include "adis.hpp"
 #include "exti_local.hpp"
+#include "array_len.hpp"
 
 /*
  ******************************************************************************
@@ -46,7 +47,6 @@ static const uint16_t ADIS_SAMPLE_RATE_DIV = 24;
 static const uint16_t ADIS_INTERNAL_SAMPLE_RATE = 2460;
 
 static const uint16_t supported_models[] = {16480};
-static const size_t supported_models_cnt = sizeof(supported_models) / sizeof(supported_models[0]);
 
 /*
  * Maximum speed SPI configuration (84MHz/8, CPHA=1, CPOL=1, 16bit, MSb first).
@@ -91,8 +91,8 @@ static const uint8_t request[] = {
     0x70, // c33
     0x70 /* special fake read */
 };
-static const size_t request_len = sizeof(request) / sizeof(request[0]);
-static uint16_t rxbuf[request_len];
+//static const size_t request_len = sizeof(request) / sizeof(request[0]);
+static uint16_t rxbuf[ArrayLen(request)];
 
 static const adisfp ADIS_DT = (adisfp)ADIS_SAMPLE_RATE_DIV / ADIS_INTERNAL_SAMPLE_RATE;
 
@@ -160,7 +160,7 @@ static bool check_id(void){
   read(PROD_ID);
   ack = read(PROD_ID);
 
-  for (i=0; i<supported_models_cnt; i++){
+  for (i=0; i<ArrayLen(supported_models); i++){
     if (supported_models[i] == ack)
       return OSAL_SUCCESS;
   }
@@ -272,8 +272,7 @@ void Adis::stop(void){
 /**
  * @note    If you do not need some data than pass NULL pointer.
  */
-uint16_t Adis::get(adisfp *acc, adisfp *gyr, adisfp *mag,
-                   adisfp *baro, adisfp *quat, adisfp *euler){
+uint16_t Adis::get(adis_data_t *result) {
 
   const adisfp gyr_scale   = 0.00000030517578125; /* to deg/s */
   const adisfp acc_scale   = 0.00000001220703125; /* to G */
@@ -282,44 +281,31 @@ uint16_t Adis::get(adisfp *acc, adisfp *gyr, adisfp *mag,
   const adisfp temp_scale  = 0.00565; /* to celsius */
   const adisfp quat_scale  = 0.000030517578125;
   const adisfp euler_scale = 0.0054931640625; /* to deg (360/65536) */
-  uint16_t errors;
-  adisfp temp;
 
   chTMStartMeasurementX(&tm);
   osalDbgCheck(ready);
 
   /* reading data */
   read(request[0]); /* first read for warm up */
-  for (size_t i=1; i<request_len; i++) // NOTE: this loop must be start from #1
+  for (size_t i=1; i<ArrayLen(request); i++) // NOTE: this loop must be start from #1
     rxbuf[i-1] = read(request[i]);
 
   /* converting to useful values */
-  temp = 25 + u16_conv(temp_scale, rxbuf[1]);
+  result->temp = 25 + u16_conv(temp_scale, rxbuf[1]);
 
-  if (nullptr != acc)
-    u32_block_conv(acc_scale, &rxbuf[8], acc, 3);
+  if (nullptr != result){
+    u32_block_conv(acc_scale, &rxbuf[8], result->acc, 3);
+    u32_block_conv(gyr_scale, &rxbuf[2], result->gyr, 3);
+    u16_block_conv(mag_scale, &rxbuf[14], result->mag, 3);
+    result->baro = u32_conv(baro_scale, rxbuf[14], rxbuf[15]);
+    u16_block_conv(quat_scale, &rxbuf[19], result->quat, 4);
+    u16_block_conv(euler_scale, &rxbuf[24], result->euler, 3);
+  }
 
-  if (nullptr != gyr)
-    u32_block_conv(gyr_scale, &rxbuf[2], gyr, 3);
-
-  if (nullptr != mag)
-    u16_block_conv(mag_scale, &rxbuf[14], mag, 3);
-
-  if (nullptr != baro)
-    *baro = u32_conv(baro_scale, rxbuf[14], rxbuf[15]);
-
-  if (nullptr != quat)
-    u16_block_conv(quat_scale, &rxbuf[19], quat, 4);
-
-  if (nullptr != euler)
-    u16_block_conv(euler_scale, &rxbuf[24], euler, 3);
-
-  errors = rxbuf[0];
-
-  (void)temp;
+  result->errors = rxbuf[0];
 
   chTMStopMeasurementX(&tm);
-  return errors;
+  return result->errors;
 }
 
 /**

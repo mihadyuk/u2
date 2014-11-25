@@ -99,12 +99,6 @@ static const float acc_sens_array[4] = {
     (16 * 9.81) / 32768.0
 };
 
-//static FIR<float, float, MPU6050_FIR_LEN> acc_fir_array[3];
-//static FIR<float, float, MPU6050_FIR_LEN> gyr_fir_array[3];
-
-//FIR<float, float, MPU6050_FIR_LEN> acc_fir_array[3] __attribute__((section(".bss.ccm_ram")));
-//FIR<float, float, MPU6050_FIR_LEN> gyr_fir_array[3] __attribute__((section(".bss.ccm_ram")));
-
 FIR<float, float, MPU6050_FIR_LEN> acc_fir_array[3] __attribute__((section(".ccm")));
 FIR<float, float, MPU6050_FIR_LEN> gyr_fir_array[3] __attribute__((section(".ccm")));
 
