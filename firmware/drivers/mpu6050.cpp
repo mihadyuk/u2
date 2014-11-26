@@ -295,17 +295,17 @@ msg_t MPU6050::hw_init_full(void){
 
   msg_t ret = MSG_RESET;
 
-  txbuf[0] = MPUREG_WHO_AM_I;
-  ret = transmit(txbuf, 1, rxbuf, 1);
-  osalDbgAssert(MSG_OK == ret, "MPU6050 does not responding");
-  osalDbgAssert(WHO_AM_I_VAL == rxbuf[0], "MPU6050 wrong id");
-  osalThreadSleepMilliseconds(1);
-
   txbuf[0] = MPUREG_PWR_MGMT1;
   txbuf[1] = 0b10000000; /* soft reset */
   ret = transmit(txbuf, 2, NULL, 0);
   osalDbgAssert(MSG_OK == ret, "MPU6050 does not responding");
   osalThreadSleepMilliseconds(60);
+
+  txbuf[0] = MPUREG_WHO_AM_I;
+  ret = transmit(txbuf, 1, rxbuf, 1);
+  osalDbgAssert(MSG_OK == ret, "MPU6050 does not responding");
+  osalDbgAssert(WHO_AM_I_VAL == rxbuf[0], "MPU6050 wrong id");
+  osalThreadSleepMilliseconds(1);
 
   txbuf[0] = MPUREG_PWR_MGMT1;
   txbuf[1] = 1; /* select X gyro as clock source */

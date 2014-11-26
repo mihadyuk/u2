@@ -192,7 +192,7 @@ thread_t* ps_clicmd(int argc, const char * const * argv, SerialDriver *sdp){
 
 #if !CH_USE_REGISTRY
   (void)curr;
-  cli_print("In order to use this function you must set CH_USE_REGISTRY to TRUE\n\r");
+  cli_println("In order to use this function you must set CH_USE_REGISTRY -> TRUE");
   return NULL;
 #else
   curr = chRegFirstThread();

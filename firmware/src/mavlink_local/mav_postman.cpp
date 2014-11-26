@@ -127,18 +127,18 @@ void MavPostman::start(mavChannel *chan){
  */
 void MavPostman::stop(void){
 
-  ready = false;
-
-  chThdTerminate(rxworker);
-  chThdTerminate(txworker);
-
-  chThdWait(rxworker);
-  chThdWait(txworker);
-
-  rxworker = NULL;
-  txworker = NULL;
-
-  channel = NULL;
+  if (false == ready)
+    return;
+  else{
+    ready = false;
+    chThdTerminate(rxworker);
+    chThdTerminate(txworker);
+    chThdWait(rxworker);
+    chThdWait(txworker);
+    rxworker = NULL;
+    txworker = NULL;
+    channel = NULL;
+  }
 }
 
 /**

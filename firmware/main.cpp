@@ -182,7 +182,7 @@ int main(void) {
   if (was_softreset() || was_padreset())
     chThdSleepMilliseconds(1);
   else
-    chThdSleepMilliseconds(100);
+    chThdSleepMilliseconds(200);
 
   /* give power to all needys */
 //  pwr5v_power_on(); // TODO: check main voltage first using internal ADC

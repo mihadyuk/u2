@@ -190,10 +190,10 @@ static THD_FUNCTION(ShellThread, sdp) {
 
   // create and init microrl object
   microrl_t microrl_shell;
-  chThdSleepMilliseconds(5);
+  chThdSleepMilliseconds(10);
   cli_print("Mobile Operational System Kamize (MOSK) welcomes you.");
   cli_print(ENDL);
-  chThdSleepMilliseconds(5);
+  chThdSleepMilliseconds(10);
   cli_print("Press enter to get command prompt.");
   microrl_init(&microrl_shell, cli_print);
 
@@ -242,14 +242,14 @@ static thread_t* togglesh_cmd(int argc, const char * const * argv, SerialDriver 
   (void)argv;
 
   uint32_t *sh_flag;
-  param_registry.valueSearch("SH_overxbee", &sh_flag);
+  param_registry.valueSearch("SH_over_radio", &sh_flag);
 
   if (0 == *sh_flag)
     *sh_flag = 1;
   else
     *sh_flag = 0;
 
-  param_registry.syncParam("SH_overxbee");
+  param_registry.syncParam("SH_over_radio");
   return NULL;
 }
 
@@ -331,8 +331,10 @@ void cli_print_long(const char * str, int n, int nres){
  *
  */
 void KillShellThreads(void) {
-  chThdTerminate(shell_tp);
-  chThdWait(shell_tp);
+  if (NULL != shell_tp) {
+    chThdTerminate(shell_tp);
+    chThdWait(shell_tp);
+  }
 }
 
 /**

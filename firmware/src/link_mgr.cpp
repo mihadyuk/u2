@@ -24,7 +24,6 @@
  ******************************************************************************
  */
 
-/* Virtual serial port over USB.*/
 SerialUSBDriver SDU1;
 
 /*
@@ -55,38 +54,6 @@ static mavChannelUsbSerial channel_usb_serial;
  *******************************************************************************
  */
 /**
- *
- */
-static void boot_strap(bool plug_prev, uint32_t sh_prev) {
-  if (0 == sh_prev){
-    sdStart(&XBEESD, &xbee_ser_cfg);
-    channel_serial.start(&XBEESD);
-    mav_postman.start(&channel_serial);
-    if (true == plug_prev){
-      sduStart(&SDU1, &serusbcfg);
-      usbStart(serusbcfg.usbp, &usbcfg);
-      usb_lld_connect_bus_workaround();
-      usbConnectBus(serusbcfg.usbp);
-      osalThreadSleepMilliseconds(500);
-      SpawnShellThreads(&SDU1);
-    }
-  }
-  else{
-    sdStart(&XBEESD, &xbee_ser_cfg);
-    SpawnShellThreads(&XBEESD);
-    if (true == plug_prev){
-      usbStart(serusbcfg.usbp, &usbcfg);
-      usb_lld_connect_bus_workaround();
-      usbConnectBus(serusbcfg.usbp);
-      osalThreadSleepMilliseconds(500);
-      sduStart(&SDU1, &serusbcfg);
-      channel_usb_serial.start(&SDU1);
-      mav_postman.start(&channel_usb_serial);
-    }
-  }
-}
-
-/**
  * Track changes of sh_overxbee flag and fork appropriate threads
  */
 static THD_WORKING_AREA(LinkMgrThreadWA, 128);
@@ -95,9 +62,9 @@ static THD_FUNCTION(LinkMgrThread, arg) {
   chRegSetThreadName("LinkMgr");
 
   uint32_t sh_prev; // cached previous value
-  uint32_t tmp_sh;
+  uint32_t sh_now;
   bool plug_prev;
-  bool tmp_plug;
+  bool plug_now;
 
   plug_prev = debouncer.update();
   /* Activates the USB driver and then the USB bus pull-up on D+.
@@ -107,34 +74,72 @@ static THD_FUNCTION(LinkMgrThread, arg) {
   usbDisconnectBus(serusbcfg.usbp);
   osalThreadSleepMilliseconds(1000);
 
-  plug_prev = debouncer.update();
-  sh_prev = *sh_overxbee;
-  boot_strap(plug_prev, sh_prev);
+  sh_now = sh_prev = *sh_overxbee;
+  plug_now = debouncer.update();
+  plug_prev = !plug_now; /* provocate state updating */
+  sdStart(&XBEESD, &xbee_ser_cfg);
 
   /* now track changes of flag and fork appropriate threads */
   while (!chThdShouldTerminateX()) {
-    tmp_plug = debouncer.update();
-    tmp_sh = *sh_overxbee;
 
-    if ((tmp_plug != plug_prev) || (tmp_sh != sh_prev)) {
-      plug_prev = tmp_plug;
-      sh_prev = tmp_sh;
+    /* first process plug state changes */
+    if ((plug_now != plug_prev) || (sh_now != sh_prev)) {
 
-      mav_postman.stop();
+      /* start from clean state */
       KillShellThreads();
-      usb_lld_disconnect_bus_workaround();
-      usbDisconnectBus(serusbcfg.usbp);
-      osalThreadSleep(DEBOUNCE_TIMEOUT);
-      usbStop(serusbcfg.usbp);
-      osalThreadSleep(DEBOUNCE_TIMEOUT);
-      sduStop(&SDU1);
-      osalThreadSleep(DEBOUNCE_TIMEOUT);
-      sdStop(&XBEESD);
+      mav_postman.stop();
+      channel_serial.stop();
+      channel_usb_serial.stop();
 
-      boot_strap(plug_prev, sh_prev);
+      /* start or stop USB driver */
+      if (plug_now != plug_prev) {
+        if (true == plug_now) {
+          sduStart(&SDU1, &serusbcfg);
+          usbStart(serusbcfg.usbp, &usbcfg);
+          usb_lld_connect_bus_workaround();
+          usbConnectBus(serusbcfg.usbp);
+          osalThreadSleepMilliseconds(500);
+        }
+        else {
+          usbDisconnectBus(serusbcfg.usbp);
+          usb_lld_disconnect_bus_workaround();
+          usbStop(serusbcfg.usbp);
+          sduStop(&SDU1);
+        }
+      }
+      /* now process shell flag */
+      if (1 == sh_now) {
+        if (true == plug_now) {
+          channel_usb_serial.start(&SDU1);
+          mav_postman.start(&channel_usb_serial);
+        }
+        SpawnShellThreads(&XBEESD);
+      }
+      else {
+        if (true == plug_now) {
+          SpawnShellThreads(&SDU1);
+        }
+        channel_serial.start(&XBEESD);
+        mav_postman.start(&channel_serial);
+      }
     }
+    plug_prev = plug_now;
+    sh_prev = sh_now;
+
     osalThreadSleep(DEBOUNCE_TIMEOUT);
+    plug_now = debouncer.update();
+    sh_now = *sh_overxbee;
   }
+
+  KillShellThreads();
+  mav_postman.stop();
+  channel_serial.stop();
+  channel_usb_serial.stop();
+  usbDisconnectBus(serusbcfg.usbp);
+  usb_lld_disconnect_bus_workaround();
+  usbStop(serusbcfg.usbp);
+  sduStop(&SDU1);
+  sdStop(&XBEESD);
 
   chThdExit(MSG_OK);
   return MSG_OK;
