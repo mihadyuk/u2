@@ -4,7 +4,7 @@
 #include "param_registry.hpp"
 #include "global_flags.h"
 #include "cli.hpp"
-#include "message.hpp"
+#include "mavlink_local.hpp"
 
 /*
  ******************************************************************************
@@ -57,7 +57,7 @@ static void _param_cli_confirm(param_status_t status){
 /**
  *
  */
-static void _param_cli_print(uint32_t i, bool_t need_help){
+static void _param_cli_print(uint32_t i, bool need_help){
 
   int n = 80;
   int nres = 0;
@@ -175,7 +175,7 @@ static void _param_cli_help(void){
 /**
  * Working with parameters from CLI.
  */
-Thread* param_clicmd(int argc, const char * const * argv, SerialDriver *sdp){
+thread_t* param_clicmd(int argc, const char * const * argv, SerialDriver *sdp){
   (void)sdp;
 
   int32_t i = -1;

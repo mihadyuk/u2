@@ -137,6 +137,7 @@ MAVSRC = src/mavlink_local/parameters.cpp \
 
 CLISRC = src/cli/cli.cpp \
          src/cli/cli_cmd.cpp \
+         src/param_cli.cpp \
 
 CPPSRC = $(CHCPPSRC) \
          $(NVRAMSRC) \
@@ -157,7 +158,6 @@ CPPSRC = $(CHCPPSRC) \
          src/instantiator.cpp \
          src/nvram_local.cpp \
          src/link_mgr.cpp \
-         src/shell.cpp \
          src/usb_debouncer.cpp \
          src/blinker.cpp \
          src/sanity.cpp \
@@ -198,6 +198,7 @@ INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
          lib/24aa/src \
          src \
          src/mavlink_local \
+         src/cli \
          lib/mavlink/C/lapwing \
          benchmark \
 

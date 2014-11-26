@@ -9,14 +9,14 @@
  */
 class mavChannelSerial : public mavChannel {
 public:
-  mavChannelSerial(SerialDriver *sdp, const SerialConfig *ser_cfg);
-  void start(void);
+  mavChannelSerial(void);
+  void start(SerialDriver *sdp);
   void stop(void);
   void write(const uint8_t *buf, size_t len);
   msg_t get(systime_t time);
+  size_t read(uint8_t *buf, size_t len, systime_t timeout);
 protected:
   SerialDriver *sdp;
-  const SerialConfig *ser_cfg;
 };
 
 #endif /* MAV_CHANNEL_SERIAL_H_ */

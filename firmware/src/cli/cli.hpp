@@ -1,6 +1,8 @@
 #ifndef CLI_H_
 #define CLI_H_
 
+#include "microrl.h"
+
 /**
  * Shell command structure
  */

@@ -111,7 +111,6 @@ MavPostman::MavPostman(void){
 void MavPostman::start(mavChannel *chan){
 
   this->channel = chan;
-  this->channel->start();
 
   rxworker = chThdCreateStatic(RxThreadWA, sizeof(RxThreadWA),
       LINKPRIO, RxThread, channel);
@@ -139,7 +138,6 @@ void MavPostman::stop(void){
   rxworker = NULL;
   txworker = NULL;
 
-  channel->stop();
   channel = NULL;
 }
 

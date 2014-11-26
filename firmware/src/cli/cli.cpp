@@ -349,9 +349,3 @@ void SpawnShellThreads(void *sdp) {
     osalSysHalt("Can not allocate memory");
 }
 
-
-
-
-
-
-

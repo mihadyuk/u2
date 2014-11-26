@@ -42,18 +42,18 @@
 /**
  *
  */
-mavChannelSerial::mavChannelSerial(SerialDriver *sdp, const SerialConfig *ser_cfg) :
-sdp(sdp),
-ser_cfg(ser_cfg)
+mavChannelSerial::mavChannelSerial() :
+sdp(nullptr)
 {
-  chDbgCheck((NULL != sdp) && (NULL != ser_cfg));
+  return;
 }
 
 /**
  *
  */
-void mavChannelSerial::start(void){
-  sdStart(sdp, ser_cfg);
+void mavChannelSerial::start(SerialDriver *sdp){
+  chDbgCheck((NULL != sdp) && (SD_READY == sdp->state));
+  this->sdp = sdp;
   this->ready = true;
 }
 
@@ -62,7 +62,7 @@ void mavChannelSerial::start(void){
  */
 void mavChannelSerial::stop(void){
   if (true == this->ready){
-    sdStop(sdp);
+    this->sdp = nullptr;
     this->ready = false;
   }
 }
@@ -83,3 +83,10 @@ msg_t mavChannelSerial::get(systime_t time) {
   return sdGetTimeout(sdp, time);
 }
 
+/**
+ *
+ */
+size_t mavChannelSerial::read(uint8_t *buf, size_t len, systime_t timeout){
+  osalDbgCheck(true == this->ready);
+  return sdReadTimeout(sdp, buf, len, timeout);
+}

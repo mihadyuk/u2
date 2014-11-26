@@ -5,7 +5,7 @@
 #include "usb_debouncer.hpp"
 #include "link_mgr.hpp"
 
-#include "shell.hpp"
+#include "cli.hpp"
 #include "mav_channel_serial.hpp"
 #include "mav_channel_usbserial.hpp"
 #include "mav_postman.hpp"
@@ -44,10 +44,8 @@ static const uint32_t *sh_overxbee;
 
 static UsbDebouncer debouncer;
 
-static mavChannelSerial channel_serial(&XBEESD, &xbee_ser_cfg);
-static mavChannelUsbSerial channel_usb_serial(&SDU1, &serusbcfg);
-
-static Shell shell;
+static mavChannelSerial channel_serial;
+static mavChannelUsbSerial channel_usb_serial;
 
 /*
  *******************************************************************************
@@ -61,6 +59,8 @@ static Shell shell;
  */
 static void boot_strap(bool plug_prev, uint32_t sh_prev) {
   if (0 == sh_prev){
+    sdStart(&XBEESD, &xbee_ser_cfg);
+    channel_serial.start(&XBEESD);
     mav_postman.start(&channel_serial);
     if (true == plug_prev){
       sduStart(&SDU1, &serusbcfg);
@@ -68,17 +68,19 @@ static void boot_strap(bool plug_prev, uint32_t sh_prev) {
       usb_lld_connect_bus_workaround();
       usbConnectBus(serusbcfg.usbp);
       osalThreadSleepMilliseconds(500);
-      shell.start((SerialDriver *)&SDU1);
+      SpawnShellThreads(&SDU1);
     }
   }
   else{
     sdStart(&XBEESD, &xbee_ser_cfg);
-    shell.start(&XBEESD);
+    SpawnShellThreads(&XBEESD);
     if (true == plug_prev){
       usbStart(serusbcfg.usbp, &usbcfg);
       usb_lld_connect_bus_workaround();
       usbConnectBus(serusbcfg.usbp);
       osalThreadSleepMilliseconds(500);
+      sduStart(&SDU1, &serusbcfg);
+      channel_usb_serial.start(&SDU1);
       mav_postman.start(&channel_usb_serial);
     }
   }
@@ -119,7 +121,7 @@ static THD_FUNCTION(LinkMgrThread, arg) {
       sh_prev = tmp_sh;
 
       mav_postman.stop();
-      shell.stop();
+      KillShellThreads();
       usb_lld_disconnect_bus_workaround();
       usbDisconnectBus(serusbcfg.usbp);
       osalThreadSleep(DEBOUNCE_TIMEOUT);

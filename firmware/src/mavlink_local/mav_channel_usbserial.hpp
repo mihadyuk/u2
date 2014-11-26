@@ -9,14 +9,14 @@
  */
 class mavChannelUsbSerial : public mavChannel {
 public:
-  mavChannelUsbSerial(SerialUSBDriver *sdp, const SerialUSBConfig *ser_cfg);
-  void start(void);
+  mavChannelUsbSerial(void);
+  void start(SerialUSBDriver *sdp);
   void stop(void);
   void write(const uint8_t *buf, size_t len);
   msg_t get(systime_t time);
+  size_t read(uint8_t *buf, size_t len, systime_t timeout);
 protected:
   SerialUSBDriver *sdp;
-  const SerialUSBConfig *ser_cfg;
 };
 
 #endif /* MAV_CHANNEL_USBSERIAL_H_ */

@@ -42,17 +42,18 @@
 /**
  *
  */
-mavChannelUsbSerial::mavChannelUsbSerial(SerialUSBDriver *sdp, const SerialUSBConfig *ser_cfg){
-  chDbgCheck((NULL != sdp) &&(NULL != ser_cfg));
-  this->sdp = sdp;
-  this->ser_cfg = ser_cfg;
+mavChannelUsbSerial::mavChannelUsbSerial(void) :
+sdp(nullptr)
+{
+  return;
 }
 
 /**
  *
  */
-void mavChannelUsbSerial::start(void){
-  sduStart(sdp, ser_cfg);
+void mavChannelUsbSerial::start(SerialUSBDriver *sdp){
+  osalDbgCheck((NULL != sdp) && (SDU_READY == sdp->state));
+  this->sdp = sdp;
   this->ready = true;
 }
 
@@ -61,7 +62,7 @@ void mavChannelUsbSerial::start(void){
  */
 void mavChannelUsbSerial::stop(void){
   if (true == this->ready){
-    sduStop(sdp);
+    this->sdp = nullptr;
     this->ready = false;
   }
 }
@@ -77,9 +78,15 @@ void mavChannelUsbSerial::write(const uint8_t *buf, size_t len){
 /**
  *
  */
-msg_t mavChannelUsbSerial::get(systime_t time){
+msg_t mavChannelUsbSerial::get(systime_t timeout){
   osalDbgCheck(true == this->ready);
-  return sdGetTimeout(sdp, time);
+  return sdGetTimeout(sdp, timeout);
 }
 
-
+/**
+ *
+ */
+size_t mavChannelUsbSerial::read(uint8_t *buf, size_t len, systime_t timeout){
+  osalDbgCheck(true == this->ready);
+  return sdReadTimeout(sdp, buf, len, timeout);
+}
