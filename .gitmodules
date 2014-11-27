@@ -4,3 +4,6 @@
 [submodule "mavlink_generator"]
 	path = mavlink_generator
 	url = git@github.com:mavlink/mavlink.git
+[submodule "firmware/lib/embmatrix"]
+	path = firmware/lib/embmatrix
+	url = git@github.com:barthess/embmatrix.git
