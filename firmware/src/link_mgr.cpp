@@ -2,7 +2,7 @@
 
 #include "param_registry.hpp"
 #include "usbcfg.h"
-#include "usb_debouncer.hpp"
+#include "debouncer.hpp"
 #include "link_mgr.hpp"
 
 #include "cli.hpp"
@@ -16,7 +16,7 @@
  ******************************************************************************
  */
 #define BAUDRATE_XBEE           115200
-#define DEBOUNCE_TIMEOUT        MS2ST(100)
+#define DEBOUNCE_PERIOD         MS2ST(50)
 
 /*
  ******************************************************************************
@@ -41,7 +41,7 @@ static SerialConfig xbee_ser_cfg = {
 
 static const uint32_t *sh_overxbee;
 
-static UsbDebouncer debouncer;
+static Debouncer debouncer(2, 0, usb_lld_plug_state);
 
 static mavChannelSerial channel_serial;
 static mavChannelUsbSerial channel_usb_serial;
@@ -63,8 +63,8 @@ static THD_FUNCTION(LinkMgrThread, arg) {
 
   uint32_t sh_prev; // cached previous value
   uint32_t sh_now;
-  bool plug_prev;
-  bool plug_now;
+  int plug_prev;
+  int plug_now;
 
   plug_prev = debouncer.update();
   /* Activates the USB driver and then the USB bus pull-up on D+.
@@ -93,7 +93,7 @@ static THD_FUNCTION(LinkMgrThread, arg) {
 
       /* start or stop USB driver */
       if (plug_now != plug_prev) {
-        if (true == plug_now) {
+        if (1 == plug_now) {
           sduStart(&SDU1, &serusbcfg);
           usbStart(serusbcfg.usbp, &usbcfg);
           usb_lld_connect_bus_workaround();
@@ -109,14 +109,14 @@ static THD_FUNCTION(LinkMgrThread, arg) {
       }
       /* now process shell flag */
       if (1 == sh_now) {
-        if (true == plug_now) {
+        if (1 == plug_now) {
           channel_usb_serial.start(&SDU1);
           mav_postman.start(&channel_usb_serial);
         }
         SpawnShellThreads(&XBEESD);
       }
       else {
-        if (true == plug_now) {
+        if (1 == plug_now) {
           SpawnShellThreads(&SDU1);
         }
         channel_serial.start(&XBEESD);
@@ -126,7 +126,7 @@ static THD_FUNCTION(LinkMgrThread, arg) {
     plug_prev = plug_now;
     sh_prev = sh_now;
 
-    osalThreadSleep(DEBOUNCE_TIMEOUT);
+    osalThreadSleep(DEBOUNCE_PERIOD);
     plug_now = debouncer.update();
     sh_now = *sh_overxbee;
   }

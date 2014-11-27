@@ -1,5 +1,4 @@
-#include "main.h"
-#include "usb_debouncer.hpp"
+#include "debouncer.hpp"
 
 /*
  ******************************************************************************
@@ -37,21 +36,36 @@
 /**
  *
  */
-UsbDebouncer::UsbDebouncer(void) : plugged_flag(false) {
+Debouncer::Debouncer(int threshold, int initial_state, unsigned int (*read_pad)(void)) :
+threshold(threshold),
+state(initial_state),
+read_pad(read_pad)
+{
+  if (initial_state > 0)
+    prev = 1;
+  else
+    prev = 0;
   return;
 }
 
 /**
  *
  */
-bool UsbDebouncer::update(void){
-  bool ret = false;
+int Debouncer::update(void) {
+  if (1 == read_pad())
+    state++;
+  else
+    state--;
 
-  if (plugged_flag && usb_lld_is_plug_inserted())
-    ret = true;
+  if (state > threshold) {
+    state = threshold;
+    prev = 1;
+  }
+  else if (state < 0) {
+    state = 0;
+    prev = 0;
+  }
 
-  plugged_flag = usb_lld_is_plug_inserted();
-
-  return ret;
+  return prev;
 }
 

@@ -173,7 +173,6 @@ int main(void) {
 
   halInit();
   System::init();
-  chThdSleepMilliseconds(1);
 
   endianness_test();
 
