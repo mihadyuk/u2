@@ -16,7 +16,7 @@
  ******************************************************************************
  */
 #define BAUDRATE_XBEE           115200
-#define DEBOUNCE_TIMEOUT        MS2ST(100)
+#define DEBOUNCE_PERIOD         MS2ST(50)
 
 /*
  ******************************************************************************
@@ -126,7 +126,7 @@ static THD_FUNCTION(LinkMgrThread, arg) {
     plug_prev = plug_now;
     sh_prev = sh_now;
 
-    osalThreadSleep(DEBOUNCE_TIMEOUT);
+    osalThreadSleep(DEBOUNCE_PERIOD);
     plug_now = debouncer.update();
     sh_now = *sh_overxbee;
   }
