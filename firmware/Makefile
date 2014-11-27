@@ -158,7 +158,7 @@ CPPSRC = $(CHCPPSRC) \
          src/instantiator.cpp \
          src/nvram_local.cpp \
          src/link_mgr.cpp \
-         src/usb_debouncer.cpp \
+         src/debouncer.cpp \
          src/blinker.cpp \
          src/sanity.cpp \
          lib/filters/fir_test.cpp \
@@ -188,7 +188,6 @@ ASMSRC = $(PORTASM)
 
 INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
          $(HALINC) $(OSALINC) $(PLATFORMINC) $(BOARDINC) $(FATFSINC) \
-         $(CHIBIOS)/os/various/devices_lib/accel \
          $(CHIBIOS)/os/various \
          $(CHIBIOS)/os/various/cpp_wrappers \
          drivers \

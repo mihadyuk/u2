@@ -92,8 +92,8 @@ bool sdc_lld_is_write_protected(SDCDriver *sdcp) {
 
 #if HAL_USE_USB
 
-bool usb_lld_is_plug_inserted(void) {
-  return PAL_HIGH == palReadPad(GPIOE, GPIOE_USB_PRESENCE);
+unsigned int usb_lld_plug_state(void) {
+  return palReadPad(GPIOE, GPIOE_USB_PRESENCE);
 }
 
 void usb_lld_connect_bus_workaround(void) {
