@@ -1,8 +1,6 @@
 #ifndef CLI_CMD_H_
 #define CLI_CMD_H_
 
-#include "../../lib/microrl/src/config.h"
-
 thread_t* ps_clicmd(int argc, const char * const * argv, SerialDriver *sdp);
 thread_t* uname_clicmd(int argc, const char * const * argv, SerialDriver *sdp);
 thread_t* clear_clicmd(int argc, const char * const * argv, SerialDriver *sdp);

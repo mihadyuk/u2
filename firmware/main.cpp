@@ -175,6 +175,7 @@ int main(void) {
   System::init();
 
   endianness_test();
+  chThdSleepMilliseconds(1000);
 
   /* enable softreset on panic */
   setGlobalFlag(GlobalFlags.allow_softreset);

@@ -92,6 +92,13 @@ static SerialDriver *ShellSDp;
  * LOCAL FUNCTIONS
  *******************************************************************************
  */
+/**
+ * Print routine for microrl.
+ */
+static void microrl_print(void* user_halde, const char *str){
+  (void)user_halde;
+  cli_print(str);
+}
 
 /**
  * Search value (pointer to function) by key (name string)
@@ -110,7 +117,9 @@ static int32_t cmd_search(const char* key, const ShellCmd_t *cmdarray){
 //*****************************************************************************
 // execute callback for microrl library
 // do what you want here, but don't write to argv!!! read only!!
-static int execute (int argc, const char * const * argv){
+static unsigned int execute (void* user_handle, int argc, const char * const * argv){
+  (void)user_handle;
+
   int i = 0;
 
   /* search first token */
@@ -132,8 +141,9 @@ static int execute (int argc, const char * const * argv){
 //*****************************************************************************
 // completion callback for microrl library
 #ifdef _USE_COMPLETE
-static char ** complete(int argc, const char * const * argv)
-{
+static char ** complete(void* user_handle, int argc, const char * const * argv) {
+  (void)user_handle;
+
   int j = 0;
   int i = 0;
 
@@ -167,7 +177,9 @@ static char ** complete(int argc, const char * const * argv)
 /**
  *
  */
-static void sigint (void){
+static void sigint (void* user_handle){
+  (void)user_handle;
+
   if (current_cmd_tp != NULL){
     cli_print("^C pressed. Exiting...");
     chThdTerminate(current_cmd_tp);
@@ -195,7 +207,7 @@ static THD_FUNCTION(ShellThread, sdp) {
   cli_print(ENDL);
   chThdSleepMilliseconds(10);
   cli_print("Press enter to get command prompt.");
-  microrl_init(&microrl_shell, cli_print);
+  microrl_init(&microrl_shell, NULL, microrl_print);
 
   // set callback for execute
   microrl_set_execute_callback(&microrl_shell, execute);
