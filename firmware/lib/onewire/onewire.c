@@ -37,20 +37,20 @@
  ******************************************************************************
  */
 
-OWDriver OWD1;
+onewireDriver OWD1;
 
 /*
  ******************************************************************************
  * PROTOTYPES
  ******************************************************************************
  */
-static void ow_reset_cb(PWMDriver *pwmp, OWDriver *owp);
+static void ow_reset_cb(PWMDriver *pwmp, onewireDriver *owp);
 static void pwm_reset_cb(PWMDriver *pwmp);
-static void ow_read_bit_cb(PWMDriver *pwmp, OWDriver *owp);
+static void ow_read_bit_cb(PWMDriver *pwmp, onewireDriver *owp);
 static void pwm_read_bit_cb(PWMDriver *pwmp);
-static void ow_write_bit_cb(PWMDriver *pwmp, OWDriver *owp);
+static void ow_write_bit_cb(PWMDriver *pwmp, onewireDriver *owp);
 static void pwm_write_bit_cb(PWMDriver *pwmp);
-static void ow_search_rom_cb(PWMDriver *pwmp, OWDriver *owp);
+static void ow_search_rom_cb(PWMDriver *pwmp, onewireDriver *owp);
 static void pwm_search_rom_cb(PWMDriver *pwmp);
 
 /*
@@ -60,7 +60,7 @@ static void pwm_search_rom_cb(PWMDriver *pwmp);
  */
 
 /*
- * config for fast initializing
+ * config for fast of all fields initializing
  */
 static const PWMConfig pwm_default_cfg = {
   1000000,
@@ -77,25 +77,41 @@ static const PWMConfig pwm_default_cfg = {
 };
 
 /*
- * Look up table for fash crc calculation
+ * Look up table for fast CRC calculation
  */
 static const uint8_t onewire_crc_table[256] = {
-     0,     94,   188,   226,    97,  63,   221,   131, 194,   156, 126,   32,    163,   253,   31,     65,
-    157,   195,    33,   127,   252, 162,    64,   30,   95,    1,  227,  189,    62,     96,  130,    220,
-     35,   125,   159,   193,    66,  28,   254,   160, 225,   191,  93,    3,    128,   222,   60,     98,
-    190,   224,     2,    92,   223, 129,    99,   61,  124,    34, 192,  158,    29,     67,  161,    255,
-     70,    24,   250,   164,    39, 121,   155,   197, 132,   218,  56,  102,    229,   187,   89,     7,
-    219,   133,   103,    57,   186, 228,     6,   88,   25,    71, 165,  251,    120,    38,  196,    154,
-    101,    59,   217,   135,    4,   90,   184,   230, 167,   249,  27,   69,    198,   152,  122,     36,
-    248,   166,    68,    26,   153, 199,    37,   123,  58,   100, 134,  216,    91,     5,   231,    185,
-    140,   210,    48,   110,   237, 179,    81,   15,   78,    16, 242,  172,    47,    113,  147,    205,
-     17,    79,   173,   243,   112,  46,   204,   146, 211,   141, 111,   49,    178,   236,   14,     80,
-    175,   241,    19,    77,   206, 144,   114,   44,  109,    51, 209,  143,    12,     82,  176,    238,
-     50,   108,   142,   208,    83,  13,   239,   177, 240,   174,  76,   18,    145,   207,   45,    115,
-    202,   148,   118,    40,   171, 245,    23,   73,    8,    86, 180,  234,    105,    55,  213,    139,
-     87,     9,   235,   181,    54, 104,   138,   212, 149,   203,  41,  119,    244,   170,   72,     22,
-    233,   183,    85,    11,   136, 214,    52,   106,  43,   117, 151,  201,    74,     20,  246,    168,
-    116,    42,   200,   150,    21,  75,   169,   247, 182,   232,  10,   84,    215,   137,  107,    53
+    0x0,  0x5e, 0xbc, 0xe2, 0x61, 0x3f, 0xdd, 0x83,
+    0xc2, 0x9c, 0x7e, 0x20, 0xa3, 0xfd, 0x1f, 0x41,
+    0x9d, 0xc3, 0x21, 0x7f, 0xfc, 0xa2, 0x40, 0x1e,
+    0x5f, 0x1,  0xe3, 0xbd, 0x3e, 0x60, 0x82, 0xdc,
+    0x23, 0x7d, 0x9f, 0xc1, 0x42, 0x1c, 0xfe, 0xa0,
+    0xe1, 0xbf, 0x5d, 0x3,  0x80, 0xde, 0x3c, 0x62,
+    0xbe, 0xe0, 0x2,  0x5c, 0xdf, 0x81, 0x63, 0x3d,
+    0x7c, 0x22, 0xc0, 0x9e, 0x1d, 0x43, 0xa1, 0xff,
+    0x46, 0x18, 0xfa, 0xa4, 0x27, 0x79, 0x9b, 0xc5,
+    0x84, 0xda, 0x38, 0x66, 0xe5, 0xbb, 0x59, 0x7,
+    0xdb, 0x85, 0x67, 0x39, 0xba, 0xe4, 0x6,  0x58,
+    0x19, 0x47, 0xa5, 0xfb, 0x78, 0x26, 0xc4, 0x9a,
+    0x65, 0x3b, 0xd9, 0x87, 0x4,  0x5a, 0xb8, 0xe6,
+    0xa7, 0xf9, 0x1b, 0x45, 0xc6, 0x98, 0x7a, 0x24,
+    0xf8, 0xa6, 0x44, 0x1a, 0x99, 0xc7, 0x25, 0x7b,
+    0x3a, 0x64, 0x86, 0xd8, 0x5b, 0x5,  0xe7, 0xb9,
+    0x8c, 0xd2, 0x30, 0x6e, 0xed, 0xb3, 0x51, 0xf,
+    0x4e, 0x10, 0xf2, 0xac, 0x2f, 0x71, 0x93, 0xcd,
+    0x11, 0x4f, 0xad, 0xf3, 0x70, 0x2e, 0xcc, 0x92,
+    0xd3, 0x8d, 0x6f, 0x31, 0xb2, 0xec, 0xe,  0x50,
+    0xaf, 0xf1, 0x13, 0x4d, 0xce, 0x90, 0x72, 0x2c,
+    0x6d, 0x33, 0xd1, 0x8f, 0xc,  0x52, 0xb0, 0xee,
+    0x32, 0x6c, 0x8e, 0xd0, 0x53, 0xd,  0xef, 0xb1,
+    0xf0, 0xae, 0x4c, 0x12, 0x91, 0xcf, 0x2d, 0x73,
+    0xca, 0x94, 0x76, 0x28, 0xab, 0xf5, 0x17, 0x49,
+    0x8,  0x56, 0xb4, 0xea, 0x69, 0x37, 0xd5, 0x8b,
+    0x57, 0x9,  0xeb, 0xb5, 0x36, 0x68, 0x8a, 0xd4,
+    0x95, 0xcb, 0x29, 0x77, 0xf4, 0xaa, 0x48, 0x16,
+    0xe9, 0xb7, 0x55, 0xb,  0x88, 0xd6, 0x34, 0x6a,
+    0x2b, 0x75, 0x97, 0xc9, 0x4a, 0x14, 0xf6, 0xa8,
+    0x74, 0x2a, 0xc8, 0x96, 0x15, 0x4b, 0xa9, 0xf7,
+    0xb6, 0xe8, 0xa,  0x54, 0xd7, 0x89, 0x6b, 0x35
 };
 
 static time_measurement_t search_rom_tm;
@@ -138,8 +154,8 @@ static void pwm_search_rom_cb(PWMDriver *pwmp) {
 /**
  *
  */
-static void ow_write_bit_I(OWDriver *owp, uint8_t bit) {
-#if SYNTH_SEARCH_TEST
+static void ow_write_bit_I(onewireDriver *owp, uint8_t bit) {
+#if ONEWIRE_SYNTH_SEARCH_TEST
   _synth_ow_write_bit(owp, bit);
 #else
   osalSysLockFromISR();
@@ -151,23 +167,12 @@ static void ow_write_bit_I(OWDriver *owp, uint8_t bit) {
 #endif
 }
 
-/**
- *
- */
-static uint_fast8_t ow_read_bit_X(void) {
-#if SYNTH_SEARCH_TEST
-  return _synth_ow_read_bit();
-#else
-  return palReadPad(GPIOB, GPIOB_TACHOMETER);
-#endif
-}
-
 /*
  * presence pulse callback
  */
-static void ow_reset_cb(PWMDriver *pwmp, OWDriver *owp) {
+static void ow_reset_cb(PWMDriver *pwmp, onewireDriver *owp) {
 
-  owp->reg.slave_present = (PAL_LOW == ow_read_bit_X());
+  owp->reg.slave_present = (PAL_LOW == owp->config->readBitX());
 
   osalSysLockFromISR();
   pwmDisableChannelI(pwmp, owp->config->sample_channel);
@@ -178,7 +183,7 @@ static void ow_reset_cb(PWMDriver *pwmp, OWDriver *owp) {
 /**
  *
  */
-static void ow_read_bit_cb(PWMDriver *pwmp, OWDriver *owp) {
+static void ow_read_bit_cb(PWMDriver *pwmp, onewireDriver *owp) {
 
   if (true == owp->reg.final_timeslot) {
     osalSysLockFromISR();
@@ -188,7 +193,7 @@ static void ow_read_bit_cb(PWMDriver *pwmp, OWDriver *owp) {
     return;
   }
   else {
-    *owp->buf |= ow_read_bit_X() << owp->reg.bit;
+    *owp->buf |= owp->config->readBitX() << owp->reg.bit;
     owp->reg.bit++;
     if (8 == owp->reg.bit) {
       owp->reg.bit = 0;
@@ -206,11 +211,10 @@ static void ow_read_bit_cb(PWMDriver *pwmp, OWDriver *owp) {
   }
 }
 
-#include "pads.h"
 /*
  * bit transmission callback
  */
-static void ow_write_bit_cb(PWMDriver *pwmp, OWDriver *owp) {
+static void ow_write_bit_cb(PWMDriver *pwmp, onewireDriver *owp) {
 
   if (8 == owp->reg.bit) {
     owp->buf++;
@@ -231,8 +235,8 @@ static void ow_write_bit_cb(PWMDriver *pwmp, OWDriver *owp) {
   if (true == owp->reg.final_timeslot) {
     #if ONEWIRE_USE_PARASITIC_POWER
     if (owp->reg.need_pullup) {
-      owp->reg.state = OW_PULL_UP;
-      owp->config->onewire_pullup_assert();
+      owp->reg.state = ONEWIRE_PULL_UP;
+      owp->config->pullup_assert();
       owp->reg.need_pullup = false;
     }
     #endif
@@ -250,7 +254,7 @@ static void ow_write_bit_cb(PWMDriver *pwmp, OWDriver *owp) {
 /**
  * @brief   Helper for collision handler
  */
-static void store_bit(OWSearchRom *sr, uint_fast8_t bit) {
+static void store_bit(onewire_search_rom_t *sr, uint_fast8_t bit) {
 
   size_t rb = sr->reg.rombit;
 
@@ -269,17 +273,17 @@ static uint_fast8_t extract_path_bit(const uint8_t *path, uint_fast8_t bit) {
 /**
  *
  */
-static uint_fast8_t collision_handler(OWSearchRom *sr) {
+static uint_fast8_t collision_handler(onewire_search_rom_t *sr) {
 
   uint_fast8_t bit;
 
   switch(sr->reg.search_iter) {
-  case OW_SEARCH_ROM_NEXT:
+  case ONEWIRE_SEARCH_ROM_NEXT:
     if ((int)sr->reg.rombit < sr->last_zero_branch) {
       bit = extract_path_bit(sr->prev_path, sr->reg.rombit);
       if (0 == bit) {
         sr->prev_zero_branch = sr->reg.rombit;
-        sr->reg.result = OW_SEARCH_ROM_SUCCESS;
+        sr->reg.result = ONEWIRE_SEARCH_ROM_SUCCESS;
       }
       store_bit(sr, bit);
       return bit;
@@ -294,17 +298,17 @@ static uint_fast8_t collision_handler(OWSearchRom *sr) {
       sr->prev_zero_branch = sr->last_zero_branch;
       sr->last_zero_branch = sr->reg.rombit;
       store_bit(sr, 0);
-      sr->reg.result = OW_SEARCH_ROM_SUCCESS;
+      sr->reg.result = ONEWIRE_SEARCH_ROM_SUCCESS;
       return 0;
     }
     break;
 
-  case OW_SEARCH_ROM_FIRST:
+  case ONEWIRE_SEARCH_ROM_FIRST:
     /* always take 0-branch */
     sr->prev_zero_branch = sr->last_zero_branch;
     sr->last_zero_branch = sr->reg.rombit;
     store_bit(sr, 0);
-    sr->reg.result = OW_SEARCH_ROM_SUCCESS;
+    sr->reg.result = ONEWIRE_SEARCH_ROM_SUCCESS;
     return 0;
     break;
 
@@ -318,23 +322,23 @@ static uint_fast8_t collision_handler(OWSearchRom *sr) {
 /**
  *
  */
-static void ow_search_rom_cb(PWMDriver *pwmp, OWDriver *owp) {
+static void ow_search_rom_cb(PWMDriver *pwmp, onewireDriver *owp) {
 
   chTMStartMeasurementX(&search_rom_tm);
 
-  OWSearchRom *sr = &owp->search_rom;
+  onewire_search_rom_t *sr = &owp->search_rom;
 
   if (0 == sr->reg.bit_step) {                    /* read direct bit */
-    sr->reg.bit_buf |= ow_read_bit_X();
+    sr->reg.bit_buf |= owp->config->readBitX();
     sr->reg.bit_step++;
   }
   else if (1 == sr->reg.bit_step) {               /* read complement bit */
-    sr->reg.bit_buf |= ow_read_bit_X() << 1;
+    sr->reg.bit_buf |= owp->config->readBitX() << 1;
     sr->reg.bit_step++;
     switch(sr->reg.bit_buf){
     case 0b11:
       /* no one device on bus */
-      sr->reg.result = OW_SEARCH_ROM_ERROR;
+      sr->reg.result = ONEWIRE_SEARCH_ROM_ERROR;
       goto THE_END;
       break;
     case 0b01:
@@ -355,7 +359,7 @@ static void ow_search_rom_cb(PWMDriver *pwmp, OWDriver *owp) {
     }
   }
   else {                                      /* start next step */
-#if !SYNTH_SEARCH_TEST
+#if !ONEWIRE_SYNTH_SEARCH_TEST
     ow_write_bit_I(owp, 1);
 #endif
     sr->reg.bit_step = 0;
@@ -365,9 +369,9 @@ static void ow_search_rom_cb(PWMDriver *pwmp, OWDriver *owp) {
   /* one ROM successfully discovered */
   if (64 == sr->reg.rombit) {
     sr->reg.devices_found++;
-    sr->reg.search_iter = OW_SEARCH_ROM_NEXT;
+    sr->reg.search_iter = ONEWIRE_SEARCH_ROM_NEXT;
     if (true == sr->reg.single_device)
-      sr->reg.result = OW_SEARCH_ROM_LAST;
+      sr->reg.result = ONEWIRE_SEARCH_ROM_LAST;
     goto THE_END;
   }
 
@@ -376,7 +380,7 @@ static void ow_search_rom_cb(PWMDriver *pwmp, OWDriver *owp) {
   return;
 
 THE_END:
-#if SYNTH_SEARCH_TEST
+#if ONEWIRE_SYNTH_SEARCH_TEST
   (void)pwmp;
   return;
 #else
@@ -392,11 +396,11 @@ THE_END:
 /**
  * @brief   Early reset. Call it once before search rom routine.
  */
-static void search_clean_start(OWSearchRom *sr) {
+static void search_clean_start(onewire_search_rom_t *sr) {
 
   sr->reg.single_device = true; /* presume simplest way at beginning */
-  sr->reg.result = OW_SEARCH_ROM_LAST;
-  sr->reg.search_iter = OW_SEARCH_ROM_FIRST;
+  sr->reg.result = ONEWIRE_SEARCH_ROM_LAST;
+  sr->reg.search_iter = ONEWIRE_SEARCH_ROM_FIRST;
   sr->retbuf = NULL;
   sr->reg.devices_found = 0;
   memset(sr->prev_path, 0, 8);
@@ -411,12 +415,12 @@ static void search_clean_start(OWSearchRom *sr) {
 /**
  * @brief   Call it the begining of every iteration
  */
-static void search_clean_iteration(OWSearchRom *sr) {
+static void search_clean_iteration(onewire_search_rom_t *sr) {
 
   sr->reg.rombit = 0;
   sr->reg.bit_step = 0;
   sr->reg.bit_buf = 0;
-  sr->reg.result = OW_SEARCH_ROM_LAST;
+  sr->reg.result = ONEWIRE_SEARCH_ROM_LAST;
 }
 
 /*
@@ -428,11 +432,13 @@ static void search_clean_iteration(OWSearchRom *sr) {
 /**
  *
  */
-void onewireObjectInit(OWDriver *owp) {
+void onewireObjectInit(onewireDriver *owp) {
+
+  osalDbgCheck(NULL != owp);
 
   owp->config = NULL;
   owp->reg.slave_present = false;
-  owp->reg.state = OW_STOP;
+  owp->reg.state = ONEWIRE_STOP;
   owp->thread = NULL;
 
   owp->reg.bytes = 0;
@@ -450,29 +456,34 @@ void onewireObjectInit(OWDriver *owp) {
 /**
  *
  */
-void onewireStart(OWDriver *owp, const OWConfig *config) {
+void onewireStart(onewireDriver *owp, const onewireConfig *config) {
 
   osalDbgCheck((NULL != owp) && (NULL != config));
+  osalDbgCheck(NULL != config->readBitX);
+  osalDbgAssert(PWM_STOP == config->pwmd->state,
+      "PWM will be started by onewire driver internally");
+  osalDbgAssert(ONEWIRE_STOP == owp->reg.state, "Invalid state");
 #if ONEWIRE_USE_PARASITIC_POWER
-  osalDbgCheck((NULL != config->onewire_pullup_assert) &&
-               (NULL != config->onewire_pullup_assert));
+  osalDbgCheck((NULL != config->pullup_assert) &&
+               (NULL != config->pullup_assert));
 #endif
 
-  chTMObjectInit(&search_rom_tm);
   owp->config = config;
-  owp->reg.state = OW_READY;
+  owp->reg.state = ONEWIRE_READY;
+  chTMObjectInit(&search_rom_tm);
 }
 
 /**
  *
  */
-void onewireStop(OWDriver *owp) {
-
+void onewireStop(onewireDriver *owp) {
+  osalDbgCheck(NULL != owp);
 #if ONEWIRE_USE_PARASITIC_POWER
-  owp->config->onewire_pullup_release();
+  owp->config->pullup_release();
 #endif
+  pwmStop(owp->config->pwmd);
   owp->config = NULL;
-  owp->reg.state = OW_STOP;
+  owp->reg.state = ONEWIRE_STOP;
 }
 
 /**
@@ -491,14 +502,17 @@ uint8_t onewireCRC(const uint8_t *buf, size_t len) {
 /**
  * @brief     Return true if device(s) detected on bus.
  */
-bool onewireReset(OWDriver *owp) {
-  PWMDriver *pwmd = owp->config->pwmd;
+bool onewireReset(onewireDriver *owp) {
+  PWMDriver *pwmd;
 
-  osalDbgAssert(owp->reg.state == OW_READY, "invalid state");
+  osalDbgCheck(NULL != owp);
+  osalDbgAssert(owp->reg.state == ONEWIRE_READY, "Invalid state");
 
   /* short circuit on bus or any other device transmit data */
-  if (0 == ow_read_bit_X())
+  if (0 == owp->config->readBitX())
     return false;
+
+  pwmd = owp->config->pwmd;
 
   owp->pwmcfg.period = ONEWIRE_RESET_LOW_WIDTH + ONEWIRE_RESET_SAMPLE_WIDTH;
   owp->pwmcfg.callback = NULL;
@@ -520,20 +534,24 @@ bool onewireReset(OWDriver *owp) {
 
   /* wait until slave release bus to discriminate it from short circuit */
   osalThreadSleepMicroseconds(500);
-  return (1 == ow_read_bit_X()) && (true == owp->reg.slave_present);
+  return (1 == owp->config->readBitX()) && (true == owp->reg.slave_present);
 }
 
 /**
  *
  */
-void onewireRead(OWDriver *owp, uint8_t *rxbuf, size_t rxbytes) {
-  PWMDriver *pwmd = owp->config->pwmd;
+void onewireRead(onewireDriver *owp, uint8_t *rxbuf, size_t rxbytes) {
+  PWMDriver *pwmd;
 
-  osalDbgAssert(owp->reg.state == OW_READY, "invalid state");
+  osalDbgCheck((NULL != owp) && (NULL != rxbuf));
+  osalDbgCheck((rxbytes > 0) && (rxbytes < 65536));
+  osalDbgAssert(owp->reg.state == ONEWIRE_READY, "Invalid state");
 
   /* Buffer zeroing. This is important because of driver collects
      bits using |= operation.*/
   memset(rxbuf, 0, rxbytes);
+
+  pwmd = owp->config->pwmd;
 
   owp->reg.bit = 0;
   owp->reg.final_timeslot = false;
@@ -562,15 +580,19 @@ void onewireRead(OWDriver *owp, uint8_t *rxbuf, size_t rxbytes) {
 /**
  *
  */
-void onewireWrite(OWDriver *owp, uint8_t *txbuf,
+void onewireWrite(onewireDriver *owp, uint8_t *txbuf,
                 size_t txbytes, systime_t pullup_time) {
-  PWMDriver *pwmd = owp->config->pwmd;
+  PWMDriver *pwmd;
 
-  osalDbgAssert(owp->reg.state == OW_READY, "invalid state");
-
+  osalDbgCheck((NULL != owp) && (NULL != txbuf));
+  osalDbgCheck((txbytes > 0) && (txbytes < 65536));
+  osalDbgAssert(owp->reg.state == ONEWIRE_READY, "Invalid state");
 #if !ONEWIRE_USE_PARASITIC_POWER
-  osalDbgAssert(0 == pullup_time, "Non zero pull up time is valid only in parasitic power mode");
+  osalDbgAssert(0 == pullup_time,
+      "Non zero time is valid only in parasitic power mode");
 #endif
+
+  pwmd = owp->config->pwmd;
 
   owp->buf = txbuf;
   owp->reg.bit = 0;
@@ -586,7 +608,7 @@ void onewireWrite(OWDriver *owp, uint8_t *txbuf,
 
 #if ONEWIRE_USE_PARASITIC_POWER
   if (pullup_time > 0) {
-    owp->reg.state = OW_PULL_UP;
+    owp->reg.state = ONEWIRE_PULL_UP;
     owp->reg.need_pullup = true;
   }
 #endif
@@ -604,8 +626,8 @@ void onewireWrite(OWDriver *owp, uint8_t *txbuf,
 #if ONEWIRE_USE_PARASITIC_POWER
   if (pullup_time > 0) {
     osalThreadSleep(pullup_time);
-    owp->config->onewire_pullup_release();
-    owp->reg.state = OW_READY;
+    owp->config->pullup_release();
+    owp->reg.state = ONEWIRE_READY;
   }
 #endif
 }
@@ -622,11 +644,16 @@ void onewireWrite(OWDriver *owp, uint8_t *txbuf,
  * @return              Count of discovered ROMs. May be more than max_rom_cnt.
  * @retval 0            no ROMs found or communication error occurred.
  */
-size_t onewireSearchRom(OWDriver *owp, uint8_t *result, size_t max_rom_cnt) {
-  PWMDriver *pwmd = owp->config->pwmd;
-  uint8_t cmd = ONEWIRE_CMD_SEARCH_ROM;
+size_t onewireSearchRom(onewireDriver *owp, uint8_t *result, size_t max_rom_cnt) {
+  PWMDriver *pwmd;
+  uint8_t cmd;
 
-  osalDbgAssert(OW_READY == owp->reg.state, "invalid state");
+  osalDbgCheck(NULL != owp);
+  osalDbgAssert(ONEWIRE_READY == owp->reg.state, "Invalid state");
+  osalDbgCheck((max_rom_cnt <= 256) && (max_rom_cnt > 0));
+
+  pwmd = owp->config->pwmd;
+  cmd = ONEWIRE_CMD_SEARCH_ROM;
 
   search_clean_start(&owp->search_rom);
 
@@ -666,7 +693,7 @@ size_t onewireSearchRom(OWDriver *owp, uint8_t *result, size_t max_rom_cnt) {
 
     pwmStop(pwmd);
 
-    if (OW_SEARCH_ROM_ERROR != owp->search_rom.reg.result) {
+    if (ONEWIRE_SEARCH_ROM_ERROR != owp->search_rom.reg.result) {
       /* check CRC and return 0 (error status) if mismatch */
       if (owp->search_rom.retbuf[7] != onewireCRC(owp->search_rom.retbuf, 7))
         return 0;
@@ -674,15 +701,15 @@ size_t onewireSearchRom(OWDriver *owp, uint8_t *result, size_t max_rom_cnt) {
       memcpy(owp->search_rom.prev_path, owp->search_rom.retbuf, 8);
     }
   }
-  while (OW_SEARCH_ROM_SUCCESS == owp->search_rom.reg.result);
+  while (ONEWIRE_SEARCH_ROM_SUCCESS == owp->search_rom.reg.result);
 
   /**/
-  if (OW_SEARCH_ROM_ERROR == owp->search_rom.reg.result)
+  if (ONEWIRE_SEARCH_ROM_ERROR == owp->search_rom.reg.result)
     return 0;
   else
     return owp->search_rom.reg.devices_found;
 }
 
-#if SYNTH_SEARCH_TEST
+#if ONEWIRE_SYNTH_SEARCH_TEST
 #include "onewire_sr_synth.c"
-#endif /* SYNTH_SEARCH_TEST */
+#endif /* ONEWIRE_SYNTH_SEARCH_TEST */

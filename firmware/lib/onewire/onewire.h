@@ -21,7 +21,7 @@
 
 #define ONEWIRE_SYNTH_SEARCH_TEST         FALSE
 
-#define ONEWIRE_USE_PARASITIC_POWER       TRUE
+#define ONEWIRE_USE_PARASITIC_POWER       FALSE
 
 #define ONEWIRE_CMD_READ_ROM              0x33
 #define ONEWIRE_CMD_SEARCH_ROM            0xF0
@@ -32,34 +32,38 @@
 
 typedef void (*onewire_pullup_assert_t)(void);
 typedef void (*onewire_pullup_release_t)(void);
+typedef uint_fast8_t (*onewire_read_bit_t)(void);
 
 typedef enum {
-  OW_UNINIT = 0,
-  OW_STOP = 1,
-  OW_READY = 2,
-  OW_PULL_UP
+  ONEWIRE_UNINIT = 0,
+  ONEWIRE_STOP = 1,
+  ONEWIRE_READY = 2,
+#if ONEWIRE_USE_PARASITIC_POWER
+  ONEWIRE_PULL_UP
+#endif
 } onewire_state_t;
 
 typedef enum {
-  OW_SEARCH_ROM_SUCCESS = 0,
-  OW_SEARCH_ROM_LAST,
-  OW_SEARCH_ROM_ERROR
+  ONEWIRE_SEARCH_ROM_SUCCESS = 0,
+  ONEWIRE_SEARCH_ROM_LAST,
+  ONEWIRE_SEARCH_ROM_ERROR
 } search_rom_result_t;
 
 typedef enum {
-  OW_SEARCH_ROM_FIRST = 0,
-  OW_SEARCH_ROM_NEXT
+  ONEWIRE_SEARCH_ROM_FIRST = 0,
+  ONEWIRE_SEARCH_ROM_NEXT
 } search_iteration_t;
 
 typedef struct {
-  PWMDriver *pwmd;
-  size_t    master_channel;
-  size_t    sample_channel;
+  PWMDriver                 *pwmd;
+  size_t                    master_channel;
+  size_t                    sample_channel;
+  onewire_read_bit_t        readBitX;
 #if ONEWIRE_USE_PARASITIC_POWER
-  onewire_pullup_assert_t onewire_pullup_assert;
-  onewire_pullup_release_t onewire_pullup_release;
+  onewire_pullup_assert_t   pullup_assert;
+  onewire_pullup_release_t  pullup_release;
 #endif
-} OWConfig;
+} onewireConfig;
 
 /**
  * small search rom fields combined in single machine word to save RAM
@@ -83,7 +87,7 @@ typedef struct {
   uint8_t           prev_path[8];
   int8_t            last_zero_branch; /* negative values uses to point out of tree root */
   int8_t            prev_zero_branch; /* negative values uses to point out of tree root */
-} OWSearchRom;
+} onewire_search_rom_t;
 
 
 /**
@@ -109,40 +113,37 @@ typedef struct {
  *
  */
 typedef struct {
-  onewire_reg_t     reg;
-  const OWConfig    *config;
-  PWMConfig         pwmcfg;
-  uint8_t           *buf;
-  OWSearchRom       search_rom;
+  onewire_reg_t         reg;
+  const onewireConfig   *config;
+  PWMConfig             pwmcfg;
+  uint8_t               *buf;
+  onewire_search_rom_t  search_rom;
 
   /**
    * @brief   Thread waiting for I/O completion.
    */
   thread_reference_t  thread;
-} OWDriver;
+} onewireDriver;
 
-extern OWDriver OWD1;
+extern onewireDriver OWD1;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
   void onewireInit(void);
-  void onewireObjectInit(OWDriver *owp);
-  void onewireStart(OWDriver *owp, const OWConfig *config);
-  void onewireStop(OWDriver *owp);
-  bool onewireReset(OWDriver *owp);
-  void onewireRead(OWDriver *owp, uint8_t *rxbuf, size_t rxbytes);
-  void onewireWrite(OWDriver *owp, uint8_t *txbuf, size_t txbytes, systime_t pullup_time);
-  size_t onewireSearchRom(OWDriver *owp, uint8_t *result, size_t max_rom_cnt);
+  void onewireObjectInit(onewireDriver *owp);
+  void onewireStart(onewireDriver *owp, const onewireConfig *config);
+  void onewireStop(onewireDriver *owp);
+  bool onewireReset(onewireDriver *owp);
+  void onewireRead(onewireDriver *owp, uint8_t *rxbuf, size_t rxbytes);
+  void onewireWrite(onewireDriver *owp, uint8_t *txbuf, size_t txbytes, systime_t pullup_time);
+  size_t onewireSearchRom(onewireDriver *owp, uint8_t *result, size_t max_rom_cnt);
   uint8_t onewireCRC(const uint8_t *buf, size_t len);
-//#if ONEWIRE_USE_PARASITIC_POWER
-//  void onewirePullUpRelease(OWDriver *owp);
-//#endif
-#if SYNTH_SEARCH_TEST
-  void _synth_ow_write_bit(OWDriver *owp, uint8_t bit);
+#if ONEWIRE_SYNTH_SEARCH_TEST
+  void _synth_ow_write_bit(onewireDriver *owp, uint8_t bit);
   uint_fast8_t _synth_ow_read_bit(void);
-  void synthSearchRomTest(OWDriver *owp);
-#endif
+  void synthSearchRomTest(onewireDriver *owp);
+#endif /* ONEWIRE_SYNTH_SEARCH_TEST */
 #ifdef __cplusplus
 }
 #endif

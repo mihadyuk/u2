@@ -26,6 +26,17 @@
 #define ONEWIRE_MASTER_CHANNEL        2 /* this PWM channel drives bus */
 #define ONEWIRE_SAMPLE_CHANNEL        3 /* this one generates interrupts when sampling needed */
 
+#if defined(BOARD_ST_STM32F4_DISCOVERY)
+#define GPIOB_ONEWIRE                 GPIOB_PIN8
+#define search_led_off()              (palClearPad(GPIOD, GPIOD_LED4))
+#define search_led_on()               (palSetPad(GPIOD, GPIOD_LED4))
+#else
+#define GPIOB_ONEWIRE                 GPIOB_TACHOMETER
+#include "pads.h"
+#define search_led_on     red_led_on
+#define search_led_off    red_led_off
+#endif
+
 /*
  ******************************************************************************
  * EXTERNS
@@ -37,6 +48,8 @@
  * PROTOTYPES
  ******************************************************************************
  */
+
+static uint_fast8_t onewire_read_bit_X(void);
 
 #if ONEWIRE_USE_PARASITIC_POWER
 static void strong_pullup_assert(void);
@@ -56,10 +69,11 @@ static float temperature[3];
 /*
  *
  */
-static const OWConfig ow_cfg = {
+static const onewireConfig ow_cfg = {
   &PWMD4,
   ONEWIRE_MASTER_CHANNEL,
   ONEWIRE_SAMPLE_CHANNEL,
+  onewire_read_bit_X,
 #if ONEWIRE_USE_PARASITIC_POWER
   strong_pullup_assert,
   strong_pullup_release
@@ -79,7 +93,7 @@ static const OWConfig ow_cfg = {
  *
  */
 static void strong_pullup_assert(void) {
-  palSetPadMode(GPIOB, GPIOB_TACHOMETER, PAL_MODE_ALTERNATE(2) |
+  palSetPadMode(GPIOB, GPIOB_ONEWIRE, PAL_MODE_ALTERNATE(2) |
                   PAL_STM32_OTYPE_PUSHPULL | PAL_STM32_PUDR_PULLUP);
 }
 
@@ -87,18 +101,28 @@ static void strong_pullup_assert(void) {
  *
  */
 static void strong_pullup_release(void) {
-  palSetPadMode(GPIOB, GPIOB_TACHOMETER, PAL_MODE_ALTERNATE(2) |
+  palSetPadMode(GPIOB, GPIOB_ONEWIRE, PAL_MODE_ALTERNATE(2) |
                 PAL_STM32_OTYPE_OPENDRAIN | PAL_STM32_PUDR_PULLUP);
 }
 #endif /* ONEWIRE_PARASITIC_POWER_MODE */
+
+/**
+ *
+ */
+static uint_fast8_t onewire_read_bit_X(void) {
+#if ONEWIRE_SYNTH_SEARCH_TEST
+  return _synth_ow_read_bit();
+#else
+  return palReadPad(GPIOB, GPIOB_ONEWIRE);
+#endif
+}
 
 /*
  ******************************************************************************
  * EXPORTED FUNCTIONS
  ******************************************************************************
  */
-#include "pads.h"
-volatile bool presence;
+
 /**
  *
  */
@@ -108,6 +132,7 @@ void onewireTest(void) {
   uint8_t rombuf[24];
   size_t devices_on_bus = 0;
   size_t i = 0;
+  volatile bool presence;
 
   onewireObjectInit(&OWD1);
   onewireStart(&OWD1, &ow_cfg);
@@ -123,8 +148,11 @@ void onewireTest(void) {
     if (true == onewireReset(&OWD1)){
 
       memset(rombuf, 0x55, sizeof(rombuf));
+      search_led_on();
       devices_on_bus = onewireSearchRom(&OWD1, rombuf, 3);
+      search_led_off();
       osalDbgCheck(devices_on_bus <= 3);
+      osalDbgCheck(devices_on_bus  > 0);
 
       if (1 == devices_on_bus){
         /* test read rom command */
@@ -165,10 +193,7 @@ void onewireTest(void) {
         testbuf[9] = ONEWIRE_CMD_READ_SCRATCHPAD;
         onewireWrite(&OWD1, testbuf, 10, 0);
 
-        red_led_on();
         onewireRead(&OWD1, testbuf, 9);
-        red_led_off();
-
         osalDbgCheck(testbuf[8] == onewireCRC(testbuf, 8));
         tmp = 0;
         tmp |= (testbuf[1] << 8) | testbuf[0];
@@ -178,9 +203,7 @@ void onewireTest(void) {
     else {
       osalSysHalt("");
     }
-
-    //palTogglePad(GPIOD, GPIOD_LED4);
-    osalThreadSleep(1);
+    osalThreadSleep(1); /* enforce ChibiOS's stack overflow check */
   }
 
   onewireStop(&OWD1);
