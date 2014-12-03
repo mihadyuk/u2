@@ -5,7 +5,7 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -O0 -ggdb -fomit-frame-pointer -falign-functions=16
+  USE_OPT = -O2 -ggdb -fomit-frame-pointer -falign-functions=16
 endif
 
 # C specific options here (added to USE_OPT).
@@ -110,6 +110,8 @@ CSRC = $(PORTSRC) \
        lib/uav_utils/cpu_load.c \
        lib/uav_utils/crc.c \
        lib/microrl/src/microrl.c \
+       lib/onewire/onewire.c \
+       lib/onewire/onewire_test.c \
        src/fault_handlers.c \
        src/mavlink_local/mav_encode.c \
        benchmark/memcpy_bench.c \
@@ -194,6 +196,7 @@ INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
          lib/microrl/src \
          lib/uav_utils \
          lib/filters \
+         lib/onewire \
          lib/24aa/src \
          src \
          src/mavlink_local \
