@@ -226,7 +226,7 @@ LSM303_mag::LSM303_mag(I2CDriver *i2cdp, i2caddr_t addr):
 I2CSensor(i2cdp, addr),
 sample_cnt(0)
 {
-  return;
+  state = SENSOR_STATE_STOP;
 }
 
 /**

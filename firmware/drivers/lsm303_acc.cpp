@@ -151,7 +151,7 @@ msg_t LSM303_acc::stop_sleep_code(void) {
 LSM303_acc::LSM303_acc(I2CDriver *i2cdp, i2caddr_t addr):
 I2CSensor(i2cdp, addr)
 {
-  return;
+  state = SENSOR_STATE_STOP;
 }
 
 /**

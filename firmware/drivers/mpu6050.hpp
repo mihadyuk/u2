@@ -20,7 +20,7 @@ public:
   sensor_state_t wakeup(void);
   void stop(void);
   void sleep(void);
-  float update_perod(void);
+  float dt(void);
 
 private:
   msg_t get_simple(float *acc, float *gyr);

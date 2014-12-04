@@ -133,7 +133,7 @@ msg_t AK8975::start_measurement(void) {
 AK8975::AK8975(I2CDriver *i2cdp, i2caddr_t addr):
 I2CSensor(i2cdp, addr)
 {
-  return;
+  state = SENSOR_STATE_STOP;
 }
 
 /**

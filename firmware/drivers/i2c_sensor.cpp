@@ -28,7 +28,6 @@
  *
  */
 I2CSensor::I2CSensor(I2CDriver *i2cdp, i2caddr_t addr):
-  state(SENSOR_STATE_STOP),
   i2cdp(i2cdp),
   addr(addr)
 {
@@ -98,9 +97,3 @@ msg_t I2CSensor::receive(uint8_t *rxbuf, size_t rxbytes){
   return status;
 }
 
-/**
- *
- */
-sensor_state_t I2CSensor::get_state(void) {
-  return state;
-}

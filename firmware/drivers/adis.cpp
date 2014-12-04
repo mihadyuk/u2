@@ -89,12 +89,20 @@ static const uint8_t request[] = {
     0x6C, // pitch (c31)
     0x6E, // yaw (c32)
     0x70, // c33
-    0x70 /* special fake read for stupid adis */
+    0x70 /* special fake read for stupid adis logic */
 };
-//static const size_t request_len = sizeof(request) / sizeof(request[0]);
+
 static uint16_t rxbuf[ArrayLen(request)];
 
 static const adisfp ADIS_DT = (adisfp)ADIS_SAMPLE_RATE_DIV / ADIS_INTERNAL_SAMPLE_RATE;
+
+static const adisfp gyr_scale   = 0.00000030517578125; /* to deg/s */
+static const adisfp acc_scale   = 0.00000001220703125; /* to G */
+static const adisfp mag_scale   = 0.0001; /* to millygauss */
+static const adisfp baro_scale  = 0.04; /* to millybars */
+static const adisfp temp_scale  = 0.00565; /* to celsius */
+static const adisfp quat_scale  = 0.000030517578125;
+static const adisfp euler_scale = 0.0054931640625; /* to deg (360/65536) */
 
 /*
  ******************************************************************************
@@ -270,17 +278,9 @@ void Adis::stop(void){
 }
 
 /**
- * @note    If you do not need some data than pass NULL pointer.
+ *
  */
 uint16_t Adis::get(adis_data_t *result) {
-
-  const adisfp gyr_scale   = 0.00000030517578125; /* to deg/s */
-  const adisfp acc_scale   = 0.00000001220703125; /* to G */
-  const adisfp mag_scale   = 0.0001; /* to millygauss */
-  const adisfp baro_scale  = 0.04; /* to millybars */
-  const adisfp temp_scale  = 0.00565; /* to celsius */
-  const adisfp quat_scale  = 0.000030517578125;
-  const adisfp euler_scale = 0.0054931640625; /* to deg (360/65536) */
 
   chTMStartMeasurementX(&tm);
   osalDbgCheck(ready);

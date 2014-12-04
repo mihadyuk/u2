@@ -8,4 +8,18 @@ typedef enum {
   SENSOR_STATE_SLEEP
 } sensor_state_t;
 
+class Sensor {
+protected:
+  sensor_state_t get_state(void) {return this->state;}
+  virtual void stop(void) = 0;
+  virtual void sleep(void) = 0;
+  virtual sensor_state_t start(void) = 0;
+  virtual sensor_state_t wakeup(void) = 0;
+  sensor_state_t state;
+
+private:
+  virtual bool hw_init_fast(void) = 0;
+  virtual bool hw_init_full(void) = 0;
+};
+
 #endif /* SENSOR_HPP_ */

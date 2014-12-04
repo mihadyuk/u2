@@ -493,6 +493,7 @@ I2CSensor(i2cdp, addr),
 acc_fir(acc_fir_array),
 gyr_fir(gyr_fir_array)
 {
+  state = SENSOR_STATE_STOP;
   chTMObjectInit(&fir_tmu);
 
   acc_fir[0].setKernel(taps, ArrayLen(taps));
@@ -628,7 +629,7 @@ ERROR:
 /**
  *
  */
-float MPU6050::update_perod(void) {
+float MPU6050::dt(void) {
   return 0.01;
 }
 
