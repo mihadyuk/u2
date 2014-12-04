@@ -11,21 +11,25 @@
 class LSM303_mag: private I2CSensor {
 public:
   LSM303_mag(I2CDriver *i2cdp, i2caddr_t addr);
-  msg_t get(float *result);
-  msg_t start(void);
+  sensor_state_t get(float *result);
+  sensor_state_t start(void);
+  sensor_state_t wakeup(void);
   void stop(void);
+  void sleep(void);
   static void extiISR(EXTDriver *extp, expchannel_t channel);
 
 private:
   msg_t set_gain(uint8_t val);
   msg_t refresh_gain(void);
   msg_t start_single_measurement(void);
+  msg_t get_prev_measurement(float *result);
+  msg_t stop_sleep_code(void);
   void thermo_comp(float *result);
   void iron_comp(float *result);
   float mag_sens(void);
   void pickle(float *result);
-  msg_t hw_init_full(void);
-  msg_t hw_init_fast(void);
+  bool hw_init_full(void);
+  bool hw_init_fast(void);
   uint8_t rxbuf[LSM_MAG_RX_DEPTH];
   uint8_t txbuf[LSM_MAG_TX_DEPTH];
   size_t sample_cnt;

@@ -168,28 +168,13 @@ MavLogger mav_logger;
  *******************************************************************************
  *******************************************************************************
  */
-#include "onewire_test.h"
 int main(void) {
 
   halInit();
   System::init();
 
   endianness_test();
-  chThdSleepMilliseconds(1000);
-
-
-
-  /*
-   * Connect PB8 to TIM4 channel 2, set opendrain mode
-   * and enable internal pullup for slave absence detection.
-   */
-  palSetPadMode(GPIOB, GPIOB_TACHOMETER,
-      PAL_MODE_ALTERNATE(2) | PAL_STM32_OTYPE_OPENDRAIN | PAL_STM32_PUDR_PULLUP);
-
-  onewireTest();
-
-
-
+  chThdSleepMilliseconds(200);
 
   /* enable softreset on panic */
   setGlobalFlag(GlobalFlags.allow_softreset);

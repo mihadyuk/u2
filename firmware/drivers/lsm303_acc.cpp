@@ -9,6 +9,11 @@
  * DEFINES
  ******************************************************************************
  */
+
+#define CTRL_REG1_A             0x20
+#define CTRL_REG2_A             0x21
+#define OUT_X_L_A               0x28
+
 /**
  * @brief   Accel full scale in g
  */
@@ -81,14 +86,14 @@ void LSM303_acc::pickle(float *result){
 /**
  *
  */
-msg_t LSM303_acc::hw_init_fast(void){
-  return MSG_RESET;
+bool LSM303_acc::hw_init_fast(void){
+  return hw_init_full();
 }
 
 /**
  *
  */
-msg_t LSM303_acc::hw_init_full(void){
+bool LSM303_acc::hw_init_full(void){
 
   msg_t ret = MSG_RESET;
 
@@ -120,8 +125,19 @@ msg_t LSM303_acc::hw_init_full(void){
   txbuf[6] = 0b0;
 
   ret = transmit(txbuf, 7, NULL, 0);
-  osalDbgCheck(MSG_OK == ret);
-  return ret;
+  if (MSG_OK == ret)
+    return OSAL_SUCCESS;
+  else
+    return OSAL_FAILED;
+}
+
+/**
+ *
+ */
+msg_t LSM303_acc::stop_sleep_code(void) {
+  txbuf[0] = CTRL_REG1_A | 0b10000000;
+  txbuf[1] = 0;
+  return transmit(txbuf, 2, NULL, 0);
 }
 
 /*
@@ -135,46 +151,96 @@ msg_t LSM303_acc::hw_init_full(void){
 LSM303_acc::LSM303_acc(I2CDriver *i2cdp, i2caddr_t addr):
 I2CSensor(i2cdp, addr)
 {
-  ready = false;
+  return;
 }
 
 /**
  *
  */
-void LSM303_acc::stop(void){
-  // TODO: power down sensor here
-  ready = false;
+sensor_state_t LSM303_acc::start(void){
+
+  if (SENSOR_STATE_STOP == this->state) {
+
+    /* init hardware */
+    bool init_status = OSAL_FAILED;
+    if (need_full_init())
+      init_status = hw_init_full();
+    else
+      init_status = hw_init_fast();
+
+    /* check state */
+    if (OSAL_SUCCESS == init_status)
+      this->state = SENSOR_STATE_READY;
+    else
+      this->state = SENSOR_STATE_DEAD;
+  }
+
+  return this->state;
 }
 
 /**
  *
  */
-msg_t LSM303_acc::get(float *result){
+void LSM303_acc::stop(void) {
 
-  chDbgCheck(true == ready);
+  if (this->state == SENSOR_STATE_STOP)
+    return;
 
-  msg_t ret;
+  osalDbgAssert(this->state == SENSOR_STATE_READY, "Invalid state");
 
-  /* read previose measurement results */
-  txbuf[0] = OUT_X_L_A | 0b10000000;
-  ret = transmit(txbuf, 1, rxbuf, 6);
-  this->pickle(result);
-
-  return ret;
-}
-
-/**
- *
- */
-msg_t LSM303_acc::start(void){
-
-  msg_t ret;
-
-  if (need_full_init())
-    ret = hw_init_full();
+  if (MSG_OK == stop_sleep_code())
+    this->state = SENSOR_STATE_STOP;
   else
-    ret = hw_init_fast();
-  ready = true;
-
-  return ret;
+    this->state = SENSOR_STATE_DEAD;
 }
+
+/**
+ *
+ */
+sensor_state_t LSM303_acc::get(float *result) {
+
+  if ((SENSOR_STATE_READY == this->state) && (nullptr != result)) {
+    /* read previose measurement results */
+    txbuf[0] = OUT_X_L_A | 0b10000000;
+    if (MSG_OK != transmit(txbuf, 1, rxbuf, 6))
+      this->state = SENSOR_STATE_DEAD;
+    else
+      this->pickle(result);
+  }
+
+  return this->state;
+}
+
+/**
+ *
+ */
+void LSM303_acc::sleep(void) {
+  if (this->state == SENSOR_STATE_SLEEP)
+    return;
+
+  osalDbgAssert(this->state == SENSOR_STATE_READY, "Invalid state");
+  if (MSG_OK != stop_sleep_code())
+    this->state = SENSOR_STATE_DEAD;
+  else
+    this->state = SENSOR_STATE_SLEEP;
+}
+
+/**
+ *
+ */
+sensor_state_t LSM303_acc::wakeup(void) {
+  if (this->state == SENSOR_STATE_READY)
+    return this->state;
+
+  osalDbgAssert(this->state == SENSOR_STATE_SLEEP, "Invalid state");
+
+  /* FIXME: this code may be faster */
+  if (OSAL_SUCCESS == hw_init_fast())
+    this->state = SENSOR_STATE_READY;
+  else
+    this->state = SENSOR_STATE_DEAD;
+  return this->state;
+}
+
+
+

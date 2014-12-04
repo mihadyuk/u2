@@ -89,7 +89,7 @@ static const uint8_t request[] = {
     0x6C, // pitch (c31)
     0x6E, // yaw (c32)
     0x70, // c33
-    0x70 /* special fake read */
+    0x70 /* special fake read for stupid adis */
 };
 //static const size_t request_len = sizeof(request) / sizeof(request[0]);
 static uint16_t rxbuf[ArrayLen(request)];

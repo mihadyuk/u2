@@ -41,6 +41,7 @@
   #define FIFO_RST            (1 << 2)
 #define MPUREG_PWR_MGMT1        0x6B
   #define DEVICE_RESET          (1 << 7)
+  #define DEVICE_SLEEP          (1 << 6)
 #define MPUREG_PWR_MGMT2        0x6C
 #define MPUREG_FIFO_CNT         0x72 /* MSB. Next byte is LSB */
 #define MPUREG_FIFO_DATA        0x74
@@ -206,9 +207,8 @@ void MPU6050::pickle_acc(float *result){
 /**
  *
  */
-msg_t MPU6050::hw_init_fast(void){
-  ready = true;
-  return MSG_OK; /* unimplemented */
+bool MPU6050::hw_init_fast(void) {
+  return hw_init_full(); /* unimplemented */
 }
 
 /**
@@ -291,54 +291,61 @@ msg_t MPU6050::set_dlpf_smplrt(uint8_t lpf, uint8_t smplrt) {
 /**
  *
  */
-msg_t MPU6050::hw_init_full(void){
+bool MPU6050::hw_init_full(void){
 
-  msg_t ret = MSG_RESET;
+  msg_t i2c_status = MSG_RESET;
 
   txbuf[0] = MPUREG_PWR_MGMT1;
-  txbuf[1] = 0b10000000; /* soft reset */
-  ret = transmit(txbuf, 2, NULL, 0);
-  osalDbgAssert(MSG_OK == ret, "MPU6050 does not responding");
-  osalThreadSleepMilliseconds(60);
+  txbuf[1] = DEVICE_RESET; /* soft reset */
+  i2c_status = transmit(txbuf, 2, NULL, 0);
+  if (MSG_OK != i2c_status)
+    return OSAL_FAILED;
+  osalThreadSleepMilliseconds(30);
 
   txbuf[0] = MPUREG_WHO_AM_I;
-  ret = transmit(txbuf, 1, rxbuf, 1);
-  osalDbgAssert(MSG_OK == ret, "MPU6050 does not responding");
-  osalDbgAssert(WHO_AM_I_VAL == rxbuf[0], "MPU6050 wrong id");
+  i2c_status = transmit(txbuf, 1, rxbuf, 1);
+  if (MSG_OK != i2c_status)
+    return OSAL_FAILED;
+  if(WHO_AM_I_VAL != rxbuf[0]) // MPU6050 wrong id
+    return OSAL_FAILED;
   osalThreadSleepMilliseconds(1);
 
   txbuf[0] = MPUREG_PWR_MGMT1;
   txbuf[1] = 1; /* select X gyro as clock source */
-  ret = transmit(txbuf, 2, NULL, 0);
-  osalDbgAssert(MSG_OK == ret, "MPU6050 does not responding");
+  i2c_status = transmit(txbuf, 2, NULL, 0);
+  if (MSG_OK != i2c_status)
+    return OSAL_FAILED;
   osalThreadSleepMilliseconds(5);
 
-  ret = set_gyr_fs(*gyr_fs);
-  osalDbgAssert(MSG_OK == ret, "MPU6050 does not responding");
+  i2c_status = set_gyr_fs(*gyr_fs);
+  if (MSG_OK != i2c_status)
+    return OSAL_FAILED;
   osalThreadSleepMilliseconds(1);
 
-  ret = set_acc_fs(*acc_fs);
-  osalDbgAssert(MSG_OK == ret, "MPU6050 does not responding");
+  i2c_status = set_acc_fs(*acc_fs);
+  if (MSG_OK != i2c_status)
+    return OSAL_FAILED;
   osalThreadSleepMilliseconds(1);
 
   txbuf[0] = MPUREG_INT_PIN_CFG;
   txbuf[1] = INT_RD_CLEAR | I2C_BYPASS_EN;
-  ret = transmit(txbuf, 2, NULL, 0);
-  osalDbgAssert(MSG_OK == ret, "MPU6050 does not responding");
+  i2c_status = transmit(txbuf, 2, NULL, 0);
+  if (MSG_OK != i2c_status)
+    return OSAL_FAILED;
   osalThreadSleepMilliseconds(1);
 
-  ret = set_dlpf_smplrt(*this->dlpf, *this->smplrt_div);
-  osalDbgAssert(MSG_OK == ret, "MPU6050 does not responding");
+  i2c_status = set_dlpf_smplrt(*this->dlpf, *this->smplrt_div);
+  if (MSG_OK != i2c_status)
+    return OSAL_FAILED;
   osalThreadSleepMilliseconds(1);
 
   txbuf[0] = MPUREG_INT_ENABLE;
   txbuf[1] = 1; /* enable data ready interrupts */
-  ret = transmit(txbuf, 2, NULL, 0);
-  osalDbgAssert(MSG_OK == ret, "MPU6050 does not responding");
+  i2c_status = transmit(txbuf, 2, NULL, 0);
+  if (MSG_OK != i2c_status)
+    return OSAL_FAILED;
 
-  ready = true;
-
-  return MSG_OK;
+  return OSAL_SUCCESS;
 }
 
 /**
@@ -487,9 +494,6 @@ acc_fir(acc_fir_array),
 gyr_fir(gyr_fir_array)
 {
   chTMObjectInit(&fir_tmu);
-  //buf[0] = 10;
-  ready = false;
-  hw_initialized = false;
 
   acc_fir[0].setKernel(taps, ArrayLen(taps));
   acc_fir[1].setKernel(taps, ArrayLen(taps));
@@ -503,66 +507,128 @@ gyr_fir(gyr_fir_array)
 /**
  *
  */
-msg_t MPU6050::start(void) {
+sensor_state_t MPU6050::start(void) {
 
-  param_registry.valueSearch("MPU_gyr_fs",    &gyr_fs);
-  param_registry.valueSearch("MPU_acc_fs",    &acc_fs);
-  param_registry.valueSearch("MPU_fir_f",     &fir_f);
-  param_registry.valueSearch("MPU_dlpf",      &dlpf);
-  param_registry.valueSearch("MPU_smplrt_div",&smplrt_div);
+  if (SENSOR_STATE_STOP == this->state) {
+    param_registry.valueSearch("MPU_gyr_fs",    &gyr_fs);
+    param_registry.valueSearch("MPU_acc_fs",    &acc_fs);
+    param_registry.valueSearch("MPU_fir_f",     &fir_f);
+    param_registry.valueSearch("MPU_dlpf",      &dlpf);
+    param_registry.valueSearch("MPU_smplrt_div",&smplrt_div);
 
-  gyr_fs_prev = *gyr_fs;
-  acc_fs_prev = *acc_fs;
-  dlpf_prev   = *dlpf;
-  smplrt_prev = *smplrt_div;
+    gyr_fs_prev = *gyr_fs;
+    acc_fs_prev = *acc_fs;
+    dlpf_prev   = *dlpf;
+    smplrt_prev = *smplrt_div;
 
-  /* init hardware */
-  if (! hw_initialized){
+    /* init hardware */
+    bool init_status = OSAL_FAILED;
     if (need_full_init())
-      hw_init_full();
+      init_status = hw_init_full();
     else
-      hw_init_fast();
-    hw_initialized = true;
+      init_status = hw_init_fast();
+
+    /* check state */
+    if (OSAL_SUCCESS == init_status)
+      this->state = SENSOR_STATE_READY;
+    else
+      this->state = SENSOR_STATE_DEAD;
   }
 
-  return MSG_OK;
+  return this->state;
+}
+
+/**
+ * Just fire soft reset signal. After completing of reset sequence
+ * device will be in sleep state.
+ */
+void MPU6050::stop(void) {
+
+  txbuf[0] = MPUREG_PWR_MGMT1;
+  txbuf[1] = DEVICE_RESET; /* soft reset */
+  if (MSG_OK != transmit(txbuf, 2, NULL, 0))
+    this->state = SENSOR_STATE_DEAD;
+  else
+    this->state = SENSOR_STATE_STOP;
 }
 
 /**
  *
  */
-void MPU6050::stop(void){
-  hw_initialized = false;
-  ready = false;
-}
-
-/**
- *
- */
-msg_t MPU6050::get(float *acc, float *gyr) {
+sensor_state_t MPU6050::get(float *acc, float *gyr) {
 
   msg_t ret1 = MSG_RESET;
   msg_t ret2 = MSG_RESET;
 
-  osalDbgCheck(true == ready);
+  if (SENSOR_STATE_READY == this->state) {
+    if (*dlpf > 0)
+      ret1 = get_simple(acc, gyr);
+    else
+      ret1 = get_fifo(acc, gyr);
+    ret2 = refresh_settings();
 
-  if (*dlpf > 0)
-    ret1 = get_simple(acc, gyr);
-  else
-    ret1 = get_fifo(acc, gyr);
+    if ((MSG_OK != ret1) || (MSG_OK != ret2))
+      this->state = SENSOR_STATE_DEAD;
+  }
 
-  ret2 = refresh_settings();
-
-  if ((MSG_OK == ret1) && (MSG_OK == ret2))
-    return MSG_OK;
-  else
-    return MSG_RESET;
+  return this->state;
 }
 
 /**
  *
  */
-float MPU6050::update_perod(void){
+void MPU6050::sleep(void) {
+  uint8_t b;
+
+  if (this->state == SENSOR_STATE_SLEEP)
+    return;
+
+  osalDbgAssert(this->state == SENSOR_STATE_READY, "Invalid state");
+
+  txbuf[0] = MPUREG_PWR_MGMT1;
+  if (MSG_OK != transmit(txbuf, 1, &b, 1))
+    goto ERROR;
+  txbuf[0] = MPUREG_PWR_MGMT1;
+  txbuf[1] = b | DEVICE_SLEEP;
+  if (MSG_OK != transmit(txbuf, 2, NULL, 0))
+    goto ERROR;
+
+  return;
+ERROR:
+  this->state = SENSOR_STATE_DEAD;
+}
+
+/**
+ *
+ */
+sensor_state_t MPU6050::wakeup(void) {
+  uint8_t b;
+
+  if (this->state == SENSOR_STATE_READY)
+    return this->state;
+
+  osalDbgAssert(this->state == SENSOR_STATE_SLEEP, "Invalid state");
+
+  txbuf[0] = MPUREG_PWR_MGMT1;
+  if (MSG_OK != transmit(txbuf, 1, &b, 1))
+    goto ERROR;
+  txbuf[0] = MPUREG_PWR_MGMT1;
+  txbuf[1] = b & ~DEVICE_SLEEP;
+  if (MSG_OK != transmit(txbuf, 2, NULL, 0))
+    goto ERROR;
+
+  this->state = SENSOR_STATE_READY;
+  return this->state;
+
+ERROR:
+  this->state = SENSOR_STATE_DEAD;
+  return this->state;
+}
+
+/**
+ *
+ */
+float MPU6050::update_perod(void) {
   return 0.01;
 }
 

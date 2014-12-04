@@ -11,7 +11,7 @@
 
 #define MEASUREMENT_TIME    MS2ST(9)
 
-#define AKREG_WIA         0x00 /* who am I register, always contain 0x48 */
+#define AKREG_WIA         0x00 /* who am I register, always contains 0x48 */
   #define WIA_VAL         0x48
 #define AKREG_ST1         0x02
   #define ST1_DATA_READY  0x01
@@ -84,26 +84,26 @@ void AK8975::pickle(float *result){
 /**
  *
  */
-msg_t AK8975::hw_init_fast(void){
-  ready = true;
-  return MSG_OK; /* unimplemented */
+bool AK8975::hw_init_fast(void) {
+  return hw_init_full();
 }
 
 /**
  *
  */
-msg_t AK8975::hw_init_full(void){
+bool AK8975::hw_init_full(void) {
 
   msg_t ret = MSG_RESET;
   uint8_t txbuf[1];
 
   txbuf[0] = AKREG_WIA;
   ret = transmit(txbuf, 1, rxbuf, 2);
-  osalDbgAssert(MSG_OK == ret, "AK8975 does not responding. Ensure you start MPU6050 first");
-  osalDbgAssert(WIA_VAL == rxbuf[0], "AK8975 incorrect ACK");
+  if (MSG_OK != ret) // AK8975 does not responding. Ensure that you start MPU6050 first
+    return OSAL_FAILED;
+  if (WIA_VAL != rxbuf[0]) // AK8975 incorrect ACK
+    return OSAL_FAILED;
 
-  ready = true;
-  return MSG_OK;
+  return OSAL_SUCCESS;
 }
 
 /**
@@ -133,55 +133,103 @@ msg_t AK8975::start_measurement(void) {
 AK8975::AK8975(I2CDriver *i2cdp, i2caddr_t addr):
 I2CSensor(i2cdp, addr)
 {
-  ready = false;
+  return;
 }
 
 /**
  *
  */
-msg_t AK8975::start(void){
+sensor_state_t AK8975::start(void) {
 
-  if (need_full_init())
-    hw_init_full();
-  else
-    hw_init_fast();
+  if (SENSOR_STATE_STOP == this->state) {
+    bool init_status;
+    if (need_full_init())
+      init_status = hw_init_full();
+    else
+      init_status = hw_init_fast();
 
-  start_measurement();
-  return MSG_OK;
+    /* check state */
+    if (OSAL_SUCCESS != init_status) {
+      this->state = SENSOR_STATE_DEAD;
+      return this->state;
+    }
+
+    /* kick start measurement */
+    if (MSG_OK != start_measurement()) {
+      this->state = SENSOR_STATE_DEAD;
+      return this->state;
+    }
+
+    this->state = SENSOR_STATE_READY;
+  }
+
+  return this->state;
 }
 
 /**
  *
  */
-void AK8975::stop(void){
-  ready = false;
+void AK8975::stop(void) {
+  if (this->state == SENSOR_STATE_STOP)
+    return;
+
+  osalDbgAssert(this->state == SENSOR_STATE_READY, "Invalid state");
+  this->state = SENSOR_STATE_STOP;
+}
+
+/**
+ *
+ */
+void AK8975::sleep(void) {
+  if (this->state == SENSOR_STATE_SLEEP)
+    return;
+
+  osalDbgAssert(this->state == SENSOR_STATE_READY, "Invalid state");
+  this->state = SENSOR_STATE_SLEEP;
+}
+
+/**
+ *
+ */
+sensor_state_t AK8975::wakeup(void) {
+  if (this->state == SENSOR_STATE_READY)
+    return this->state;
+
+  osalDbgAssert(this->state == SENSOR_STATE_SLEEP, "Invalid state");
+  this->state = SENSOR_STATE_READY;
+  return this->state;
 }
 
 /**
  * @brief   Return magnentometer data in Gauss
  */
-msg_t AK8975::get(float *mag) {
+sensor_state_t AK8975::get(float *result) {
 
-  msg_t ret = MSG_RESET;
   uint8_t txbuf[2];
 
-  osalDbgCheck(true == ready);
-
-  txbuf[0] = AKREG_ST1;
-  ret = transmit(txbuf, 1, rxbuf, 7);
-
-  if (nullptr != mag){
-    /* protection from too fast data acquisition */
-    if (ST1_DATA_READY == (rxbuf[0] & ST1_DATA_READY)){
-      /* read measured data and immediately start new measurement */
-      pickle(mag);
-      start_measurement();
+  if (this->state == SENSOR_STATE_READY) {
+    txbuf[0] = AKREG_ST1;
+    if (MSG_OK != transmit(txbuf, 1, rxbuf, 7)) {
+      this->state = SENSOR_STATE_DEAD;
+      return this->state;
     }
-    else
-      memcpy(mag, cache, sizeof(cache));
+
+    if (nullptr != result){
+      /* protection from too fast data acquisition */
+      if (ST1_DATA_READY == (rxbuf[0] & ST1_DATA_READY)) {
+        /* read measured data and immediately start new measurement */
+        pickle(result);
+        if (MSG_OK != start_measurement()) {
+          this->state = SENSOR_STATE_DEAD;
+          return this->state;
+        }
+      }
+      else
+        memcpy(result, cache, sizeof(cache));
+    }
   }
 
-  return ret;
+  return this->state;
 }
 
 

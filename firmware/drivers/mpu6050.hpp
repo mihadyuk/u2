@@ -6,19 +6,20 @@
 
 #define mpu6050addr         0b1101000
 
-#define MPU_RX_DEPTH        16  /* 1 status bite and 14 bytes of data */
+#define MPU_RX_DEPTH        16  /* 1 status byte + 14 bytes of data + 1 padding */
 #define MPU_TX_DEPTH        4
 
 #define MPU6050_1KHZ        FALSE
 #define MPU6050_FIR_LEN     65
 
 class MPU6050: protected I2CSensor{
-
 public:
   MPU6050(I2CDriver *i2cdp, i2caddr_t addr);
-  msg_t get(float *acc, float *gyr);
-  msg_t start(void);
+  sensor_state_t get(float *acc, float *gyr);
+  sensor_state_t start(void);
+  sensor_state_t wakeup(void);
   void stop(void);
+  void sleep(void);
   float update_perod(void);
 
 private:
@@ -36,8 +37,8 @@ private:
   void pickle_fifo(float *acc, float *gyr, const size_t sample_cnt);
   void pickle_acc(float *result);
   void pickle_temp(float *result);
-  msg_t hw_init_full(void);
-  msg_t hw_init_fast(void);
+  bool hw_init_full(void);
+  bool hw_init_fast(void);
 
   float temperature;
   const uint32_t *gyr_fs = NULL;
@@ -45,7 +46,6 @@ private:
   const uint32_t *dlpf = NULL;
   const uint32_t *smplrt_div = NULL;
   const int32_t  *fir_f = NULL;
-  bool hw_initialized;
   FIR<float, float, MPU6050_FIR_LEN> *acc_fir;
   FIR<float, float, MPU6050_FIR_LEN> *gyr_fir;
   uint16_t fifo_remainder = 0;

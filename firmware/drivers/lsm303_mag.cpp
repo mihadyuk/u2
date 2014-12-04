@@ -128,21 +128,23 @@ void LSM303_mag::pickle(float *result){
 /**
  *
  */
-msg_t LSM303_mag::hw_init_fast(void){
-  return MSG_RESET; /* unimplemented */
+bool LSM303_mag::hw_init_fast(void){
+  return hw_init_full(); /* unimplemented */
 }
 
 /**
  *
  */
-msg_t LSM303_mag::hw_init_full(void){
+bool LSM303_mag::hw_init_full(void){
 
-  msg_t ret = MSG_RESET;
+  msg_t i2cret = MSG_RESET;
 
   txbuf[0] = LSM_REG_ID;
-  ret = transmit(txbuf, 1, rxbuf, 3);
-  osalDbgAssert(MSG_OK == ret, "LSM303 magnetometer not responding");
-  osalDbgAssert(0 == memcmp("H43", rxbuf, 3), "LSM303 magnetometer incorrect ID");
+  i2cret = transmit(txbuf, 1, rxbuf, 3);
+  if (MSG_OK != i2cret)
+    return OSAL_FAILED;
+  if(0 != memcmp("H43", rxbuf, 3)) // incorrect ID
+    return OSAL_FAILED;
 
   txbuf[0] = LSM_REG_CRA;
   //txbuf[1] = 0b10011100; /* enable thermometer and set maximum output rate */
@@ -153,12 +155,13 @@ msg_t LSM303_mag::hw_init_full(void){
   /* single conversion mode */
   txbuf[3] = 0b00000001;
 
-  ret = transmit(txbuf, 4, NULL, 0);
-  osalDbgCheck(MSG_OK == ret);
+  i2cret = transmit(txbuf, 4, NULL, 0);
+  if (MSG_OK != i2cret)
+    return OSAL_FAILED;
 
   Exti.lsm303(true);
 
-  return ret;
+  return OSAL_SUCCESS;
 }
 
 /**
@@ -194,6 +197,23 @@ msg_t LSM303_mag::refresh_gain(void) {
     return MSG_OK;
 }
 
+/**
+ *
+ */
+msg_t LSM303_mag::get_prev_measurement(float *result) {
+
+  msg_t ret = MSG_RESET;
+
+  txbuf[0] = LSM_REG_MAG_OUT;
+  ret = transmit(txbuf, 1, rxbuf, 6);
+  if (MSG_OK == ret) {
+    pickle(result);
+    memcpy(cache, result, sizeof(cache));
+  }
+
+  return ret;
+}
+
 /*
  ******************************************************************************
  * EXPORTED FUNCTIONS
@@ -206,62 +226,105 @@ LSM303_mag::LSM303_mag(I2CDriver *i2cdp, i2caddr_t addr):
 I2CSensor(i2cdp, addr),
 sample_cnt(0)
 {
-  ready = false;
+  return;
+}
+
+/**
+ *
+ */
+sensor_state_t LSM303_mag::get(float *result) {
+
+  if (SENSOR_STATE_READY == this->state) {
+    if (nullptr != result) {
+      if (true == mag_data_fresh) {
+        if (MSG_OK != get_prev_measurement(result))
+          this->state = SENSOR_STATE_DEAD;
+        mag_data_fresh = false;
+        if (MSG_OK != start_single_measurement())
+          this->state = SENSOR_STATE_DEAD;
+      }
+      else {
+        memcpy(result, cache, sizeof(cache));
+      }
+    }
+    if (MSG_OK != refresh_gain())
+      this->state = SENSOR_STATE_DEAD;
+  }
+
+  return this->state;
+}
+
+/**
+ *
+ */
+sensor_state_t LSM303_mag::start(void){
+
+  if (SENSOR_STATE_STOP == this->state) {
+    param_registry.valueSearch("LSMM_gain",  &gain);
+    gain_prev = *gain;
+
+    bool ret;
+    if (need_full_init())
+      ret = hw_init_full();
+    else
+      ret = hw_init_fast();
+
+    if (OSAL_SUCCESS != ret)
+      this->state = SENSOR_STATE_DEAD;
+    else
+      this->state = SENSOR_STATE_READY;
+  }
+
+  return this->state;
+}
+
+/**
+ *
+ */
+msg_t LSM303_mag::stop_sleep_code(void) {
+  txbuf[0] = LSM_REG_MR;
+  txbuf[1] = 0b00000011;
+  return transmit(txbuf, 2, NULL, 0);
 }
 
 /**
  *
  */
 void LSM303_mag::stop(void){
-  // TODO: power down sensor here
-  ready = false;
-}
+  if (this->state == SENSOR_STATE_STOP)
+    return;
 
-/**
- *
- */
-msg_t LSM303_mag::get(float *result){
-
-  msg_t ret = MSG_OK;
-
-  chDbgCheck(true == ready);
-
-  if (nullptr != result) {
-    if (true == mag_data_fresh) {
-      txbuf[0] = LSM_REG_MAG_OUT;
-      transmit(txbuf, 1, rxbuf, 6);
-      pickle(result);
-      memcpy(cache, result, sizeof(cache));
-
-      mag_data_fresh = false;
-      ret = start_single_measurement();
-    }
-    else{
-      memcpy(result, cache, sizeof(cache));
-    }
-  }
-
-  refresh_gain();
-
-  return ret;
-}
-
-/**
- *
- */
-msg_t LSM303_mag::start(void){
-  msg_t ret;
-
-  param_registry.valueSearch("LSMM_gain",  &gain);
-  gain_prev = *gain;
-
-  if (need_full_init())
-    ret = hw_init_full();
+  osalDbgAssert(this->state == SENSOR_STATE_READY, "Invalid state");
+  if (MSG_OK != stop_sleep_code())
+    this->state = SENSOR_STATE_DEAD;
   else
-    ret = hw_init_fast();
-  ready = true;
+    this->state = SENSOR_STATE_STOP;
+}
 
-  return ret;
+/**
+ *
+ */
+void LSM303_mag::sleep(void) {
+  if (this->state == SENSOR_STATE_SLEEP)
+    return;
+
+  osalDbgAssert(this->state == SENSOR_STATE_READY, "Invalid state");
+  if (MSG_OK != stop_sleep_code())
+    this->state = SENSOR_STATE_DEAD;
+  else
+    this->state = SENSOR_STATE_SLEEP;
+}
+
+/**
+ *
+ */
+sensor_state_t LSM303_mag::wakeup(void) {
+  if (this->state == SENSOR_STATE_READY)
+    return this->state;
+
+  osalDbgAssert(this->state == SENSOR_STATE_SLEEP, "Invalid state");
+  this->state = SENSOR_STATE_READY;
+  return this->state;
 }
 
 /**
