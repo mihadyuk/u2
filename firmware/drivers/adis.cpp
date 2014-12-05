@@ -57,7 +57,8 @@ static const SPIConfig spicfg = {
   NULL,
   GPIOA,
   GPIOA_ADIS_NSS,
-  SPI_CR1_BR_1 | SPI_CR1_CPOL | SPI_CR1_CPHA | SPI_CR1_DFF
+  SPI_CR1_BR_1 | SPI_CR1_CPOL | SPI_CR1_CPHA | SPI_CR1_DFF // (84MHz/8, CPHA=1, CPOL=1, 16bit, MSb first).
+  //SPI_CR1_BR_0 | SPI_CR1_CPOL | SPI_CR1_CPHA | SPI_CR1_DFF // (84MHz/4, CPHA=1, CPOL=1, 16bit, MSb first).
 };
 
 chibios_rt::BinarySemaphore Adis::interrupt_sem(true);
@@ -94,14 +95,14 @@ static const uint8_t request[] = {
     0x70 /* special fake read for stupid adis logic */
 };
 
-static uint16_t rxbuf[ArrayLen(request)] __attribute__((section(".ccm")));
+static uint16_t rxbuf[ArrayLen(request)];
 
 static const adisfp ADIS_DT = (adisfp)ADIS_SAMPLE_RATE_DIV / ADIS_INTERNAL_SAMPLE_RATE;
 
 static const adisfp gyr_scale   = 0.00000030517578125; /* to deg/s */
 static const adisfp acc_scale   = 0.00000001220703125; /* to G */
-static const adisfp mag_scale   = 0.0001; /* to millygauss */
-static const adisfp baro_scale  = 0.04; /* to millybars */
+static const adisfp mag_scale   = 0.1; /* to gauss */
+static const adisfp baro_scale  = 0.04; /* to millibars */
 static const adisfp temp_scale  = 0.00565; /* to celsius */
 static const adisfp quat_scale  = 0.000030517578125;
 static const adisfp euler_scale = 0.0054931640625; /* to deg (360/65536) */
@@ -268,7 +269,7 @@ THD_FUNCTION(AdisThread, arg) {
     semstatus = self->interrupt_sem.wait(ADIS_WAIT_TIMEOUT);
     if (MSG_OK == semstatus) {
       self->acquire_data();
-      self->data_ready_sem.signal();
+      self->data_ready_sem->signal();
     }
   }
 
@@ -287,7 +288,7 @@ THD_FUNCTION(AdisThread, arg) {
 /**
  *
  */
-Adis::Adis(chibios_rt::BinarySemaphore &data_ready_sem):
+Adis::Adis(chibios_rt::BinarySemaphore *data_ready_sem):
 data_ready_sem(data_ready_sem)
 {
   state = SENSOR_STATE_STOP;
@@ -323,7 +324,7 @@ sensor_state_t Adis::start(void) {
     Exti.adis(true);
 
     worker = chThdCreateStatic(AdisThreadWA, sizeof(AdisThreadWA),
-                               ADISPRIO, AdisThread, NULL);
+                               ADISPRIO, AdisThread, this);
     osalDbgAssert(nullptr != worker, "Can not allocate RAM");
 
     this->state = SENSOR_STATE_READY;
@@ -395,9 +396,8 @@ sensor_state_t Adis::wakeup(void) {
  */
 sensor_state_t Adis::get(adis_data_t *result) {
 
-  if ((SENSOR_STATE_READY == this->state) && (nullptr != result)) {
-    memcpy(result, &this->measurement, sizeof(adis_data_t));
-  }
+  if ((SENSOR_STATE_READY == this->state) && (nullptr != result))
+    memcpy(result, &measurement, sizeof(adis_data_t));
 
   return this->state;
 }
@@ -420,3 +420,10 @@ void Adis::extiISR(EXTDriver *extp, expchannel_t channel){
 adisfp Adis::dt(void){
   return ADIS_DT;
 }
+
+bool Adis::hw_init_fast(void){return OSAL_SUCCESS;}
+bool Adis::hw_init_full(void){return OSAL_SUCCESS;}
+
+
+
+

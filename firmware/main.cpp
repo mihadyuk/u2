@@ -155,6 +155,11 @@ static LinkMgr link_mgr;
 
 MavLogger mav_logger;
 
+#include "adis.hpp"
+static adis_data_t adis_data;
+static chibios_rt::BinarySemaphore data_ready_sem(true);
+static Adis adis(&data_ready_sem);
+
 /*
  ******************************************************************************
  * GLOBAL VARIABLES
@@ -218,9 +223,12 @@ int main(void) {
   mav_logger.start(NORMALPRIO);
 
   MargStart();
+  adis.start();
 
   while (TRUE) {
-    osalThreadSleepMilliseconds(100);
+    data_ready_sem.wait(MS2ST(100));
+    adis.get(&adis_data);
+    //osalThreadSleepMilliseconds(100);
 
 //    if (ATTITUDE_UNIT_UPDATE_RESULT_OK == attitude_unit.update()){
 //      sins.update();
