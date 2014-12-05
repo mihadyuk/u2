@@ -41,6 +41,7 @@
 #define GPSPRIO           (NORMALPRIO - 2)
 #define TELEMTRYPRIO      (LINKPRIO - 1)
 #define SHELLPRIO         (NORMALPRIO - 10)
+#define ADISPRIO          (NORMALPRIO)
 
 ///* константы для мавлинка */
 //#define GROUND_STATION_ID   255

@@ -147,7 +147,6 @@ CPPSRC = $(CHCPPSRC) \
          $(CLISRC) \
          main.cpp \
          drivers/adis.cpp \
-         drivers/adis_test.cpp \
          drivers/exti_local.cpp \
          drivers/i2c_sensor.cpp \
          drivers/marg.cpp \

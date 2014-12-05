@@ -1,3 +1,5 @@
+#include <cstring>
+
 #include "main.h"
 #include "pads.h"
 
@@ -12,6 +14,7 @@
  */
 #define ADIS_START_TIME_MS        560
 #define ADIS_SPI                  SPID1
+#define ADIS_WAIT_TIMEOUT         MS2ST(200)
 
 /* some address definitions */
 #define DIAG_STS          0x0A
@@ -24,7 +27,6 @@
  * EXTERNS
  ******************************************************************************
  */
-Adis adis;
 
 /*
  ******************************************************************************
@@ -58,7 +60,7 @@ static const SPIConfig spicfg = {
   SPI_CR1_BR_1 | SPI_CR1_CPOL | SPI_CR1_CPHA | SPI_CR1_DFF
 };
 
-chibios_rt::BinarySemaphore adis_sem(true);
+chibios_rt::BinarySemaphore Adis::interrupt_sem(true);
 
 static const uint8_t request[] = {
     0x08, // sys error flags
@@ -92,7 +94,7 @@ static const uint8_t request[] = {
     0x70 /* special fake read for stupid adis logic */
 };
 
-static uint16_t rxbuf[ArrayLen(request)];
+static uint16_t rxbuf[ArrayLen(request)] __attribute__((section(".ccm")));
 
 static const adisfp ADIS_DT = (adisfp)ADIS_SAMPLE_RATE_DIV / ADIS_INTERNAL_SAMPLE_RATE;
 
@@ -130,7 +132,7 @@ static uint16_t read(uint8_t address){
 /**
  *
  */
-static void write(uint8_t address, uint16_t word){
+static void write(uint8_t address, uint16_t word) {
   osalDbgCheck(address < 64);
 
   spiSelect(&ADIS_SPI);
@@ -148,7 +150,7 @@ static void write(uint8_t address, uint16_t word){
  * @note    This function does not use defined write() because page select
  *          is special case of write - single byte.
  */
-static void select_page(uint8_t page){
+static void select_page(uint8_t page) {
 
   osalDbgCheck(page < 13);
   spiSelect(&ADIS_SPI);
@@ -198,7 +200,7 @@ static bool selftest(void){
  *
  */
 template<typename T>
-static inline T u16_conv(T scale, uint16_t msb){
+static T u16_conv(T scale, uint16_t msb){
   return scale * (int16_t)msb;
 }
 
@@ -206,7 +208,7 @@ static inline T u16_conv(T scale, uint16_t msb){
  *
  */
 template<typename T>
-static inline T u32_conv(T scale, uint16_t msb, uint16_t lsb){
+static T u32_conv(T scale, uint16_t msb, uint16_t lsb){
   return scale * (int32_t)((msb << 16) | lsb);
 }
 
@@ -214,7 +216,7 @@ static inline T u32_conv(T scale, uint16_t msb, uint16_t lsb){
  *
  */
 template<typename T>
-static inline void u16_block_conv(T scale, const uint16_t *raw, T *ret, size_t len){
+static void u16_block_conv(T scale, const uint16_t *raw, T *ret, size_t len){
   for (size_t i = 0; i<len; i++)
     ret[i] = u16_conv(scale, raw[i]);
 }
@@ -223,10 +225,58 @@ static inline void u16_block_conv(T scale, const uint16_t *raw, T *ret, size_t l
  *
  */
 template<typename T>
-static inline void u32_block_conv(T scale, const uint16_t *raw, T *ret, size_t len){
+static void u32_block_conv(T scale, const uint16_t *raw, T *ret, size_t len){
   for (size_t i = 0; i<len; i++)
     ret[i] = u32_conv(scale, raw[2*i+1], raw[2*i]);
 }
+
+/**
+ *
+ */
+void Adis::acquire_data(void) {
+
+  chTMStartMeasurementX(&tm);
+
+  /* reading data */
+  read(request[0]); /* first read for warm up */
+  for (size_t i=1; i<ArrayLen(request); i++) // NOTE: this loop must be start from #1
+    rxbuf[i-1] = read(request[i]);
+
+  /* converting to human useful values */
+  measurement.temp = 25 + u16_conv(temp_scale, rxbuf[1]);
+  u32_block_conv(acc_scale, &rxbuf[8], measurement.acc, 3);
+  u32_block_conv(gyr_scale, &rxbuf[2], measurement.gyr, 3);
+  u16_block_conv(mag_scale, &rxbuf[14], measurement.mag, 3);
+  measurement.baro = u32_conv(baro_scale, rxbuf[14], rxbuf[15]);
+  u16_block_conv(quat_scale, &rxbuf[19], measurement.quat, 4);
+  u16_block_conv(euler_scale, &rxbuf[24], measurement.euler, 3);
+  measurement.errors = rxbuf[0];
+
+  chTMStopMeasurementX(&tm);
+}
+
+/**
+ *
+ */
+static THD_WORKING_AREA(AdisThreadWA, 256);
+THD_FUNCTION(AdisThread, arg) {
+  chRegSetThreadName("Adis");
+  Adis *self = static_cast<Adis *>(arg);
+  msg_t semstatus = MSG_RESET;
+
+  while (!chThdShouldTerminateX()) {
+    semstatus = self->interrupt_sem.wait(ADIS_WAIT_TIMEOUT);
+    if (MSG_OK == semstatus) {
+      self->acquire_data();
+      self->data_ready_sem.signal();
+    }
+  }
+
+  chThdExit(MSG_OK);
+  return MSG_OK;
+}
+
+
 
 /*
  ******************************************************************************
@@ -237,9 +287,10 @@ static inline void u32_block_conv(T scale, const uint16_t *raw, T *ret, size_t l
 /**
  *
  */
-Adis::Adis(void):
-ready(false)
+Adis::Adis(chibios_rt::BinarySemaphore &data_ready_sem):
+data_ready_sem(data_ready_sem)
 {
+  state = SENSOR_STATE_STOP;
   chTMObjectInit(&tm);
   return;
 }
@@ -247,65 +298,108 @@ ready(false)
 /**
  *
  */
-bool Adis::start(void){
-  adis_reset_clear();
-  spiStart(&ADIS_SPI, &spicfg);
-  osalThreadSleepMilliseconds(ADIS_START_TIME_MS);
+sensor_state_t Adis::start(void) {
 
-  if (OSAL_SUCCESS != check_id())
-    return OSAL_FAILED;
+  if (SENSOR_STATE_STOP == this->state) {
+    adis_reset_clear();
+    spiStart(&ADIS_SPI, &spicfg);
+    osalThreadSleepMilliseconds(ADIS_START_TIME_MS);
 
-  if (OSAL_SUCCESS != selftest())
-    return OSAL_FAILED;
+    if (OSAL_SUCCESS != check_id()) {
+      this->state = SENSOR_STATE_DEAD;
+      return this->state;
+    }
 
-  /* set sample rate */
-  select_page(3);
-  write(0x0C, ADIS_SAMPLE_RATE_DIV - 1);
-  select_page(0);
+    if (OSAL_SUCCESS != selftest()) {
+      this->state = SENSOR_STATE_DEAD;
+      return this->state;
+    }
 
-  Exti.adis(true);
-  ready = true;
-  return OSAL_SUCCESS;
-}
+    /* set sample rate */
+    select_page(3);
+    write(0x0C, ADIS_SAMPLE_RATE_DIV - 1);
+    select_page(0);
 
-/**
- *
- */
-void Adis::stop(void){
-  adis_reset_assert();
-  spiStop(&ADIS_SPI);
-  ready = false;
-}
+    Exti.adis(true);
 
-/**
- *
- */
-uint16_t Adis::get(adis_data_t *result) {
+    worker = chThdCreateStatic(AdisThreadWA, sizeof(AdisThreadWA),
+                               ADISPRIO, AdisThread, NULL);
+    osalDbgAssert(nullptr != worker, "Can not allocate RAM");
 
-  chTMStartMeasurementX(&tm);
-  osalDbgCheck(ready);
-
-  /* reading data */
-  read(request[0]); /* first read for warm up */
-  for (size_t i=1; i<ArrayLen(request); i++) // NOTE: this loop must be start from #1
-    rxbuf[i-1] = read(request[i]);
-
-  /* converting to useful values */
-  result->temp = 25 + u16_conv(temp_scale, rxbuf[1]);
-
-  if (nullptr != result){
-    u32_block_conv(acc_scale, &rxbuf[8], result->acc, 3);
-    u32_block_conv(gyr_scale, &rxbuf[2], result->gyr, 3);
-    u16_block_conv(mag_scale, &rxbuf[14], result->mag, 3);
-    result->baro = u32_conv(baro_scale, rxbuf[14], rxbuf[15]);
-    u16_block_conv(quat_scale, &rxbuf[19], result->quat, 4);
-    u16_block_conv(euler_scale, &rxbuf[24], result->euler, 3);
+    this->state = SENSOR_STATE_READY;
   }
 
-  result->errors = rxbuf[0];
+  return this->state;
+}
 
-  chTMStopMeasurementX(&tm);
-  return result->errors;
+/**
+ *
+ */
+void Adis::stop(void) {
+
+  if ((SENSOR_STATE_DEAD == this->state) || (SENSOR_STATE_STOP == this->state))
+    return;
+  else {
+    chThdTerminate(worker);
+    interrupt_sem.reset(false); /* speedup termination */
+    chThdWait(worker);
+    worker = nullptr;
+
+    adis_reset_assert();
+    spiStop(&ADIS_SPI);
+    this->state = SENSOR_STATE_STOP;
+  }
+}
+
+/**
+ * @note    In sleep mode Adis remains in page#3
+ */
+void Adis::sleep(void) {
+
+  if (this->state == SENSOR_STATE_SLEEP)
+    return;
+
+  osalDbgAssert(this->state == SENSOR_STATE_READY, "Invalid state");
+
+  select_page(3);
+  /* first we have to write 0 to SLP_CNT bits
+     for infinite sleep (not sure if it really need) */
+  write(0x10, 0);
+  /* now set sleep bit */
+  write(0x10, 1 << 8);
+
+  this->state = SENSOR_STATE_SLEEP;
+}
+
+/**
+ * @note    In sleep mode Adis remains in page#3
+ */
+sensor_state_t Adis::wakeup(void) {
+
+  if (this->state == SENSOR_STATE_READY)
+    return this->state;
+
+  osalDbgAssert(this->state == SENSOR_STATE_SLEEP, "Invalid state");
+
+  /* To wake up adis it is enough to assert CS line low. */
+  spiSelect(&ADIS_SPI);
+  osalThreadSleepMilliseconds(1); /* sleep recovery time is 700uS */
+  select_page(0);
+
+  this->state = SENSOR_STATE_READY;
+  return this->state;
+}
+
+/**
+ *
+ */
+sensor_state_t Adis::get(adis_data_t *result) {
+
+  if ((SENSOR_STATE_READY == this->state) && (nullptr != result)) {
+    memcpy(result, &this->measurement, sizeof(adis_data_t));
+  }
+
+  return this->state;
 }
 
 /**
@@ -316,15 +410,8 @@ void Adis::extiISR(EXTDriver *extp, expchannel_t channel){
   (void)channel;
 
   osalSysLockFromISR();
-  adis_sem.signalI();
+  interrupt_sem.signalI();
   osalSysUnlockFromISR();
-}
-
-/**
- *
- */
-msg_t Adis::wait(systime_t timeout){
-  return adis_sem.wait(timeout);
 }
 
 /**
