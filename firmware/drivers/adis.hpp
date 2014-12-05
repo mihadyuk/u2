@@ -18,7 +18,7 @@ typedef struct {
 
 class Adis : public Sensor {
 public:
-  Adis(chibios_rt::BinarySemaphore *data_ready_sem);
+  Adis(chibios_rt::BinarySemaphore &data_ready_sem);
   void stop(void);
   void sleep(void);
   sensor_state_t start(void);
@@ -36,7 +36,7 @@ private:
 
   time_measurement_t tm;
   static chibios_rt::BinarySemaphore interrupt_sem;
-  chibios_rt::BinarySemaphore *data_ready_sem;
+  chibios_rt::BinarySemaphore &data_ready_sem;
   thread_t *worker;
   adis_data_t measurement;
 };

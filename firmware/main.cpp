@@ -158,7 +158,7 @@ MavLogger mav_logger;
 #include "adis.hpp"
 static adis_data_t adis_data;
 static chibios_rt::BinarySemaphore data_ready_sem(true);
-static Adis adis(&data_ready_sem);
+static Adis adis(data_ready_sem);
 
 /*
  ******************************************************************************

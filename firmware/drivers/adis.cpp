@@ -269,15 +269,13 @@ THD_FUNCTION(AdisThread, arg) {
     semstatus = self->interrupt_sem.wait(ADIS_WAIT_TIMEOUT);
     if (MSG_OK == semstatus) {
       self->acquire_data();
-      self->data_ready_sem->signal();
+      self->data_ready_sem.signal();
     }
   }
 
   chThdExit(MSG_OK);
   return MSG_OK;
 }
-
-
 
 /*
  ******************************************************************************
@@ -288,7 +286,7 @@ THD_FUNCTION(AdisThread, arg) {
 /**
  *
  */
-Adis::Adis(chibios_rt::BinarySemaphore *data_ready_sem):
+Adis::Adis(chibios_rt::BinarySemaphore &data_ready_sem):
 data_ready_sem(data_ready_sem)
 {
   state = SENSOR_STATE_STOP;
