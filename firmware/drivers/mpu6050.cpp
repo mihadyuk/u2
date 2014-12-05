@@ -424,8 +424,10 @@ void MPU6050::pickle_fifo(float *acc, float *gyr, const size_t sample_cnt) {
   const size_t acc_fifo_offset = 0;
   const size_t gyr_fifo_offset = 3;
 
-  //acc2raw_imu(&rxbuf_fifo[acc_fifo_offset]);
-  //gyr2raw_imu(&rxbuf_fifo[gyr_fifo_offset]);
+  for (size_t i=0; i<3; i++) {
+    acc_raw[i] = rxbuf_fifo[acc_fifo_offset + i];
+    gyr_raw[i] = rxbuf_fifo[gyr_fifo_offset + i];
+  }
 
   if (sample_cnt == 10)
     chTMStartMeasurementX(&fir_tmu);
@@ -648,6 +650,23 @@ sensor_state_t MPU6050::get(float *acc, float *gyr) {
       memcpy(acc, this->acc_data, sizeof(this->acc_data));
     if (nullptr != gyr)
       memcpy(gyr, this->gyr_data, sizeof(this->gyr_data));
+    release_lock();
+  }
+
+  return this->state;
+}
+
+/**
+ *
+ */
+sensor_state_t MPU6050::get_raw(int16_t *acc, int16_t *gyr) {
+
+  if (SENSOR_STATE_READY == this->state) {
+    set_lock();
+    if (nullptr != acc)
+      memcpy(acc, this->acc_raw, sizeof(this->acc_raw));
+    if (nullptr != gyr)
+      memcpy(gyr, this->gyr_raw, sizeof(this->gyr_raw));
     release_lock();
   }
 
