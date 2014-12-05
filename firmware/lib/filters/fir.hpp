@@ -14,7 +14,7 @@ public:
    * @brief   Default constructor
    */
   FIR(void):
-  kernel(NULL),
+  kernel(nullptr),
   tip(L)
   {
     return;
@@ -68,7 +68,7 @@ public:
    *
    * @retval    filtered sample.
    */
-  T update_reference(dataT sample){
+  T update_reference(dataT sample) {
 
     /* shift */
     for (size_t i=L-1; i>0; i--)
@@ -131,7 +131,7 @@ public:
   /**
    *
    */
-  T update(dataT sample){
+  T update(dataT sample) {
     T s;
 
     tip--;
@@ -151,7 +151,7 @@ private:
    * @brief     Constructor implementation.
    * @details   Performs checks and array initialization.
    */
-  void ctor_impl(const T *tapsp, size_t len, dataT initial_value){
+  void ctor_impl(const T *tapsp, size_t len, dataT initial_value) {
 
     osalDbgCheck((NULL != tapsp) && (L == len));
 

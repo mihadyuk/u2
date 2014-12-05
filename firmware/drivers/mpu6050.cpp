@@ -1,5 +1,6 @@
 #include "main.h"
 
+#include "exti_local.hpp"
 #include "mpu6050.hpp"
 #include "pack_unpack.h"
 #include "geometry.hpp"
@@ -103,6 +104,11 @@ static const float acc_sens_array[4] = {
 FIR<float, float, MPU6050_FIR_LEN> acc_fir_array[3] __attribute__((section(".ccm")));
 FIR<float, float, MPU6050_FIR_LEN> gyr_fir_array[3] __attribute__((section(".ccm")));
 
+size_t MPU6050::isr_count = 0;
+uint8_t MPU6050::isr_dlpf = 0;
+uint8_t MPU6050::isr_smplrt_div = 0;
+chibios_rt::BinarySemaphore MPU6050::isr_sem(true);
+
 /*
  *******************************************************************************
  *******************************************************************************
@@ -166,7 +172,7 @@ static void toggle_endiannes16(uint8_t *data, const size_t len){
 /**
  *
  */
-void MPU6050::pickle_gyr(float *result){
+void MPU6050::pickle_gyr(float *result) {
 
   int16_t raw[3];
   uint8_t *b = &rxbuf[MPU_GYRO_OFFSET];
@@ -391,7 +397,7 @@ msg_t MPU6050::refresh_settings(void) {
 /**
  *
  */
-msg_t MPU6050::get_simple(float *acc, float *gyr) {
+msg_t MPU6050::acquire_simple(float *acc, float *gyr) {
 
   msg_t ret = MSG_RESET;
 
@@ -418,8 +424,8 @@ void MPU6050::pickle_fifo(float *acc, float *gyr, const size_t sample_cnt) {
   const size_t acc_fifo_offset = 0;
   const size_t gyr_fifo_offset = 3;
 
-  acc2raw_imu(&rxbuf_fifo[acc_fifo_offset]);
-  gyr2raw_imu(&rxbuf_fifo[gyr_fifo_offset]);
+  //acc2raw_imu(&rxbuf_fifo[acc_fifo_offset]);
+  //gyr2raw_imu(&rxbuf_fifo[gyr_fifo_offset]);
 
   if (sample_cnt == 10)
     chTMStartMeasurementX(&fir_tmu);
@@ -451,7 +457,7 @@ void MPU6050::pickle_fifo(float *acc, float *gyr, const size_t sample_cnt) {
 /**
  *
  */
-msg_t MPU6050::get_fifo(float *acc, float *gyr) {
+msg_t MPU6050::acquire_fifo(float *acc, float *gyr) {
 
   msg_t ret = MSG_RESET;
   size_t recvd;
@@ -479,6 +485,64 @@ msg_t MPU6050::get_fifo(float *acc, float *gyr) {
   return ret;
 }
 
+/**
+ *
+ */
+void MPU6050::acquire_data(void) {
+
+  msg_t ret1 = MSG_RESET;
+  msg_t ret2 = MSG_RESET;
+
+  if (SENSOR_STATE_READY == this->state) {
+    if (*dlpf > 0)
+      ret1 = acquire_simple(acc_data, gyr_data);
+    else
+      ret1 = acquire_fifo(acc_data, gyr_data);
+    ret2 = refresh_settings();
+
+    if ((MSG_OK != ret1) || (MSG_OK != ret2))
+      this->state = SENSOR_STATE_DEAD;
+  }
+}
+
+/**
+ *
+ */
+void MPU6050::set_lock(void) {
+  this->protect_sem.wait();
+}
+
+/**
+ *
+ */
+void MPU6050::release_lock(void) {
+  this->protect_sem.signal();
+}
+
+/**
+ *
+ */
+static THD_WORKING_AREA(Mpu6050ThreadWA, 256);
+THD_FUNCTION(Mpu6050Thread, arg) {
+  chRegSetThreadName("Mpu6050");
+  MPU6050 *self = static_cast<MPU6050 *>(arg);
+
+  while (!chThdShouldTerminateX()) {
+    self->isr_sem.wait();
+    self->isr_dlpf = *self->dlpf;
+    self->isr_smplrt_div = *self->smplrt_div;
+
+    self->set_lock();
+    self->acquire_data();
+    self->release_lock();
+
+    self->data_ready_sem.signal();
+  }
+
+  chThdExit(MSG_OK);
+  return MSG_OK;
+}
+
 /*
  *******************************************************************************
  * EXPORTED FUNCTIONS
@@ -488,21 +552,16 @@ msg_t MPU6050::get_fifo(float *acc, float *gyr) {
 /**
  *
  */
-MPU6050::MPU6050(I2CDriver *i2cdp, i2caddr_t addr):
+MPU6050::MPU6050(I2CDriver *i2cdp, i2caddr_t addr,
+                      chibios_rt::BinarySemaphore &data_ready_sem) :
 I2CSensor(i2cdp, addr),
+protect_sem(false),
+data_ready_sem(data_ready_sem),
 acc_fir(acc_fir_array),
 gyr_fir(gyr_fir_array)
 {
   state = SENSOR_STATE_STOP;
   chTMObjectInit(&fir_tmu);
-
-  acc_fir[0].setKernel(taps, ArrayLen(taps));
-  acc_fir[1].setKernel(taps, ArrayLen(taps));
-  acc_fir[2].setKernel(taps, ArrayLen(taps));
-
-  gyr_fir[0].setKernel(taps, ArrayLen(taps));
-  gyr_fir[1].setKernel(taps, ArrayLen(taps));
-  gyr_fir[2].setKernel(taps, ArrayLen(taps));
 }
 
 /**
@@ -511,6 +570,14 @@ gyr_fir(gyr_fir_array)
 sensor_state_t MPU6050::start(void) {
 
   if (SENSOR_STATE_STOP == this->state) {
+    acc_fir[0].setKernel(taps, ArrayLen(taps));
+    acc_fir[1].setKernel(taps, ArrayLen(taps));
+    acc_fir[2].setKernel(taps, ArrayLen(taps));
+
+    gyr_fir[0].setKernel(taps, ArrayLen(taps));
+    gyr_fir[1].setKernel(taps, ArrayLen(taps));
+    gyr_fir[2].setKernel(taps, ArrayLen(taps));
+
     param_registry.valueSearch("MPU_gyr_fs",    &gyr_fs);
     param_registry.valueSearch("MPU_acc_fs",    &acc_fs);
     param_registry.valueSearch("MPU_fir_f",     &fir_f);
@@ -522,6 +589,9 @@ sensor_state_t MPU6050::start(void) {
     dlpf_prev   = *dlpf;
     smplrt_prev = *smplrt_div;
 
+    this->isr_dlpf = *dlpf;
+    this->isr_smplrt_div = *smplrt_div;
+
     /* init hardware */
     bool init_status = OSAL_FAILED;
     if (need_full_init())
@@ -530,8 +600,15 @@ sensor_state_t MPU6050::start(void) {
       init_status = hw_init_fast();
 
     /* check state */
-    if (OSAL_SUCCESS == init_status)
+    osalDbgCheck(OSAL_SUCCESS == init_status);
+
+    if (OSAL_SUCCESS == init_status) {
+      worker = chThdCreateStatic(Mpu6050ThreadWA, sizeof(Mpu6050ThreadWA),
+                                        MPU6050PRIO, Mpu6050Thread, this);
+      osalDbgAssert(nullptr != worker, "Can not allocate RAM");
+      Exti.mpu6050(true);
       this->state = SENSOR_STATE_READY;
+    }
     else
       this->state = SENSOR_STATE_DEAD;
   }
@@ -544,6 +621,13 @@ sensor_state_t MPU6050::start(void) {
  * device will be in sleep state.
  */
 void MPU6050::stop(void) {
+
+  chThdTerminate(worker);
+  isr_sem.reset(false); /* speedup termination */
+  chThdWait(worker);
+  worker = nullptr;
+
+  Exti.mpu6050(false);
 
   txbuf[0] = MPUREG_PWR_MGMT1;
   txbuf[1] = DEVICE_RESET; /* soft reset */
@@ -558,18 +642,13 @@ void MPU6050::stop(void) {
  */
 sensor_state_t MPU6050::get(float *acc, float *gyr) {
 
-  msg_t ret1 = MSG_RESET;
-  msg_t ret2 = MSG_RESET;
-
   if (SENSOR_STATE_READY == this->state) {
-    if (*dlpf > 0)
-      ret1 = get_simple(acc, gyr);
-    else
-      ret1 = get_fifo(acc, gyr);
-    ret2 = refresh_settings();
-
-    if ((MSG_OK != ret1) || (MSG_OK != ret2))
-      this->state = SENSOR_STATE_DEAD;
+    set_lock();
+    if (nullptr != acc)
+      memcpy(acc, this->acc_data, sizeof(this->acc_data));
+    if (nullptr != gyr)
+      memcpy(gyr, this->gyr_data, sizeof(this->gyr_data));
+    release_lock();
   }
 
   return this->state;
@@ -624,6 +703,29 @@ sensor_state_t MPU6050::wakeup(void) {
 ERROR:
   this->state = SENSOR_STATE_DEAD;
   return this->state;
+}
+
+/**
+ *
+ */
+void MPU6050::extiISR(EXTDriver *extp, expchannel_t channel) {
+  (void)extp;
+  (void)channel;
+
+  osalSysLockFromISR();
+
+  if (0 == isr_dlpf){ /* we need software rate divider */
+    isr_count++;
+    if (isr_count >= isr_smplrt_div) {
+      isr_count = 0;
+      isr_sem.signalI();
+    }
+  }
+  else { /* signal semaphore every interrupt pulse */
+    isr_sem.signalI();
+  }
+
+  osalSysUnlockFromISR();
 }
 
 /**

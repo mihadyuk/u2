@@ -2,7 +2,7 @@
 
 #include "exti_local.hpp"
 #include "adis.hpp"
-#include "marg.hpp"
+#include "mpu6050.hpp"
 #include "lsm303_mag.hpp"
 
 /*
@@ -63,7 +63,7 @@ static const EXTConfig extcfg = {
     {EXT_CH_MODE_DISABLED, NULL},
     {EXT_CH_MODE_FALLING_EDGE | EXT_MODE_GPIOE, Adis::extiISR},
     {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_RISING_EDGE | EXT_MODE_GPIOE, MPU6050ISR},
+    {EXT_CH_MODE_RISING_EDGE | EXT_MODE_GPIOE, MPU6050::extiISR},
     {EXT_CH_MODE_DISABLED, NULL},//4
     {EXT_CH_MODE_FALLING_EDGE | EXT_MODE_GPIOE, LSM303_mag::extiISR},
     {EXT_CH_MODE_DISABLED, NULL},

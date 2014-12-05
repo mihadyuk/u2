@@ -33,9 +33,12 @@ private:
   void acquire_data(void);
   bool hw_init_fast(void);
   bool hw_init_full(void);
+  void set_lock(void);
+  void release_lock(void);
 
   time_measurement_t tm;
-  static chibios_rt::BinarySemaphore interrupt_sem;
+  chibios_rt::BinarySemaphore protect_sem;
+  static chibios_rt::BinarySemaphore isr_sem;
   chibios_rt::BinarySemaphore &data_ready_sem;
   thread_t *worker;
   adis_data_t measurement;

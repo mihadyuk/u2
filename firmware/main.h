@@ -42,6 +42,7 @@
 #define TELEMTRYPRIO      (LINKPRIO - 1)
 #define SHELLPRIO         (NORMALPRIO - 10)
 #define ADISPRIO          (NORMALPRIO)
+#define MPU6050PRIO       (ADISPRIO + 1)
 
 ///* константы для мавлинка */
 //#define GROUND_STATION_ID   255

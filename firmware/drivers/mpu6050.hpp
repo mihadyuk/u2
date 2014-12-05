@@ -14,17 +14,23 @@
 
 class MPU6050: protected I2CSensor{
 public:
-  MPU6050(I2CDriver *i2cdp, i2caddr_t addr);
+  MPU6050(I2CDriver *i2cdp, i2caddr_t addr,
+      chibios_rt::BinarySemaphore &data_ready_sem);
   sensor_state_t get(float *acc, float *gyr);
   sensor_state_t start(void);
   sensor_state_t wakeup(void);
   void stop(void);
   void sleep(void);
   float dt(void);
+  static void extiISR(EXTDriver *extp, expchannel_t channel);
 
 private:
-  msg_t get_simple(float *acc, float *gyr);
-  msg_t get_fifo(float *acc, float *gyr);
+  friend THD_FUNCTION(Mpu6050Thread, arg);
+  void acquire_data(void);
+  msg_t acquire_simple(float *acc, float *gyr);
+  msg_t acquire_fifo(float *acc, float *gyr);
+  void set_lock(void);
+  void release_lock(void);
   msg_t set_gyr_fs(uint8_t fs);
   msg_t set_acc_fs(uint8_t fs);
   msg_t set_dlpf_smplrt(uint8_t lpf, uint8_t smplrt);
@@ -41,21 +47,33 @@ private:
   bool hw_init_fast(void);
 
   float temperature;
+  chibios_rt::BinarySemaphore protect_sem;
+  chibios_rt::BinarySemaphore &data_ready_sem;
+  thread_t *worker;
+  float acc_data[3];
+  float gyr_data[3];
+
   const uint32_t *gyr_fs = NULL;
   const uint32_t *acc_fs = NULL;
   const uint32_t *dlpf = NULL;
   const uint32_t *smplrt_div = NULL;
   const int32_t  *fir_f = NULL;
-  FIR<float, float, MPU6050_FIR_LEN> *acc_fir;
-  FIR<float, float, MPU6050_FIR_LEN> *gyr_fir;
-  uint16_t fifo_remainder = 0;
-  int16_t rxbuf_fifo[960 / 2];
-  uint8_t rxbuf[MPU_RX_DEPTH];
-  uint8_t txbuf[MPU_TX_DEPTH];
   uint8_t gyr_fs_prev;
   uint8_t acc_fs_prev;
   uint8_t dlpf_prev;
   uint8_t smplrt_prev;
+  FIR<float, float, MPU6050_FIR_LEN> *acc_fir;
+  FIR<float, float, MPU6050_FIR_LEN> *gyr_fir;
+
+  uint16_t fifo_remainder = 0;
+  int16_t rxbuf_fifo[960 / 2];
+  uint8_t rxbuf[MPU_RX_DEPTH];
+  uint8_t txbuf[MPU_TX_DEPTH];
+
+  static size_t  isr_count;
+  static uint8_t isr_dlpf;
+  static uint8_t isr_smplrt_div;
+  static chibios_rt::BinarySemaphore isr_sem;
 };
 
 #endif /* MPU6050_HPP_ */

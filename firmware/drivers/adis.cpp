@@ -61,7 +61,7 @@ static const SPIConfig spicfg = {
   //SPI_CR1_BR_0 | SPI_CR1_CPOL | SPI_CR1_CPHA | SPI_CR1_DFF // (84MHz/4, CPHA=1, CPOL=1, 16bit, MSb first).
 };
 
-chibios_rt::BinarySemaphore Adis::interrupt_sem(true);
+chibios_rt::BinarySemaphore Adis::isr_sem(true);
 
 static const uint8_t request[] = {
     0x08, // sys error flags
@@ -209,8 +209,10 @@ static T u16_conv(T scale, uint16_t msb){
  *
  */
 template<typename T>
-static T u32_conv(T scale, uint16_t msb, uint16_t lsb){
-  return scale * (int32_t)((msb << 16) | lsb);
+static T u32_conv(T scale, uint32_t msb, uint32_t lsb) {
+  int32_t data = 0;
+  data |= (msb << 16) | lsb;
+  return scale * data;
 }
 
 /**
@@ -259,6 +261,20 @@ void Adis::acquire_data(void) {
 /**
  *
  */
+void Adis::set_lock(void) {
+  this->protect_sem.wait();
+}
+
+/**
+ *
+ */
+void Adis::release_lock(void) {
+  this->protect_sem.signal();
+}
+
+/**
+ *
+ */
 static THD_WORKING_AREA(AdisThreadWA, 256);
 THD_FUNCTION(AdisThread, arg) {
   chRegSetThreadName("Adis");
@@ -266,9 +282,12 @@ THD_FUNCTION(AdisThread, arg) {
   msg_t semstatus = MSG_RESET;
 
   while (!chThdShouldTerminateX()) {
-    semstatus = self->interrupt_sem.wait(ADIS_WAIT_TIMEOUT);
+    semstatus = self->isr_sem.wait(ADIS_WAIT_TIMEOUT);
     if (MSG_OK == semstatus) {
+      self->set_lock();
       self->acquire_data();
+      self->release_lock();
+
       self->data_ready_sem.signal();
     }
   }
@@ -287,6 +306,7 @@ THD_FUNCTION(AdisThread, arg) {
  *
  */
 Adis::Adis(chibios_rt::BinarySemaphore &data_ready_sem):
+protect_sem(false),
 data_ready_sem(data_ready_sem)
 {
   state = SENSOR_STATE_STOP;
@@ -340,7 +360,7 @@ void Adis::stop(void) {
     return;
   else {
     chThdTerminate(worker);
-    interrupt_sem.reset(false); /* speedup termination */
+    isr_sem.reset(false); /* speedup termination */
     chThdWait(worker);
     worker = nullptr;
 
@@ -394,9 +414,11 @@ sensor_state_t Adis::wakeup(void) {
  */
 sensor_state_t Adis::get(adis_data_t *result) {
 
-  if ((SENSOR_STATE_READY == this->state) && (nullptr != result))
+  if ((SENSOR_STATE_READY == this->state) && (nullptr != result)) {
+    set_lock();
     memcpy(result, &measurement, sizeof(adis_data_t));
-
+    release_lock();
+  }
   return this->state;
 }
 
@@ -408,7 +430,7 @@ void Adis::extiISR(EXTDriver *extp, expchannel_t channel){
   (void)channel;
 
   osalSysLockFromISR();
-  interrupt_sem.signalI();
+  isr_sem.signalI();
   osalSysUnlockFromISR();
 }
 
