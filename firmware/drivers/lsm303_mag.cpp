@@ -100,14 +100,13 @@ void LSM303_mag::iron_comp(float *result){
 /**
  *
  */
-void LSM303_mag::pickle(float *result){
+void LSM303_mag::pickle(float *result, int16_t *result_raw) {
 
   int16_t raw[3];
   float sens = this->mag_sens();
 
-  raw[0] = static_cast<int16_t>(pack8to16be(&rxbuf[0]));
-  raw[1] = static_cast<int16_t>(pack8to16be(&rxbuf[2]));
-  raw[2] = static_cast<int16_t>(pack8to16be(&rxbuf[4]));
+  for (size_t i=0; i<3; i++)
+    raw[i] = static_cast<int16_t>(pack8to16be(&rxbuf[i*2]));
 
   #if LSM_SWAP_Y_Z
   float tmp = raw[2];
@@ -115,12 +114,11 @@ void LSM303_mag::pickle(float *result){
   raw[1] = tmp;
   #endif
 
-  mag2raw_imu(raw);
-
   /* */
-  result[0] = sens * raw[0];
-  result[1] = sens * raw[1];
-  result[2] = sens * raw[2];
+  for (size_t i=0; i<3; i++) {
+    result[i] = sens * raw[i];
+    result_raw[i] = raw[i];
+  }
   thermo_comp(result);
   iron_comp(result);
 }
@@ -200,15 +198,16 @@ msg_t LSM303_mag::refresh_gain(void) {
 /**
  *
  */
-msg_t LSM303_mag::get_prev_measurement(float *result) {
+msg_t LSM303_mag::get_prev_measurement(float *result, int16_t *result_raw) {
 
   msg_t ret = MSG_RESET;
 
   txbuf[0] = LSM_REG_MAG_OUT;
   ret = transmit(txbuf, 1, rxbuf, 6);
   if (MSG_OK == ret) {
-    pickle(result);
+    pickle(result, result_raw);
     memcpy(cache, result, sizeof(cache));
+    memcpy(cache_raw, result_raw, sizeof(cache_raw));
   }
 
   return ret;
@@ -232,21 +231,22 @@ sample_cnt(0)
 /**
  *
  */
-sensor_state_t LSM303_mag::get(float *result) {
+sensor_state_t LSM303_mag::get(float *result, int16_t *result_raw) {
 
   if (SENSOR_STATE_READY == this->state) {
-    if (nullptr != result) {
-      if (true == mag_data_fresh) {
-        if (MSG_OK != get_prev_measurement(result))
-          this->state = SENSOR_STATE_DEAD;
-        mag_data_fresh = false;
-        if (MSG_OK != start_single_measurement())
-          this->state = SENSOR_STATE_DEAD;
-      }
-      else {
-        memcpy(result, cache, sizeof(cache));
-      }
+    osalDbgCheck((nullptr != result) && (nullptr != result_raw));
+    if (true == mag_data_fresh) {
+      if (MSG_OK != get_prev_measurement(result, result_raw))
+        this->state = SENSOR_STATE_DEAD;
+      mag_data_fresh = false;
+      if (MSG_OK != start_single_measurement())
+        this->state = SENSOR_STATE_DEAD;
     }
+    else {
+      memcpy(result, cache, sizeof(cache));
+      memcpy(result_raw, cache_raw, sizeof(cache_raw));
+    }
+
     if (MSG_OK != refresh_gain())
       this->state = SENSOR_STATE_DEAD;
   }

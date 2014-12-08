@@ -16,10 +16,10 @@ class MPU6050: protected I2CSensor{
 public:
   MPU6050(I2CDriver *i2cdp, i2caddr_t addr,
       chibios_rt::BinarySemaphore &data_ready_sem);
-  sensor_state_t get(float *acc, float *gyr);
-  sensor_state_t get_raw(int16_t *acc, int16_t *gyr);
+  sensor_state_t get(float *acc, float *gyr, int16_t *acc_raw, int16_t *gyr_raw);
   sensor_state_t start(void);
   sensor_state_t wakeup(void);
+  sensor_state_t get_state(void) {return this->state;}
   void stop(void);
   void sleep(void);
   float dt(void);
@@ -53,8 +53,8 @@ private:
   thread_t *worker;
   float acc_data[3];
   float gyr_data[3];
-  int16_t acc_raw[3];
-  int16_t gyr_raw[3];
+  int16_t acc_raw_data[3];
+  int16_t gyr_raw_data[3];
 
   const uint32_t *gyr_fs = NULL;
   const uint32_t *acc_fs = NULL;

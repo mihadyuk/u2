@@ -11,15 +11,16 @@
 class LSM303_acc: private I2CSensor {
 public:
   LSM303_acc(I2CDriver *i2cdp, i2caddr_t addr);
-  sensor_state_t get(float *result);
+  sensor_state_t get(float *result, int16_t *result_raw);
   sensor_state_t start(void);
   sensor_state_t wakeup(void);
+  sensor_state_t get_state(void) {return this->state;}
   void stop(void);
   void sleep(void);
 
 private:
   float acc_sens(void);
-  void pickle(float *result);
+  void pickle(float *result, int16_t *raw_ret);
   msg_t stop_sleep_code(void);
   bool hw_init_full(void);
   bool hw_init_fast(void);

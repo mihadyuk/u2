@@ -3,16 +3,14 @@
 
 #include "sensor.hpp"
 
-typedef float adisfp; /* adis floating point type */
-
 typedef struct {
-  adisfp acc[3];
-  adisfp gyr[3];
-  adisfp mag[3];
-  adisfp baro;
-  adisfp quat[4];
-  adisfp euler[3];
-  adisfp temp;
+  float acc[3];
+  float gyr[3];
+  float mag[3];
+  float baro;
+  float quat[4];
+  float euler[3];
+  float temp;
   uint16_t errors;
 } adis_data_t;
 
@@ -24,7 +22,7 @@ public:
   sensor_state_t start(void);
   sensor_state_t wakeup(void);
   sensor_state_t get(adis_data_t *result);
-  adisfp dt(void);
+  float dt(void);
   static void extiISR(EXTDriver *extp, expchannel_t channel);
   msg_t wait(systime_t timeout);
 

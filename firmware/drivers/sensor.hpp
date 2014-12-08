@@ -9,8 +9,10 @@ typedef enum {
 } sensor_state_t;
 
 class Sensor {
+public:
+  virtual sensor_state_t get_state(void) {return this->state;}
+
 protected:
-  sensor_state_t get_state(void) {return this->state;}
   virtual void stop(void) = 0;
   virtual void sleep(void) = 0;
   virtual sensor_state_t start(void) = 0;

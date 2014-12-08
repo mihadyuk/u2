@@ -97,15 +97,15 @@ static const uint8_t request[] = {
 
 static uint16_t rxbuf[ArrayLen(request)];
 
-static const adisfp ADIS_DT = (adisfp)ADIS_SAMPLE_RATE_DIV / ADIS_INTERNAL_SAMPLE_RATE;
+static const float ADIS_DT = (float)ADIS_SAMPLE_RATE_DIV / ADIS_INTERNAL_SAMPLE_RATE;
 
-static const adisfp gyr_scale   = 0.00000030517578125; /* to deg/s */
-static const adisfp acc_scale   = 0.00000001220703125; /* to G */
-static const adisfp mag_scale   = 0.1; /* to gauss */
-static const adisfp baro_scale  = 0.04; /* to millibars */
-static const adisfp temp_scale  = 0.00565; /* to celsius */
-static const adisfp quat_scale  = 0.000030517578125;
-static const adisfp euler_scale = 0.0054931640625; /* to deg (360/65536) */
+static const float gyr_scale   = 0.00000000532632218; /* to rad/s */
+static const float acc_scale   = 0.00000011975097664; /* to G */
+static const float mag_scale   = 0.0001; /* to gauss */
+static const float baro_scale  = 0.04; /* to millibars */
+static const float temp_scale  = 0.00565; /* to celsius */
+static const float quat_scale  = 0.000030517578125;
+static const float euler_scale = 0.0054931640625; /* to deg (360/65536) */
 
 /*
  ******************************************************************************
@@ -286,10 +286,7 @@ THD_FUNCTION(AdisThread, arg) {
   while (!chThdShouldTerminateX()) {
     semstatus = self->isr_sem.wait(ADIS_WAIT_TIMEOUT);
     if (MSG_OK == semstatus) {
-      self->set_lock();
       self->acquire_data();
-      self->release_lock();
-
       self->data_ready_sem.signal();
     }
   }
@@ -449,7 +446,7 @@ void Adis::extiISR(EXTDriver *extp, expchannel_t channel){
 /**
  *
  */
-adisfp Adis::dt(void){
+float Adis::dt(void){
   return ADIS_DT;
 }
 

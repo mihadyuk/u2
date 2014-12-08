@@ -182,7 +182,7 @@ void MPU6050::pickle_gyr(float *result) {
   memcpy(raw, b, sizeof(raw));
 
   for (size_t i=0; i<3; i++) {
-    gyr_raw[i] = raw[i];
+    gyr_raw_data[i] = raw[i];
     result[i] = sens * raw[i];
   }
 
@@ -203,7 +203,7 @@ void MPU6050::pickle_acc(float *result){
   raw[2] = static_cast<int16_t>(pack8to16be(&b[4]));
 
   for (size_t i=0; i<3; i++) {
-    acc_raw[i] = raw[i];
+    acc_raw_data[i] = raw[i];
     result[i] = sens * raw[i];
   }
 
@@ -430,8 +430,8 @@ void MPU6050::pickle_fifo(float *acc, float *gyr, const size_t sample_cnt) {
   const size_t gyr_fifo_offset = 3;
 
   for (size_t i=0; i<3; i++) {
-    acc_raw[i] = rxbuf_fifo[acc_fifo_offset + i];
-    gyr_raw[i] = rxbuf_fifo[gyr_fifo_offset + i];
+    acc_raw_data[i] = rxbuf_fifo[acc_fifo_offset + i];
+    gyr_raw_data[i] = rxbuf_fifo[gyr_fifo_offset + i];
   }
 
   if (sample_cnt == 10)
@@ -645,7 +645,8 @@ void MPU6050::stop(void) {
 /**
  *
  */
-sensor_state_t MPU6050::get(float *acc, float *gyr) {
+sensor_state_t MPU6050::get(float *acc, float *gyr,
+                            int16_t *acc_raw, int16_t *gyr_raw) {
 
   if (SENSOR_STATE_READY == this->state) {
     set_lock();
@@ -653,23 +654,10 @@ sensor_state_t MPU6050::get(float *acc, float *gyr) {
       memcpy(acc, this->acc_data, sizeof(this->acc_data));
     if (nullptr != gyr)
       memcpy(gyr, this->gyr_data, sizeof(this->gyr_data));
-    release_lock();
-  }
-
-  return this->state;
-}
-
-/**
- *
- */
-sensor_state_t MPU6050::get_raw(int16_t *acc, int16_t *gyr) {
-
-  if (SENSOR_STATE_READY == this->state) {
-    set_lock();
-    if (nullptr != acc)
-      memcpy(acc, this->acc_raw, sizeof(this->acc_raw));
-    if (nullptr != gyr)
-      memcpy(gyr, this->gyr_raw, sizeof(this->gyr_raw));
+    if (nullptr != acc_raw)
+      memcpy(acc_raw, this->acc_raw_data, sizeof(this->acc_raw_data));
+    if (nullptr != gyr_raw)
+      memcpy(gyr_raw, this->gyr_raw_data, sizeof(this->gyr_raw_data));
     release_lock();
   }
 
@@ -767,8 +755,6 @@ void MPU6050::extiISR(EXTDriver *extp, expchannel_t channel) {
  *
  */
 float MPU6050::dt(void) {
-  return 0.01;
+  return *smplrt_div / static_cast<float>(1000);
 }
-
-
 

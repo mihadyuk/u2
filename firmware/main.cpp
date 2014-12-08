@@ -155,17 +155,7 @@ static LinkMgr link_mgr;
 
 MavLogger mav_logger;
 
-#include "adis.hpp"
-//static adis_data_t adis_data;
-static chibios_rt::BinarySemaphore adis_ready_sem(true);
-static Adis adis(adis_ready_sem);
-
-#include "mpu6050.hpp"
-static float acc[3], gyr[3];
-static chibios_rt::BinarySemaphore mpu_ready_sem(true);
-static MPU6050 mpu6050(&I2CD_FAST, mpu6050addr, mpu_ready_sem);
-
-#include "fir_test.hpp"
+Marg marg;
 
 /*
  ******************************************************************************
@@ -229,24 +219,13 @@ int main(void) {
 //  sins.start(&state_vector);
   mav_logger.start(NORMALPRIO);
 
-  //MargStart();
-  //adis.start();
-  mpu6050.start();
-  sensor_state_t mpu_status = SENSOR_STATE_READY;
+  marg.start();
+  marg_data_t marg_data;
 
   while (TRUE) {
-//    adis_ready_sem.wait(MS2ST(100));
-//    adis.get(&adis_data);
-    red_led_off();
-    for (size_t i=0; i<50; i++) {
-      mpu_ready_sem.wait(MS2ST(100));
-      mpu_status = mpu6050.get(acc, gyr);
-      osalDbgCheck(SENSOR_STATE_READY == mpu_status);
-    }
-    mpu6050.sleep();
-    red_led_on();
-    osalThreadSleepSeconds(2);
-    mpu6050.wakeup();
+    marg.update(&marg_data, MS2ST(100));
+    //osalThreadSleepMilliseconds(200);
+
 
 //    if (ATTITUDE_UNIT_UPDATE_RESULT_OK == attitude_unit.update()){
 //      sins.update();

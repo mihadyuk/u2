@@ -67,20 +67,16 @@ float LSM303_acc::acc_sens(void){
 /**
  *
  */
-void LSM303_acc::pickle(float *result){
+void LSM303_acc::pickle(float *result, int16_t *result_raw){
 
   int16_t raw[3];
   float sens = this->acc_sens();
 
-  raw[0] = static_cast<int16_t>(pack8to16be(&rxbuf[0]));
-  raw[1] = static_cast<int16_t>(pack8to16be(&rxbuf[2]));
-  raw[2] = static_cast<int16_t>(pack8to16be(&rxbuf[4]));
-  acc2raw_imu(raw);
-
-  /* */
-  result[0] = sens * raw[0];
-  result[1] = sens * raw[1];
-  result[2] = sens * raw[2];
+  for (size_t i=0; i<3; i++) {
+    raw[i] = static_cast<int16_t>(pack8to16be(&rxbuf[i*2]));
+    result[i] = sens * raw[i];
+    result_raw[i] = raw[i];
+  }
 }
 
 /**
@@ -197,15 +193,17 @@ void LSM303_acc::stop(void) {
 /**
  *
  */
-sensor_state_t LSM303_acc::get(float *result) {
+sensor_state_t LSM303_acc::get(float *result, int16_t *result_raw) {
 
-  if ((SENSOR_STATE_READY == this->state) && (nullptr != result)) {
+  if (SENSOR_STATE_READY == this->state) {
+    osalDbgCheck((nullptr != result) && (nullptr != result_raw));
+
     /* read previose measurement results */
     txbuf[0] = OUT_X_L_A | 0b10000000;
     if (MSG_OK != transmit(txbuf, 1, rxbuf, 6))
       this->state = SENSOR_STATE_DEAD;
     else
-      this->pickle(result);
+      this->pickle(result, result_raw);
   }
 
   return this->state;

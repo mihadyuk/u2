@@ -63,20 +63,17 @@ void AK8975::iron_comp(float *result){
 /**
  *
  */
-void AK8975::pickle(float *result){
+void AK8975::pickle(float *result, int16_t *result_raw) {
 
   int16_t raw[3];
   float sens = this->mag_sens();
 
-  raw[0] = static_cast<int16_t>(pack8to16le(&rxbuf[1]));
-  raw[1] = static_cast<int16_t>(pack8to16le(&rxbuf[3]));
-  raw[2] = static_cast<int16_t>(pack8to16le(&rxbuf[5]));
-  mag2raw_imu(raw);
+  for (size_t i=0; i<3; i++) {
+    raw[i] = static_cast<int16_t>(pack8to16le(&rxbuf[i*2 + 1]));
+    result[i] = sens * raw[i];
+    result_raw[i] = raw[i];
+  }
 
-  /* */
-  result[0] = sens * raw[0];
-  result[1] = sens * raw[1];
-  result[2] = sens * raw[2];
   thermo_comp(result);
   iron_comp(result);
 }
@@ -203,7 +200,7 @@ sensor_state_t AK8975::wakeup(void) {
 /**
  * @brief   Return magnentometer data in Gauss
  */
-sensor_state_t AK8975::get(float *result) {
+sensor_state_t AK8975::get(float *result, int16_t *result_raw) {
 
   uint8_t txbuf[2];
 
@@ -214,18 +211,21 @@ sensor_state_t AK8975::get(float *result) {
       return this->state;
     }
 
-    if (nullptr != result){
-      /* protection from too fast data acquisition */
-      if (ST1_DATA_READY == (rxbuf[0] & ST1_DATA_READY)) {
-        /* read measured data and immediately start new measurement */
-        pickle(result);
-        if (MSG_OK != start_measurement()) {
-          this->state = SENSOR_STATE_DEAD;
-          return this->state;
-        }
+    osalDbgCheck((nullptr != result) && (nullptr != result_raw));
+    /* protection from too fast data acquisition */
+    if (ST1_DATA_READY == (rxbuf[0] & ST1_DATA_READY)) {
+      /* read measured data and immediately start new measurement */
+      pickle(result, result_raw);
+      memcpy(cache, result, sizeof(cache));
+      memcpy(cache_raw, result_raw, sizeof(cache_raw));
+      if (MSG_OK != start_measurement()) {
+        this->state = SENSOR_STATE_DEAD;
+        return this->state;
       }
-      else
-        memcpy(result, cache, sizeof(cache));
+    }
+    else {
+      memcpy(result, cache, sizeof(cache));
+      memcpy(result_raw, cache_raw, sizeof(cache_raw));
     }
   }
 
