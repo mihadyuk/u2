@@ -232,14 +232,21 @@ int main(void) {
   //MargStart();
   //adis.start();
   mpu6050.start();
+  sensor_state_t mpu_status = SENSOR_STATE_READY;
 
   while (TRUE) {
 //    adis_ready_sem.wait(MS2ST(100));
 //    adis.get(&adis_data);
-    mpu_ready_sem.wait(MS2ST(100));
-    mpu6050.get(acc, gyr);
-
-    //osalThreadSleepMilliseconds(100);
+    red_led_off();
+    for (size_t i=0; i<50; i++) {
+      mpu_ready_sem.wait(MS2ST(100));
+      mpu_status = mpu6050.get(acc, gyr);
+      osalDbgCheck(SENSOR_STATE_READY == mpu_status);
+    }
+    mpu6050.sleep();
+    red_led_on();
+    osalThreadSleepSeconds(2);
+    mpu6050.wakeup();
 
 //    if (ATTITUDE_UNIT_UPDATE_RESULT_OK == attitude_unit.update()){
 //      sins.update();

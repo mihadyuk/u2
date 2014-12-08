@@ -17,10 +17,10 @@
 #define ADIS_WAIT_TIMEOUT         MS2ST(200)
 
 /* some address definitions */
-#define DIAG_STS          0x0A
-#define GLOB_CMD          0x02
-#define PROD_ID           0x7E
-#define SYS_E_FLAG        0x08
+#define DIAG_STS                  0x0A
+#define GLOB_CMD                  0x02
+#define PROD_ID                   0x7E
+#define SYS_E_FLAG                0x08
 
 /*
  ******************************************************************************
@@ -246,6 +246,7 @@ void Adis::acquire_data(void) {
     rxbuf[i-1] = read(request[i]);
 
   /* converting to human useful values */
+  this->set_lock();
   measurement.temp = 25 + u16_conv(temp_scale, rxbuf[1]);
   u32_block_conv(acc_scale, &rxbuf[8], measurement.acc, 3);
   u32_block_conv(gyr_scale, &rxbuf[2], measurement.gyr, 3);
@@ -254,6 +255,7 @@ void Adis::acquire_data(void) {
   u16_block_conv(quat_scale, &rxbuf[19], measurement.quat, 4);
   u16_block_conv(euler_scale, &rxbuf[24], measurement.euler, 3);
   measurement.errors = rxbuf[0];
+  this->release_lock();
 
   chTMStopMeasurementX(&tm);
 }
@@ -380,6 +382,12 @@ void Adis::sleep(void) {
 
   osalDbgAssert(this->state == SENSOR_STATE_READY, "Invalid state");
 
+  /* terminate thread */
+  chThdTerminate(worker);
+  chThdWait(worker);
+  worker = nullptr;
+
+  /* suspend sensor */
   select_page(3);
   /* first we have to write 0 to SLP_CNT bits
      for infinite sleep (not sure if it really need) */
@@ -404,6 +412,10 @@ sensor_state_t Adis::wakeup(void) {
   spiSelect(&ADIS_SPI);
   osalThreadSleepMilliseconds(1); /* sleep recovery time is 700uS */
   select_page(0);
+
+  worker = chThdCreateStatic(AdisThreadWA, sizeof(AdisThreadWA),
+                             ADISPRIO, AdisThread, this);
+  osalDbgAssert(nullptr != worker, "Can not allocate RAM");
 
   this->state = SENSOR_STATE_READY;
   return this->state;

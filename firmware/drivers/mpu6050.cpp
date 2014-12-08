@@ -18,9 +18,9 @@
  */
 
 /* offsets in received data array */
-#define MPU_ACCEL_OFFSET      1
-#define MPU_TEMP_OFFSET       7
-#define MPU_GYRO_OFFSET       9
+#define MPU_ACCEL_OFFSET        1
+#define MPU_TEMP_OFFSET         7
+#define MPU_GYRO_OFFSET         9
 
 /* registers address */
 #define MPUREG_SMPLRT_DIV       0x19
@@ -180,11 +180,11 @@ void MPU6050::pickle_gyr(float *result) {
 
   toggle_endiannes16(b, 6);
   memcpy(raw, b, sizeof(raw));
-  gyr2raw_imu(raw);
 
-  result[0] = sens * raw[0];
-  result[1] = sens * raw[1];
-  result[2] = sens * raw[2];
+  for (size_t i=0; i<3; i++) {
+    gyr_raw[i] = raw[i];
+    result[i] = sens * raw[i];
+  }
 
   gyro_thermo_comp(result);
 }
@@ -201,11 +201,11 @@ void MPU6050::pickle_acc(float *result){
   raw[0] = static_cast<int16_t>(pack8to16be(&b[0]));
   raw[1] = static_cast<int16_t>(pack8to16be(&b[2]));
   raw[2] = static_cast<int16_t>(pack8to16be(&b[4]));
-  acc2raw_imu(raw);
 
-  result[0] = sens * raw[0];
-  result[1] = sens * raw[1];
-  result[2] = sens * raw[2];
+  for (size_t i=0; i<3; i++) {
+    acc_raw[i] = raw[i];
+    result[i] = sens * raw[i];
+  }
 
   acc_egg_comp(result);
 }
@@ -403,12 +403,17 @@ msg_t MPU6050::acquire_simple(float *acc, float *gyr) {
 
   txbuf[0] = MPUREG_INT_STATUS;
   ret = transmit(txbuf, 1, rxbuf, sizeof(rxbuf));
+
+  this->set_lock();
+
   pickle_temp(&temperature);
   if (nullptr != gyr)
     pickle_gyr(gyr);
   if (nullptr != acc)
     pickle_acc(acc);
   fifo_remainder = 0;
+
+  this->release_lock();
 
   return ret;
 }
@@ -481,7 +486,9 @@ msg_t MPU6050::acquire_fifo(float *acc, float *gyr) {
     ret = transmit(txbuf, 1, (uint8_t*)rxbuf_fifo, recvd);
     toggle_endiannes16((uint8_t*)rxbuf_fifo, recvd);
 
+    this->set_lock();
     pickle_fifo(acc, gyr, recvd/BYTES_IN_SAMPLE);
+    this->release_lock();
   }
 
   return ret;
@@ -533,11 +540,7 @@ THD_FUNCTION(Mpu6050Thread, arg) {
     self->isr_sem.wait();
     self->isr_dlpf = *self->dlpf;
     self->isr_smplrt_div = *self->smplrt_div;
-
-    self->set_lock();
     self->acquire_data();
-    self->release_lock();
-
     self->data_ready_sem.signal();
   }
 
@@ -684,6 +687,12 @@ void MPU6050::sleep(void) {
 
   osalDbgAssert(this->state == SENSOR_STATE_READY, "Invalid state");
 
+  /* stop worker thread */
+  chThdTerminate(worker);
+  chThdWait(worker);
+  worker = nullptr;
+
+  /* suspend sensor */
   txbuf[0] = MPUREG_PWR_MGMT1;
   if (MSG_OK != transmit(txbuf, 1, &b, 1))
     goto ERROR;
@@ -692,6 +701,7 @@ void MPU6050::sleep(void) {
   if (MSG_OK != transmit(txbuf, 2, NULL, 0))
     goto ERROR;
 
+  this->state = SENSOR_STATE_SLEEP;
   return;
 ERROR:
   this->state = SENSOR_STATE_DEAD;
@@ -708,6 +718,12 @@ sensor_state_t MPU6050::wakeup(void) {
 
   osalDbgAssert(this->state == SENSOR_STATE_SLEEP, "Invalid state");
 
+  /* start worker thread back */
+  worker = chThdCreateStatic(Mpu6050ThreadWA, sizeof(Mpu6050ThreadWA),
+                                    MPU6050PRIO, Mpu6050Thread, this);
+  osalDbgAssert(nullptr != worker, "Can not allocate RAM");
+
+  /* wakeup sensor */
   txbuf[0] = MPUREG_PWR_MGMT1;
   if (MSG_OK != transmit(txbuf, 1, &b, 1))
     goto ERROR;
