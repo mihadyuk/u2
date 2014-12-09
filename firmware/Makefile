@@ -5,7 +5,7 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -O0 -ggdb -fomit-frame-pointer -falign-functions=16
+  USE_OPT = -O2 -ggdb -fomit-frame-pointer -falign-functions=16
 endif
 
 # C specific options here (added to USE_OPT).
@@ -146,15 +146,15 @@ CPPSRC = $(CHCPPSRC) \
          $(MAVSRC) \
          $(CLISRC) \
          main.cpp \
-         drivers/adis.cpp \
-         drivers/exti_local.cpp \
-         drivers/i2c_sensor.cpp \
-         drivers/marg.cpp \
-         drivers/marg2mavlink.cpp \
-         drivers/mpu6050.cpp \
-         drivers/ak8975.cpp \
-         drivers/lsm303_acc.cpp \
-         drivers/lsm303_mag.cpp \
+         sensors/adis.cpp \
+         sensors/exti_local.cpp \
+         sensors/i2c_sensor.cpp \
+         sensors/marg.cpp \
+         sensors/marg2mavlink.cpp \
+         sensors/mpu6050.cpp \
+         sensors/ak8975.cpp \
+         sensors/lsm303_acc.cpp \
+         sensors/lsm303_mag.cpp \
          src/i2c_local.cpp \
          src/instantiator.cpp \
          src/nvram_local.cpp \
@@ -191,7 +191,7 @@ INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
          $(HALINC) $(OSALINC) $(PLATFORMINC) $(BOARDINC) $(FATFSINC) \
          $(CHIBIOS)/os/various \
          $(CHIBIOS)/os/various/cpp_wrappers \
-         drivers \
+         sensors \
          lib/microrl/src \
          lib/uav_utils \
          lib/filters \
