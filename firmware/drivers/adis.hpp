@@ -28,6 +28,8 @@ public:
 
 private:
   friend THD_FUNCTION(AdisThread, arg);
+  void set_sample_rate(void);
+  void param_update(void);
   void acquire_data(void);
   bool hw_init_fast(void);
   bool hw_init_full(void);
@@ -40,6 +42,8 @@ private:
   chibios_rt::BinarySemaphore &data_ready_sem;
   thread_t *worker;
   adis_data_t measurement;
+  const uint32_t *smplrtdiv = NULL;
+  uint8_t smplrtdiv_prev;
 };
 
 #endif /* ADIS_HPP_ */

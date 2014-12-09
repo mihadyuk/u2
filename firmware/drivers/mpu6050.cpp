@@ -106,7 +106,7 @@ FIR<float, float, MPU6050_FIR_LEN> gyr_fir_array[3] __attribute__((section(".ccm
 
 size_t MPU6050::isr_count = 0;
 uint8_t MPU6050::isr_dlpf = 0;
-uint8_t MPU6050::isr_smplrt_div = 0;
+uint8_t MPU6050::isr_smplrtdiv = 0;
 chibios_rt::BinarySemaphore MPU6050::isr_sem(true);
 
 /*
@@ -346,7 +346,7 @@ bool MPU6050::hw_init_full(void){
     return OSAL_FAILED;
   osalThreadSleepMilliseconds(1);
 
-  i2c_status = set_dlpf_smplrt(*this->dlpf, *this->smplrt_div);
+  i2c_status = set_dlpf_smplrt(*this->dlpf, *this->smplrtdiv);
   if (MSG_OK != i2c_status)
     return OSAL_FAILED;
   osalThreadSleepMilliseconds(1);
@@ -387,7 +387,7 @@ msg_t MPU6050::refresh_settings(void) {
 
   /* low pass filter and sample rate */
   lpf = *dlpf;
-  smplrt = *smplrt_div;
+  smplrt = *smplrtdiv;
   if ((lpf != dlpf_prev) || (smplrt != smplrt_prev)){
     ret3 = set_dlpf_smplrt(lpf, smplrt);
     dlpf_prev = lpf;
@@ -545,7 +545,7 @@ THD_FUNCTION(Mpu6050Thread, arg) {
   while (!chThdShouldTerminateX()) {
     self->isr_sem.wait();
     self->isr_dlpf = *self->dlpf;
-    self->isr_smplrt_div = *self->smplrt_div;
+    self->isr_smplrtdiv = *self->smplrtdiv;
     self->acquire_data();
     self->data_ready_sem.signal();
   }
@@ -593,15 +593,15 @@ sensor_state_t MPU6050::start(void) {
     param_registry.valueSearch("MPU_acc_fs",    &acc_fs);
     param_registry.valueSearch("MPU_fir_f",     &fir_f);
     param_registry.valueSearch("MPU_dlpf",      &dlpf);
-    param_registry.valueSearch("MPU_smplrt_div",&smplrt_div);
+    param_registry.valueSearch("MPU_smplrtdiv", &smplrtdiv);
 
     gyr_fs_prev = *gyr_fs;
     acc_fs_prev = *acc_fs;
     dlpf_prev   = *dlpf;
-    smplrt_prev = *smplrt_div;
+    smplrt_prev = *smplrtdiv;
 
     this->isr_dlpf = *dlpf;
-    this->isr_smplrt_div = *smplrt_div;
+    this->isr_smplrtdiv = *smplrtdiv;
 
     /* init hardware */
     bool init_status = OSAL_FAILED;
@@ -750,7 +750,7 @@ void MPU6050::extiISR(EXTDriver *extp, expchannel_t channel) {
 
   if (0 == isr_dlpf){ /* we need software rate divider */
     isr_count++;
-    if (isr_count >= isr_smplrt_div) {
+    if (isr_count >= isr_smplrtdiv) {
       isr_count = 0;
       isr_sem.signalI();
     }
@@ -766,6 +766,6 @@ void MPU6050::extiISR(EXTDriver *extp, expchannel_t channel) {
  *
  */
 float MPU6050::dt(void) {
-  return *smplrt_div / static_cast<float>(1000);
+  return *smplrtdiv / static_cast<float>(1000);
 }
 

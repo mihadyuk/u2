@@ -60,7 +60,7 @@ private:
   const uint32_t *gyr_fs = NULL;
   const uint32_t *acc_fs = NULL;
   const uint32_t *dlpf = NULL;
-  const uint32_t *smplrt_div = NULL;
+  const uint32_t *smplrtdiv = NULL;
   const int32_t  *fir_f = NULL;
   uint8_t gyr_fs_prev;
   uint8_t acc_fs_prev;
@@ -76,7 +76,7 @@ private:
 
   static size_t  isr_count;
   static uint8_t isr_dlpf;
-  static uint8_t isr_smplrt_div;
+  static uint8_t isr_smplrtdiv;
   static chibios_rt::BinarySemaphore isr_sem;
 };
 

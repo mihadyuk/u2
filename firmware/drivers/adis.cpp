@@ -6,6 +6,7 @@
 #include "adis.hpp"
 #include "exti_local.hpp"
 #include "array_len.hpp"
+#include "param_registry.hpp"
 
 /*
  ******************************************************************************
@@ -41,11 +42,10 @@
  */
 
 /*
- * Software delay for this stupid sensor - 1.5uS
+ * Software delay for this stupid sensor ~1.5uS
  */
 static const size_t ADIS_NSS_DELAY_US = (STM32_SYSCLK + STM32_SYSCLK / 2) / 1000000;
 
-static const uint16_t ADIS_SAMPLE_RATE_DIV = 24;
 static const uint16_t ADIS_INTERNAL_SAMPLE_RATE = 2460;
 
 static const uint16_t supported_models[] = {16480};
@@ -95,8 +95,6 @@ static const uint8_t request[] = {
 };
 
 static uint16_t rxbuf[ArrayLen(request)];
-
-static const float ADIS_DT = (float)ADIS_SAMPLE_RATE_DIV / ADIS_INTERNAL_SAMPLE_RATE;
 
 static const float gyr_scale   = 0.00000000532632218; /* to rad/s */
 static const float acc_scale   = 0.00000011975097664; /* to G */
@@ -291,6 +289,27 @@ void Adis::acquire_data(void) {
 /**
  *
  */
+void Adis::set_sample_rate(void) {
+  select_page(3);
+  write(0x0C, *smplrtdiv - 1);
+  select_page(0);
+}
+
+/**
+ *
+ */
+void Adis::param_update(void) {
+  uint32_t s = *smplrtdiv;
+
+  if (s != smplrtdiv_prev) {
+    set_sample_rate();
+    smplrtdiv_prev = s;
+  }
+}
+
+/**
+ *
+ */
 static THD_WORKING_AREA(AdisThreadWA, 256);
 THD_FUNCTION(AdisThread, arg) {
   chRegSetThreadName("Adis");
@@ -302,6 +321,7 @@ THD_FUNCTION(AdisThread, arg) {
     if (MSG_OK == semstatus) {
       self->acquire_data();
       self->data_ready_sem.signal();
+      self->param_update();
     }
   }
 
@@ -333,6 +353,9 @@ data_ready_sem(data_ready_sem)
 sensor_state_t Adis::start(void) {
 
   if (SENSOR_STATE_STOP == this->state) {
+    param_registry.valueSearch("ADIS_smplrtdiv", &smplrtdiv);
+    smplrtdiv_prev = *smplrtdiv;
+
     adis_reset_clear();
     spiStart(&ADIS_SPI, &spicfg);
     osalThreadSleepMilliseconds(ADIS_START_TIME_MS);
@@ -347,10 +370,7 @@ sensor_state_t Adis::start(void) {
       return this->state;
     }
 
-    /* set sample rate */
-    select_page(3);
-    write(0x0C, ADIS_SAMPLE_RATE_DIV - 1);
-    select_page(0);
+    set_sample_rate();
 
     Exti.adis(true);
 
@@ -460,8 +480,8 @@ void Adis::extiISR(EXTDriver *extp, expchannel_t channel){
 /**
  *
  */
-float Adis::dt(void){
-  return ADIS_DT;
+float Adis::dt(void) {
+  return *smplrtdiv / (float)ADIS_INTERNAL_SAMPLE_RATE;
 }
 
 
