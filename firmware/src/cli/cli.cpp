@@ -346,6 +346,7 @@ void KillShellThreads(void) {
   if (NULL != shell_tp) {
     chThdTerminate(shell_tp);
     chThdWait(shell_tp);
+    shell_tp = NULL;
   }
 }
 
