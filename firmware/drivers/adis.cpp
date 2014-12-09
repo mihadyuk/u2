@@ -58,7 +58,6 @@ static const SPIConfig spicfg = {
   GPIOA,
   GPIOA_ADIS_NSS,
   SPI_CR1_BR_1 | SPI_CR1_CPOL | SPI_CR1_CPHA | SPI_CR1_DFF // (84MHz/8, CPHA=1, CPOL=1, 16bit, MSb first).
-  //SPI_CR1_BR_0 | SPI_CR1_CPOL | SPI_CR1_CPHA | SPI_CR1_DFF // (84MHz/4, CPHA=1, CPOL=1, 16bit, MSb first).
 };
 
 chibios_rt::BinarySemaphore Adis::isr_sem(true);
@@ -233,6 +232,35 @@ static void u32_block_conv(T scale, const uint16_t *raw, T *ret, size_t len){
     ret[i] = u32_conv(scale, raw[2*i+1], raw[2*i]);
 }
 
+
+/**
+ *
+ */
+void Adis::set_lock(void) {
+  this->protect_sem.wait();
+}
+
+/**
+ *
+ */
+void Adis::release_lock(void) {
+  this->protect_sem.signal();
+}
+
+/**
+ *
+ */
+bool Adis::hw_init_fast(void) {
+  return OSAL_SUCCESS;
+}
+
+/**
+ *
+ */
+bool Adis::hw_init_full(void) {
+  return OSAL_SUCCESS;
+}
+
 /**
  *
  */
@@ -258,20 +286,6 @@ void Adis::acquire_data(void) {
   this->release_lock();
 
   chTMStopMeasurementX(&tm);
-}
-
-/**
- *
- */
-void Adis::set_lock(void) {
-  this->protect_sem.wait();
-}
-
-/**
- *
- */
-void Adis::release_lock(void) {
-  this->protect_sem.signal();
 }
 
 /**
@@ -450,8 +464,6 @@ float Adis::dt(void){
   return ADIS_DT;
 }
 
-bool Adis::hw_init_fast(void){return OSAL_SUCCESS;}
-bool Adis::hw_init_full(void){return OSAL_SUCCESS;}
 
 
 
