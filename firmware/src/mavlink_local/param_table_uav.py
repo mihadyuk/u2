@@ -25,9 +25,9 @@ param = [
 ("AHRS_ahrsmode",   0,          0,          1,          "u", "default",     "0 - Starlino, 1 - Madgwick"),
 
 ########### MARG ##############
-("MARG_acc_src",    0,          0,          3,          "u", "default",     "Accelerometer measurement source for MARG (see enum acc_src_t)"),
-("MARG_gyr_src",    0,          0,          2,          "u", "default",     "Angular rate measurement source for MARG (see enum gyr_src_t)"),
-("MARG_mag_src",    0,          0,          3,          "u", "default",     "Magnetometer measurement source for MARG (see enum mag_src_t)"),
+("MARG_acc_src",    0,          0,          2,          "u", "default",     "Accelerometer measurement source for MARG (see enum acc_src_t)"),
+("MARG_gyr_src",    0,          0,          1,          "u", "default",     "Angular rate measurement source for MARG (see enum gyr_src_t)"),
+("MARG_mag_src",    0,          0,          2,          "u", "default",     "Magnetometer measurement source for MARG (see enum mag_src_t)"),
 
 ########### LSM303 ###############
 ("LSMM_gain",       0,          0,          7,          "u", "default",     "LSM magnetometer gain (see enum mag_sens_t)"),
