@@ -21,6 +21,9 @@ static inline void eeprom_power_off(void)     {palSetPad(GPIOA,   GPIOA_NVRAM_PW
 static inline void microsd_power_on(void)     {palClearPad(GPIOE, GPIOE_SDIO_PWR_EN);}
 static inline void microsd_power_off(void)    {palSetPad(GPIOE,   GPIOE_SDIO_PWR_EN);}
 
+static inline void mpu6050_power_on(void)     {palSetPad(GPIOE, GPIOE_MPU6050_PWR);}
+static inline void mpu6050_power_off(void)    {palClearPad(GPIOE, GPIOE_MPU6050_PWR);}
+
 static inline void blue_led_on(void)          {palClearPad(GPIOB, GPIOB_LED_B);}
 static inline void blue_led_off(void)         {palSetPad(GPIOB,   GPIOB_LED_B);}
 static inline void red_led_on(void)           {palClearPad(GPIOB, GPIOB_LED_R);}

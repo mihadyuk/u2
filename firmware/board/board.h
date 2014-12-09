@@ -124,7 +124,7 @@
 #define GPIOE_MAG_INT           5
 #define GPIOE_PIN6              6
 #define GPIOE_PIN7              7
-#define GPIOE_PIN8              8
+#define GPIOE_MPU6050_PWR              8
 #define GPIOE_TIM1_PWM1         9
 #define GPIOE_USB_DISCOVERY     10
 #define GPIOE_TIM1_PWM2         11
@@ -567,7 +567,7 @@
                                 PIN_MODE_INPUT(GPIOE_MAG_INT) |               \
                                 PIN_MODE_INPUT(GPIOE_PIN6) |                  \
                                 PIN_MODE_INPUT(GPIOE_PIN7) |                  \
-                                PIN_MODE_INPUT(GPIOE_PIN8) |                  \
+                                PIN_MODE_OUTPUT(GPIOE_MPU6050_PWR) |                  \
                                 PIN_MODE_ALTERNATE(GPIOE_TIM1_PWM1) |         \
                                 PIN_MODE_INPUT(GPIOE_USB_DISCOVERY) |         \
                                 PIN_MODE_ALTERNATE(GPIOE_TIM1_PWM2) |         \
@@ -583,7 +583,7 @@
                                 PIN_OTYPE_PUSHPULL(GPIOE_MAG_INT) |           \
                                 PIN_OTYPE_PUSHPULL(GPIOE_PIN6) |              \
                                 PIN_OTYPE_PUSHPULL(GPIOE_PIN7) |              \
-                                PIN_OTYPE_PUSHPULL(GPIOE_PIN8) |              \
+                                PIN_OTYPE_PUSHPULL(GPIOE_MPU6050_PWR) |              \
                                 PIN_OTYPE_PUSHPULL(GPIOE_TIM1_PWM1) |         \
                                 PIN_OTYPE_PUSHPULL(GPIOE_USB_DISCOVERY) |     \
                                 PIN_OTYPE_PUSHPULL(GPIOE_TIM1_PWM2) |         \
@@ -599,7 +599,7 @@
                                 PIN_OSPEED_2M(GPIOE_MAG_INT) |                \
                                 PIN_OSPEED_2M(GPIOE_PIN6) |                   \
                                 PIN_OSPEED_2M(GPIOE_PIN7) |                   \
-                                PIN_OSPEED_2M(GPIOE_PIN8) |                   \
+                                PIN_OSPEED_2M(GPIOE_MPU6050_PWR) |                   \
                                 PIN_OSPEED_2M(GPIOE_TIM1_PWM1) |              \
                                 PIN_OSPEED_2M(GPIOE_USB_DISCOVERY) |          \
                                 PIN_OSPEED_2M(GPIOE_TIM1_PWM2) |              \
@@ -615,7 +615,7 @@
                                 PIN_PUPDR_PULLUP(GPIOE_MAG_INT) |             \
                                 PIN_PUPDR_FLOATING(GPIOE_PIN6) |              \
                                 PIN_PUPDR_FLOATING(GPIOE_PIN7) |              \
-                                PIN_PUPDR_FLOATING(GPIOE_PIN8) |              \
+                                PIN_PUPDR_FLOATING(GPIOE_MPU6050_PWR) |              \
                                 PIN_PUPDR_PULLDOWN(GPIOE_TIM1_PWM1) |         \
                                 PIN_PUPDR_FLOATING(GPIOE_USB_DISCOVERY) |     \
                                 PIN_PUPDR_PULLDOWN(GPIOE_TIM1_PWM2) |         \
@@ -631,7 +631,7 @@
                                 PIN_ODR_HIGH(GPIOE_MAG_INT) |                 \
                                 PIN_ODR_HIGH(GPIOE_PIN6) |                    \
                                 PIN_ODR_HIGH(GPIOE_PIN7) |                    \
-                                PIN_ODR_HIGH(GPIOE_PIN8) |                    \
+                                PIN_ODR_LOW(GPIOE_MPU6050_PWR) |                    \
                                 PIN_ODR_LOW(GPIOE_TIM1_PWM1) |                \
                                 PIN_ODR_HIGH(GPIOE_USB_DISCOVERY) |           \
                                 PIN_ODR_LOW(GPIOE_TIM1_PWM2) |                \
@@ -647,7 +647,7 @@
                                 PIN_AFIO_AF(GPIOE_MAG_INT, 0) |               \
                                 PIN_AFIO_AF(GPIOE_PIN6, 0) |                  \
                                 PIN_AFIO_AF(GPIOE_PIN7, 0))
-#define VAL_GPIOE_AFRH         (PIN_AFIO_AF(GPIOE_PIN8, 0) |                  \
+#define VAL_GPIOE_AFRH         (PIN_AFIO_AF(GPIOE_MPU6050_PWR, 0) |                  \
                                 PIN_AFIO_AF(GPIOE_TIM1_PWM1, 1) |             \
                                 PIN_AFIO_AF(GPIOE_USB_DISCOVERY, 0) |         \
                                 PIN_AFIO_AF(GPIOE_TIM1_PWM2, 1) |             \

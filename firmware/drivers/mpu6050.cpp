@@ -297,15 +297,21 @@ msg_t MPU6050::set_dlpf_smplrt(uint8_t lpf, uint8_t smplrt) {
 /**
  *
  */
+msg_t MPU6050::soft_reset(void) {
+  txbuf[0] = MPUREG_PWR_MGMT1;
+  txbuf[1] = DEVICE_RESET; /* soft reset */
+  return transmit(txbuf, 2, NULL, 0);
+}
+
+/**
+ *
+ */
 bool MPU6050::hw_init_full(void){
 
   msg_t i2c_status = MSG_RESET;
 
-  txbuf[0] = MPUREG_PWR_MGMT1;
-  txbuf[1] = DEVICE_RESET; /* soft reset */
-  i2c_status = transmit(txbuf, 2, NULL, 0);
-  if (MSG_OK != i2c_status)
-    return OSAL_FAILED;
+  /* there is not need to call soft reset here because of POR sensor reset,
+     just wait timeout. */
   osalThreadSleepMilliseconds(30);
 
   txbuf[0] = MPUREG_WHO_AM_I;
@@ -599,6 +605,7 @@ sensor_state_t MPU6050::start(void) {
 
     /* init hardware */
     bool init_status = OSAL_FAILED;
+    mpu6050_power_on();
     if (need_full_init())
       init_status = hw_init_full();
     else
@@ -614,8 +621,10 @@ sensor_state_t MPU6050::start(void) {
       Exti.mpu6050(true);
       this->state = SENSOR_STATE_READY;
     }
-    else
+    else {
+      mpu6050_power_off();
       this->state = SENSOR_STATE_DEAD;
+    }
   }
 
   return this->state;
@@ -640,6 +649,8 @@ void MPU6050::stop(void) {
     this->state = SENSOR_STATE_DEAD;
   else
     this->state = SENSOR_STATE_STOP;
+
+  mpu6050_power_off();
 }
 
 /**

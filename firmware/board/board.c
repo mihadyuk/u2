@@ -59,6 +59,7 @@ void __early_init(void) {
  * Board-specific initialization code.
  */
 void boardInit(void) {
+  //palSetPad(GPIOE, GPIOE_MPU6050_PWR);
 }
 
 #if HAL_USE_SDC
