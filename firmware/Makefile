@@ -162,6 +162,7 @@ CPPSRC = $(CHCPPSRC) \
          src/debouncer.cpp \
          src/blinker.cpp \
          src/sanity.cpp \
+         src/rtc_timer_test.cpp \
          lib/filters/fir_test.cpp \
 
 # C sources to be compiled in ARM mode regardless of the global setting.

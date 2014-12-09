@@ -170,6 +170,11 @@ Marg marg;
  *******************************************************************************
  *******************************************************************************
  */
+
+
+#include "rtc_timer_test.hpp"
+
+
 int main(void) {
 
   halInit();
@@ -177,6 +182,12 @@ int main(void) {
 
   endianness_test();
   chThdSleepMilliseconds(300);
+
+
+
+  rtcTimerStart();
+
+
 
   /* enable softreset on panic */
   setGlobalFlag(GlobalFlags.allow_softreset);
