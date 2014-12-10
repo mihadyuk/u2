@@ -45,6 +45,8 @@
 /* timer autoreload value */
 #define RTC_TIMER_STEP                  65535
 
+#define RTC_TIMER_CORRECTION            3
+
 #define RTC_GPTD                        GPTD6
 
 /*
@@ -122,7 +124,7 @@ static void gptcb(GPTDriver *gptp) {
   (void)gptp;
 
   osalSysLockFromISR();
-  UnixUsec += RTC_TIMER_STEP;
+  UnixUsec += RTC_TIMER_STEP + RTC_TIMER_CORRECTION;
   osalSysUnlockFromISR();
 }
 
@@ -222,7 +224,7 @@ int64_t TimeKeeper::utc(void) {
   if (cnt2 >= cnt1)
     return ret + cnt1;
   else
-    return ret + cnt1 + RTC_TIMER_STEP;
+    return ret + cnt1 + RTC_TIMER_STEP + RTC_TIMER_CORRECTION;
 }
 
 /**
