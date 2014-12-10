@@ -40,7 +40,7 @@ extern ParamRegistry param_registry;
  * PROTOTYPES
  *******************************************************************************
  */
-static thread_t* togglesh_cmd(int argc, const char * const * argv, SerialDriver *sdp);
+static thread_t* shellswap_cmd(int argc, const char * const * argv, SerialDriver *sdp);
 static thread_t* help_clicmd(int argc, const char * const * argv, SerialDriver *sdp);
 
 /*
@@ -66,7 +66,7 @@ static const ShellCmd_t cliutils[] = {
 //    {"sensors",   &sensors_clicmd,    "get human readable data from onboard sensors"},
 //    {"servo",     &servo_clicmd,      "change actuators' state during servo limits tuning"},
     {"sleep",     &sleep_clicmd,      "put autopilot board in sleep state (do not use it)"},
-    {"togglesh",  &togglesh_cmd,      "swap telemetry and shell channels"},
+    {"shellswap", &shellswap_cmd,     "swap telemetry and shell channels"},
     {"uname",     &uname_clicmd,      "'info' alias"},
 //    {"wps",       &wps_clicmd,        "simple waypoint interface"},
     #if USE_EEPROM_TEST_SUIT
@@ -248,7 +248,7 @@ static THD_FUNCTION(ShellThread, sdp) {
 /**
  *
  */
-static thread_t* togglesh_cmd(int argc, const char * const * argv, SerialDriver *sdp){
+static thread_t* shellswap_cmd(int argc, const char * const * argv, SerialDriver *sdp){
   (void)sdp;
   (void)argc;
   (void)argv;
