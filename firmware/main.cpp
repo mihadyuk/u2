@@ -46,7 +46,7 @@ Giovanni
 #include "i2c_local.hpp"
 #include "nvram_local.hpp"
 #include "parameters.hpp"
-//#include "timekeeper.hpp"
+#include "timekeeper.hpp"
 //#include "sensors.hpp"
 //#include "pwr_mgmt.hpp"
 #include "tlm_sender.hpp"
@@ -79,7 +79,7 @@ using namespace chibios_rt;
  */
 ///* RTC-GPS sync */
 ////chibios_rt::BinarySemaphore rtc_sem(true);
-//chibios_rt::BinarySemaphore ppstimesync_sem(true);  /* for syncing internal RTC with PPS */
+chibios_rt::BinarySemaphore ppstimesync_sem(true);  /* for syncing internal RTC with PPS */
 //chibios_rt::BinarySemaphore ppsgps_sem(true);       /* for acquiring data from GPS */
 //
 ///* Servo-PID sync */
@@ -146,8 +146,8 @@ static uint8_t link_thd_buf[THREAD_HEAP_SIZE + sizeof(stkalign_t)];
 //MissionPlanner mission_planner(&MissionFile);
 //
 //int64_t TimeUsGps;
-//
-//TimeKeeper time_keeper;
+
+TimeKeeper time_keeper;
 
 TlmSender tlm_sender;
 
@@ -170,11 +170,6 @@ Marg marg;
  *******************************************************************************
  *******************************************************************************
  */
-
-
-#include "rtc_timer_test.hpp"
-
-
 int main(void) {
 
   halInit();
@@ -182,12 +177,6 @@ int main(void) {
 
   endianness_test();
   chThdSleepMilliseconds(300);
-
-
-
-  rtcTimerStart();
-
-
 
   /* enable softreset on panic */
   setGlobalFlag(GlobalFlags.allow_softreset);
@@ -206,7 +195,7 @@ int main(void) {
   chHeapObjectInit(&ThdHeap, (uint8_t *)MEM_ALIGN_NEXT(link_thd_buf), THREAD_HEAP_SIZE);
 
   Exti.start();
-//  time_keeper.start();
+  time_keeper.start();
   blinker.start();
   SanityControlInit();
   I2CInitLocal();

@@ -5,7 +5,7 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -O0 -ggdb -fomit-frame-pointer -falign-functions=16
+  USE_OPT = -Os -ggdb -fomit-frame-pointer -falign-functions=16
 endif
 
 # C specific options here (added to USE_OPT).
@@ -30,7 +30,7 @@ endif
 
 # Enable this if you want link time optimizations (LTO)
 ifeq ($(USE_LTO),)
-  USE_LTO = no
+  USE_LTO = yes
 endif
 
 # If enabled, this option allows to compile the application in THUMB mode.
@@ -162,7 +162,7 @@ CPPSRC = $(CHCPPSRC) \
          src/debouncer.cpp \
          src/blinker.cpp \
          src/sanity.cpp \
-         src/rtc_timer_test.cpp \
+         src/timekeeper.cpp \
          lib/filters/fir_test.cpp \
 
 # C sources to be compiled in ARM mode regardless of the global setting.

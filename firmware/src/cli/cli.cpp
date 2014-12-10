@@ -9,7 +9,7 @@
 #include "cli_cmd.hpp"
 #include "param_registry.hpp"
 #include "param_cli.hpp"
-//#include "timekeeping.hpp"
+#include "timekeeper.hpp"
 //#include "irq_storm.hpp"
 //#include "cli_cal.hpp"
 //#include "dcm_cli.hpp"
@@ -52,7 +52,7 @@ static thread_t* help_clicmd(int argc, const char * const * argv, SerialDriver *
 static const ShellCmd_t cliutils[] = {
     {"clear",     &clear_clicmd,      "clear screen"},
 //    {"cal",       &cal_clicmd,        "start calibration of onboard sensors"},
-//    {"date",      &date_clicmd,       "print and set current date"},
+    {"date",      &date_clicmd,       "print and set current date"},
 //    {"dcm",       &dcm_clicmd,        "print DCM in realtime until ^C pressed"},
     {"echo",      &echo_clicmd,       "echo it's input to terminal"},
     {"help",      &help_clicmd,       "this message"},
