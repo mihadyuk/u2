@@ -130,11 +130,8 @@ void SanityControlInit(void){
   mavlink_out_sys_status_struct.onboard_control_sensors_health = mavlink_out_sys_status_struct.onboard_control_sensors_present;
 
   /* */
-  chThdCreateStatic(SanityControlThreadWA,
-          sizeof(SanityControlThreadWA),
-          NORMALPRIO,
-          SanityControlThread,
-          NULL);
+  chThdCreateStatic(SanityControlThreadWA, sizeof(SanityControlThreadWA),
+          NORMALPRIO, SanityControlThread, NULL);
 }
 
 
