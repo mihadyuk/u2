@@ -15,10 +15,8 @@ using namespace chibios_rt;
  * EXTERNS
  ******************************************************************************
  */
-
-extern mavlink_raw_imu_t mavlink_out_raw_imu_struct;
+extern mavlink_raw_imu_t        mavlink_out_raw_imu_struct;
 extern mavlink_highres_imu_t    mavlink_out_highres_imu_struct;
-extern TimeKeeper time_keeper;
 
 /*
  ******************************************************************************

@@ -690,6 +690,7 @@ void MPU6050::sleep(void) {
   chThdTerminate(worker);
   chThdWait(worker);
   worker = nullptr;
+  osalThreadSleepMilliseconds(1);
 
   /* suspend sensor */
   txbuf[0] = MPUREG_PWR_MGMT1;

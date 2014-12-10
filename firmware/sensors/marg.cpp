@@ -4,6 +4,8 @@
 #include "mavlink_local.hpp"
 #include "marg2mavlink.hpp"
 #include "param_registry.hpp"
+#include "mav_mail.hpp"
+#include "mav_logger.hpp"
 
 using namespace chibios_rt;
 
@@ -54,6 +56,13 @@ typedef enum {
  ******************************************************************************
  */
 
+extern MavLogger mav_logger;
+
+extern mavlink_raw_imu_t                mavlink_out_raw_imu_struct;
+extern mavlink_highres_imu_t            mavlink_out_highres_imu_struct;
+extern mavlink_attitude_t               mavlink_out_attitude_struct;
+extern mavlink_attitude_quaternion_t    mavlink_out_attitude_quaternion_struct;
+
 /*
  ******************************************************************************
  * PROTOTYPES
@@ -66,6 +75,11 @@ typedef enum {
  ******************************************************************************
  */
 
+static mavMail raw_imu_mail;
+static mavMail highres_imu_mail;
+static mavMail attitude_imu_mail;
+static mavMail attitude_quaternion_imu_mail;
+
 /*
  ******************************************************************************
  ******************************************************************************
@@ -74,26 +88,26 @@ typedef enum {
  ******************************************************************************
  */
 
-
-
-/*
- ******************************************************************************
- * EXPORTED FUNCTIONS
- ******************************************************************************
- */
 /**
  *
  */
-Marg::Marg(void) :
-    adis_sem(true),
-    mpu6050_sem(true),
-    adis(this->adis_sem),
-    mpu6050(&I2CD_FAST, mpu6050addr, this->mpu6050_sem),
-    ak8975(&I2CD_FAST, ak8975addr),
-    lsm303mag(&I2CD_FAST, lsm303magaddr),
-    lsm303acc(&I2CD_FAST, lsm303accaddr)
-{
-  return;
+static void log_append(void) {
+
+  msg_t status = MSG_RESET;
+
+  if (raw_imu_mail.free()) {
+    raw_imu_mail.fill(&mavlink_out_raw_imu_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_RAW_IMU);
+    status = mav_logger.post(&raw_imu_mail);
+    if (MSG_OK != status)
+      raw_imu_mail.release();
+  }
+
+  if (highres_imu_mail.free()) {
+    highres_imu_mail.fill(&mavlink_out_highres_imu_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_HIGHRES_IMU);
+    status = mav_logger.post(&highres_imu_mail);
+    if (MSG_OK != status)
+      raw_imu_mail.release();
+  }
 }
 
 /**
@@ -161,6 +175,26 @@ marg_state_reg_t Marg::reschedule(void) {
   this->mag_src_prev = m;
 
   return this->get_state();
+}
+
+/*
+ ******************************************************************************
+ * EXPORTED FUNCTIONS
+ ******************************************************************************
+ */
+/**
+ *
+ */
+Marg::Marg(void) :
+    adis_sem(true),
+    mpu6050_sem(true),
+    adis(this->adis_sem),
+    mpu6050(&I2CD_FAST, mpu6050addr, this->mpu6050_sem),
+    ak8975(&I2CD_FAST, ak8975addr),
+    lsm303mag(&I2CD_FAST, lsm303magaddr),
+    lsm303acc(&I2CD_FAST, lsm303accaddr)
+{
+  return;
 }
 
 /**
@@ -312,6 +346,7 @@ msg_t Marg::update(marg_data_t *ret, systime_t timeout) {
    */
   marg2highres_imu(ret->acc, ret->gyr, ret->mag);
   ret->reg = get_state();
+  log_append();
   return sem_status;
 }
 

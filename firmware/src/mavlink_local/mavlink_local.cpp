@@ -30,6 +30,7 @@ mavlink_system_time_t           mavlink_out_system_time_struct;
 mavlink_vfr_hud_t               mavlink_out_vfr_hud_struct;
 mavlink_global_position_int_t   mavlink_out_global_position_int_struct;
 mavlink_attitude_t              mavlink_out_attitude_struct;
+mavlink_attitude_quaternion_t   mavlink_out_attitude_quaternion_struct;
 mavlink_heartbeat_t             mavlink_out_heartbeat_struct;
 mavlink_param_value_t           mavlink_out_param_value_struct;
 mavlink_gps_raw_int_t           mavlink_out_gps_raw_int_struct;

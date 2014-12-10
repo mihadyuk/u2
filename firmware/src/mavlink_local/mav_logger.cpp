@@ -103,15 +103,16 @@ static void insert_handler(void) {
  */
 static void remove_handler(void) {
 
-  if (fs_ready == false){
+  if (fs_ready == false) {
     f_mount(NULL, 0, 0);
     fs_ready = false;
   }
 
-  if ((&SDCD1)->state == BLK_ACTIVE){
+  if ((&SDCD1)->state == BLK_READY) {
     sdcDisconnect(&SDCD1);
     sdcStop(&SDCD1);
   }
+
   fs_ready = false;
 }
 
@@ -135,11 +136,11 @@ static size_t name_from_time(char *buf) {
 /**
  *
  */
-static void sync_cb(void *par){
+static void sync_cb(void *par) {
   (void)par;
   osalSysLockFromISR();
   chVTSetI(&sync_vt, SYNC_PERIOD, &sync_cb, NULL);
-  sync_tmo = TRUE;
+  sync_tmo = true;
   osalSysUnlockFromISR();
 }
 
@@ -147,10 +148,10 @@ static void sync_cb(void *par){
  * По нескольким критериям определяет, надо ли сбрасывать буфер и при
  * необходимости сбрасывает.
  */
-static FRESULT fs_sync(FIL *Log){
+static FRESULT fs_sync(FIL *Log) {
   FRESULT err = FR_OK;
 
-  if (sync_tmo && fresh_data){
+  if (sync_tmo && fresh_data) {
     err = f_sync(Log);
     sync_tmo = FALSE;
     fresh_data = FALSE;
@@ -174,7 +175,7 @@ FRESULT MavLogger::append_log(mavMail *mail, bool *fresh_data) {
 
   /**/
   mavlink_encode(mail->msgid, &mavlink_msgbuf_log, mail->mavmsg);
-  mail->free();
+  mail->release();
 
   memset(recordbuf, 0, sizeof(recordbuf));
 #if MAVLINK_LOG_FORMAT
@@ -201,14 +202,16 @@ FRESULT MavLogger::append_log(mavMail *mail, bool *fresh_data) {
  * Если произошла ошибка - поток логгера просто тушится,
  * потому что исправить всё равно ничего нельзя.
  */
-msg_t MavLogger::main(void){
+msg_t MavLogger::main(void) {
   setName("MicroSD");
 
   FRESULT err;
   uint32_t clusters;
   FATFS *fsp;
-
   mavMail *mail;
+
+  chVTObjectInit(&sync_vt);
+  chVTSet(&sync_vt, SYNC_PERIOD, &sync_cb, NULL);
 
   /* wait until card not ready */
 NOT_READY:
@@ -241,13 +244,24 @@ NOT_READY:
   err = f_sync(&log_file);
   err_check();
 
+  ready = true;
   while (!this->shouldTerminate()) {
-    /* wait ID */
-    if (logwriter_mb.fetch(&mail, MS2ST(100)) == MSG_OK){
-      if (!sdcIsCardInserted(&SDCD1)){
-        remove_handler();
-        goto NOT_READY;
+    if (!sdcIsCardInserted(&SDCD1)) {
+      ready = false;
+      remove_handler();
+      osalThreadSleepMilliseconds(100);
+      osalSysLock();
+      size_t used = logwriter_mb.getUsedCountI();
+      osalSysUnlock();
+      while (used--) {
+        logwriter_mb.fetch(&mail, MS2ST(100));
+        mail->release();
       }
+      goto NOT_READY;
+    }
+
+    /* wait ID */
+    if (logwriter_mb.fetch(&mail, MS2ST(100)) == MSG_OK) {
       err = append_log(mail, &fresh_data);
       err_check();
     }
@@ -257,6 +271,7 @@ NOT_READY:
   }
 
 EXIT:
+  ready = false;
   exit(MSG_OK);
   return MSG_OK;
 }
@@ -270,14 +285,20 @@ EXIT:
 /**
  * @note    just drop message if logger not ready
  */
-msg_t MavLogger::post(mavMail* msg) {
+msg_t MavLogger::post(mavMail* mail) {
   msg_t ret = MSG_RESET;
 
   if (true == ready) {
-    ret = logwriter_mb.post(msg, TIME_IMMEDIATE);
-    if (MSG_OK != ret)
+    ret = logwriter_mb.post(mail, TIME_IMMEDIATE);
+    if (MSG_OK != ret) {
+      mail->release();
       this->drop_cnt++;
+    }
   }
+  else {
+    mail->release();
+  }
+
   return ret;
 }
 
