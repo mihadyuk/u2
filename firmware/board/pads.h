@@ -9,8 +9,8 @@ static inline void xbee_reset_clear(void)     {palSetPad(GPIOD,   GPIOD_XBEE_RES
 static inline void adis_reset_assert(void)    {palClearPad(GPIOA, GPIOA_ADIS_NRST);}
 static inline void adis_reset_clear(void)     {palSetPad(GPIOA,   GPIOA_ADIS_NRST);}
 
-static inline void gps_power_on(void)         {palClearPad(GPIOA, GPIOA_GPS_ENABLE);}
-static inline void gps_power_off(void)        {palSetPad(GPIOA,   GPIOA_GPS_ENABLE);}
+static inline void gps_power_on(void)         {palClearPad(GPIOE, GPIOE_GPS_ENABLE);}
+static inline void gps_power_off(void)        {palSetPad(GPIOE,   GPIOE_GPS_ENABLE);}
 
 static inline void pwr5v_power_on(void)       {palSetPad(GPIOD,   GPIOD_5V_ENABLE);}
 static inline void pwr5v_power_off(void)      {palClearPad(GPIOD, GPIOD_5V_ENABLE);}

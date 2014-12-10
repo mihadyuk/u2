@@ -48,7 +48,7 @@
 /*
  * IO pins assignments.
  */
-#define GPIOA_GPS_ENABLE        0
+#define GPIOA_GPS_PPS           0
 #define GPIOA_NVRAM_PWR_EN      1
 #define GPIOA_SONAR_PWM         2 /* tim2_ch3 */
 #define GPIOA_AD_CLK            3
@@ -116,7 +116,7 @@
 #define GPIOD_TIM4_PWM3         14
 #define GPIOD_TIM4_PWM4         15
 
-#define GPIOE_GPS_PPS           0
+#define GPIOE_GPS_ENABLE        0
 #define GPIOE_ADIS_INT          1
 #define GPIOE_USB_PRESENCE      2
 #define GPIOE_MPU9150_INT       3
@@ -124,7 +124,7 @@
 #define GPIOE_MAG_INT           5
 #define GPIOE_PIN6              6
 #define GPIOE_PIN7              7
-#define GPIOE_MPU6050_PWR              8
+#define GPIOE_MPU6050_PWR       8
 #define GPIOE_TIM1_PWM1         9
 #define GPIOE_USB_DISCOVERY     10
 #define GPIOE_TIM1_PWM2         11
@@ -160,7 +160,7 @@
 /*
  * GPIOA setup
  */
-#define VAL_GPIOA_MODER        (PIN_MODE_OUTPUT(GPIOA_GPS_ENABLE) |           \
+#define VAL_GPIOA_MODER        (PIN_MODE_INPUT(GPIOA_GPS_PPS) |               \
                                 PIN_MODE_OUTPUT(GPIOA_NVRAM_PWR_EN) |         \
                                 PIN_MODE_ALTERNATE(GPIOA_SONAR_PWM) |         \
                                 PIN_MODE_OUTPUT(GPIOA_AD_CLK) |               \
@@ -176,7 +176,7 @@
                                 PIN_MODE_ALTERNATE(GPIOA_JTMS) |              \
                                 PIN_MODE_ALTERNATE(GPIOA_JTCK) |              \
                                 PIN_MODE_ALTERNATE(GPIOA_JTDI))
-#define VAL_GPIOA_OTYPER       (PIN_OTYPE_PUSHPULL(GPIOA_GPS_ENABLE) |        \
+#define VAL_GPIOA_OTYPER       (PIN_OTYPE_PUSHPULL(GPIOA_GPS_PPS) |           \
                                 PIN_OTYPE_OPENDRAIN(GPIOA_NVRAM_PWR_EN) |     \
                                 PIN_OTYPE_PUSHPULL(GPIOA_SONAR_PWM) |         \
                                 PIN_OTYPE_PUSHPULL(GPIOA_AD_CLK) |            \
@@ -192,7 +192,7 @@
                                 PIN_OTYPE_PUSHPULL(GPIOA_JTMS) |              \
                                 PIN_OTYPE_PUSHPULL(GPIOA_JTCK) |              \
                                 PIN_OTYPE_PUSHPULL(GPIOA_JTDI))
-#define VAL_GPIOA_OSPEEDR      (PIN_OSPEED_2M(GPIOA_GPS_ENABLE) |             \
+#define VAL_GPIOA_OSPEEDR      (PIN_OSPEED_2M(GPIOA_GPS_PPS) |                \
                                 PIN_OSPEED_2M(GPIOA_NVRAM_PWR_EN) |           \
                                 PIN_OSPEED_2M(GPIOA_SONAR_PWM) |              \
                                 PIN_OSPEED_2M(GPIOA_AD_CLK) |                 \
@@ -208,7 +208,7 @@
                                 PIN_OSPEED_100M(GPIOA_JTMS) |                 \
                                 PIN_OSPEED_100M(GPIOA_JTCK) |                 \
                                 PIN_OSPEED_100M(GPIOA_JTDI))
-#define VAL_GPIOA_PUPDR        (PIN_PUPDR_PULLUP(GPIOA_GPS_ENABLE) |          \
+#define VAL_GPIOA_PUPDR        (PIN_PUPDR_PULLDOWN(GPIOA_GPS_PPS) |           \
                                 PIN_PUPDR_FLOATING(GPIOA_NVRAM_PWR_EN) |      \
                                 PIN_PUPDR_PULLDOWN(GPIOA_SONAR_PWM) |         \
                                 PIN_PUPDR_PULLUP(GPIOA_AD_CLK) |              \
@@ -224,7 +224,7 @@
                                 PIN_PUPDR_FLOATING(GPIOA_JTMS) |              \
                                 PIN_PUPDR_FLOATING(GPIOA_JTCK) |              \
                                 PIN_PUPDR_FLOATING(GPIOA_JTDI))
-#define VAL_GPIOA_ODR          (PIN_ODR_HIGH(GPIOA_GPS_ENABLE) |              \
+#define VAL_GPIOA_ODR          (PIN_ODR_HIGH(GPIOA_GPS_PPS) |                 \
                                 PIN_ODR_LOW(GPIOA_NVRAM_PWR_EN) |             \
                                 PIN_ODR_HIGH(GPIOA_SONAR_PWM) |               \
                                 PIN_ODR_HIGH(GPIOA_AD_CLK) |                  \
@@ -240,7 +240,7 @@
                                 PIN_ODR_HIGH(GPIOA_JTMS) |                    \
                                 PIN_ODR_HIGH(GPIOA_JTCK) |                    \
                                 PIN_ODR_HIGH(GPIOA_JTDI))
-#define VAL_GPIOA_AFRL         (PIN_AFIO_AF(GPIOA_GPS_ENABLE, 0) |            \
+#define VAL_GPIOA_AFRL         (PIN_AFIO_AF(GPIOA_GPS_PPS, 0) |               \
                                 PIN_AFIO_AF(GPIOA_NVRAM_PWR_EN, 0) |          \
                                 PIN_AFIO_AF(GPIOA_SONAR_PWM, 1) |             \
                                 PIN_AFIO_AF(GPIOA_AD_CLK, 0) |                \
@@ -267,7 +267,7 @@
                                 PIN_MODE_OUTPUT(GPIOB_LED_B) |                \
                                 PIN_MODE_ALTERNATE(GPIOB_I2C_SLOW_SCL) |      \
                                 PIN_MODE_ALTERNATE(GPIOB_I2C_SLOW_SDA) |      \
-                                PIN_MODE_ALTERNATE(GPIOB_TACHOMETER) |                        \
+                                PIN_MODE_INPUT(GPIOB_TACHOMETER) |            \
                                 PIN_MODE_INPUT(GPIOB_RECEIVER_PPM) |          \
                                 PIN_MODE_ALTERNATE(GPIOB_I2C_FAST_SCL) |      \
                                 PIN_MODE_ALTERNATE(GPIOB_I2C_FAST_SDA) |      \
@@ -283,7 +283,7 @@
                                 PIN_OTYPE_OPENDRAIN(GPIOB_LED_B) |            \
                                 PIN_OTYPE_OPENDRAIN(GPIOB_I2C_SLOW_SCL) |     \
                                 PIN_OTYPE_OPENDRAIN(GPIOB_I2C_SLOW_SDA) |     \
-                                PIN_OTYPE_OPENDRAIN(GPIOB_TACHOMETER) |        \
+                                PIN_OTYPE_PUSHPULL(GPIOB_TACHOMETER) |        \
                                 PIN_OTYPE_PUSHPULL(GPIOB_RECEIVER_PPM) |      \
                                 PIN_OTYPE_OPENDRAIN(GPIOB_I2C_FAST_SCL) |     \
                                 PIN_OTYPE_OPENDRAIN(GPIOB_I2C_FAST_SDA) |     \
@@ -315,7 +315,7 @@
                                 PIN_PUPDR_FLOATING(GPIOB_LED_B) |             \
                                 PIN_PUPDR_FLOATING(GPIOB_I2C_SLOW_SCL) |      \
                                 PIN_PUPDR_FLOATING(GPIOB_I2C_SLOW_SDA) |      \
-                                PIN_PUPDR_PULLUP(GPIOB_TACHOMETER) |        \
+                                PIN_PUPDR_PULLUP(GPIOB_TACHOMETER) |          \
                                 PIN_PUPDR_PULLDOWN(GPIOB_RECEIVER_PPM) |      \
                                 PIN_PUPDR_FLOATING(GPIOB_I2C_FAST_SCL) |      \
                                 PIN_PUPDR_FLOATING(GPIOB_I2C_FAST_SDA) |      \
@@ -559,7 +559,7 @@
 /*
  * Port E setup.
  */
-#define VAL_GPIOE_MODER        (PIN_MODE_INPUT(GPIOE_GPS_PPS) |               \
+#define VAL_GPIOE_MODER        (PIN_MODE_OUTPUT(GPIOE_GPS_ENABLE) |           \
                                 PIN_MODE_INPUT(GPIOE_ADIS_INT) |              \
                                 PIN_MODE_INPUT(GPIOE_USB_PRESENCE) |          \
                                 PIN_MODE_INPUT(GPIOE_MPU9150_INT) |           \
@@ -567,7 +567,7 @@
                                 PIN_MODE_INPUT(GPIOE_MAG_INT) |               \
                                 PIN_MODE_INPUT(GPIOE_PIN6) |                  \
                                 PIN_MODE_INPUT(GPIOE_PIN7) |                  \
-                                PIN_MODE_OUTPUT(GPIOE_MPU6050_PWR) |                  \
+                                PIN_MODE_OUTPUT(GPIOE_MPU6050_PWR) |          \
                                 PIN_MODE_ALTERNATE(GPIOE_TIM1_PWM1) |         \
                                 PIN_MODE_INPUT(GPIOE_USB_DISCOVERY) |         \
                                 PIN_MODE_ALTERNATE(GPIOE_TIM1_PWM2) |         \
@@ -575,7 +575,7 @@
                                 PIN_MODE_ALTERNATE(GPIOE_TIM1_PWM3) |         \
                                 PIN_MODE_ALTERNATE(GPIOE_TIM1_PWM4) |         \
                                 PIN_MODE_OUTPUT(GPIOE_SDIO_PWR_EN))
-#define VAL_GPIOE_OTYPER       (PIN_OTYPE_PUSHPULL(GPIOE_GPS_PPS) |           \
+#define VAL_GPIOE_OTYPER       (PIN_OTYPE_PUSHPULL(GPIOE_GPS_ENABLE) |        \
                                 PIN_OTYPE_PUSHPULL(GPIOE_ADIS_INT) |          \
                                 PIN_OTYPE_PUSHPULL(GPIOE_USB_PRESENCE) |      \
                                 PIN_OTYPE_PUSHPULL(GPIOE_MPU9150_INT) |       \
@@ -583,7 +583,7 @@
                                 PIN_OTYPE_PUSHPULL(GPIOE_MAG_INT) |           \
                                 PIN_OTYPE_PUSHPULL(GPIOE_PIN6) |              \
                                 PIN_OTYPE_PUSHPULL(GPIOE_PIN7) |              \
-                                PIN_OTYPE_PUSHPULL(GPIOE_MPU6050_PWR) |              \
+                                PIN_OTYPE_PUSHPULL(GPIOE_MPU6050_PWR) |       \
                                 PIN_OTYPE_PUSHPULL(GPIOE_TIM1_PWM1) |         \
                                 PIN_OTYPE_PUSHPULL(GPIOE_USB_DISCOVERY) |     \
                                 PIN_OTYPE_PUSHPULL(GPIOE_TIM1_PWM2) |         \
@@ -591,7 +591,7 @@
                                 PIN_OTYPE_PUSHPULL(GPIOE_TIM1_PWM3) |         \
                                 PIN_OTYPE_PUSHPULL(GPIOE_TIM1_PWM4) |         \
                                 PIN_OTYPE_OPENDRAIN(GPIOE_SDIO_PWR_EN))
-#define VAL_GPIOE_OSPEEDR      (PIN_OSPEED_2M(GPIOE_GPS_PPS) |                \
+#define VAL_GPIOE_OSPEEDR      (PIN_OSPEED_2M(GPIOE_GPS_ENABLE) |             \
                                 PIN_OSPEED_2M(GPIOE_ADIS_INT) |               \
                                 PIN_OSPEED_2M(GPIOE_USB_PRESENCE) |           \
                                 PIN_OSPEED_2M(GPIOE_MPU9150_INT) |            \
@@ -599,7 +599,7 @@
                                 PIN_OSPEED_2M(GPIOE_MAG_INT) |                \
                                 PIN_OSPEED_2M(GPIOE_PIN6) |                   \
                                 PIN_OSPEED_2M(GPIOE_PIN7) |                   \
-                                PIN_OSPEED_2M(GPIOE_MPU6050_PWR) |                   \
+                                PIN_OSPEED_2M(GPIOE_MPU6050_PWR) |            \
                                 PIN_OSPEED_2M(GPIOE_TIM1_PWM1) |              \
                                 PIN_OSPEED_2M(GPIOE_USB_DISCOVERY) |          \
                                 PIN_OSPEED_2M(GPIOE_TIM1_PWM2) |              \
@@ -607,7 +607,7 @@
                                 PIN_OSPEED_2M(GPIOE_TIM1_PWM3) |              \
                                 PIN_OSPEED_2M(GPIOE_TIM1_PWM4) |              \
                                 PIN_OSPEED_2M(GPIOE_SDIO_PWR_EN))
-#define VAL_GPIOE_PUPDR        (PIN_PUPDR_PULLDOWN(GPIOE_GPS_PPS) |           \
+#define VAL_GPIOE_PUPDR        (PIN_PUPDR_PULLDOWN(GPIOE_GPS_ENABLE) |        \
                                 PIN_PUPDR_PULLDOWN(GPIOE_ADIS_INT) |          \
                                 PIN_PUPDR_PULLDOWN(GPIOE_USB_PRESENCE) |      \
                                 PIN_PUPDR_PULLUP(GPIOE_MPU9150_INT) |         \
@@ -615,7 +615,7 @@
                                 PIN_PUPDR_PULLUP(GPIOE_MAG_INT) |             \
                                 PIN_PUPDR_FLOATING(GPIOE_PIN6) |              \
                                 PIN_PUPDR_FLOATING(GPIOE_PIN7) |              \
-                                PIN_PUPDR_FLOATING(GPIOE_MPU6050_PWR) |              \
+                                PIN_PUPDR_FLOATING(GPIOE_MPU6050_PWR) |       \
                                 PIN_PUPDR_PULLDOWN(GPIOE_TIM1_PWM1) |         \
                                 PIN_PUPDR_FLOATING(GPIOE_USB_DISCOVERY) |     \
                                 PIN_PUPDR_PULLDOWN(GPIOE_TIM1_PWM2) |         \
@@ -623,7 +623,7 @@
                                 PIN_PUPDR_PULLDOWN(GPIOE_TIM1_PWM3) |         \
                                 PIN_PUPDR_PULLDOWN(GPIOE_TIM1_PWM4) |         \
                                 PIN_PUPDR_FLOATING(GPIOE_SDIO_PWR_EN))
-#define VAL_GPIOE_ODR          (PIN_ODR_HIGH(GPIOE_GPS_PPS) |                 \
+#define VAL_GPIOE_ODR          (PIN_ODR_HIGH(GPIOE_GPS_ENABLE) |              \
                                 PIN_ODR_HIGH(GPIOE_ADIS_INT) |                \
                                 PIN_ODR_HIGH(GPIOE_USB_PRESENCE) |            \
                                 PIN_ODR_HIGH(GPIOE_MPU9150_INT) |             \
@@ -631,7 +631,7 @@
                                 PIN_ODR_HIGH(GPIOE_MAG_INT) |                 \
                                 PIN_ODR_HIGH(GPIOE_PIN6) |                    \
                                 PIN_ODR_HIGH(GPIOE_PIN7) |                    \
-                                PIN_ODR_LOW(GPIOE_MPU6050_PWR) |                    \
+                                PIN_ODR_LOW(GPIOE_MPU6050_PWR) |              \
                                 PIN_ODR_LOW(GPIOE_TIM1_PWM1) |                \
                                 PIN_ODR_HIGH(GPIOE_USB_DISCOVERY) |           \
                                 PIN_ODR_LOW(GPIOE_TIM1_PWM2) |                \
@@ -639,7 +639,7 @@
                                 PIN_ODR_LOW(GPIOE_TIM1_PWM3) |                \
                                 PIN_ODR_LOW(GPIOE_TIM1_PWM4) |                \
                                 PIN_ODR_HIGH(GPIOE_SDIO_PWR_EN))
-#define VAL_GPIOE_AFRL         (PIN_AFIO_AF(GPIOE_GPS_PPS, 0) |               \
+#define VAL_GPIOE_AFRL         (PIN_AFIO_AF(GPIOE_GPS_ENABLE, 0) |            \
                                 PIN_AFIO_AF(GPIOE_ADIS_INT, 0) |              \
                                 PIN_AFIO_AF(GPIOE_USB_PRESENCE, 0) |          \
                                 PIN_AFIO_AF(GPIOE_MPU9150_INT, 0) |           \
@@ -647,7 +647,7 @@
                                 PIN_AFIO_AF(GPIOE_MAG_INT, 0) |               \
                                 PIN_AFIO_AF(GPIOE_PIN6, 0) |                  \
                                 PIN_AFIO_AF(GPIOE_PIN7, 0))
-#define VAL_GPIOE_AFRH         (PIN_AFIO_AF(GPIOE_MPU6050_PWR, 0) |                  \
+#define VAL_GPIOE_AFRH         (PIN_AFIO_AF(GPIOE_MPU6050_PWR, 0) |           \
                                 PIN_AFIO_AF(GPIOE_TIM1_PWM1, 1) |             \
                                 PIN_AFIO_AF(GPIOE_USB_DISCOVERY, 0) |         \
                                 PIN_AFIO_AF(GPIOE_TIM1_PWM2, 1) |             \
