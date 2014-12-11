@@ -1,7 +1,6 @@
 #include "main.h"
 #include "lsm303_mag.hpp"
 #include "pack_unpack.h"
-#include "marg2mavlink.hpp"
 #include "param_registry.hpp"
 #include "exti_local.hpp"
 

@@ -4,7 +4,6 @@
 #include "mpu6050.hpp"
 #include "pack_unpack.h"
 #include "geometry.hpp"
-#include "marg2mavlink.hpp"
 #include "param_registry.hpp"
 
 #include "mpu6050_fir_taps.h"

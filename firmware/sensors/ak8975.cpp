@@ -1,7 +1,6 @@
 #include "main.h"
 #include "ak8975.hpp"
 #include "pack_unpack.h"
-#include "marg2mavlink.hpp"
 
 /*
  ******************************************************************************

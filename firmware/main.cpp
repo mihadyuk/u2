@@ -148,13 +148,9 @@ static uint8_t link_thd_buf[THREAD_HEAP_SIZE + sizeof(stkalign_t)];
 //int64_t TimeUsGps;
 
 TimeKeeper time_keeper;
-
 TlmSender tlm_sender;
-
 static LinkMgr link_mgr;
-
 MavLogger mav_logger;
-
 Marg marg;
 
 /*

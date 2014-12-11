@@ -150,7 +150,6 @@ CPPSRC = $(CHCPPSRC) \
          sensors/exti_local.cpp \
          sensors/i2c_sensor.cpp \
          sensors/marg.cpp \
-         sensors/marg2mavlink.cpp \
          sensors/mpu6050.cpp \
          sensors/ak8975.cpp \
          sensors/lsm303_acc.cpp \

@@ -2,7 +2,6 @@
 
 #include "lsm303_acc.hpp"
 #include "pack_unpack.h"
-#include "marg2mavlink.hpp"
 
 /*
  ******************************************************************************
