@@ -562,11 +562,10 @@ THD_FUNCTION(Mpu6050Thread, arg) {
 /**
  *
  */
-MPU6050::MPU6050(I2CDriver *i2cdp, i2caddr_t addr,
-                      chibios_rt::BinarySemaphore &data_ready_sem) :
+MPU6050::MPU6050(I2CDriver *i2cdp, i2caddr_t addr) :
 I2CSensor(i2cdp, addr),
 protect_sem(false),
-data_ready_sem(data_ready_sem),
+data_ready_sem(true),
 acc_fir(acc_fir_array),
 gyr_fir(gyr_fir_array)
 {
@@ -655,23 +654,33 @@ void MPU6050::stop(void) {
 /**
  *
  */
-sensor_state_t MPU6050::get(float *acc, float *gyr,
-                            int16_t *acc_raw, int16_t *gyr_raw) {
+sensor_state_t MPU6050::get(marg_data_t &result) {
 
   if (SENSOR_STATE_READY == this->state) {
+
     set_lock();
-    if (nullptr != acc)
-      memcpy(acc, this->acc_data, sizeof(this->acc_data));
-    if (nullptr != gyr)
-      memcpy(gyr, this->gyr_data, sizeof(this->gyr_data));
-    if (nullptr != acc_raw)
-      memcpy(acc_raw, this->acc_raw_data, sizeof(this->acc_raw_data));
-    if (nullptr != gyr_raw)
-      memcpy(gyr_raw, this->gyr_raw_data, sizeof(this->gyr_raw_data));
+    if (1 == result.request.acc) {
+      memcpy(result.acc,     this->acc_data,     sizeof(this->acc_data));
+      memcpy(result.acc_raw, this->acc_raw_data, sizeof(this->acc_raw_data));
+    }
+    if (1 == result.request.gyr) {
+      memcpy(result.gyr,     this->gyr_data,     sizeof(this->gyr_data));
+      memcpy(result.gyr_raw, this->gyr_raw_data, sizeof(this->gyr_raw_data));
+    }
+    if (1 == result.request.dt) {
+      result.dt = this->dt();
+    }
     release_lock();
   }
 
   return this->state;
+}
+
+/**
+ *
+ */
+msg_t MPU6050::waitData(systime_t timeout) {
+  return data_ready_sem.wait(timeout);
 }
 
 /**

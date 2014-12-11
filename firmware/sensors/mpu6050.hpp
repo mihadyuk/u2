@@ -3,6 +3,7 @@
 
 #include "i2c_sensor.hpp"
 #include "fir.hpp"
+#include "marg_data.hpp"
 
 #define mpu6050addr         0b1101000
 
@@ -14,19 +15,19 @@
 
 class MPU6050: protected I2CSensor{
 public:
-  MPU6050(I2CDriver *i2cdp, i2caddr_t addr,
-      chibios_rt::BinarySemaphore &data_ready_sem);
-  sensor_state_t get(float *acc, float *gyr, int16_t *acc_raw, int16_t *gyr_raw);
+  MPU6050(I2CDriver *i2cdp, i2caddr_t addr);
+  msg_t waitData(systime_t timeout);
+  sensor_state_t get(marg_data_t &result);
   sensor_state_t start(void);
   sensor_state_t wakeup(void);
   sensor_state_t get_state(void) {return this->state;}
   void stop(void);
   void sleep(void);
-  float dt(void);
   static void extiISR(EXTDriver *extp, expchannel_t channel);
 
 private:
   friend THD_FUNCTION(Mpu6050Thread, arg);
+  float dt(void);
   void acquire_data(void);
   msg_t soft_reset(void);
   msg_t acquire_simple(float *acc, float *gyr);
@@ -50,7 +51,7 @@ private:
 
   float temperature;
   chibios_rt::BinarySemaphore protect_sem;
-  chibios_rt::BinarySemaphore &data_ready_sem;
+  chibios_rt::BinarySemaphore data_ready_sem;
   thread_t *worker;
   float acc_data[3];
   float gyr_data[3];

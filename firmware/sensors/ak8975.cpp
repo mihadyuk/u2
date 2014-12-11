@@ -199,38 +199,34 @@ sensor_state_t AK8975::wakeup(void) {
 /**
  * @brief   Return magnentometer data in Gauss
  */
-sensor_state_t AK8975::get(float *result, int16_t *result_raw) {
+sensor_state_t AK8975::get(marg_data_t &result) {
 
   uint8_t txbuf[2];
 
-  if (this->state == SENSOR_STATE_READY) {
+  if ((this->state == SENSOR_STATE_READY) && (1 == result.request.mag)) {
     txbuf[0] = AKREG_ST1;
     if (MSG_OK != transmit(txbuf, 1, rxbuf, 7)) {
       this->state = SENSOR_STATE_DEAD;
       return this->state;
     }
 
-    osalDbgCheck((nullptr != result) && (nullptr != result_raw));
     /* protection from too fast data acquisition */
     if (ST1_DATA_READY == (rxbuf[0] & ST1_DATA_READY)) {
       /* read measured data and immediately start new measurement */
-      pickle(result, result_raw);
-      memcpy(cache, result, sizeof(cache));
-      memcpy(cache_raw, result_raw, sizeof(cache_raw));
+      pickle(result.mag, result.mag_raw);
+      memcpy(cache, result.mag, sizeof(cache));
+      memcpy(cache_raw, result.mag_raw, sizeof(cache_raw));
       if (MSG_OK != start_measurement()) {
         this->state = SENSOR_STATE_DEAD;
         return this->state;
       }
     }
     else {
-      memcpy(result, cache, sizeof(cache));
-      memcpy(result_raw, cache_raw, sizeof(cache_raw));
+      memcpy(result.mag, cache, sizeof(cache));
+      memcpy(result.mag_raw, cache_raw, sizeof(cache_raw));
     }
   }
 
   return this->state;
 }
-
-
-
 

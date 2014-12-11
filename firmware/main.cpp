@@ -67,7 +67,7 @@ Giovanni
 //#include "marg_rover.hpp"
 //#include "drivetrain.hpp"
 #include "exti_local.hpp"
-#include "marg.hpp"
+#include "ahrs.hpp"
 #include "mav_logger.hpp"
 
 using namespace chibios_rt;
@@ -147,11 +147,12 @@ static uint8_t link_thd_buf[THREAD_HEAP_SIZE + sizeof(stkalign_t)];
 //
 //int64_t TimeUsGps;
 
+sensor_state_registry_t SensorStateRegistry;
 TimeKeeper time_keeper;
 TlmSender tlm_sender;
 static LinkMgr link_mgr;
 MavLogger mav_logger;
-Marg marg;
+Ahrs ahrs;
 
 /*
  ******************************************************************************
@@ -215,11 +216,12 @@ int main(void) {
 //  sins.start(&state_vector);
   mav_logger.start(NORMALPRIO);
 
-  marg.start();
-  marg_data_t marg_data;
+  ahrs.start();
+  ahrs_data_t ahrs_data;
 
   while (TRUE) {
-    marg.update(&marg_data, MS2ST(100));
+    ahrs.get(ahrs_data, MS2ST(200));
+
     //osalThreadSleepMilliseconds(200);
 
 

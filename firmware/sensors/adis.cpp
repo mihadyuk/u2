@@ -310,6 +310,13 @@ void Adis::param_update(void) {
 /**
  *
  */
+float Adis::dt(void) {
+  return *smplrtdiv / (float)ADIS_INTERNAL_SAMPLE_RATE;
+}
+
+/**
+ *
+ */
 static THD_WORKING_AREA(AdisThreadWA, 256);
 THD_FUNCTION(AdisThread, arg) {
   chRegSetThreadName("Adis");
@@ -338,9 +345,9 @@ THD_FUNCTION(AdisThread, arg) {
 /**
  *
  */
-Adis::Adis(chibios_rt::BinarySemaphore &data_ready_sem):
+Adis::Adis(void):
 protect_sem(false),
-data_ready_sem(data_ready_sem)
+data_ready_sem(true)
 {
   state = SENSOR_STATE_STOP;
   chTMObjectInit(&tm);
@@ -455,11 +462,41 @@ sensor_state_t Adis::wakeup(void) {
 /**
  *
  */
-sensor_state_t Adis::get(adis_data_t *result) {
+sensor_state_t Adis::get(ahrs_data_t &result) {
 
-  if ((SENSOR_STATE_READY == this->state) && (nullptr != result)) {
+  if (SENSOR_STATE_READY == this->state) {
     set_lock();
-    memcpy(result, &measurement, sizeof(adis_data_t));
+    if (1 == result.request.euler)
+      memcpy(result.euler, &measurement.euler, sizeof(result.euler));
+    if (1 == result.request.quat)
+      memcpy(result.quat, &measurement.quat, sizeof(result.quat));
+    release_lock();
+  }
+  return this->state;
+}
+
+/**
+ *
+ */
+msg_t Adis::waitData(systime_t timeout) {
+  return data_ready_sem.wait(timeout);
+}
+
+/**
+ *
+ */
+sensor_state_t Adis::get(marg_data_t &result) {
+
+  if (SENSOR_STATE_READY == this->state) {
+    set_lock();
+    if (1 == result.request.acc)
+      memcpy(result.acc, &measurement.acc, sizeof(result.acc));
+    if (1 == result.request.gyr)
+      memcpy(result.gyr, &measurement.gyr, sizeof(result.gyr));
+    if (1 == result.request.mag)
+      memcpy(result.mag, &measurement.mag, sizeof(result.mag));
+    if (1 == result.request.dt)
+      result.dt = this->dt();
     release_lock();
   }
   return this->state;
@@ -477,12 +514,6 @@ void Adis::extiISR(EXTDriver *extp, expchannel_t channel){
   osalSysUnlockFromISR();
 }
 
-/**
- *
- */
-float Adis::dt(void) {
-  return *smplrtdiv / (float)ADIS_INTERNAL_SAMPLE_RATE;
-}
 
 
 

@@ -20,7 +20,7 @@ const GlobalParam_t ParamRegistry::param_db[] = {
 {"AHRS_gpsweight", {.f32 = 0.000000}, {.f32 = 0.050000}, {.f32 = 0.500000}, &gp_val[5], PARAM_DEFAULT, MAVLINK_TYPE_FLOAT,    NULL},
 {"AHRS_beta", {.f32 = 0.000000}, {.f32 = 1.000000}, {.f32 = 20.000000}, &gp_val[6], PARAM_DEFAULT, MAVLINK_TYPE_FLOAT,    "Error rate of gyro in degrees"},
 {"AHRS_zeta", {.f32 = 0.000000}, {.f32 = 1.000000}, {.f32 = 20.000000}, &gp_val[7], PARAM_DEFAULT, MAVLINK_TYPE_FLOAT,    NULL},
-{"AHRS_ahrsmode", {.u32 = 0}, {.u32 = 0}, {.u32 = 2}, &gp_val[8], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, "0 - Starlino, 1 - Madgwick, 2 - Adis"},
+{"AHRS_ahrsmode", {.u32 = 0}, {.u32 = 0}, {.u32 = 3}, &gp_val[8], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, "0 - Starlino, 1 - Madgwick, 2 - Adis, 3 - Kalman"},
 {"MARG_acc_src", {.u32 = 0}, {.u32 = 0}, {.u32 = 2}, &gp_val[9], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, "Accelerometer measurement source for MARG (see enum acc_src_t)"},
 {"MARG_gyr_src", {.u32 = 0}, {.u32 = 0}, {.u32 = 1}, &gp_val[10], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, "Angular rate measurement source for MARG (see enum gyr_src_t)"},
 {"MARG_mag_src", {.u32 = 0}, {.u32 = 0}, {.u32 = 2}, &gp_val[11], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, "Magnetometer measurement source for MARG (see enum mag_src_t)"},

@@ -119,7 +119,8 @@ CSRC = $(PORTSRC) \
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
-NVRAMSRC = lib/24aa/src/mtd.cpp \
+NVRAMSRC = src/nvram_local.cpp \
+         lib/24aa/src/mtd.cpp \
          lib/24aa/src/eeprom_mtd.cpp \
          lib/24aa/src/fram_mtd.cpp \
          lib/24aa/src/nvram_fs.cpp \
@@ -137,15 +138,7 @@ MAVSRC = src/mavlink_local/parameters.cpp \
          src/mavlink_local/mav_channel_serial.cpp \
          src/mavlink_local/mav_channel_usbserial.cpp \
 
-CLISRC = src/cli/cli.cpp \
-         src/cli/cli_cmd.cpp \
-         src/param_cli.cpp \
-
-CPPSRC = $(CHCPPSRC) \
-         $(NVRAMSRC) \
-         $(MAVSRC) \
-         $(CLISRC) \
-         main.cpp \
+SENSORSRC = src/i2c_local.cpp \
          sensors/adis.cpp \
          sensors/exti_local.cpp \
          sensors/i2c_sensor.cpp \
@@ -154,14 +147,24 @@ CPPSRC = $(CHCPPSRC) \
          sensors/ak8975.cpp \
          sensors/lsm303_acc.cpp \
          sensors/lsm303_mag.cpp \
-         src/i2c_local.cpp \
+          
+CLISRC = src/cli/cli.cpp \
+         src/cli/cli_cmd.cpp \
+         src/param_cli.cpp \
+
+CPPSRC = $(CHCPPSRC) \
+         $(NVRAMSRC) \
+         $(MAVSRC) \
+         $(SENSORSRC) \
+         $(CLISRC) \
+         main.cpp \
          src/instantiator.cpp \
-         src/nvram_local.cpp \
          src/link_mgr.cpp \
          src/debouncer.cpp \
          src/blinker.cpp \
          src/sanity.cpp \
          src/timekeeper.cpp \
+         src/kinematic/ahrs.cpp \
          lib/filters/fir_test.cpp \
 
 # C sources to be compiled in ARM mode regardless of the global setting.
@@ -199,6 +202,7 @@ INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
          lib/24aa/src \
          src \
          src/mavlink_local \
+         src/kinematic \
          src/cli \
          lib/mavlink/C/lapwing \
          benchmark \

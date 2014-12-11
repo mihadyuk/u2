@@ -22,7 +22,7 @@ param = [
 ("AHRS_gpsweight",  0.0,        0.05,       0.5,        "f", "default",     "NULL"),
 ("AHRS_beta",       0.0,        1.0,        20.0,       "f", "default",     "Error rate of gyro in degrees"),
 ("AHRS_zeta",       0.0,        1.0,        20.0,       "f", "default",     "NULL"),
-("AHRS_ahrsmode",   0,          0,          2,          "u", "default",     "0 - Starlino, 1 - Madgwick, 2 - Adis"),
+("AHRS_ahrsmode",   0,          0,          3,          "u", "default",     "0 - Starlino, 1 - Madgwick, 2 - Adis, 3 - Kalman"),
 
 ########### MARG ##############
 ("MARG_acc_src",    0,          0,          2,          "u", "default",     "Accelerometer measurement source for MARG (see enum acc_src_t)"),

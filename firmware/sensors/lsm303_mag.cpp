@@ -230,20 +230,20 @@ sample_cnt(0)
 /**
  *
  */
-sensor_state_t LSM303_mag::get(float *result, int16_t *result_raw) {
+sensor_state_t LSM303_mag::get(marg_data_t &result) {
 
-  if (SENSOR_STATE_READY == this->state) {
-    osalDbgCheck((nullptr != result) && (nullptr != result_raw));
+  if ((SENSOR_STATE_READY == this->state) && (1 == result.request.mag)) {
+
     if (true == mag_data_fresh) {
-      if (MSG_OK != get_prev_measurement(result, result_raw))
+      if (MSG_OK != get_prev_measurement(result.mag, result.mag_raw))
         this->state = SENSOR_STATE_DEAD;
       mag_data_fresh = false;
       if (MSG_OK != start_single_measurement())
         this->state = SENSOR_STATE_DEAD;
     }
     else {
-      memcpy(result, cache, sizeof(cache));
-      memcpy(result_raw, cache_raw, sizeof(cache_raw));
+      memcpy(result.mag,     cache,     sizeof(cache));
+      memcpy(result.mag_raw, cache_raw, sizeof(cache_raw));
     }
 
     if (MSG_OK != refresh_gain())

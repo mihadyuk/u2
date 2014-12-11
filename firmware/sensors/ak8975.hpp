@@ -2,6 +2,7 @@
 #define AK8975_HPP_
 
 #include "i2c_sensor.hpp"
+#include "marg_data.hpp"
 
 #define ak8975addr       0x0C
 
@@ -11,7 +12,7 @@
 class AK8975: protected I2CSensor {
 public:
   AK8975(I2CDriver *i2cdp, i2caddr_t addr);
-  sensor_state_t get(float *result, int16_t *result_raw);
+  sensor_state_t get(marg_data_t &result);
   sensor_state_t start(void);
   sensor_state_t wakeup(void);
   sensor_state_t get_state(void) {return this->state;}

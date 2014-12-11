@@ -192,17 +192,16 @@ void LSM303_acc::stop(void) {
 /**
  *
  */
-sensor_state_t LSM303_acc::get(float *result, int16_t *result_raw) {
+sensor_state_t LSM303_acc::get(marg_data_t &result) {
 
-  if (SENSOR_STATE_READY == this->state) {
-    osalDbgCheck((nullptr != result) && (nullptr != result_raw));
+  if ((SENSOR_STATE_READY == this->state) && (1 == result.request.mag)) {
 
     /* read previose measurement results */
     txbuf[0] = OUT_X_L_A | 0b10000000;
     if (MSG_OK != transmit(txbuf, 1, rxbuf, 6))
       this->state = SENSOR_STATE_DEAD;
     else
-      this->pickle(result, result_raw);
+      this->pickle(result.acc, result.acc_raw);
   }
 
   return this->state;

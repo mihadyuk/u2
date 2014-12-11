@@ -1,6 +1,11 @@
 #ifndef SENSOR_HPP_
 #define SENSOR_HPP_
 
+#define SENSOR_DATA_BITS   3
+
+/**
+ *
+ */
 typedef enum {
   SENSOR_STATE_DEAD = 0, /* sensor does not responding, or structure unintialized */
   SENSOR_STATE_STOP,
@@ -8,6 +13,20 @@ typedef enum {
   SENSOR_STATE_SLEEP
 } sensor_state_t;
 
+/**
+ *
+ */
+typedef struct {
+  uint32_t lsm303acc: SENSOR_DATA_BITS;
+  uint32_t lsm303mag: SENSOR_DATA_BITS;
+  uint32_t mpu6050:   SENSOR_DATA_BITS;
+  uint32_t ak8975:    SENSOR_DATA_BITS;
+  uint32_t adis:      SENSOR_DATA_BITS;
+} sensor_state_registry_t;
+
+/**
+ *
+ */
 class Sensor {
 public:
   virtual sensor_state_t get_state(void) {return this->state;}

@@ -2,6 +2,7 @@
 #define LSM303_MAG_HPP_
 
 #include "i2c_sensor.hpp"
+#include "marg_data.hpp"
 
 #define lsm303magaddr       0b0011110
 
@@ -11,7 +12,7 @@
 class LSM303_mag: private I2CSensor {
 public:
   LSM303_mag(I2CDriver *i2cdp, i2caddr_t addr);
-  sensor_state_t get(float *result, int16_t *result_raw);
+  sensor_state_t get(marg_data_t &result);
   sensor_state_t start(void);
   sensor_state_t wakeup(void);
   sensor_state_t get_state(void) {return this->state;}

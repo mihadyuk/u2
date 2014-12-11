@@ -2,7 +2,12 @@
 #define ADIS_HPP_
 
 #include "sensor.hpp"
+#include "marg_data.hpp"
+#include "ahrs_data.hpp"
 
+/**
+ *
+ */
 typedef struct {
   float acc[3];
   float gyr[3];
@@ -12,19 +17,22 @@ typedef struct {
   float euler[3];
   float temp;
   uint16_t errors;
-} adis_data_t;
+} adis_measurement_t;
 
+/**
+ *
+ */
 class Adis : public Sensor {
 public:
-  Adis(chibios_rt::BinarySemaphore &data_ready_sem);
+  Adis(void);
   void stop(void);
   void sleep(void);
   sensor_state_t start(void);
   sensor_state_t wakeup(void);
-  sensor_state_t get(adis_data_t *result);
-  float dt(void);
+  msg_t waitData(systime_t timeout);
+  sensor_state_t get(ahrs_data_t &result);
+  sensor_state_t get(marg_data_t &result);
   static void extiISR(EXTDriver *extp, expchannel_t channel);
-  msg_t wait(systime_t timeout);
 
 private:
   friend THD_FUNCTION(AdisThread, arg);
@@ -35,13 +43,14 @@ private:
   bool hw_init_full(void);
   void set_lock(void);
   void release_lock(void);
+  float dt(void);
 
   time_measurement_t tm;
   chibios_rt::BinarySemaphore protect_sem;
   static chibios_rt::BinarySemaphore isr_sem;
-  chibios_rt::BinarySemaphore &data_ready_sem;
+  chibios_rt::BinarySemaphore data_ready_sem;
   thread_t *worker;
-  adis_data_t measurement;
+  adis_measurement_t measurement;
   const uint32_t *smplrtdiv = NULL;
   uint8_t smplrtdiv_prev;
 };
