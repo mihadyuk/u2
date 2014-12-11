@@ -20,7 +20,7 @@ public:
   msg_t get(marg_data_t &result, systime_t timeout);
 private:
   void sleep_all(void);
-  sensor_state_registry_t reschedule(void);
+  sensor_state_registry_t param_update(void);
   Adis &adis;
   MPU6050 mpu6050;
   AK8975 ak8975;

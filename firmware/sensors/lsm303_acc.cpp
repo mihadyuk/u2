@@ -8,7 +8,6 @@
  * DEFINES
  ******************************************************************************
  */
-
 #define CTRL_REG1_A             0x20
 #define CTRL_REG2_A             0x21
 #define OUT_X_L_A               0x28
@@ -41,6 +40,8 @@ typedef enum {
  ******************************************************************************
  */
 
+static const acc_sens_t DEFAULT_FULL_SCALE = LSM_ACC_FULL_SCALE_8;
+
 static const float acc_sens_array[4] = {
     (2 * 9.81)  / 32768.0,
     (4 * 9.81)  / 32768.0,
@@ -60,7 +61,7 @@ static const float acc_sens_array[4] = {
  *
  */
 float LSM303_acc::acc_sens(void){
-  return acc_sens_array[LSM_ACC_FULL_SCALE_8];
+  return acc_sens_array[DEFAULT_FULL_SCALE];
 }
 
 /**
@@ -110,7 +111,7 @@ bool LSM303_acc::hw_init_full(void){
    * high resolution */
   uint8_t tmp;
   tmp = 0b01001000;
-  tmp |= LSM_ACC_FULL_SCALE_8 << 4;
+  tmp |= DEFAULT_FULL_SCALE << 4;
   txbuf[4] = tmp;
 
   /* REG5: */

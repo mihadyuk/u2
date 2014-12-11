@@ -22,7 +22,7 @@ public:
 
 private:
   msg_t set_gain(uint8_t val);
-  msg_t refresh_gain(void);
+  msg_t param_update(void);
   msg_t start_single_measurement(void);
   msg_t get_prev_measurement(float *result, int16_t *result_raw);
   msg_t stop_sleep_code(void);
@@ -38,7 +38,7 @@ private:
   const uint32_t *gain = NULL;
   float cache[3];
   int16_t cache_raw[3];
-  uint8_t gain_prev;
+  uint8_t gain_current;
 };
 
 #endif /* LSM303_MAG_HPP_ */

@@ -79,7 +79,7 @@ static bool mag_data_fresh = true;
  * @brief   convert parrots to Gauss.
  */
 float LSM303_mag::mag_sens(void) {
-  return mag_sens_array[*gain];
+  return mag_sens_array[gain_current];
 }
 
 /**
@@ -148,7 +148,7 @@ bool LSM303_mag::hw_init_full(void){
   txbuf[1] = 0;
   /* Set gain. 001 is documented for LSM303 and 000 is for HMC5883.
    * 000 looks working for LSM303 too - lets use it. */
-  txbuf[2] = *gain << GAIN_BITS_SHIFT;
+  txbuf[2] = gain_current << GAIN_BITS_SHIFT;
   /* single conversion mode */
   txbuf[3] = 0b00000001;
 
@@ -182,13 +182,16 @@ msg_t LSM303_mag::set_gain(uint8_t val) {
 /**
  *
  */
-msg_t LSM303_mag::refresh_gain(void) {
+msg_t LSM303_mag::param_update(void) {
+  uint8_t tmp;
 
-  uint8_t tmp = *gain;
+  osalSysLock();
+  tmp = *gain;
+  osalSysUnlock();
 
-  if (tmp != gain_prev) {
-    gain_prev = tmp;
+  if (tmp != gain_current) {
     return set_gain(tmp << GAIN_BITS_SHIFT);
+    gain_current = tmp;
   }
   else
     return MSG_OK;
@@ -246,7 +249,7 @@ sensor_state_t LSM303_mag::get(marg_data_t &result) {
       memcpy(result.mag_raw, cache_raw, sizeof(cache_raw));
     }
 
-    if (MSG_OK != refresh_gain())
+    if (MSG_OK != param_update())
       this->state = SENSOR_STATE_DEAD;
   }
 
@@ -260,7 +263,7 @@ sensor_state_t LSM303_mag::start(void){
 
   if (SENSOR_STATE_STOP == this->state) {
     param_registry.valueSearch("LSMM_gain",  &gain);
-    gain_prev = *gain;
+    gain_current = *gain;
 
     bool ret;
     if (need_full_init())

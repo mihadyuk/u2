@@ -291,7 +291,7 @@ void Adis::acquire_data(void) {
  */
 void Adis::set_sample_rate(void) {
   select_page(3);
-  write(0x0C, *smplrtdiv - 1);
+  write(0x0C, smplrtdiv_current - 1);
   select_page(0);
 }
 
@@ -301,9 +301,9 @@ void Adis::set_sample_rate(void) {
 void Adis::param_update(void) {
   uint32_t s = *smplrtdiv;
 
-  if (s != smplrtdiv_prev) {
+  if (s != smplrtdiv_current) {
     set_sample_rate();
-    smplrtdiv_prev = s;
+    smplrtdiv_current = s;
   }
 }
 
@@ -311,7 +311,7 @@ void Adis::param_update(void) {
  *
  */
 float Adis::dt(void) {
-  return *smplrtdiv / (float)ADIS_INTERNAL_SAMPLE_RATE;
+  return smplrtdiv_current / static_cast<float>(ADIS_INTERNAL_SAMPLE_RATE);
 }
 
 /**
@@ -361,7 +361,7 @@ sensor_state_t Adis::start(void) {
 
   if (SENSOR_STATE_STOP == this->state) {
     param_registry.valueSearch("ADIS_smplrtdiv", &smplrtdiv);
-    smplrtdiv_prev = *smplrtdiv;
+    smplrtdiv_current = *smplrtdiv;
 
     adis_reset_clear();
     spiStart(&ADIS_SPI, &spicfg);

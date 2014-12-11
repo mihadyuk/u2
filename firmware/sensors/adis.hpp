@@ -52,7 +52,7 @@ private:
   thread_t *worker;
   adis_measurement_t measurement;
   const uint32_t *smplrtdiv = NULL;
-  uint8_t smplrtdiv_prev;
+  uint8_t smplrtdiv_current;
 };
 
 #endif /* ADIS_HPP_ */

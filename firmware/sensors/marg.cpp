@@ -154,7 +154,7 @@ void Marg::sleep_all(void) {
 /**
  *
  */
-sensor_state_registry_t Marg::reschedule(void) {
+sensor_state_registry_t Marg::param_update(void) {
 
   uint8_t a, g, m;
 
@@ -248,7 +248,7 @@ sensor_state_registry_t Marg::start(void) {
   if (SENSOR_STATE_READY == lsm303acc.start())
     lsm303acc.sleep();
 
-  ret = this->reschedule();
+  ret = this->param_update();
   this->ready = true;
   return ret;
 }
@@ -264,7 +264,7 @@ msg_t Marg::get(marg_data_t &result, systime_t timeout) {
   /*
    * sensor reschedule must be performed _before_ semaphore wait() call
    */
-  this->reschedule();
+  this->param_update();
 
   /*
    * wait data from "main" sensor
@@ -284,7 +284,7 @@ msg_t Marg::get(marg_data_t &result, systime_t timeout) {
     return sem_status;
 
   /*
-   * check ADIS
+   * ADIS
    */
   memset(&result.request, 0, sizeof(result.request));
   if (MARG_ACC_SRC_ADIS == *acc_src)
@@ -298,7 +298,7 @@ msg_t Marg::get(marg_data_t &result, systime_t timeout) {
   adis.get(result);
 
   /*
-   * check MPU6050
+   * MPU6050
    */
   memset(&result.request, 0, sizeof(result.request));
   if (MARG_ACC_SRC_MPU6050 == *acc_src)

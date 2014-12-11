@@ -13,7 +13,7 @@
 #define MPU6050_1KHZ        FALSE
 #define MPU6050_FIR_LEN     65
 
-class MPU6050: protected I2CSensor{
+class MPU6050: protected I2CSensor {
 public:
   MPU6050(I2CDriver *i2cdp, i2caddr_t addr);
   msg_t waitData(systime_t timeout);
@@ -37,7 +37,7 @@ private:
   msg_t set_gyr_fs(uint8_t fs);
   msg_t set_acc_fs(uint8_t fs);
   msg_t set_dlpf_smplrt(uint8_t lpf, uint8_t smplrt);
-  msg_t refresh_settings(void);
+  msg_t param_update(void);
   float gyr_sens(void);
   float acc_sens(void);
   void gyro_thermo_comp(float *result);
@@ -63,10 +63,10 @@ private:
   const uint32_t *dlpf = NULL;
   const uint32_t *smplrtdiv = NULL;
   const int32_t  *fir_f = NULL;
-  uint8_t gyr_fs_prev;
-  uint8_t acc_fs_prev;
-  uint8_t dlpf_prev;
-  uint8_t smplrt_prev;
+  uint8_t gyr_fs_current;
+  uint8_t acc_fs_current;
+  uint8_t dlpf_current;
+  uint8_t smplrtdiv_current;
   FIR<float, float, MPU6050_FIR_LEN> *acc_fir;
   FIR<float, float, MPU6050_FIR_LEN> *gyr_fir;
 

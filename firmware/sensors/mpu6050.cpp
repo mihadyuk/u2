@@ -119,14 +119,14 @@ chibios_rt::BinarySemaphore MPU6050::isr_sem(true);
  *
  */
 float MPU6050::gyr_sens(void){
-  return gyro_sens_array[*gyr_fs];
+  return gyro_sens_array[gyr_fs_current];
 }
 
 /**
  *
  */
 float MPU6050::acc_sens(void){
-  return acc_sens_array[*acc_fs];
+  return acc_sens_array[acc_fs_current];
 }
 
 /**
@@ -328,12 +328,12 @@ bool MPU6050::hw_init_full(void){
     return OSAL_FAILED;
   osalThreadSleepMilliseconds(5);
 
-  i2c_status = set_gyr_fs(*gyr_fs);
+  i2c_status = set_gyr_fs(gyr_fs_current);
   if (MSG_OK != i2c_status)
     return OSAL_FAILED;
   osalThreadSleepMilliseconds(1);
 
-  i2c_status = set_acc_fs(*acc_fs);
+  i2c_status = set_acc_fs(acc_fs_current);
   if (MSG_OK != i2c_status)
     return OSAL_FAILED;
   osalThreadSleepMilliseconds(1);
@@ -345,7 +345,7 @@ bool MPU6050::hw_init_full(void){
     return OSAL_FAILED;
   osalThreadSleepMilliseconds(1);
 
-  i2c_status = set_dlpf_smplrt(*this->dlpf, *this->smplrtdiv);
+  i2c_status = set_dlpf_smplrt(dlpf_current, smplrtdiv_current);
   if (MSG_OK != i2c_status)
     return OSAL_FAILED;
   osalThreadSleepMilliseconds(1);
@@ -362,35 +362,38 @@ bool MPU6050::hw_init_full(void){
 /**
  *
  */
-msg_t MPU6050::refresh_settings(void) {
+msg_t MPU6050::param_update(void) {
 
-  uint8_t fs, lpf, smplrt;
+  uint8_t afs, gfs, lpf, smplrt;
 
   msg_t ret1 = MSG_OK;
   msg_t ret2 = MSG_OK;
   msg_t ret3 = MSG_OK;
 
+  osalSysLock();
+  afs = *acc_fs;
+  gfs = *gyr_fs;
+  lpf = *dlpf;
+  smplrt = *smplrtdiv;
+  osalSysUnlock();
+
   /* gyr full scale */
-  fs = *gyr_fs;
-  if (fs != gyr_fs_prev){
-    ret1 = set_gyr_fs(fs);
-    gyr_fs_prev = fs;
+  if (gfs != gyr_fs_current){
+    ret1 = set_gyr_fs(gfs);
+    gyr_fs_current = gfs;
   }
 
   /* acc full scale */
-  fs = *acc_fs;
-  if (fs != acc_fs_prev){
-    ret2 = set_acc_fs(fs);
-    acc_fs_prev = fs;
+  if (afs != acc_fs_current){
+    ret2 = set_acc_fs(afs);
+    acc_fs_current = afs;
   }
 
   /* low pass filter and sample rate */
-  lpf = *dlpf;
-  smplrt = *smplrtdiv;
-  if ((lpf != dlpf_prev) || (smplrt != smplrt_prev)){
+  if ((lpf != dlpf_current) || (smplrt != smplrtdiv_current)){
     ret3 = set_dlpf_smplrt(lpf, smplrt);
-    dlpf_prev = lpf;
-    smplrt_prev = smplrt;
+    dlpf_current = lpf;
+    smplrtdiv_current = smplrt;
   }
 
   if ((MSG_OK == ret1) && (MSG_OK == ret2) && (MSG_OK == ret3))
@@ -508,11 +511,12 @@ void MPU6050::acquire_data(void) {
   msg_t ret2 = MSG_RESET;
 
   if (SENSOR_STATE_READY == this->state) {
-    if (*dlpf > 0)
+    ret2 = param_update();
+
+    if (dlpf_current > 0)
       ret1 = acquire_simple(acc_data, gyr_data);
     else
       ret1 = acquire_fifo(acc_data, gyr_data);
-    ret2 = refresh_settings();
 
     if ((MSG_OK != ret1) || (MSG_OK != ret2))
       this->state = SENSOR_STATE_DEAD;
@@ -543,8 +547,8 @@ THD_FUNCTION(Mpu6050Thread, arg) {
 
   while (!chThdShouldTerminateX()) {
     self->isr_sem.wait();
-    self->isr_dlpf = *self->dlpf;
-    self->isr_smplrtdiv = *self->smplrtdiv;
+    self->isr_dlpf = self->dlpf_current;
+    self->isr_smplrtdiv = self->smplrtdiv_current;
     self->acquire_data();
     self->data_ready_sem.signal();
   }
@@ -593,13 +597,14 @@ sensor_state_t MPU6050::start(void) {
     param_registry.valueSearch("MPU_dlpf",      &dlpf);
     param_registry.valueSearch("MPU_smplrtdiv", &smplrtdiv);
 
-    gyr_fs_prev = *gyr_fs;
-    acc_fs_prev = *acc_fs;
-    dlpf_prev   = *dlpf;
-    smplrt_prev = *smplrtdiv;
-
-    this->isr_dlpf = *dlpf;
+    osalSysLock();
+    gyr_fs_current      = *gyr_fs;
+    acc_fs_current      = *acc_fs;
+    dlpf_current        = *dlpf;
+    smplrtdiv_current   = *smplrtdiv;
+    this->isr_dlpf      = *dlpf;
     this->isr_smplrtdiv = *smplrtdiv;
+    osalSysUnlock();
 
     /* init hardware */
     bool init_status = OSAL_FAILED;
@@ -775,6 +780,6 @@ void MPU6050::extiISR(EXTDriver *extp, expchannel_t channel) {
  *
  */
 float MPU6050::dt(void) {
-  return *smplrtdiv / static_cast<float>(1000);
+  return smplrtdiv_current / static_cast<float>(1000);
 }
 
