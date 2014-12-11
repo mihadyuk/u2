@@ -33,8 +33,8 @@ private:
   Adis adis;
   Marg marg;
   ahrs_state_t state;
-  const uint32_t *mode_;
-  uint8_t mode_prev;
+  const uint32_t *mode;
+  uint8_t mode_current;
 };
 
 #endif /* AHRS_HPP_ */

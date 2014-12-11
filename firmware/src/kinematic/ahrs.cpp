@@ -45,8 +45,8 @@ extern mavlink_attitude_quaternion_t    mavlink_out_attitude_quaternion_struct;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-static mavMail attitude_imu_mail;
-static mavMail attitude_quaternion_imu_mail;
+static mavMail attitude_mail;
+static mavMail attitude_quaternion_mail;
 
 /*
  ******************************************************************************
@@ -55,6 +55,38 @@ static mavMail attitude_quaternion_imu_mail;
  ******************************************************************************
  ******************************************************************************
  */
+/**
+ *
+ */
+static void attitude2mavlink(const ahrs_data_t &result) {
+
+  mavlink_out_attitude_struct.roll  = result.euler[0];
+  mavlink_out_attitude_struct.pitch = result.euler[1];
+  mavlink_out_attitude_struct.yaw   = result.euler[2];
+  mavlink_out_attitude_struct.time_boot_ms = TIME_BOOT_MS;
+
+  mavlink_out_attitude_quaternion_struct.q1 = result.quat[0];
+  mavlink_out_attitude_quaternion_struct.q2 = result.quat[1];
+  mavlink_out_attitude_quaternion_struct.q3 = result.quat[2];
+  mavlink_out_attitude_quaternion_struct.q4 = result.quat[3];
+  mavlink_out_attitude_quaternion_struct.time_boot_ms = TIME_BOOT_MS;
+}
+
+/**
+ *
+ */
+static void log_append(void) {
+
+  if (attitude_mail.free()) {
+    attitude_mail.fill(&mavlink_out_attitude_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_ATTITUDE);
+    mav_logger.post(&attitude_mail);
+  }
+
+  if (attitude_quaternion_mail.free()) {
+    attitude_quaternion_mail.fill(&mavlink_out_attitude_quaternion_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_ATTITUDE_QUATERNION);
+    mav_logger.post(&attitude_quaternion_mail);
+  }
+}
 
 /**
  *
@@ -127,38 +159,26 @@ msg_t Ahrs::get_adis(ahrs_data_t &result, systime_t timeout) {
 /**
  *
  */
-static void log_append(void) {
-
-//  if (raw_imu_mail.free()) {
-//    raw_imu_mail.fill(&mavlink_out_raw_imu_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_RAW_IMU);
-//    mav_logger.post(&raw_imu_mail);
-//  }
-//
-//  if (highres_imu_mail.free()) {
-//    highres_imu_mail.fill(&mavlink_out_highres_imu_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_HIGHRES_IMU);
-//    mav_logger.post(&highres_imu_mail);
-//  }
-}
-
-/**
- *
- */
 void Ahrs::reschedule(void) {
-
   uint8_t m;
 
   osalSysLock();
   m = *mode;
   osalSysUnlock();
 
-  if (this->mode_prev != m) {
-    ;
+  if (this->mode_current != m) {
+    if (AHRS_MODE_ADIS == mode_current) {
+      marg.stop();
+      adis.start();
+    }
+    else {
+      adis.stop();
+      marg.start();
+    }
   }
 
-  this->mode_prev = m;
+  this->mode_current = m;
 }
-
-
 
 /*
  ******************************************************************************
@@ -181,8 +201,9 @@ marg(adis)
 void Ahrs::start(void) {
 
   param_registry.valueSearch("AHRS_mode", &mode);
+  mode_current = *mode;
 
-  if (AHRS_MODE_ADIS == *mode)
+  if (AHRS_MODE_ADIS == mode_current)
     adis.start();
   else
     marg.start();
@@ -198,7 +219,7 @@ msg_t Ahrs::get(ahrs_data_t &result, systime_t timeout) {
 
   reschedule();
 
-  switch(*mode) {
+  switch(mode_current) {
   case AHRS_MODE_STARLINO:
     sem_status = get_starlino(result, timeout);
     break;
@@ -216,6 +237,7 @@ msg_t Ahrs::get(ahrs_data_t &result, systime_t timeout) {
     break;
   }
 
+  attitude2mavlink(result);
   log_append();
   return sem_status;
 }

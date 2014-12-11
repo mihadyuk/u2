@@ -44,15 +44,14 @@
 #define ADISPRIO          (NORMALPRIO)
 #define MPU6050PRIO       (ADISPRIO + 1)
 
-///* константы для мавлинка */
-//#define GROUND_STATION_ID   255
-//
-//
-///* метка времени для пакетов */
-//#if (CH_FREQUENCY) >= 1000
-//#define TIME_BOOT_MS ((chTimeNow()) / ((CH_FREQUENCY) / 1000))
-//#endif
-//
+/* константы для мавлинка */
+#define GROUND_STATION_ID   255
+
+/* метка времени для пакетов */
+#if (CH_CFG_ST_FREQUENCY) >= 1000
+#define TIME_BOOT_MS ((chVTGetSystemTimeX()) / ((CH_CFG_ST_FREQUENCY) / 1000))
+#endif
+
 ///* stop watchdog timer in debugging mode */
 ///*unlock PR register*/
 ///*set 1.6384s timeout*/
