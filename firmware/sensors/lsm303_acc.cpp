@@ -179,15 +179,14 @@ sensor_state_t LSM303_acc::start(void){
  */
 void LSM303_acc::stop(void) {
 
-  if (this->state == SENSOR_STATE_STOP)
+  if ((this->state == SENSOR_STATE_STOP) || (this->state == SENSOR_STATE_DEAD))
     return;
-
-  osalDbgAssert(this->state == SENSOR_STATE_READY, "Invalid state");
-
-  if (MSG_OK == stop_sleep_code())
-    this->state = SENSOR_STATE_STOP;
-  else
-    this->state = SENSOR_STATE_DEAD;
+  else {
+    if (MSG_OK == stop_sleep_code())
+      this->state = SENSOR_STATE_STOP;
+    else
+      this->state = SENSOR_STATE_DEAD;
+  }
 }
 
 /**
@@ -195,7 +194,7 @@ void LSM303_acc::stop(void) {
  */
 sensor_state_t LSM303_acc::get(marg_data_t &result) {
 
-  if ((SENSOR_STATE_READY == this->state) && (1 == result.request.mag)) {
+  if ((SENSOR_STATE_READY == this->state) && (1 == result.request.acc)) {
 
     /* read previose measurement results */
     txbuf[0] = OUT_X_L_A | 0b10000000;

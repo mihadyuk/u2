@@ -544,13 +544,16 @@ static THD_WORKING_AREA(Mpu6050ThreadWA, 256);
 THD_FUNCTION(Mpu6050Thread, arg) {
   chRegSetThreadName("Mpu6050");
   MPU6050 *self = static_cast<MPU6050 *>(arg);
+  msg_t sem_status = MSG_RESET;
 
   while (!chThdShouldTerminateX()) {
-    self->isr_sem.wait();
-    self->isr_dlpf = self->dlpf_current;
-    self->isr_smplrtdiv = self->smplrtdiv_current;
-    self->acquire_data();
-    self->data_ready_sem.signal();
+    sem_status = self->isr_sem.wait(MS2ST(self->smplrtdiv_current * 2));
+    if (MSG_OK == sem_status) {
+      self->isr_dlpf = self->dlpf_current;
+      self->isr_smplrtdiv = self->smplrtdiv_current;
+      self->acquire_data();
+      self->data_ready_sem.signal();
+    }
   }
 
   chThdExit(MSG_OK);
@@ -639,21 +642,24 @@ sensor_state_t MPU6050::start(void) {
  */
 void MPU6050::stop(void) {
 
-  chThdTerminate(worker);
-  isr_sem.reset(false); /* speedup termination */
-  chThdWait(worker);
-  worker = nullptr;
+  if ((SENSOR_STATE_READY == this->state) || (SENSOR_STATE_SLEEP == this->state)) {
+    if (SENSOR_STATE_READY == this->state) {
+      chThdTerminate(worker);
+      chThdWait(worker);
+      worker = nullptr;
+    }
 
-  Exti.mpu6050(false);
+    Exti.mpu6050(false);
 
-  txbuf[0] = MPUREG_PWR_MGMT1;
-  txbuf[1] = DEVICE_RESET; /* soft reset */
-  if (MSG_OK != transmit(txbuf, 2, NULL, 0))
-    this->state = SENSOR_STATE_DEAD;
-  else
-    this->state = SENSOR_STATE_STOP;
+    txbuf[0] = MPUREG_PWR_MGMT1;
+    txbuf[1] = DEVICE_RESET; /* soft reset */
+    if (MSG_OK != transmit(txbuf, 2, NULL, 0))
+      this->state = SENSOR_STATE_DEAD;
+    else
+      this->state = SENSOR_STATE_STOP;
 
-  mpu6050_power_off();
+    mpu6050_power_off();
+  }
 }
 
 /**
@@ -703,7 +709,6 @@ void MPU6050::sleep(void) {
   chThdTerminate(worker);
   chThdWait(worker);
   worker = nullptr;
-  osalThreadSleepMilliseconds(1);
 
   /* suspend sensor */
   txbuf[0] = MPUREG_PWR_MGMT1;

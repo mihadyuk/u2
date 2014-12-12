@@ -169,7 +169,8 @@ void AK8975::stop(void) {
   if (this->state == SENSOR_STATE_STOP)
     return;
 
-  osalDbgAssert(this->state == SENSOR_STATE_READY, "Invalid state");
+  osalDbgAssert((this->state == SENSOR_STATE_READY) ||
+                (this->state == SENSOR_STATE_SLEEP), "Invalid state");
   this->state = SENSOR_STATE_STOP;
 }
 

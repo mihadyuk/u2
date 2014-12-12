@@ -164,40 +164,40 @@ sensor_state_registry_t Marg::param_update(void) {
   m = *mag_src;
   osalSysUnlock();
 
-  if ((this->acc_src_prev != a) || (this->gyr_src_prev != g) || (this->mag_src_prev != m)) {
+  if ((this->acc_src_current != a) || (this->gyr_src_current != g) || (this->mag_src_current != m)) {
     sleep_all();
 
     if (SENSOR_STATE_SLEEP == adis.get_state()) {
-      if ((MARG_ACC_SRC_ADIS == *acc_src) || (MARG_GYR_SRC_ADIS == *gyr_src) ||
-                                             (MARG_MAG_SRC_ADIS == *mag_src)){
+      if ((MARG_ACC_SRC_ADIS == a) || (MARG_GYR_SRC_ADIS == g) ||
+                                      (MARG_MAG_SRC_ADIS == m)){
         adis.wakeup();
       }
     }
     if (SENSOR_STATE_SLEEP == mpu6050.get_state()) {
-      if ((MARG_ACC_SRC_MPU6050 == *acc_src) || (MARG_GYR_SRC_MPU6050 == *gyr_src)) {
+      if ((MARG_ACC_SRC_MPU6050 == a) || (MARG_GYR_SRC_MPU6050 == g)) {
         mpu6050.wakeup();
       }
     }
     if (SENSOR_STATE_SLEEP == ak8975.get_state()) {
-      if (MARG_MAG_SRC_AK8975 == *mag_src){
+      if (MARG_MAG_SRC_AK8975 == m){
         ak8975.wakeup();
       }
     }
     if (SENSOR_STATE_SLEEP == lsm303mag.get_state()) {
-      if (MARG_MAG_SRC_LSM303 == *mag_src) {
+      if (MARG_MAG_SRC_LSM303 == m) {
         lsm303mag.wakeup();
       }
     }
     if (SENSOR_STATE_SLEEP == lsm303acc.get_state()) {
-      if (MARG_ACC_SRC_LSM303 == *acc_src) {
+      if (MARG_ACC_SRC_LSM303 == a) {
         lsm303acc.wakeup();
       }
     }
   }
 
-  this->acc_src_prev = a;
-  this->gyr_src_prev = g;
-  this->mag_src_prev = m;
+  this->acc_src_current = a;
+  this->gyr_src_current = g;
+  this->mag_src_current = m;
 
   return this->get_state();
 }
@@ -232,9 +232,9 @@ sensor_state_registry_t Marg::start(void) {
   param_registry.valueSearch("MARG_mag_src", &mag_src);
 
   /* enforce rescheduling */
-  this->acc_src_prev = !*acc_src;
-  this->gyr_src_prev = !*gyr_src;
-  this->mag_src_prev = !*mag_src;
+  this->acc_src_current = !*acc_src;
+  this->gyr_src_current = !*gyr_src;
+  this->mag_src_current = !*mag_src;
 
   /* start all sensors and put them in sleep state */
   if (SENSOR_STATE_READY == adis.start())
@@ -269,7 +269,7 @@ msg_t Marg::get(marg_data_t &result, systime_t timeout) {
   /*
    * wait data from "main" sensor
    */
-  switch(*this->gyr_src) {
+  switch(this->gyr_src_current) {
   case MARG_GYR_SRC_MPU6050:
     sem_status = mpu6050.waitData(timeout);
     break;
@@ -284,14 +284,19 @@ msg_t Marg::get(marg_data_t &result, systime_t timeout) {
     return sem_status;
 
   /*
+   * start from clean state
+   */
+  memset(&result, 0, sizeof(result));
+
+  /*
    * ADIS
    */
   memset(&result.request, 0, sizeof(result.request));
-  if (MARG_ACC_SRC_ADIS == *acc_src)
+  if (MARG_ACC_SRC_ADIS == acc_src_current)
     result.request.acc = 1;
-  if (MARG_MAG_SRC_ADIS == *mag_src)
+  if (MARG_MAG_SRC_ADIS == mag_src_current)
     result.request.mag = 1;
-  if (MARG_GYR_SRC_ADIS == *gyr_src) {
+  if (MARG_GYR_SRC_ADIS == gyr_src_current) {
     result.request.gyr = 1;
     result.request.dt = 1;
   }
@@ -301,9 +306,9 @@ msg_t Marg::get(marg_data_t &result, systime_t timeout) {
    * MPU6050
    */
   memset(&result.request, 0, sizeof(result.request));
-  if (MARG_ACC_SRC_MPU6050 == *acc_src)
+  if (MARG_ACC_SRC_MPU6050 == acc_src_current)
     result.request.acc = 1;
-  if (MARG_GYR_SRC_MPU6050 == *gyr_src) {
+  if (MARG_GYR_SRC_MPU6050 == gyr_src_current) {
     result.request.gyr = 1;
     result.request.dt = 1;
   }
@@ -313,7 +318,7 @@ msg_t Marg::get(marg_data_t &result, systime_t timeout) {
    * LSM303 accel
    */
   memset(&result.request, 0, sizeof(result.request));
-  if (MARG_ACC_SRC_LSM303 == *acc_src)
+  if (MARG_ACC_SRC_LSM303 == acc_src_current)
     result.request.acc = 1;
   lsm303acc.get(result);
 
@@ -321,7 +326,7 @@ msg_t Marg::get(marg_data_t &result, systime_t timeout) {
    * LSM303 mag
    */
   memset(&result.request, 0, sizeof(result.request));
-  if (MARG_MAG_SRC_LSM303 == *mag_src)
+  if (MARG_MAG_SRC_LSM303 == mag_src_current)
     result.request.mag = 1;
   lsm303mag.get(result);
 
@@ -329,7 +334,7 @@ msg_t Marg::get(marg_data_t &result, systime_t timeout) {
    * AK8975
    */
   memset(&result.request, 0, sizeof(result.request));
-  if (MARG_MAG_SRC_AK8975 == *mag_src)
+  if (MARG_MAG_SRC_AK8975 == mag_src_current)
     result.request.mag = 1;
   ak8975.get(result);
 

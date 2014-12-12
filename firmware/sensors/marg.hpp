@@ -28,7 +28,7 @@ private:
   LSM303_acc lsm303acc;
   bool ready = false;
   const uint32_t *gyr_src, *acc_src, *mag_src;
-  uint8_t gyr_src_prev, acc_src_prev, mag_src_prev;
+  uint8_t gyr_src_current, acc_src_current, mag_src_current;
 };
 
 #endif /* MARG_HPP_ */

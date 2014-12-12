@@ -3,7 +3,7 @@
 
 #include "sensor.hpp"
 
-#define I2C_SENSOR_USE_ERROR_COUNTERS     FALSE
+#define I2C_SENSOR_USE_ERROR_COUNTERS     TRUE
 
 class I2CSensor : public Sensor {
 public:
@@ -15,6 +15,7 @@ protected:
   msg_t receive(uint8_t *rxbuf, size_t rxbytes);
 
 private:
+  systime_t calc_timeout(size_t txbytes, size_t rxbytes);
   void error_handler(msg_t status);
   I2CDriver *i2cdp;
   const i2caddr_t addr;

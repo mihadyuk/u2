@@ -293,14 +293,15 @@ msg_t LSM303_mag::stop_sleep_code(void) {
  *
  */
 void LSM303_mag::stop(void){
-  if (this->state == SENSOR_STATE_STOP)
-    return;
 
-  osalDbgAssert(this->state == SENSOR_STATE_READY, "Invalid state");
-  if (MSG_OK != stop_sleep_code())
-    this->state = SENSOR_STATE_DEAD;
-  else
-    this->state = SENSOR_STATE_STOP;
+  if ((this->state == SENSOR_STATE_STOP) || (this->state == SENSOR_STATE_DEAD))
+    return;
+  else {
+    if (MSG_OK != stop_sleep_code())
+      this->state = SENSOR_STATE_DEAD;
+    else
+      this->state = SENSOR_STATE_STOP;
+  }
 }
 
 /**

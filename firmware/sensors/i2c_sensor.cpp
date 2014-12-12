@@ -24,6 +24,19 @@
  * EXPORTED FUNCTIONS
  *******************************************************************************
  */
+
+/**
+ * @brief     Calculates requred timeout.
+ */
+systime_t I2CSensor::calc_timeout(size_t txbytes, size_t rxbytes) {
+  const uint32_t bitsinbyte = 10;
+  uint32_t tmo;
+  tmo = ((txbytes + rxbytes + 1) * bitsinbyte * 1000);
+  tmo /= this->i2cdp->config->clock_speed;
+  tmo += 2; /* some additional milliseconds to be safer */
+  return MS2ST(tmo);
+}
+
 /**
  *
  */
@@ -74,7 +87,7 @@ msg_t I2CSensor::transmit(const uint8_t *txbuf, size_t txbytes,
 
   i2cAcquireBus(this->i2cdp);
   status = i2cMasterTransmitTimeout(this->i2cdp, this->addr,
-                      txbuf, txbytes, rxbuf, rxbytes, MS2ST(6));
+              txbuf, txbytes, rxbuf, rxbytes, calc_timeout(txbytes, rxbytes));
   i2cReleaseBus(this->i2cdp);
   error_handler(status);
 
@@ -90,7 +103,7 @@ msg_t I2CSensor::receive(uint8_t *rxbuf, size_t rxbytes){
 
   i2cAcquireBus(this->i2cdp);
   status = i2cMasterReceiveTimeout(this->i2cdp, this->addr,
-                                  rxbuf, rxbytes, MS2ST(6));
+                          rxbuf, rxbytes, calc_timeout(0, rxbytes));
   i2cReleaseBus(this->i2cdp);
   error_handler(status);
 

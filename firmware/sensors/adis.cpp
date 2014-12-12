@@ -399,10 +399,12 @@ void Adis::stop(void) {
   if ((SENSOR_STATE_DEAD == this->state) || (SENSOR_STATE_STOP == this->state))
     return;
   else {
-    chThdTerminate(worker);
-    isr_sem.reset(false); /* speedup termination */
-    chThdWait(worker);
-    worker = nullptr;
+    if (SENSOR_STATE_READY == this->state) {
+      chThdTerminate(worker);
+      isr_sem.reset(false); /* speedup termination */
+      chThdWait(worker);
+      worker = nullptr;
+    }
 
     adis_reset_assert();
     spiStop(&ADIS_SPI);
