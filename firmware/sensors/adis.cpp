@@ -22,6 +22,7 @@
 #define GLOB_CMD                  0x02
 #define PROD_ID                   0x7E
 #define SYS_E_FLAG                0x08
+#define EKF_CNFG                  0x50
 
 /*
  ******************************************************************************
@@ -97,12 +98,12 @@ static const uint8_t request[] = {
 static uint16_t rxbuf[ArrayLen(request)];
 
 static const float gyr_scale   = 0.00000000532632218; /* to rad/s */
-static const float acc_scale   = 0.00000011975097664; /* to G */
+static const float acc_scale   = 0.00000011975097664; /* to m/s^2 */
 static const float mag_scale   = 0.0001; /* to gauss */
 static const float baro_scale  = 0.04; /* to millibars */
 static const float temp_scale  = 0.00565; /* to celsius */
 static const float quat_scale  = 0.000030517578125;
-static const float euler_scale = 0.0054931640625; /* to deg (360/65536) */
+static const float euler_scale = 0.00009587379924285258; /* to rad (2*pi/65536) */
 
 /*
  ******************************************************************************
@@ -131,7 +132,6 @@ static uint16_t read(uint8_t address){
  *
  */
 static void write(uint8_t address, uint16_t word) {
-  osalDbgCheck(address < 64);
 
   spiSelect(&ADIS_SPI);
   spiPolledExchange(&ADIS_SPI, (1 << 15) | (address << 8) | (word & 0xFF));
@@ -298,6 +298,15 @@ void Adis::set_sample_rate(void) {
 /**
  *
  */
+void Adis::set_kalman(void) {
+  select_page(3);
+  write(EKF_CNFG, 1 << 3);
+  select_page(0);
+}
+
+/**
+ *
+ */
 void Adis::param_update(void) {
   uint32_t s = *smplrtdiv;
 
@@ -378,6 +387,7 @@ sensor_state_t Adis::start(void) {
     }
 
     set_sample_rate();
+    set_kalman();
 
     Exti.adis(true);
 

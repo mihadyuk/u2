@@ -10,8 +10,7 @@
 #define MPU_RX_DEPTH        16  /* 1 status byte + 14 bytes of data + 1 padding */
 #define MPU_TX_DEPTH        4
 
-#define MPU6050_1KHZ        FALSE
-#define MPU6050_FIR_LEN     65
+#define MPU6050_FIR_LEN     129
 
 class MPU6050: protected I2CSensor {
 public:

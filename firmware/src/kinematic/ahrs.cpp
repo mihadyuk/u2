@@ -61,9 +61,9 @@ static mavMail attitude_quaternion_mail;
  */
 static void attitude2mavlink(const ahrs_data_t &result) {
 
-  mavlink_out_attitude_struct.roll  = deg2rad(result.euler[0]);
-  mavlink_out_attitude_struct.pitch = deg2rad(result.euler[1]);
-  mavlink_out_attitude_struct.yaw   = deg2rad(result.euler[2]);
+  mavlink_out_attitude_struct.roll  = result.euler[0];
+  mavlink_out_attitude_struct.pitch = result.euler[1];
+  mavlink_out_attitude_struct.yaw   = result.euler[2];
   mavlink_out_attitude_struct.time_boot_ms = TIME_BOOT_MS;
 
   mavlink_out_attitude_quaternion_struct.q1 = result.quat[0];

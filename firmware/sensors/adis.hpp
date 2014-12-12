@@ -36,6 +36,7 @@ public:
 
 private:
   friend THD_FUNCTION(AdisThread, arg);
+  void set_kalman(void);
   void set_sample_rate(void);
   void param_update(void);
   void acquire_data(void);
