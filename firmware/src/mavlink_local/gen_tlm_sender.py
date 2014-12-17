@@ -171,7 +171,7 @@ void refresh_deadlines(tlm_registry_t *R, size_t len, systime_t t){
   while (i < len){
     R[i].next_dealine -= t;
     if (R[i].next_dealine == 0){
-      if (*(R[i].sleepperiod) != SEND_OFF){
+      if (*(R[i].sleepperiod) != TELEMETRY_SEND_OFF){
         R[i].next_dealine = *(R[i].sleepperiod);
         R[i].sender();
       }

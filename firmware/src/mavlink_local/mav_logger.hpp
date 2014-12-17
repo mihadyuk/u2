@@ -19,7 +19,7 @@ private:
   size_t drop_cnt = 0;
   bool ready = false;
   chibios_rt::Mailbox<mavMail*, 12> logwriter_mb;
-  MultiBufWrapper<uint8_t, 8192, 2> double_buf;
+  MultiBufferAccumulator<uint8_t, 8192, 2> double_buf;
   FIL log_file;
 };
 

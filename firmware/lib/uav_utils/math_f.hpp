@@ -22,39 +22,39 @@ inline float sqrt(float v){
 #endif /* CORTEX_USE_FPU */
 }
 
-inline float cos(float v){
+static inline float cos(float v){
   return cosf(v);
 }
 
-inline float acos(float v){
+static inline float acos(float v){
   return acosf(v);
 }
 
-inline float sin(float v){
+static inline float sin(float v){
   return sinf(v);
 }
 
-inline float asin(float v){
+static inline float asin(float v){
   return asinf(v);
 }
 
-inline float tan(float v){
+static inline float tan(float v){
   return tanf(v);
 }
 
-inline float atan(float v){
+static inline float atan(float v){
   return atanf(v);
 }
 
-inline float atan2(float x, float y){
+static inline float atan2(float x, float y){
   return atan2f(x, y);
 }
 
-inline float fabs(float x){
+static inline float fabs(float x){
   return fabsf(x);
 }
 
-inline float pow(float x, float y){
+static inline float pow(float x, float y){
   return powf(x, y);
 }
 

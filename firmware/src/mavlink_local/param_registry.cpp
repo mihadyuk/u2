@@ -167,7 +167,7 @@ bool ParamRegistry::save_all(void) {
 
   for (i = 0; i < this->paramCount(); i++){
 
-    /* first copy parameter name in buffer */
+    /* first copy parameter name into buffer */
     memcpy(eeprombuf, param_db[i].name, PARAM_ID_SIZE);
 
     /* now write data */

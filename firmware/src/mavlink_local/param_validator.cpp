@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include "mavlink_local.hpp"
 #include "param_registry.hpp"
 #include "putinrange.hpp"
@@ -113,7 +115,7 @@ param_status_t ParamValidator::sendtmo_val(const param_union_t *value,
   uint32_t v = initial_value;
 
   /**/
-  if (v == SEND_OFF){
+  if (v == TELEMETRY_SEND_OFF) {
     if (param->valuep->u32 == v)
       return PARAM_NOT_CHANGED;
     else{
@@ -160,7 +162,7 @@ param_status_t ParamValidator::float_val(const param_union_t *value,
   float v = initial_value;
 
   // AND only write if new value is NOT "not-a-number" AND is NOT infinity
-  if (isnan(v) || isinf(v))
+  if (std::isnan(v) || std::isinf(v))
     return PARAM_INCONSISTENT;
 
   if (param->valuep->f32 == v)

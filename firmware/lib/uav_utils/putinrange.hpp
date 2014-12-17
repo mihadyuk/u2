@@ -1,36 +1,30 @@
 #ifndef PUTINRANGE_HPP_
 #define PUTINRANGE_HPP_
 
+#include <algorithm>
+
+#include "min_max.hpp"
+
 /**
  * Clamper function implementation
  */
 template<typename T>
-T __putinrange_impl(T v, T vmin, T vmax){
+T __putinrange_impl(const T& v, const T& lower, const T& upper) {
 
-  if(vmin <= vmax){
-    if (v <= vmin)
-      return vmin;
-    else if (v >= vmax)
-      return vmax;
-    else
-      return v;
-  }
-  else{ /* protection from stupidity */
-    if(v <= vmax)
-      return vmax;
-    else if (v >= vmin)
-      return vmin;
-    else
-      return v;
-  }
+  if(lower <= upper)
+    return std::max(lower, std::min(v, upper));
+  else /* protection from stupidity */
+    return std::min(lower, std::max(v, upper));
 }
 
 /**
  * Clamper function wrapper
  */
 template<typename T, typename T2, typename T3>
-T putinrange(T v, T2 vmin, T3 vmax){
-  return __putinrange_impl(v, static_cast<typeof(v)>(vmin), static_cast<typeof(v)>(vmax));
+T putinrange(const T& v, const T2& lower, const T3& upper) {
+  return __putinrange_impl(v,
+        static_cast<typeof(v)>(lower),
+        static_cast<typeof(v)>(upper));
 }
 
 #endif /* PUTINRANGE_HPP_ */

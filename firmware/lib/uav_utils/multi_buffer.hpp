@@ -36,20 +36,6 @@ public:
     return &(internal_buf[head * L]);
   }
 
-//  /**
-//   *
-//   */
-//  size_t len(void) {
-//    return L;
-//  }
-//
-//  /**
-//   *
-//   */
-//  size_t cnt(void) {
-//    return Count;
-//  }
-
   /**
    * @brief     Return sizeof of single buffer.
    */
@@ -61,7 +47,7 @@ private:
   /**
    *
    */
-  void constructor_impl(int pattern){
+  void constructor_impl(int pattern) {
     static_assert(Count > 1, "Multibuffer with zero count value is pointless");
     memset(internal_buf, pattern, sizeof(internal_buf));
     head = 0;
@@ -71,21 +57,24 @@ private:
   size_t head;
 };
 
-
+/**
+ * @brief   Convenient class allowing to add portions of data to the
+ *          multiple buffer without gaps on the buffers' boundaries.
+ */
 template <typename T, int L, int Count>
-class MultiBufWrapper {
+class MultiBufferAccumulator {
 public:
   /**
    *
    */
-  MultiBufWrapper(void) {
+  MultiBufferAccumulator(void) {
     tip = multi_buffer.current();
   }
 
   /**
    * @brief     Append data portion to the buffer.
    *
-   * @retval    Pointer to full buffer. @p NULL if buffer has some free space.
+   * @retval    Pointer to full buffer. @p NULL if buffer has some free space yet.
    */
   T *append(const T *data, size_t len) {
     const size_t free = get_free_space();
@@ -135,12 +124,5 @@ private:
   T *tip;
 };
 
-
-
-
 #endif /* MULTI_BUFFER_HPP_ */
-
-
-
-
 

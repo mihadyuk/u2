@@ -4,13 +4,11 @@
 #include "global_flags.h"
 #include "nvram_local.hpp"
 
-/* периодичность посылки данных в милисекундах */
-#define SEND_MIN                  10
-#define SEND_MAX                  5000
-#define SEND_OFF                  0
+/* периодичность посылки данных телеметрии в милисекундах */
+#define TELEMETRY_SEND_OFF            0
 
-#define ONBOARD_PARAM_NAME_LENGTH 15
-#define PARAM_ID_SIZE             16
+#define ONBOARD_PARAM_NAME_LENGTH     15
+#define PARAM_ID_SIZE                 16
 
 /**
  *

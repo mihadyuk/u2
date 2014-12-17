@@ -5,7 +5,7 @@
  * Integer power function.
  */
 template <typename T>
-T powi(T base, uint32_t exp){
+T powi(T base, unsigned int exp) {
   T result = 1;
   while (exp > 0){
     result *= base;
