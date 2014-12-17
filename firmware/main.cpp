@@ -19,7 +19,6 @@ Giovanni
 // TODO: gyro update period in bkp
 // TODO: save mission data in bkp for recovery if panic occured during mission
 
-// TODO: log compressed format
 // TODO: cli for format, ls, rm
 
 // TODO: rewrite stab code in general case using aviation formulae.
@@ -33,8 +32,6 @@ Giovanni
 // TODO: One more point in dynamic pressure thermal compensation algorithm (at +60 celsius)
 // TODO: Rewrite XBee code for use DMA.
 // TODO: WDT?
-
-#include <time.h>
 
 #include "main.h"
 
@@ -72,6 +69,9 @@ Giovanni
 
 using namespace chibios_rt;
 
+/* cheat sheet for use in other files */
+#pragma GCC optimize "-O0"
+
 /*
  ******************************************************************************
  * EXTERNS
@@ -106,13 +106,6 @@ static uint8_t link_thd_buf[THREAD_HEAP_SIZE + sizeof(stkalign_t)];
 //
 ///* save here flags before clear them from MCU register */
 //uint32_t LastResetFlags;
-//
-///* semaphores to sync with external interrupts from sensors */
-//chibios_rt::BinarySemaphore mma8451_sem(true);
-//chibios_rt::BinarySemaphore bmp085_sem(true);
-//chibios_rt::BinarySemaphore imu_sync_sem(true);
-//chibios_rt::BinarySemaphore lsm303_sem(true);
-//chibios_rt::BinarySemaphore imu_sem(true);
 //
 ///* waypoint DB interface */
 //WpDB wpdb;
@@ -221,10 +214,7 @@ int main(void) {
 
   while (TRUE) {
     ahrs.get(ahrs_data, MS2ST(200));
-
     //osalThreadSleepMilliseconds(200);
-
-
 //    if (ATTITUDE_UNIT_UPDATE_RESULT_OK == attitude_unit.update()){
 //      sins.update();
 //      if (ACS_STATUS_ERROR == acs.update())
