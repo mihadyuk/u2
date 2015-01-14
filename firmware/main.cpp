@@ -70,7 +70,8 @@ Giovanni
 using namespace chibios_rt;
 
 /* cheat sheet for use in other files */
-#pragma GCC optimize "-O0"
+#pragma GCC optimize "-funroll-loops"
+#pragma GCC optimize "-O2"
 
 /*
  ******************************************************************************
