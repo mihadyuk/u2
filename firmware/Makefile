@@ -110,8 +110,6 @@ CSRC = $(PORTSRC) \
        lib/uav_utils/cpu_load.c \
        lib/uav_utils/crc.c \
        lib/microrl/src/microrl.c \
-       lib/onewire/onewire.c \
-       lib/onewire/onewire_test.c \
        src/fault_handlers.c \
        src/mavlink_local/mav_encode.c \
        benchmark/memcpy_bench.c \
@@ -119,6 +117,11 @@ CSRC = $(PORTSRC) \
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
+DRIVETRAINSRC = src/drivetrain/drivetrain_pwm.cpp \
+		 src/drivetrain/servo_tree.cpp \
+		 src/drivetrain/drivetrain.cpp \
+		 src/drivetrain/engine.cpp \
+
 NVRAMSRC = src/nvram_local.cpp \
          lib/24aa/src/mtd.cpp \
          lib/24aa/src/eeprom_mtd.cpp \
@@ -157,6 +160,7 @@ CPPSRC = $(CHCPPSRC) \
          $(MAVSRC) \
          $(SENSORSRC) \
          $(CLISRC) \
+         $(DRIVETRAINSRC) \
          main.cpp \
          src/instantiator.cpp \
          src/link_mgr.cpp \
@@ -204,6 +208,7 @@ INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
          src/mavlink_local \
          src/kinematic \
          src/cli \
+         src/drivetrain \
          lib/mavlink/C/lapwing \
          benchmark \
 
