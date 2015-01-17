@@ -5,7 +5,7 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -O0 -ggdb -fomit-frame-pointer -falign-functions=16
+  USE_OPT = -O2 -ggdb -fomit-frame-pointer -falign-functions=16
 endif
 
 # C specific options here (added to USE_OPT).
@@ -80,7 +80,7 @@ endif
 PROJECT = ch
 
 # Imported source files and paths
-CHIBIOS = ../../chibios-svn
+CHIBIOS = ../../chibios-git
 include $(CHIBIOS)/os/hal/hal.mk
 include board/board.mk
 include $(CHIBIOS)/os/hal/ports/STM32/STM32F4xx/platform.mk
