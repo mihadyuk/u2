@@ -1,7 +1,6 @@
 #include <string.h>
 
 #include "main.h"
-#include "global_flags.h"
 
 #include "mavlink_local.hpp"
 #include "param_registry.hpp"

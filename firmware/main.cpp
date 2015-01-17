@@ -70,7 +70,8 @@ Giovanni
 using namespace chibios_rt;
 
 /* cheat sheet for use in other files */
-#pragma GCC optimize "-O0"
+#pragma GCC optimize "-funroll-loops"
+#pragma GCC optimize "-O2"
 
 /*
  ******************************************************************************
@@ -160,6 +161,12 @@ Ahrs ahrs;
  *******************************************************************************
  *******************************************************************************
  */
+
+#include "drivetrain.hpp"
+
+Drive::DrivetrainImpact impact;
+Drive::Drivetrain drivetrain(impact);
+
 int main(void) {
 
   halInit();
@@ -204,16 +211,23 @@ int main(void) {
 //
 //  /* main cycle */
 //  attitude_unit.start();
-//  //acs.start();
-//  drivetrain.start();
+//  acs.start();
 //  sins.start(&state_vector);
   mav_logger.start(NORMALPRIO);
 
   ahrs.start();
+  drivetrain.start();
+
   ahrs_data_t ahrs_data;
 
   while (TRUE) {
     ahrs.get(ahrs_data, MS2ST(200));
+
+    drivetrain.update();
+    impact.a[Drive::IMPACT_YAW] += 0.01;
+    if (impact.a[Drive::IMPACT_YAW] > 1)
+      impact.a[Drive::IMPACT_YAW] = -1;
+
     //osalThreadSleepMilliseconds(200);
 //    if (ATTITUDE_UNIT_UPDATE_RESULT_OK == attitude_unit.update()){
 //      sins.update();
