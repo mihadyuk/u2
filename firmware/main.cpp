@@ -218,15 +218,14 @@ int main(void) {
   ahrs.start();
   drivetrain.start();
 
-  ahrs_data_t ahrs_data;
-
   while (TRUE) {
+    ahrs_data_t ahrs_data;
     ahrs.get(ahrs_data, MS2ST(200));
 
-    drivetrain.update();
     impact.a[Drive::IMPACT_YAW] += 0.01;
     if (impact.a[Drive::IMPACT_YAW] > 1)
       impact.a[Drive::IMPACT_YAW] = -1;
+    drivetrain.update();
 
     //osalThreadSleepMilliseconds(200);
 //    if (ATTITUDE_UNIT_UPDATE_RESULT_OK == attitude_unit.update()){

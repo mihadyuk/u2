@@ -104,7 +104,7 @@ void PWM::start(void) {
   pwmStart(&PWMD1, &pwm_default_cfg);
   pwmEnablePeriodicNotification(&PWMD1);
 
-  /* pause between starts needs for spread PWM ISRs in time */
+  /* pause between starts needs for spread PWM ISRs through time */
   osalThreadSleepMicroseconds(DRIVETRAIN_PWM_PERIOD / 2);
 
   pwmStart(&PWMD4, &pwm_default_cfg);

@@ -1,6 +1,7 @@
 #include "main.h"
 #include "servo_tree.hpp"
 #include "putinrange.hpp"
+#include "param_registry.hpp"
 
 using namespace Drive;
 
@@ -71,6 +72,10 @@ pwm(pwm) {
  *
  */
 void ServoTree::start(void) {
+  param_registry.valueSearch("SRV_rud_min", &rud_min);
+  param_registry.valueSearch("SRV_rud_mid", &rud_mid);
+  param_registry.valueSearch("SRV_rud_max", &rud_max);
+
   ready = true;
 }
 
@@ -90,13 +95,8 @@ void ServoTree::update(const DrivetrainImpact &impact) {
 
   osalDbgCheck(ready);
 
-  tmp = float2pwm(impact.a[IMPACT_YAW], 1200, 1500, 1800);
+  tmp = float2pwm(impact.a[IMPACT_YAW], *rud_min, *rud_mid, *rud_max);
   pwm.update(tmp, PWM_CH_RUD);
 }
-
-
-
-
-
 
 

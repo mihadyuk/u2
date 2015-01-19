@@ -15,6 +15,7 @@ public:
 private:
   PWM &pwm;
   bool ready = false;
+  const uint32_t *rud_min, *rud_mid, *rud_max;
 };
 
 } /* namespace Drive */
