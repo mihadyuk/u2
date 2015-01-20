@@ -80,7 +80,7 @@ endif
 PROJECT = ch
 
 # Imported source files and paths
-CHIBIOS = ../../chibios-svn
+CHIBIOS = ../../chibios-git
 include $(CHIBIOS)/os/hal/hal.mk
 include board/board.mk
 include $(CHIBIOS)/os/hal/ports/STM32/STM32F4xx/platform.mk
