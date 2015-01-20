@@ -5,6 +5,8 @@
 #define DRIVETRAIN_PWM_CLK        1000000 /* 1MHz clock */
 #define DRIVETRAIN_PWM_PERIOD     20000   /* 20000 == 50Hz pulse generation */
 
+#include "drivetrain_pwm_override.hpp"
+
 namespace Drive {
 
 /**
@@ -27,6 +29,7 @@ public:
   void start(void);
   void stop(void);
   void update(uint16_t pwm, size_t channel);
+  void futaba_override(const PwmOverride &override);
 private:
   bool ready = false;
 };

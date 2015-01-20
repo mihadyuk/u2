@@ -88,5 +88,9 @@ msg_t Drivetrain::update(void) {
   return MSG_OK;
 }
 
-
-
+/**
+ *
+ */
+void Drivetrain::futaba_override(const PwmOverride &override) {
+  pwm.futaba_override(override);
+}

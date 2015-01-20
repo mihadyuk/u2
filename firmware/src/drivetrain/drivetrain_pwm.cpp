@@ -132,8 +132,7 @@ void PWM::stop(void) {
  */
 void PWM::update(uint16_t pwm, size_t channel) {
 
-  osalDbgCheck(ready);
-  osalDbgCheck(channel < DRIVETRAIN_PWM_CHANNELS);
+  osalDbgCheck(ready && (channel < DRIVETRAIN_PWM_CHANNELS));
 
   if (channel < 4)
     pwm1[channel] = pwm;
@@ -141,5 +140,19 @@ void PWM::update(uint16_t pwm, size_t channel) {
     pwm4[channel - 4] = pwm;
   else
     return;
+}
+
+/**
+ *
+ */
+void PWM::futaba_override(const PwmOverride &override) {
+  size_t i;
+
+  osalDbgCheck(ready);
+
+  for (i=0; i<4; i++)
+    pwm1[i] = override.a[i];
+  for (; i<8; i++)
+    pwm1[i-4] = override.a[i];
 }
 

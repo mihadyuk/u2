@@ -1,9 +1,9 @@
 #ifndef DRIVETRAIN_HPP_
 #define DRIVETRAIN_HPP_
 
+#include "servo_tree.hpp"
 #include "drivetrain_impact.hpp"
 #include "drivetrain_pwm.hpp"
-#include "servo_tree.hpp"
 #include "engine.hpp"
 
 namespace Drive {
@@ -17,6 +17,7 @@ public:
   void start(void);
   void stop(void);
   msg_t update();
+  void futaba_override(const PwmOverride &override);
 
 private:
   bool ready = false;
