@@ -100,6 +100,7 @@ msg_t Ahrs::get_starlino(ahrs_data_t &result, systime_t timeout) {
 
   sem_status = this->marg.get(marg_data, timeout);
   if (MSG_OK == sem_status) {
+    result.dt = marg_data.dt;
     ; // TODO: process data here
   }
 
@@ -117,6 +118,7 @@ msg_t Ahrs::get_madgwick(ahrs_data_t &result, systime_t timeout) {
 
   sem_status = this->marg.get(marg_data, timeout);
   if (MSG_OK == sem_status) {
+    result.dt = marg_data.dt;
     ; // TODO: process data here
   }
 
@@ -134,6 +136,7 @@ msg_t Ahrs::get_kalman(ahrs_data_t &result, systime_t timeout) {
 
   sem_status = this->marg.get(marg_data, timeout);
   if (MSG_OK == sem_status) {
+    result.dt = marg_data.dt;
     ; // TODO: process data here
   }
 

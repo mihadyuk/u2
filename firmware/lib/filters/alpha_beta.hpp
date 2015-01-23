@@ -1,6 +1,8 @@
 #ifndef ALPHA_BETA_H_
 #define ALPHA_BETA_H_
 
+namespace filters {
+
 /**
  * Template of alpha-beta filter class with length changed on the fly
  */
@@ -104,4 +106,5 @@ private:
   T S;
 };
 
+} /* namespace */
 #endif /* ALPHA_BETA_H_ */

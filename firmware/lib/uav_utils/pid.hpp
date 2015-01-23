@@ -10,21 +10,21 @@
 template <typename T>
 class PidControlBase {
 public:
-  PidControlBase(void){
+  PidControlBase(void) : pGain(nullptr), iGain(nullptr), dGain(nullptr) {
     iState = 0;
   }
 
   /**
    *
    */
-  void reset(void){
+  void reset(void) {
     iState = 0;
   }
 
   /**
    *
    */
-  void dryRun(T i){
+  void dryRun(T i) {
     if (fabs(*iGain) < FLT_EPSILON * 10) // zero divizion protect
       iState = 0;
     else
@@ -34,67 +34,32 @@ public:
   /**
    *
    */
-  void start(T const *iMin,  T const *iMax,
-             T const *pGain, T const *iGain, T const *dGain){
-    this->iMin  = iMin;
-    this->iMax  = iMax;
+  void start(T const *pGain, T const *iGain, T const *dGain, T iMin, T iMax) {
+
+    osalDbgCheck(iMax > iMin);
+
     this->pGain = pGain;
     this->iGain = iGain;
     this->dGain = dGain;
+    this->iMin = iMin;
+    this->iMax = iMax;
   }
-
-  /**
-   * @brief   Update PID.
-   *
-   */
-  virtual T update(T error, T diff_or_position) = 0;
 
   /**
    * @brief   Return integrator state.
    */
-  T dbg_getiState(void) const {
+  T __dbg_getiState(void) const {
     return iState;
   }
 
 protected:
   T iState;           /* Integrator state */
-  T const *iMax;
-  T const *iMin;      /* Maximum and minimum allowable integrator state */
-  T const *iGain;     /* integral gain */
+  T errorPrev;        /* Previous error value for trapezoidal integration */
   T const *pGain;     /* proportional gain */
+  T const *iGain;     /* integral gain */
   T const *dGain;     /* derivative gain */
-};
-
-/**
- * This PID calculates derivative term using current position value
- */
-template <typename T>
-class PidControlSelfDerivative : public PidControlBase <T> {
-public:
-  /**
-   * @brief   Update PID.
-   * @param[in] error     Current value error
-   * @param[in] position  Current position for derivative term self calculation
-   */
-  T update(T error, T position){
-    T pTerm, dTerm, iTerm;
-
-    /* calculate the proportional term */
-    pTerm = *this->pGain * error;
-
-    /* calculate the integral state with appropriate limiting */
-    this->iState += error;
-    this->iState  = putinrange(this->iState, *this->iMin, *this->iMax);
-
-    /* calculate the integral term */
-    iTerm = *this->iGain * this->iState;
-
-    /* calculate the derivative term */
-    dTerm = *this->dGain * (position - this->dState);
-    this->dState = position;
-
-    return pTerm + iTerm + dTerm;
-  }
+  T iMax;
+  T iMin;
 };
 
 /**
@@ -107,17 +72,52 @@ public:
   /**
    * @brief   Update PID.
    * @param[in] error   Current value error
-   * @param[in] diff    Differental part _measured_ some way, NOT calculated
+   * @param[in] dTerm   Differental part _measured_ some way, NOT calculated
+   * @param[in] dT      Time delta between measurement
    */
-  T update(T error, T diff){
+  T update(T error, T dTerm, T dT) {
     /* calculate the integral state with appropriate limiting */
-    this->iState += error;
-    this->iState  = putinrange(this->iState, *this->iMin, *this->iMax);
+    this->iState += (error + this->errorPrev) * dT / 2;
+    this->iState  = putinrange(this->iState, this->iMin, this->iMax);
+    this->errorPrev = error;
 
-    return (*this->pGain * error) + (*this->iGain * this->iState) + (*this->dGain * diff);
+    return (*this->pGain * error) + (*this->iGain * this->iState) + (*this->dGain * dTerm);
   }
 };
 
+/**
+ * This PID calculates derivative term using current position value
+ */
+template <typename T>
+class PidControlSelfDerivative : public PidControlBase <T> {
+public:
+  /**
+   * @brief   Update PID.
+   * @param[in] position  Current position for derivative term self calculation
+   * @param[in] target    Target value
+
+   */
+  T update(T position, T target, T dT) {
+
+    T error = position - target;
+
+    /* calculate the integral state with appropriate limiting */
+    this->iState += (error + this->errorPrev) * dT / 2;
+    this->iState  = putinrange(this->iState, this->iMin, this->iMax);
+    this->errorPrev = error;
+
+    /* calculate the derivative term */
+    T dTerm = (position - this->positionPrev) * dT;
+    this->positionPrev = position;
+
+    return (*this->pGain * error) + (*this->iGain * this->iState) + (*this->dGain * dTerm);
+  }
+
+private:
+  T positionPrev; /* Previous position value for derivative term calculation */
+};
+
 #endif /* PID_HPP_ */
+
 
 

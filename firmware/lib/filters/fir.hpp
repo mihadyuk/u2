@@ -1,7 +1,9 @@
 #ifndef FIR_HPP_
 #define FIR_HPP_
 
-#include "string.h"
+#include <cstring>
+
+namespace filters {
 
 /**
  * @brief   FIR filter.
@@ -218,5 +220,7 @@ private:
    */
   size_t tip;
 };
+
+} /* namespace */
 
 #endif /* FIR_HPP_ */

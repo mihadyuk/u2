@@ -1,6 +1,8 @@
 #ifndef MEDIAN_H_
 #define MEDIAN_H_
 
+namespace filters {
+
 /**
  * Template of median filter
  */
@@ -64,5 +66,7 @@ private:
    */
   T sorted[N];
 };
+
+} /* namespace */
 
 #endif /* MEDIAN_H_ */

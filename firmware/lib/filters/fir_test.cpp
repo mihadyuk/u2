@@ -4,6 +4,8 @@
 #include "fir.hpp"
 #include "array_len.hpp"
 
+using namespace filters;
+
 #define FILTER_LEN    257
 #define ROUNDS        1000
 

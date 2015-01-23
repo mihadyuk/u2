@@ -66,8 +66,8 @@ private:
   uint8_t acc_fs_current;
   uint8_t dlpf_current;
   uint8_t smplrtdiv_current;
-  FIR<float, float, MPU6050_FIR_LEN> *acc_fir;
-  FIR<float, float, MPU6050_FIR_LEN> *gyr_fir;
+  filters::FIR<float, float, MPU6050_FIR_LEN> *acc_fir;
+  filters::FIR<float, float, MPU6050_FIR_LEN> *gyr_fir;
 
   uint16_t fifo_remainder = 0;
   int16_t rxbuf_fifo[960 / 2];

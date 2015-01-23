@@ -10,6 +10,8 @@
 #include "array_len.hpp"
 #include "putinrange.hpp"
 
+using namespace filters;
+
 /*
  ******************************************************************************
  * DEFINES

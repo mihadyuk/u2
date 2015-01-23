@@ -5,7 +5,7 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -O2 -ggdb -fomit-frame-pointer -falign-functions=16
+  USE_OPT = -O0 -ggdb -fomit-frame-pointer -falign-functions=16
 endif
 
 # C specific options here (added to USE_OPT).
@@ -80,7 +80,7 @@ endif
 PROJECT = ch
 
 # Imported source files and paths
-CHIBIOS = ../../chibios-git
+CHIBIOS = ../../chibios-svn
 include $(CHIBIOS)/os/hal/hal.mk
 include board/board.mk
 include $(CHIBIOS)/os/hal/ports/STM32/STM32F4xx/platform.mk
@@ -117,59 +117,61 @@ CSRC = $(PORTSRC) \
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
-DRIVETRAINSRC = src/drivetrain/drivetrain_pwm.cpp \
-		 src/drivetrain/servo_tree.cpp \
-		 src/drivetrain/drivetrain.cpp \
-		 src/drivetrain/engine.cpp \
+CONTROLSRC =\
+		src/control/stabilizer/stabilizer.cpp \
+		src/control/drivetrain/drivetrain_pwm.cpp \
+		src/control/drivetrain/servo_tree.cpp \
+		src/control/drivetrain/drivetrain.cpp \
+		src/control/drivetrain/engine.cpp \
 
 NVRAMSRC = src/nvram_local.cpp \
-         lib/24aa/src/mtd.cpp \
-         lib/24aa/src/eeprom_mtd.cpp \
-         lib/24aa/src/fram_mtd.cpp \
-         lib/24aa/src/nvram_fs.cpp \
-         lib/24aa/src/nvram_file.cpp
+		lib/24aa/src/mtd.cpp \
+		lib/24aa/src/eeprom_mtd.cpp \
+		lib/24aa/src/fram_mtd.cpp \
+		lib/24aa/src/nvram_fs.cpp \
+		lib/24aa/src/nvram_file.cpp
 
 MAVSRC = src/mavlink_local/parameters.cpp \
-         src/mavlink_local/param_registry.cpp \
-         src/mavlink_local/param_validator.cpp \
-         src/mavlink_local/tlm_sender.cpp \
-         src/mavlink_local/mavlink_local.cpp \
-         src/mavlink_local/mav_postman.cpp \
-         src/mavlink_local/mav_spam_list.cpp \
-         src/mavlink_local/mav_mail.cpp \
-         src/mavlink_local/mav_logger.cpp \
-         src/mavlink_local/mav_channel_serial.cpp \
-         src/mavlink_local/mav_channel_usbserial.cpp \
+		src/mavlink_local/param_registry.cpp \
+		src/mavlink_local/param_validator.cpp \
+		src/mavlink_local/tlm_sender.cpp \
+		src/mavlink_local/mavlink_local.cpp \
+		src/mavlink_local/mav_postman.cpp \
+		src/mavlink_local/mav_spam_list.cpp \
+		src/mavlink_local/mav_mail.cpp \
+		src/mavlink_local/mav_logger.cpp \
+		src/mavlink_local/mav_channel_serial.cpp \
+		src/mavlink_local/mav_channel_usbserial.cpp \
 
 SENSORSRC = src/i2c_local.cpp \
-         sensors/adis.cpp \
-         sensors/exti_local.cpp \
-         sensors/i2c_sensor.cpp \
-         sensors/marg.cpp \
-         sensors/mpu6050.cpp \
-         sensors/ak8975.cpp \
-         sensors/lsm303_acc.cpp \
-         sensors/lsm303_mag.cpp \
+		sensors/adis.cpp \
+		sensors/exti_local.cpp \
+		sensors/i2c_sensor.cpp \
+		sensors/marg.cpp \
+		sensors/mpu6050.cpp \
+		sensors/ak8975.cpp \
+		sensors/lsm303_acc.cpp \
+		sensors/lsm303_mag.cpp \
           
 CLISRC = src/cli/cli.cpp \
-         src/cli/cli_cmd.cpp \
-         src/param_cli.cpp \
+		src/cli/cli_cmd.cpp \
+		src/param_cli.cpp \
 
 CPPSRC = $(CHCPPSRC) \
-         $(NVRAMSRC) \
-         $(MAVSRC) \
-         $(SENSORSRC) \
-         $(CLISRC) \
-         $(DRIVETRAINSRC) \
-         main.cpp \
-         src/instantiator.cpp \
-         src/link_mgr.cpp \
-         src/debouncer.cpp \
-         src/blinker.cpp \
-         src/sanity.cpp \
-         src/timekeeper.cpp \
-         src/kinematic/ahrs.cpp \
-         lib/filters/fir_test.cpp \
+		$(NVRAMSRC) \
+		$(MAVSRC) \
+		$(SENSORSRC) \
+		$(CLISRC) \
+		$(CONTROLSRC) \
+		main.cpp \
+		src/instantiator.cpp \
+		src/link_mgr.cpp \
+		src/debouncer.cpp \
+		src/blinker.cpp \
+		src/sanity.cpp \
+		src/timekeeper.cpp \
+		src/kinematic/ahrs.cpp \
+		lib/filters/fir_test.cpp \
 
 # C sources to be compiled in ARM mode regardless of the global setting.
 # NOTE: Mixing ARM and THUMB mode enables the -mthumb-interwork compiler
@@ -208,7 +210,7 @@ INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
          src/mavlink_local \
          src/kinematic \
          src/cli \
-         src/drivetrain \
+         src/control/ \
          lib/mavlink/C/lapwing \
          benchmark \
 

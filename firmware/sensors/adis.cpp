@@ -482,6 +482,7 @@ sensor_state_t Adis::get(ahrs_data_t &result) {
       memcpy(result.euler, &measurement.euler, sizeof(result.euler));
     if (1 == result.request.quat)
       memcpy(result.quat, &measurement.quat, sizeof(result.quat));
+    result.dt = this->dt();
     release_lock();
   }
   return this->state;

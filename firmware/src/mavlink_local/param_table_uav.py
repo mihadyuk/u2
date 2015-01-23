@@ -169,6 +169,23 @@ param = [
 #/* car specific settings */
 ("SRV_rud_dz",      1,          16,         64,         "u", "default",     "NULL"),
 
+# PID settings
+("PID_roll_P",      -200.0,     0,          200.0,      "f", "default",     "NULL"),
+("PID_roll_I",      -2.0,       0,          2.0,        "f", "default",     "NULL"),
+("PID_roll_D",      -10000.0,   0,          10000.0,    "f", "default",     "NULL"),
+
+("PID_pitch_P",     -200.0,     0,          200.0,      "f", "default",     "NULL"),
+("PID_pitch_I",     -2.0,       0,          2.0,        "f", "default",     "NULL"),
+("PID_pitch_D",     -10000.0,   0,          10000.0,    "f", "default",     "NULL"),
+
+("PID_yaw_P",       -200.0,     0,          200.0,      "f", "default",     "NULL"),
+("PID_yaw_I",       -1.0,       0,          1.0,        "f", "default",     "NULL"),
+("PID_yaw_D",       -10000.0,   0,          10000.0,    "f", "default",     "NULL"),
+
+("PID_speed_P",     -200.0,     0,          200.0,      "f", "default",     "NULL"),
+("PID_speed_I",     -8.0,       0,          8.0,        "f", "default",     "NULL"),
+("PID_speed_D",     -10000.0,   0,          10000.0,    "f", "default",     "NULL"),
+
 #/* intervals between sending different data (mS) */
 ("T_raw_imu",       SEND_MIN, 0, SEND_MAX, "u", "send_tmo","Interval of sending this data in milliseconds.\\nSet it to 0 for disabling"),
 ("T_scal_imu",      SEND_MIN, 0, SEND_MAX, "u", "send_tmo","NULL"),
