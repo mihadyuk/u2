@@ -87,22 +87,22 @@ void Stabilizer::start(void) {
   param_registry.valueSearch("PID_roll_P", &p),
   param_registry.valueSearch("PID_roll_I", &i),
   param_registry.valueSearch("PID_roll_D", &d);
-  pid_roll.start(p, i, d, -1, 1);
+  pid_roll.start(p, i, d);
 
   param_registry.valueSearch("PID_pitch_P", &p),
   param_registry.valueSearch("PID_pitch_I", &i),
   param_registry.valueSearch("PID_pitch_D", &d);
-  pid_pitch.start(p, i, d, -1, 1);
+  pid_pitch.start(p, i, d);
 
   param_registry.valueSearch("PID_yaw_P", &p),
   param_registry.valueSearch("PID_yaw_I", &i),
   param_registry.valueSearch("PID_yaw_D", &d);
-  pid_yaw.start(p, i, d, -1, 1);
+  pid_yaw.start(p, i, d);
 
   param_registry.valueSearch("PID_speed_P", &p),
   param_registry.valueSearch("PID_speed_I", &i),
   param_registry.valueSearch("PID_speed_D", &d);
-  pid_speed.start(p, i, d, -1, 1);
+  pid_speed.start(p, i, d);
 
   drivetrain.start();
 

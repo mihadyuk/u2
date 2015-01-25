@@ -11,12 +11,12 @@ public:
   /**
    * @brief   Default constructor.
    */
-  IIR(T *a_taps, T *b_taps) {
-
+  IIR(T *a_taps, T *b_taps) :
+  a(a_taps),
+  b(b_taps)
+  {
     static_assert(L > 0, "Zero size forbidden.");
-
-    a = a_taps;
-    b = b_taps;
+    osalDbgCheck((nullptr != a) && (nullptr != b));
     memset(a_state, 0, sizeof(a_state));
     memset(b_state, 0, sizeof(b_state));
   }
@@ -45,7 +45,7 @@ public:
     return s;
   }
 
-private:
+protected:
   T *a;
   T *b;
   dataT a_state[L];

@@ -25,7 +25,7 @@ public:
    *
    */
   void dryRun(T i) {
-    if (fabs(*iGain) < FLT_EPSILON * 10) // zero divizion protect
+    if (fabs(*iGain) < FLT_EPSILON * 10) // zero division protect
       iState = 0;
     else
       iState = i / *iGain;
@@ -34,15 +34,12 @@ public:
   /**
    *
    */
-  void start(T const *pGain, T const *iGain, T const *dGain, T iMin, T iMax) {
-
-    osalDbgCheck(iMax > iMin);
+  void start(T const *pGain, T const *iGain, T const *dGain) {
+    osalDbgCheck((nullptr != pGain) && (nullptr != iGain) && (nullptr != dGain));
 
     this->pGain = pGain;
     this->iGain = iGain;
     this->dGain = dGain;
-    this->iMin = iMin;
-    this->iMax = iMax;
   }
 
   /**
@@ -58,8 +55,8 @@ protected:
   T const *pGain;     /* proportional gain */
   T const *iGain;     /* integral gain */
   T const *dGain;     /* derivative gain */
-  T iMax;
-  T iMin;
+  const T iMax = 1;
+  const T iMin = -1;
 };
 
 /**
@@ -81,7 +78,9 @@ public:
     this->iState  = putinrange(this->iState, this->iMin, this->iMax);
     this->errorPrev = error;
 
-    return (*this->pGain * error) + (*this->iGain * this->iState) + (*this->dGain * dTerm);
+    return *this->pGain * error +
+           *this->iGain * this->iState +
+           *this->dGain * dTerm;
   }
 };
 
@@ -110,7 +109,9 @@ public:
     T dTerm = (position - this->positionPrev) * dT;
     this->positionPrev = position;
 
-    return (*this->pGain * error) + (*this->iGain * this->iState) + (*this->dGain * dTerm);
+    return *this->pGain * error +
+           *this->iGain * this->iState +
+           *this->dGain * dTerm;
   }
 
 private:

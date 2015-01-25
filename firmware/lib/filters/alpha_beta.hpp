@@ -19,7 +19,7 @@ public:
   /**
    * Constructor resetting current value to specified one
    */
-  AlphaBeta(T val, int32_t len){
+  AlphaBeta(T val, int len){
     reset(val, len);
   };
 
@@ -27,7 +27,7 @@ public:
    * Perform addition of new sample to filter and return current filtered
    * result
    */
-  T update(T val, int32_t len){
+  T update(T val, int len){
     T tmp = S / len;
     S = S - tmp + val;
     return tmp;
@@ -36,14 +36,14 @@ public:
   /**
    * Return current result without updating
    */
-  T get(int32_t len){
+  T get(int len){
     return S / len;
   };
 
   /**
    * Reset filter state
    */
-  void reset(T val, int32_t len){
+  void reset(T val, int len){
     S = val * len;
   }
 
@@ -57,7 +57,7 @@ private:
 /**
  * Template of alpha-beta filter class with fixed length
  */
-template<typename T, int32_t len>
+template<typename T, int len>
 class AlphaBetaFixedLen{
 public:
   /**
@@ -88,7 +88,7 @@ public:
   /**
    * Return length of filter
    */
-  int32_t getLen(void){
+  int getLen(void){
     return len;
   };
 

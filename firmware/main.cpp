@@ -161,6 +161,8 @@ Ahrs ahrs;
  *******************************************************************************
  *******************************************************************************
  */
+#include "iir.hpp"
+
 int main(void) {
 
   halInit();
@@ -222,6 +224,7 @@ int main(void) {
     state_vector.yaw = ahrs_data.euler[0];
     stabilizer.update(trgt, state_vector, ahrs_data.dt);
 
+    filters::IIR<float, float, 1> myiir(nullptr, nullptr);
 
     //osalThreadSleepMilliseconds(200);
 //    if (ATTITUDE_UNIT_UPDATE_RESULT_OK == attitude_unit.update()){
