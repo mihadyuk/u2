@@ -18,9 +18,10 @@ typedef enum {
 /**
  * @brief   Output data from ACS
  */
-typedef struct {
+struct Impact {
+  uint32_t mask = 0;
   float a[DRIVETRAIN_IMPACT_CHANNELS];    // normalized angle values -1..1
-}Impact;
+};
 
 } /* namespace */
 

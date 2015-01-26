@@ -77,12 +77,12 @@ void Drivetrain::stop(void) {
 /**
  *
  */
-msg_t Drivetrain::update(const Impact &impact) {
+msg_t Drivetrain::update(const FutabaData &futaba_data, const Impact &impact) {
 
   osalDbgCheck(ready);
 
-  servo.update(impact);
-  engine.update(impact);
+  servo.update(futaba_data, impact);
+  engine.update(futaba_data, impact);
 
   return MSG_OK;
 }
@@ -90,6 +90,6 @@ msg_t Drivetrain::update(const Impact &impact) {
 /**
  *
  */
-void Drivetrain::futaba_override(const PwmOverride &override) {
+void Drivetrain::futaba_override(const PwmVector &override) {
   pwm.futaba_override(override);
 }

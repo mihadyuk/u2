@@ -1,5 +1,8 @@
-#include <control/futaba/pwm_receiver.hpp>
 #include "main.h"
+
+#include <futaba/receiver_rc.hpp>
+
+using namespace control;
 
 /*
  ******************************************************************************
@@ -38,11 +41,43 @@
  * EXPORTED FUNCTIONS
  ******************************************************************************
  */
+/**
+ *
+ */
+ReceiverRC::ReceiverRC(systime_t timeout) : Receiver(timeout) {
+  return;
+}
 
 /**
  *
  */
-bool PWMReceiver::update(PwmVector *pwm, systime_t timeout){
-  chDbgCheck(ready == true, "PWMReceiver: invalid state");
-  return update_impl(pwm, timeout);
+void ReceiverRC::start(void) {
+  ready = true;
 }
+
+/**
+ *
+ */
+void ReceiverRC::stop(void) {
+  ready = false;
+}
+
+/**
+ *
+ */
+msg_t ReceiverRC::update(uint16_t *pwm) {
+
+  msg_t ret = MSG_OK;
+
+  chDbgCheck(ready);
+
+  for (size_t i=0; i<FUTABA_RECEIVER_PWM_CHANNELS; i++)
+    pwm[i] = 1500;
+
+  return ret;
+}
+
+
+
+
+

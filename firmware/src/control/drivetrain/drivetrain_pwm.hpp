@@ -1,11 +1,10 @@
 #ifndef DRIVETRAIN_PWM_HPP_
 #define DRIVETRAIN_PWM_HPP_
 
-#define DRIVETRAIN_PWM_CHANNELS   8
 #define DRIVETRAIN_PWM_CLK        1000000 /* 1MHz clock */
 #define DRIVETRAIN_PWM_PERIOD     20000   /* 20000 == 50Hz pulse generation */
 
-#include "pwm_override.hpp"
+#include <pwm_vector.hpp>
 
 namespace control {
 
@@ -29,7 +28,7 @@ public:
   void start(void);
   void stop(void);
   void update(uint16_t pwm, size_t channel);
-  void futaba_override(const PwmOverride &override);
+  void futaba_override(const PwmVector &override);
 private:
   bool ready = false;
 };

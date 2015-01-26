@@ -75,23 +75,24 @@ void Engine::stop(void) {
 /**
  *
  */
-void Engine::update(const Impact &impact) {
+void Engine::update(const FutabaData &futaba_data, const Impact &impact) {
   int16_t tmp;
 
   osalDbgCheck(ready);
 
-  tmp = float2pwm(impact.a[IMPACT_SPEED]);
-  if (tmp > 0) {
-    pwm.update(tmp, PWM_CH_THRUST_FORTH);
-    pwm.update(0,   PWM_CH_THRUST_BACK);
+  if (OVERRIDE_LEVEL_PWM == futaba_data.override_level) {
+    osalSysHalt("Unrealized");
   }
   else {
-    pwm.update(0,   PWM_CH_THRUST_FORTH);
-    pwm.update(tmp, PWM_CH_THRUST_BACK);
+    tmp = float2pwm(impact.a[IMPACT_SPEED]);
+    if (tmp > 0) {
+      pwm.update(tmp, PWM_CH_THRUST_FORTH);
+      pwm.update(0,   PWM_CH_THRUST_BACK);
+    }
+    else {
+      pwm.update(0,   PWM_CH_THRUST_FORTH);
+      pwm.update(tmp, PWM_CH_THRUST_BACK);
+    }
   }
 }
-
-
-
-
 

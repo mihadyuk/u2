@@ -145,14 +145,14 @@ void PWM::update(uint16_t pwm, size_t channel) {
 /**
  *
  */
-void PWM::futaba_override(const PwmOverride &override) {
+void PWM::futaba_override(const PwmVector &override) {
   size_t i;
 
   osalDbgCheck(ready);
 
   for (i=0; i<4; i++)
-    pwm1[i] = override.a[i];
+    pwm1[i] = override.pwm[i];
   for (; i<8; i++)
-    pwm1[i-4] = override.a[i];
+    pwm1[i-4] = override.pwm[i];
 }
 

@@ -56,10 +56,10 @@ ready(false)
 /**
  *
  */
-void Stabilizer::update(const TargetVector &trgt,
+void Stabilizer::update(const FutabaData &futaba_data,
+                        const TargetVector &trgt,
                         const StateVector &state,
                         float dT) {
-
   Impact impact;
 
   osalDbgCheck(ready);
@@ -69,12 +69,17 @@ void Stabilizer::update(const TargetVector &trgt,
 //  impact.a[IMPACT_YAW]   = pid_yaw.update(state.yaw     - trgt.yaw,   state.wz);
 //  impact.a[IMPACT_SPEED] = pid_speed.update(state.vair  - trgt.speed, 0);
 
-  impact.a[IMPACT_ROLL]  = pid_roll.update(state.roll, trgt.roll, dT);
-  impact.a[IMPACT_PITCH] = pid_pitch.update(state.pitch, trgt.pitch, dT);
-  impact.a[IMPACT_YAW]   = pid_yaw.update(state.yaw, trgt.yaw, dT);
-  impact.a[IMPACT_SPEED] = pid_speed.update(state.vair, trgt.speed, dT);
+  if (OVERRIDE_LEVEL_STABILIZER == futaba_data.override_level) {
+    osalSysHalt("Unrealized");
+  }
+  else {
+    impact.a[IMPACT_ROLL]  = pid_roll.update(state.roll, trgt.roll, dT);
+    impact.a[IMPACT_PITCH] = pid_pitch.update(state.pitch, trgt.pitch, dT);
+    impact.a[IMPACT_YAW]   = pid_yaw.update(state.yaw, trgt.yaw, dT);
+    impact.a[IMPACT_SPEED] = pid_speed.update(state.vair, trgt.speed, dT);
+  }
 
-  this->drivetrain.update(impact);
+  this->drivetrain.update(futaba_data, impact);
 }
 
 /**

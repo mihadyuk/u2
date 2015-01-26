@@ -1,6 +1,7 @@
 #ifndef DRIVETRAIN_HPP_
 #define DRIVETRAIN_HPP_
 
+#include "futaba_data.hpp"
 #include "servo_tree.hpp"
 #include "impact.hpp"
 #include "drivetrain_pwm.hpp"
@@ -16,8 +17,8 @@ public:
   Drivetrain(void);
   void start(void);
   void stop(void);
-  msg_t update(const Impact &impact);
-  void futaba_override(const PwmOverride &override);
+  msg_t update(const FutabaData &futaba_data, const Impact &impact);
+  void futaba_override(const PwmVector &override);
 
 private:
   bool ready = false;

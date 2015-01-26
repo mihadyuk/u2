@@ -1,19 +1,14 @@
-#include <control/futaba/pwm_receiver_rover.hpp>
-#include <stdio.h>
-
 #include "main.h"
 
-#include "alpha_beta.hpp"
-#include "message.hpp"
-#include "utils.hpp"
-#include "acs_telemetry.hpp"
+#include <futaba/receiver_mavlink.hpp>
+
+using namespace control;
 
 /*
  ******************************************************************************
  * DEFINES
  ******************************************************************************
  */
-#define CHANNELS_USED               8 /* how many first channels used */
 
 /*
  ******************************************************************************
@@ -41,22 +36,6 @@
  ******************************************************************************
  */
 
-/**
- *
- */
-bool PWMReceiverRover::update_impl(PwmVector *pwm, systime_t timeout){
-
-  chDbgCheck(NULL != pwm, "PWMPlane::update_impl. Null pointer forbidden");
-
-  /**/
-  if (((chTimeNow() - last_success_recv)   > timeout) ||
-      ((chTimeNow() - last_success_decode) > timeout)) {
-    return CH_FAILED;
-  }
-  else
-    return CH_SUCCESS;
-}
-
 /*
  ******************************************************************************
  * EXPORTED FUNCTIONS
@@ -65,24 +44,40 @@ bool PWMReceiverRover::update_impl(PwmVector *pwm, systime_t timeout){
 /**
  *
  */
-PWMReceiverRover::PWMReceiverRover(void) {
-  last_success_decode = 0;
-  last_success_recv = 0;
-  ready = false;
+ReceiverMavlink::ReceiverMavlink(systime_t timeout) : Receiver(timeout) {
+  return;
 }
 
 /**
  *
  */
-void PWMReceiverRover::start(void){
-  last_success_decode = chTimeNow();
-  last_success_recv = chTimeNow();
+void ReceiverMavlink::start(void) {
   ready = true;
 }
 
 /**
  *
  */
-void PWMReceiverRover::stop(void){
+void ReceiverMavlink::stop(void) {
   ready = false;
 }
+
+/**
+ *
+ */
+msg_t ReceiverMavlink::update(uint16_t *pwm) const {
+
+  msg_t ret = MSG_OK;
+
+  chDbgCheck(ready);
+
+  for (size_t i=0; i<FUTABA_RECEIVER_PWM_CHANNELS; i++)
+    pwm[i] = 1500;
+
+  return ret;
+}
+
+
+
+
+

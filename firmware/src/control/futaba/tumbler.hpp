@@ -31,8 +31,8 @@ public:
 
 private:
   void __ctor(T val){
-    chDbgCheck(max0 < min1, "There must be some room between hysteresises");
-    chDbgCheck(val < 2, "Incorrect initial value");
+    static_assert((max0 < min1), "");
+    chDbgCheck(val < 2);
     prev = val;
   }
 
@@ -71,9 +71,8 @@ public:
 
 private:
   void __ctor(T val){
-    chDbgCheck((max0 < min1) && (max1 < min2),
-                "There must be some room between hysteresises");
-    chDbgCheck(val < 3, "Incorrect initial value");
+    static_assert((max0 < min1) && (max1 < min2), "There must be some room between hysteresises");
+    chDbgCheck(val < 3);                      //Incorrect initial value
     prev = val;
   }
 

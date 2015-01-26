@@ -123,6 +123,8 @@ CONTROLSRC =\
 		src/control/drivetrain/servo_tree.cpp \
 		src/control/drivetrain/drivetrain.cpp \
 		src/control/drivetrain/engine.cpp \
+		src/control/futaba/futaba.cpp \
+		src/control/futaba/receiver_mavlink.cpp \
 
 NVRAMSRC = src/nvram_local.cpp \
 		lib/24aa/src/mtd.cpp \

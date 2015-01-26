@@ -3,6 +3,7 @@
 
 #include "impact.hpp"
 #include "drivetrain_pwm.hpp"
+#include "futaba_data.hpp"
 
 namespace control {
 
@@ -11,7 +12,7 @@ public:
   ServoTree(PWM &pwm);
   void start(void);
   void stop(void);
-  void update(const Impact &impact);
+  void update(const FutabaData &futaba_data, const Impact &impact);
 private:
   PWM &pwm;
   bool ready = false;

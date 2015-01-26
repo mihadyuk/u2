@@ -90,13 +90,18 @@ void ServoTree::stop(void) {
 /**
  *
  */
-void ServoTree::update(const Impact &impact) {
+void ServoTree::update(const FutabaData &futaba_data, const Impact &impact) {
   uint16_t tmp;
 
   osalDbgCheck(ready);
 
-  tmp = float2pwm(impact.a[IMPACT_YAW], *rud_min, *rud_mid, *rud_max);
-  pwm.update(tmp, PWM_CH_RUD);
+  if (OVERRIDE_LEVEL_PWM == futaba_data.override_level) {
+    osalSysHalt("Unrealized");
+  }
+  else {
+    tmp = float2pwm(impact.a[IMPACT_YAW], *rud_min, *rud_mid, *rud_max);
+    pwm.update(tmp, PWM_CH_RUD);
+  }
 }
 
 

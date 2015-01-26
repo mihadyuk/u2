@@ -112,7 +112,7 @@ static uint8_t link_thd_buf[THREAD_HEAP_SIZE + sizeof(stkalign_t)];
 //WpDB wpdb;
 
 /* State vector of system. Calculated mostly in IMU, used mostly in ACS */
-StateVector state_vector;
+StateVector state_vector __attribute__((section(".ccm")));
 
 control::Drivetrain drivetrain;
 control::Stabilizer stabilizer(drivetrain);
@@ -160,6 +160,12 @@ Ahrs ahrs;
  *******************************************************************************
  *******************************************************************************
  */
+#include <control/futaba/futaba.hpp>
+
+control::Futaba futaba(MS2ST(1000));
+control::FutabaData futaba_data __attribute__((section(".ccm")));
+control::TargetVector trgt __attribute__((section(".ccm")));
+
 int main(void) {
 
   halInit();
@@ -210,16 +216,17 @@ int main(void) {
 
   ahrs.start();
   stabilizer.start();
+  futaba.start();
 
   while (TRUE) {
     ahrs_data_t ahrs_data;
     ahrs.get(ahrs_data, MS2ST(200));
 
+    futaba.update(futaba_data);
 
-    control::TargetVector trgt;
     trgt.yaw = 0;
     state_vector.yaw = ahrs_data.euler[0];
-    stabilizer.update(trgt, state_vector, ahrs_data.dt);
+    stabilizer.update(futaba_data, trgt, state_vector, ahrs_data.dt);
 
     //osalThreadSleepMilliseconds(200);
 //    if (ATTITUDE_UNIT_UPDATE_RESULT_OK == attitude_unit.update()){

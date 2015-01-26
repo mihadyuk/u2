@@ -2,8 +2,8 @@
 #define FUTABA_HPP_
 
 #include <control/futaba/connect_checker.hpp>
-#include <control/futaba/pwm_receiver.hpp>
 #include <control/futaba/tumbler.hpp>
+#include <futaba/receiver.hpp>
 
 #include "impact.hpp"
 
