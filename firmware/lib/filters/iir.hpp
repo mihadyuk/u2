@@ -5,17 +5,18 @@
 
 namespace filters {
 
-template <typename T, typename dataT, int L>
+template <typename T, typename dataT, unsigned int L>
 class IIR {
 public:
   /**
    * @brief   Default constructor.
    */
-  IIR(T *a_taps, T *b_taps) :
+  IIR(const T *a_taps, const T *b_taps) :
   a(a_taps),
   b(b_taps)
   {
     static_assert(L > 0, "Zero size forbidden.");
+
     osalDbgCheck((nullptr != a) && (nullptr != b));
     memset(a_state, 0, sizeof(a_state));
     memset(b_state, 0, sizeof(b_state));
@@ -26,7 +27,7 @@ public:
    */
   T update(T sample) {
 
-    size_t i;
+    unsigned int i;
     T s;
 
     /* filter */
@@ -46,8 +47,8 @@ public:
   }
 
 protected:
-  T *a;
-  T *b;
+  const T *a;
+  const T *b;
   dataT a_state[L];
   dataT b_state[L];
 };

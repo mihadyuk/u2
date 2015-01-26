@@ -57,14 +57,14 @@ private:
 /**
  * Template of alpha-beta filter class with fixed length
  */
-template<typename T, int len>
+template<typename T, int L>
 class AlphaBetaFixedLen{
 public:
   /**
    * Constructor resetting current value to specified one
    */
   AlphaBetaFixedLen(T val){
-    chDbgCheck(len != 0, "Zero length forbidden");
+    static_assert(L != 0, "Zero length forbidden");
     reset(val);
   };
 
@@ -73,8 +73,8 @@ public:
    * result
    */
   T update(T val){
-    T tmp = S / len;
-    S = S - tmp + val;
+    T tmp = S / L;
+    S -= tmp + val;
     return tmp;
   };
 
@@ -82,21 +82,21 @@ public:
    * Return current result without updating
    */
   T get(void){
-    return S / len;
+    return S / L;
   };
 
   /**
    * Return length of filter
    */
   int getLen(void){
-    return len;
+    return L;
   };
 
   /**
    * Reset filter state
    */
   void reset(T val){
-    S = val * len;
+    S = val * L;
   }
 
 private:

@@ -6,7 +6,7 @@ namespace filters {
 /**
  * Template of median filter
  */
-template<typename T, uint32_t N>
+template<typename T, unsigned int N>
 class Median{
 public:
   /**
@@ -19,7 +19,8 @@ public:
      * 3) lenght more than 5 is totally inefficient */
     static_assert(((3 == N) || (5 == N)), "incorrect filter length");
 
-    for(uint32_t i=0; i<N; i++)
+    unsigned int i;
+    for(i=0; i<N; i++)
       buf[i] = 0;
   };
 
@@ -27,7 +28,7 @@ public:
    * Update filter state and return filtered value
    */
   T update(T sample){
-    uint32_t j = 0, i = 0;
+    unsigned int j = 0, i = 0;
     T tmp;
 
     /* place new sample in fifo */
