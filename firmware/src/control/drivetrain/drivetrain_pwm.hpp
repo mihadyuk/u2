@@ -5,9 +5,9 @@
 #define DRIVETRAIN_PWM_CLK        1000000 /* 1MHz clock */
 #define DRIVETRAIN_PWM_PERIOD     20000   /* 20000 == 50Hz pulse generation */
 
-#include "drivetrain_pwm_override.hpp"
+#include "pwm_override.hpp"
 
-namespace Control {
+namespace control {
 
 /**
  *
@@ -34,6 +34,6 @@ private:
   bool ready = false;
 };
 
-} /* namespace Control */
+} /* namespace */
 
 #endif /* DRIVETRAIN_PWM_HPP_ */

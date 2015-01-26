@@ -2,11 +2,11 @@
 #define DRIVETRAIN_HPP_
 
 #include "servo_tree.hpp"
-#include "drivetrain_impact.hpp"
+#include "impact.hpp"
 #include "drivetrain_pwm.hpp"
 #include "engine.hpp"
 
-namespace Control {
+namespace control {
 
 /**
  * @brief   Convert different impact values to servo angles
@@ -16,7 +16,7 @@ public:
   Drivetrain(void);
   void start(void);
   void stop(void);
-  msg_t update(const DrivetrainImpact &impact);
+  msg_t update(const Impact &impact);
   void futaba_override(const PwmOverride &override);
 
 private:
@@ -26,6 +26,6 @@ private:
   ServoTree servo;
 };
 
-} /* namespace Control */
+} /* namespace */
 
 #endif /* DRIVETRAIN_HPP_ */

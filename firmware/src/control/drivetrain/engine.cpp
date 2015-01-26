@@ -2,7 +2,7 @@
 #include "engine.hpp"
 #include "putinrange.hpp"
 
-using namespace Control;
+using namespace control;
 
 /*
  ******************************************************************************
@@ -75,7 +75,7 @@ void Engine::stop(void) {
 /**
  *
  */
-void Engine::update(const DrivetrainImpact &impact) {
+void Engine::update(const Impact &impact) {
   int16_t tmp;
 
   osalDbgCheck(ready);

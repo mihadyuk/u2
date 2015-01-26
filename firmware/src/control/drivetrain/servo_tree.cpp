@@ -4,7 +4,7 @@
 #include "putinrange.hpp"
 #include "param_registry.hpp"
 
-using namespace Control;
+using namespace control;
 
 /*
  ******************************************************************************
@@ -64,8 +64,7 @@ uint16_t float2pwm(float a, int min, int mid, int max) {
 /**
  *
  */
-ServoTree::ServoTree(PWM &pwm) :
-pwm(pwm) {
+ServoTree::ServoTree(PWM &pwm) : pwm(pwm) {
   return;
 }
 
@@ -91,7 +90,7 @@ void ServoTree::stop(void) {
 /**
  *
  */
-void ServoTree::update(const DrivetrainImpact &impact) {
+void ServoTree::update(const Impact &impact) {
   uint16_t tmp;
 
   osalDbgCheck(ready);

@@ -1,23 +1,23 @@
 #ifndef SERVO_TREE_HPP_
 #define SERVO_TREE_HPP_
 
-#include "drivetrain_impact.hpp"
+#include "impact.hpp"
 #include "drivetrain_pwm.hpp"
 
-namespace Control {
+namespace control {
 
 class ServoTree {
 public:
   ServoTree(PWM &pwm);
   void start(void);
   void stop(void);
-  void update(const DrivetrainImpact &impact);
+  void update(const Impact &impact);
 private:
   PWM &pwm;
   bool ready = false;
-  const uint32_t *rud_min, *rud_mid, *rud_max;
+  const uint32_t *rud_min = nullptr, *rud_mid = nullptr, *rud_max = nullptr;
 };
 
-} /* namespace Control */
+} /* namespace */
 
 #endif /* SERVO_TREE_HPP_ */

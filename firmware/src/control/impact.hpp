@@ -1,9 +1,9 @@
-#ifndef DRIVETRAIN_IMPACT_HPP_
-#define DRIVETRAIN_IMPACT_HPP_
+#ifndef CONTROL_IMPACT_HPP_
+#define CONTROL_IMPACT_HPP_
 
 #define DRIVETRAIN_IMPACT_CHANNELS   4
 
-namespace Control {
+namespace control {
 
 /**
  *
@@ -20,8 +20,8 @@ typedef enum {
  */
 typedef struct {
   float a[DRIVETRAIN_IMPACT_CHANNELS];    // normalized angle values -1..1
-}DrivetrainImpact;
+}Impact;
 
-} /* namespace Control */
+} /* namespace */
 
-#endif /* DRIVETRAIN_IMPACT_HPP_ */
+#endif /* CONTROL_IMPACT_HPP_ */

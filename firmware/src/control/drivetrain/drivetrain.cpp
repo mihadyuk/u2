@@ -1,7 +1,7 @@
 #include "main.h"
 #include "drivetrain.hpp"
 
-using namespace Control;
+using namespace control;
 
 /*
  ******************************************************************************
@@ -77,7 +77,7 @@ void Drivetrain::stop(void) {
 /**
  *
  */
-msg_t Drivetrain::update(const DrivetrainImpact &impact) {
+msg_t Drivetrain::update(const Impact &impact) {
 
   osalDbgCheck(ready);
 

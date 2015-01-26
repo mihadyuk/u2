@@ -2,9 +2,9 @@
 #include "param_registry.hpp"
 
 #include "stabilizer/stabilizer.hpp"
-#include "drivetrain/drivetrain_impact.hpp"
+#include "impact.hpp"
 
-using namespace Control;
+using namespace control;
 
 /*
  ******************************************************************************
@@ -56,11 +56,11 @@ ready(false)
 /**
  *
  */
-void Stabilizer::update(const StabilizerTargetVector &trgt,
+void Stabilizer::update(const TargetVector &trgt,
                         const StateVector &state,
                         float dT) {
 
-  DrivetrainImpact impact;
+  Impact impact;
 
   osalDbgCheck(ready);
 
@@ -87,22 +87,22 @@ void Stabilizer::start(void) {
   param_registry.valueSearch("PID_roll_P", &p),
   param_registry.valueSearch("PID_roll_I", &i),
   param_registry.valueSearch("PID_roll_D", &d);
-  pid_roll.start(p, i, d);
+  pid_roll.start(p, i, d, nullptr, nullptr);
 
   param_registry.valueSearch("PID_pitch_P", &p),
   param_registry.valueSearch("PID_pitch_I", &i),
   param_registry.valueSearch("PID_pitch_D", &d);
-  pid_pitch.start(p, i, d);
+  pid_pitch.start(p, i, d, nullptr, nullptr);
 
   param_registry.valueSearch("PID_yaw_P", &p),
   param_registry.valueSearch("PID_yaw_I", &i),
   param_registry.valueSearch("PID_yaw_D", &d);
-  pid_yaw.start(p, i, d);
+  pid_yaw.start(p, i, d, nullptr, nullptr);
 
   param_registry.valueSearch("PID_speed_P", &p),
   param_registry.valueSearch("PID_speed_I", &i),
   param_registry.valueSearch("PID_speed_D", &d);
-  pid_speed.start(p, i, d);
+  pid_speed.start(p, i, d, nullptr, nullptr);
 
   drivetrain.start();
 

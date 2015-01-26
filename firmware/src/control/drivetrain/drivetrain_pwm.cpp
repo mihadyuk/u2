@@ -2,9 +2,9 @@
 
 #include "main.h"
 #include "drivetrain_pwm.hpp"
-#include "drivetrain_impact.hpp"
+#include "impact.hpp"
 
-using namespace Control;
+using namespace control;
 
 /*
  ******************************************************************************

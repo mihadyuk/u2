@@ -3,6 +3,7 @@
 
 #include "putinrange.hpp"
 #include "float.h" /* for FLT_EPSILON macro */
+#include "iir.hpp"
 
 /**
  * This Base PID control class.
@@ -90,6 +91,28 @@ public:
 template <typename T>
 class PidControlSelfDerivative : public PidControlBase <T> {
 public:
+
+  /**
+   *
+   */
+  void start(T const *pGain, T const *iGain, T const *dGain,
+             const T *iir_a, const T *iir_b) {
+    osalDbgCheck((nullptr != pGain) && (nullptr != iGain) && (nullptr != dGain));
+
+    this->pGain = pGain;
+    this->iGain = iGain;
+    this->dGain = dGain;
+
+    osalDbgCheck(((nullptr == iir_a) && (nullptr == iir_b)) ||
+                 ((nullptr != iir_a) && (nullptr != iir_b)));
+    if (nullptr != iir_a) {
+      filter.set_taps(iir_a, iir_b);
+      need_filter = true;
+    }
+    else
+      need_filter = false;
+  }
+
   /**
    * @brief   Update PID.
    * @param[in] position  Current position for derivative term self calculation
@@ -108,6 +131,8 @@ public:
     /* calculate the derivative term */
     T dTerm = (position - this->positionPrev) * dT;
     this->positionPrev = position;
+    if (need_filter)
+      dTerm = filter.update(dTerm);
 
     return *this->pGain * error +
            *this->iGain * this->iState +
@@ -116,6 +141,8 @@ public:
 
 private:
   T positionPrev; /* Previous position value for derivative term calculation */
+  filters::IIR<T, T, 1> filter;
+  bool need_filter;
 };
 
 #endif /* PID_HPP_ */

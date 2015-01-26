@@ -11,15 +11,27 @@ public:
   /**
    * @brief   Default constructor.
    */
-  IIR(const T *a_taps, const T *b_taps) :
-  a(a_taps),
-  b(b_taps)
-  {
-    static_assert(L > 0, "Zero size forbidden.");
+  IIR(void) : a(nullptr), b(nullptr) {
+    memset(a_state, 0, sizeof(a_state));
+    memset(b_state, 0, sizeof(b_state));
+  }
 
+  /**
+   * @brief   Default constructor.
+   */
+  IIR(const T *a_taps, const T *b_taps) : a(a_taps), b(b_taps) {
     osalDbgCheck((nullptr != a) && (nullptr != b));
     memset(a_state, 0, sizeof(a_state));
     memset(b_state, 0, sizeof(b_state));
+  }
+
+  /**
+   * @brief   Switch transformation kernels.
+   */
+  void set_taps(const T *a_taps, const T *b_taps) {
+    osalDbgCheck((nullptr != a) && (nullptr != b));
+    a = a_taps;
+    b = b_taps;
   }
 
   /**
