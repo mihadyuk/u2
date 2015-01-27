@@ -81,8 +81,15 @@ msg_t Drivetrain::update(const FutabaData &futaba_data, const Impact &impact) {
 
   osalDbgCheck(ready);
 
-  servo.update(futaba_data, impact);
-  engine.update(futaba_data, impact);
+  if (OverrideLevel::impact == futaba_data.level) {
+    osalSysHalt("Unrealized/Untested");
+    servo.update(futaba_data, futaba_data.impact);
+    engine.update(futaba_data, futaba_data.impact);
+  }
+  else {
+    servo.update(futaba_data, impact);
+    engine.update(futaba_data, impact);
+  }
 
   return MSG_OK;
 }

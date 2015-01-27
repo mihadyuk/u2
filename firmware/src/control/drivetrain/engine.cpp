@@ -80,11 +80,11 @@ void Engine::update(const FutabaData &futaba_data, const Impact &impact) {
 
   osalDbgCheck(ready);
 
-  if (OVERRIDE_LEVEL_PWM == futaba_data.override_level) {
+  if (OverrideLevel::pwm == futaba_data.level) {
     osalSysHalt("Unrealized");
   }
   else {
-    tmp = float2pwm(impact.a[IMPACT_SPEED]);
+    tmp = float2pwm(impact.a[IMPACT_CH_SPEED]);
     if (tmp > 0) {
       pwm.update(tmp, PWM_CH_THRUST_FORTH);
       pwm.update(0,   PWM_CH_THRUST_BACK);

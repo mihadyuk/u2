@@ -1,18 +1,17 @@
 #ifndef CONTROL_IMPACT_HPP_
 #define CONTROL_IMPACT_HPP_
 
-#define DRIVETRAIN_IMPACT_CHANNELS   4
-
 namespace control {
 
 /**
  *
  */
 typedef enum {
-  IMPACT_ROLL = 0,
-  IMPACT_PITCH = 1,
-  IMPACT_YAW = 2,
-  IMPACT_SPEED = 3,
+  IMPACT_CH_ROLL,
+  IMPACT_CH_PITCH,
+  IMPACT_CH_YAW,
+  IMPACT_CH_SPEED,
+  IMPACT_CH_ENUM_END,
 } impact_ch_t;
 
 /**
@@ -20,7 +19,7 @@ typedef enum {
  */
 struct Impact {
   uint32_t mask = 0;
-  float a[DRIVETRAIN_IMPACT_CHANNELS];    // normalized angle values -1..1
+  float a[IMPACT_CH_ENUM_END];    // normalized angle values -1..1
 };
 
 } /* namespace */

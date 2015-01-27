@@ -5,6 +5,7 @@
 #include <control/futaba_data.hpp>
 #include <control/futaba/receiver_mavlink.hpp>
 #include <control/futaba/receiver_rc.hpp>
+#include <control/futaba/receiver_synth.hpp>
 
 namespace control {
 
@@ -31,7 +32,9 @@ private:
   bool ready = false;
   const systime_t timeout;
   ReceiverMavlink receiver_mavlink;
-  ReceiverMavlink receiver_rc;
+  ReceiverRC receiver_rc;
+  Tumbler3<int, 900, 1200, 1400, 1600, 1800, 2100> switch_mavlink;
+  Tumbler3<int, 900, 1200, 1400, 1600, 1800, 2100> switch_rc;
 };
 
 } /* namespace */

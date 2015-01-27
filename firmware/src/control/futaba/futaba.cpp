@@ -11,6 +11,23 @@ using namespace control;
  * DEFINES
  ******************************************************************************
  */
+/**
+ * @brief     Routing tables.
+ * @details   Maps receiver's PWM channels to abstract channels from
+ *            higher levels.
+ */
+struct route_table_impact_t {
+  uint8_t roll    = 0;
+  uint8_t pitch   = 1;
+  uint8_t yaw     = 2;
+  uint8_t speed   = 3;
+};
+
+struct route_table_direction_t {
+  uint8_t course  = 0;
+  uint8_t height  = 1;
+  uint8_t speed   = 3;
+};
 
 /*
  ******************************************************************************
@@ -29,6 +46,8 @@ using namespace control;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
+static const route_table_impact_t     route_impact;
+static const route_table_direction_t  route_direction;
 
 /*
  ******************************************************************************
@@ -37,6 +56,15 @@ using namespace control;
  ******************************************************************************
  ******************************************************************************
  */
+
+/**
+ *
+ */
+void pwm2direction(TargetDirection &dir, const uint16_t *pwm) {
+
+  dir.a[DIRECTION_CH_COURSE] = pwm[0] / 1000.0f;
+}
+
 /**
  *
  */
@@ -49,78 +77,15 @@ float pwm_normalize(uint16_t v) {
   return putinrange(ret, -1, 1);
 }
 
-///**
-// * @brief   Special normalizer for engine
-// */
-//float Futaba::pwm_normalize_thrust(uint16_t v){
-//  const float shift = 2000;
-//  const float scale = 1000;
-//  float ret;
-//
-//  ret = (-(float)v + shift) / scale;
-//  return putinrange(ret, 0, 1);
-//}
-//
-///**
-// *
-// */
-//void Futaba::pwm2impact(const PwmVector &pwm, Impact &impact){
-//  float i;
-//
-//  i = pwm_normalize(pwm.v[PWM_AIL_CHANNEL]);
-//  impact.angle[SERVO_NUMBER_LEFT_AIL]    = i;
-//  impact.angle[SERVO_NUMBER_RIGHT_AIL]   = i;
-//
-//  i = pwm_normalize(pwm.v[PWM_ELE_CHANNEL]);
-//  impact.angle[SERVO_NUMBER_LEFT_ELE]    = i;
-//  impact.angle[SERVO_NUMBER_RIGHT_ELE]   = i;
-//
-//  i = pwm_normalize(pwm.v[PWM_RUD_CHANNEL]);
-//  impact.angle[SERVO_NUMBER_LEFT_RUD]    = i;
-//  impact.angle[SERVO_NUMBER_RIGHT_RUD]   = i;
-//
-//  i = pwm_normalize(pwm.v[PWM_FLAP_CHANNEL]);
-//  impact.angle[SERVO_NUMBER_LEFT_FLAP]   = i;
-//  impact.angle[SERVO_NUMBER_RIGHT_FLAP]  = i;
-//
-//  i = pwm_normalize(pwm.v[PWM_STRUT_CHANNEL]);
-//  impact.angle[SERVO_NUMBER_OTHER_STRUT] = i;
-//
-//  i = pwm_normalize(pwm.v[PWM_BREAK_CHANNEL]);
-//  impact.angle[SERVO_NUMBER_OTHER_BREAK] = i;
-//
-//  i = pwm_normalize(pwm.v[PWM_CHUTE_CHANNEL]);
-//  impact.angle[SERVO_NUMBER_OTHER_CHUTE] = i;
-//
-//  i = pwm_normalize_thrust(pwm.v[PWM_THRUST_CHANNEL]);
-//  impact.thrust = i;
-//}
-//
-///**
-// *
-// */
-//bool Futaba::process_pwm(manual_switch_t *manual, systime_t pwm_timeout){
-//
-//  bool pwm_status = pwm_receiver.update(&pwm_vector, pwm_timeout);
-//
-//  /**/
-//  if (CH_SUCCESS == connection.good(pwm_status, pwm_timeout)){
-//    int man = pwm_vector.v[PWM_SWITCH_MANUAL_CHANNEL];
-//    *manual = static_cast<manual_switch_t>(manual_switch3.update(man));
-//    return CH_SUCCESS;
-//  }
-//  else
-//    return CH_FAILED;
-//}
-
 /**
  *
  */
 void pwm2impact(Impact &impact, const uint16_t *pwm) {
 
-  for (size_t i=0; i<ArrayLen(impact.a); i++) {
-    impact.a[i] = pwm_normalize(pwm[i]);
-  }
+  impact.a[IMPACT_CH_ROLL]  = pwm_normalize(pwm[route_impact.roll]);
+  impact.a[IMPACT_CH_PITCH] = pwm_normalize(pwm[route_impact.pitch]);
+  impact.a[IMPACT_CH_YAW]   = pwm_normalize(pwm[route_impact.yaw]);
+  impact.a[IMPACT_CH_SPEED] = pwm_normalize(pwm[route_impact.speed]);
 }
 
 /**
@@ -142,6 +107,7 @@ msg_t process_pwm(FutabaData &result, const Receiver &receiver) {
 
   ret = receiver.update(pwm);
   if (MSG_OK == ret) {
+    pwm2direction(result.direction, pwm);
     pwm2impact(result.impact, pwm);
     pwm2drivetrain(result.pwm_vector, pwm);
   }
@@ -196,20 +162,19 @@ msg_t Futaba::update(FutabaData &result) {
   ret = process_pwm(result, receiver_rc);
   if (MSG_OK == ret) {
     // TODO: set apropriate override flags here
-    if manual_switch_RC
-    result.override_level = OVERRIDE_LEVEL_NONE;
+    //if manual_switch_RC
+    result.level = OverrideLevel::none;
     result.impact.mask = 0;
     result.pwm_vector.mask = 0;
     return ret;
-
   }
 
   /* */
   ret = process_pwm(result, receiver_mavlink);
   if (MSG_OK == ret) {
     // TODO: set apropriate override flags here
-    if manual_switch_Mavlink
-    result.override_level = OVERRIDE_LEVEL_NONE;
+    //if manual_switch_Mavlink
+    result.level = OverrideLevel::none;
     result.impact.mask = 0;
     result.pwm_vector.mask = 0;
     return ret;

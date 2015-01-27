@@ -125,6 +125,7 @@ CONTROLSRC =\
 		src/control/drivetrain/engine.cpp \
 		src/control/futaba/futaba.cpp \
 		src/control/futaba/receiver_mavlink.cpp \
+		src/control/futaba/receiver_rc.cpp \
 
 NVRAMSRC = src/nvram_local.cpp \
 		lib/24aa/src/mtd.cpp \

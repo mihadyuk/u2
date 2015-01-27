@@ -1,9 +1,9 @@
 #ifndef STABILIZER_HPP_
 #define STABILIZER_HPP_
 
+#include <target_attitude.hpp>
 #include "drivetrain/drivetrain.hpp"
 #include "state_vector.hpp"
-#include "target_vector.hpp"
 #include "futaba_data.hpp"
 #include "pid.hpp"
 
@@ -15,8 +15,10 @@ namespace control {
 class Stabilizer {
 public:
   Stabilizer(Drivetrain &drivetrain);
-  void update(const FutabaData &futaba_data, const TargetVector &trgt,
-              const StateVector &state, float dT);
+  void update(const FutabaData &futaba_data,
+              const TargetAttitude &target_attitude,
+              const StateVector &state,
+              float dT);
   void reset(void);
   void start(void);
   void stop(void);

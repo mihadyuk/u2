@@ -65,7 +65,7 @@ void ReceiverRC::stop(void) {
 /**
  *
  */
-msg_t ReceiverRC::update(uint16_t *pwm) {
+msg_t ReceiverRC::update(uint16_t *pwm) const {
 
   msg_t ret = MSG_OK;
 

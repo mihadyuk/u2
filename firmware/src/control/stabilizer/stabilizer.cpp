@@ -53,31 +53,35 @@ ready(false)
   return;
 }
 
-/**
- *
- */
-void Stabilizer::update(const FutabaData &futaba_data,
-                        const TargetVector &trgt,
-                        const StateVector &state,
-                        float dT) {
-  Impact impact;
-
-  osalDbgCheck(ready);
-
 //  impact.a[IMPACT_ROLL]  = pid_roll.update(state.roll   - trgt.roll,  state.wx);
 //  impact.a[IMPACT_PITCH] = pid_pitch.update(state.pitch - trgt.pitch, state.wy);
 //  impact.a[IMPACT_YAW]   = pid_yaw.update(state.yaw     - trgt.yaw,   state.wz);
 //  impact.a[IMPACT_SPEED] = pid_speed.update(state.vair  - trgt.speed, 0);
 
-  if (OVERRIDE_LEVEL_STABILIZER == futaba_data.override_level) {
-    osalSysHalt("Unrealized");
+/**
+ *
+ */
+void Stabilizer::update(const FutabaData &futaba_data,
+                        const TargetAttitude &target_attitude,
+                        const StateVector &state,
+                        float dT) {
+  Impact impact;
+  const float *ta;
+
+  osalDbgCheck(ready);
+
+  if (OverrideLevel::attitude == futaba_data.level) {
+    osalSysHalt("Unrealized/Untested");
+    ta = futaba_data.attitude.a;
   }
   else {
-    impact.a[IMPACT_ROLL]  = pid_roll.update(state.roll, trgt.roll, dT);
-    impact.a[IMPACT_PITCH] = pid_pitch.update(state.pitch, trgt.pitch, dT);
-    impact.a[IMPACT_YAW]   = pid_yaw.update(state.yaw, trgt.yaw, dT);
-    impact.a[IMPACT_SPEED] = pid_speed.update(state.vair, trgt.speed, dT);
+    ta = target_attitude.a;
   }
+
+  impact.a[IMPACT_CH_ROLL]  = pid_roll.update(state.roll,   ta[ATTITUDE_CH_ROLL],   dT);
+  impact.a[IMPACT_CH_PITCH] = pid_pitch.update(state.pitch, ta[ATTITUDE_CH_PITCH],  dT);
+  impact.a[IMPACT_CH_YAW]   = pid_yaw.update(state.yaw,     ta[ATTITUDE_CH_YAW],    dT);
+  impact.a[IMPACT_CH_SPEED] = pid_speed.update(state.vair,  ta[ATTITUDE_CH_SPEED],  dT);
 
   this->drivetrain.update(futaba_data, impact);
 }

@@ -164,7 +164,7 @@ Ahrs ahrs;
 
 control::Futaba futaba(MS2ST(1000));
 control::FutabaData futaba_data __attribute__((section(".ccm")));
-control::TargetVector trgt __attribute__((section(".ccm")));
+control::TargetAttitude trgt __attribute__((section(".ccm")));
 
 int main(void) {
 
@@ -224,7 +224,7 @@ int main(void) {
 
     futaba.update(futaba_data);
 
-    trgt.yaw = 0;
+    trgt.a[control::ATTITUDE_CH_YAW] = 0;
     state_vector.yaw = ahrs_data.euler[0];
     stabilizer.update(futaba_data, trgt, state_vector, ahrs_data.dt);
 

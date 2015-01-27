@@ -1,26 +1,31 @@
 #ifndef FUTABA_DATA_HPP_
 #define FUTABA_DATA_HPP_
 
-#include "control/impact.hpp"
-#include "control/pwm_vector.hpp"
+#include "target_direction.hpp"
+#include "impact.hpp"
+#include "pwm_vector.hpp"
+#include "target_attitude.hpp"
 
 namespace control {
 
 /**
  *
  */
-typedef enum {
-  OVERRIDE_LEVEL_NONE,
-  OVERRIDE_LEVEL_NAVIGATOR,
-  OVERRIDE_LEVEL_STABILIZER,
-  OVERRIDE_LEVEL_PWM,
-} override_level_t;
+enum class OverrideLevel {
+  none,
+  direction,
+  attitude,
+  impact,
+  pwm,
+};
 
 /**
- * @brief   Output data from ACS
+ * @brief   Output data from Futaba
  */
 typedef struct {
-  override_level_t override_level;
+  OverrideLevel level;
+  TargetDirection direction;
+  TargetAttitude attitude;
   Impact impact;
   PwmVector pwm_vector;
 }FutabaData;
