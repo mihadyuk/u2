@@ -52,7 +52,7 @@ Giovanni
 //#include "mav_dispatcher.hpp"
 //#include "cmd_executor.hpp"
 #include "blinker.hpp"
-//#include "waypoint_db.hpp"
+#include "waypoint_db.hpp"
 //#include "mission_planner.hpp"
 #include "mavlink_local.hpp"
 #include "endianness.h"
@@ -107,9 +107,6 @@ static uint8_t link_thd_buf[THREAD_HEAP_SIZE + sizeof(stkalign_t)];
 //
 ///* save here flags before clear them from MCU register */
 //uint32_t LastResetFlags;
-//
-///* waypoint DB interface */
-//WpDB wpdb;
 
 /* State vector of system. Calculated mostly in IMU, used mostly in ACS */
 StateVector state_vector __attribute__((section(".ccm")));
@@ -117,7 +114,6 @@ StateVector state_vector __attribute__((section(".ccm")));
 control::Drivetrain drivetrain;
 control::Stabilizer stabilizer(drivetrain);
 
-//PWMReceiverRover pwm_receiver;
 //MARGRover marg;
 //AttitudeUnitRover attitude_unit(0.01f, state_vector);
 //

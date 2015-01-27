@@ -80,10 +80,11 @@ static const uint32_t Crc32Table[256] = {
 };
 
 /**
- *
+ * param[in] crc    initialization vector. For first data block it
+ *                  is generally 0xFFFFFFFF.  For subsequent blocks it
+ *                  is result of calculation of previous block(s).
  */
-uint32_t crc32(const uint8_t *buf, size_t len){
-  uint32_t crc = 0xFFFFFFFF;
+uint32_t crc32(const uint8_t *buf, size_t len, uint32_t crc){
   while (len--)
     crc = (crc >> 8) ^ Crc32Table[(crc ^ *buf++) & 0xFF];
   return crc;
@@ -134,10 +135,16 @@ static const uint8_t Crc8Table[256] = {
     0x3B, 0x0A, 0x59, 0x68, 0xFF, 0xCE, 0x9D, 0xAC
 };
 
-uint8_t crc8(const uint8_t *buf, size_t len){
-  uint8_t crc = 0xFF;
+/**
+ * param[in] crc    initialization vector. For first data block it
+ *                  is generally 0xFF.  For subsequent blocks it is result
+ *                  of calculation of previous block(s).
+ */
+uint8_t crc8(const uint8_t *buf, size_t len, uint8_t crc) {
   while (len--)
     crc = Crc8Table[crc ^ *buf++];
   return crc;
 }
+
+
 

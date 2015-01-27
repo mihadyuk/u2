@@ -146,6 +146,7 @@ MAVSRC = src/mavlink_local/parameters.cpp \
 		src/mavlink_local/mav_logger.cpp \
 		src/mavlink_local/mav_channel_serial.cpp \
 		src/mavlink_local/mav_channel_usbserial.cpp \
+		src/mavlink_local/waypoint_db.cpp \
 
 SENSORSRC = src/i2c_local.cpp \
 		sensors/adis.cpp \

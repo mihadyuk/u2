@@ -124,7 +124,7 @@ private:
   ParamValidator validator;
   static const GlobalParam_t param_db[];
   chibios_rt::BinarySemaphore mutual_sem;
-  NvramFile *ParamFile = NULL;
+  NvramFile *ParamFile = nullptr;
   bool ready;
 };
 

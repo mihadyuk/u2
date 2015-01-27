@@ -3,13 +3,19 @@
 
 #include "nvram_fs.hpp"
 
+#define FRAM_I2CD               I2CD_SLOW
+#define FRAM_I2C_ADDR           0b1010000
+#define FRAM_SIZE               (1024 * 32)
+
 /**
  * @brief   This value will be used for create parameter file in case
  *          of totally empty nvram.
  */
 #define BOOTSTRAP_PARAM_FILE_SIZE     (1024 * 6)
+#define BOOTSTRAP_WPDB_FILE_SIZE      (1024 * 8)
 
 void NvramInit(void);
+NvramFile *NvramTryOpen(const char *name, size_t size);
 
 extern NvramFs nvram_fs;
 

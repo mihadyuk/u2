@@ -1,3 +1,4 @@
+#include <control/old_acs/mission_receiver.hpp>
 #include <stdio.h>
 
 #include "main.h"
@@ -5,7 +6,6 @@
 #include "message.hpp"
 #include "waypoint_db.hpp"
 #include "mavdbg.hpp"
-#include "mission_planner.hpp"
 #include "mavlocal.hpp"
 
 /*

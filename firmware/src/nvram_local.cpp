@@ -10,9 +10,6 @@ using namespace chibios_rt;
  * DEFINES
  ******************************************************************************
  */
-#define FRAM_I2CD               I2CD_SLOW
-#define FRAM_I2C_ADDR           0b1010000
-#define FRAM_SIZE               (1024 * 32)
 
 /*
  ******************************************************************************
@@ -69,15 +66,31 @@ void NvramInit(void){
   }
 }
 
+/**
+ * @brief     Try to open file.
+ * @details   Functions creates file if it does not exists.
+ *
+ * @param[in] name    file name.
+ * @param[in] size    size of file to be created if it does not exists.
+ *
+ * @return            pointer to file.
+ */
+NvramFile *NvramTryOpen(const char *name, size_t size) {
 
+  /* try to open file */
+   NvramFile *file = nvram_fs.open(name);
 
+  if (nullptr == file) {
+    /* boot strapping when first run */
+    if (nvram_fs.df() < size)
+      osalSysHalt("Not enough free space in nvram to create file");
+    else{
+      file = nvram_fs.create(name, size);
+      osalDbgCheck(nullptr != file);
+    }
+  }
 
-
-
-
-
-
-
-
+  return file;
+}
 
 

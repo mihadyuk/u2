@@ -193,18 +193,8 @@ bool ParamRegistry::save_all(void) {
  */
 void ParamRegistry::open_file(void) {
 
-  /* try to open file */
-  ParamFile = nvram_fs.open(PARAM_FILE_NAME);
-
-  if (NULL == ParamFile){
-    /* bootrstapping when firs run */
-    if (nvram_fs.df() < BOOTSTRAP_PARAM_FILE_SIZE)
-      osalSysHalt("Not enough free space in nvram to create parameters file");
-    else{
-      ParamFile = nvram_fs.create(PARAM_FILE_NAME, BOOTSTRAP_PARAM_FILE_SIZE);
-      osalDbgCheck(NULL != ParamFile);
-    }
-  }
+  ParamFile = NvramTryOpen(PARAM_FILE_NAME, BOOTSTRAP_PARAM_FILE_SIZE);
+  osalDbgCheck(nullptr != ParamFile);
 }
 
 /*
