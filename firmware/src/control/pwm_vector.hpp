@@ -1,5 +1,5 @@
-#ifndef PWM_OVERRIDE_HPP_
-#define PWM_OVERRIDE_HPP_
+#ifndef CONTROL_PWM_VECTOR_HPP_
+#define CONTROL_PWM_VECTOR_HPP_
 
 #define DRIVETRAIN_PWM_CHANNELS   8
 
@@ -15,4 +15,4 @@ struct PwmVector {
 
 } /* namespace */
 
-#endif /* PWM_OVERRIDE_HPP_ */
+#endif /* CONTROL_PWM_VECTOR_HPP_ */

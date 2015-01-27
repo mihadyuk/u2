@@ -29,7 +29,7 @@ typedef enum {
 }navigator_status_t;
 
 /**
- * @brief   State of ACS
+ * @brief   State of navigation module
  */
 typedef enum {
   NAVIGATOR_STATE_UNINIT,
@@ -40,7 +40,6 @@ typedef enum {
   NAVIGATOR_STATE_PASS_WAYPOINT,
   NAVIGATOR_STATE_LOITER,
   NAVIGATOR_STATE_LAND,
-  //NAVIGATOR_STATE_CONNECTION_LOST,
 }navigator_state_t;
 
 /**

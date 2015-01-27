@@ -33,8 +33,10 @@ private:
   const systime_t timeout;
   ReceiverMavlink receiver_mavlink;
   ReceiverRC receiver_rc;
+  ReceiverSynth receiver_synth;
   Tumbler3<int, 900, 1200, 1400, 1600, 1800, 2100> switch_mavlink;
   Tumbler3<int, 900, 1200, 1400, 1600, 1800, 2100> switch_rc;
+  Tumbler3<int, 900, 1200, 1400, 1600, 1800, 2100> switch_synth;
 };
 
 } /* namespace */

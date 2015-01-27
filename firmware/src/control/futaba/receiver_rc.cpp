@@ -67,13 +67,14 @@ void ReceiverRC::stop(void) {
  */
 msg_t ReceiverRC::update(uint16_t *pwm) const {
 
-  msg_t ret = MSG_OK;
+  msg_t ret = MSG_TIMEOUT;
 
   chDbgCheck(ready);
 
   for (size_t i=0; i<FUTABA_RECEIVER_PWM_CHANNELS; i++)
     pwm[i] = 1500;
 
+  ret = MSG_TIMEOUT;
   return ret;
 }
 
