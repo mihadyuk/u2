@@ -364,8 +364,8 @@ bool ParamRegistry::saveAll(void){
 /**
  *
  */
-param_status_t ParamRegistry::setParam(const param_union_t *value,
-                                       const GlobalParam_t *param) {
+ParamStatus ParamRegistry::setParam(const param_union_t *value,
+                                    const GlobalParam_t *param) {
   osalDbgCheck(true == ready);
   return validator.set(value, param);
 }

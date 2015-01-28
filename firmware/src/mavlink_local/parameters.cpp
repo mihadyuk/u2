@@ -154,7 +154,7 @@ static void param_set_handler(const mavMail *mail) {
 
   param_union_t *valuep = NULL;
   const GlobalParam_t *paramp = NULL;
-  param_status_t status;
+  ParamStatus status;
   const mavlink_param_set_t *psp = static_cast<const mavlink_param_set_t *>(mail->mavmsg);
 
   if (!for_me(psp))
@@ -172,22 +172,22 @@ static void param_set_handler(const mavMail *mail) {
 
   /* send confirmation */
   switch(status){
-  case PARAM_CLAMPED:
+  case ParamStatus::CLAMPED:
     mavlink_dbg_print(MAV_SEVERITY_WARNING, "PARAM: clamped", MAV_COMP_ID_SYSTEM_CONTROL);
     break;
-  case PARAM_NOT_CHANGED:
+  case ParamStatus::NOT_CHANGED:
     mavlink_dbg_print(MAV_SEVERITY_WARNING, "PARAM: not changed", MAV_COMP_ID_SYSTEM_CONTROL);
     break;
-  case PARAM_INCONSISTENT:
+  case ParamStatus::INCONSISTENT:
     mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: inconsistent", MAV_COMP_ID_SYSTEM_CONTROL);
     break;
-  case PARAM_WRONG_TYPE:
+  case ParamStatus::WRONG_TYPE:
     mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: wrong type", MAV_COMP_ID_SYSTEM_CONTROL);
     break;
-  case PARAM_UNKNOWN_ERROR:
+  case ParamStatus::UNKNOWN_ERROR:
     mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: unknown error", MAV_COMP_ID_SYSTEM_CONTROL);
     break;
-  case PARAM_OK:
+  case ParamStatus::OK:
     break;
   }
 

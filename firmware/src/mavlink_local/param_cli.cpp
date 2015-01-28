@@ -40,15 +40,15 @@
 /*
  * confirmation of changes
  */
-static void _param_cli_confirm(param_status_t status){
-  if (status == PARAM_OK)
+static void __param_cli_confirm(ParamStatus status){
+  if (status == ParamStatus::OK)
     return;
     //cli_println("Success");
-  else if (status == PARAM_CLAMPED)
+  else if (status == ParamStatus::CLAMPED)
     cli_println("WARNING: value clamped to safety limits.");
-  else if (status == PARAM_NOT_CHANGED)
+  else if (status == ParamStatus::NOT_CHANGED)
     cli_println("WARNING: value not changed.");
-  else if (status == PARAM_INCONSISTENT)
+  else if (status == ParamStatus::INCONSISTENT)
     cli_println("ERROR: value inconsistent.");
   else
     cli_println("ERROR: Unhandled error.");
@@ -57,7 +57,7 @@ static void _param_cli_confirm(param_status_t status){
 /**
  *
  */
-static void _param_cli_print(uint32_t i, bool need_help){
+static void __param_cli_print(uint32_t i, bool need_help){
 
   int n = 80;
   int nres = 0;
@@ -105,7 +105,7 @@ static void _param_cli_print(uint32_t i, bool need_help){
 /**
  *
  */
-static void _param_cli_print_header(void){
+static void __param_cli_print_header(void){
   cli_println("Name            min             value           max");
   cli_println("--------------------------------------------------------------");
 }
@@ -113,26 +113,26 @@ static void _param_cli_print_header(void){
 /**
  *
  */
-static void _param_print_all(void){
+static void __param_print_all(void){
   uint32_t i = 0;
   uint32_t paramcnt = param_registry.paramCount();
-  _param_cli_print_header();
+  __param_cli_print_header();
 
   for (i = 0; i < paramcnt; i++)
-    _param_cli_print(i, FALSE);
+    __param_cli_print(i, FALSE);
 }
 
 /**
  *
  */
-static param_status_t _param_cli_set(const char * val, uint32_t i){
+static ParamStatus __param_cli_set(const char * val, uint32_t i){
   param_union_t v;
   int sscanf_status;
   const GlobalParam_t *param_p = param_registry.getParam(NULL, i, NULL);
   if (NULL == param_p){
     cli_println("Something goes too bad with param registry");
     chThdSleepMilliseconds(50);
-    return PARAM_UNKNOWN_ERROR;
+    return ParamStatus::UNKNOWN_ERROR;
   }
 
   switch(param_p->param_type){
@@ -150,7 +150,7 @@ static param_status_t _param_cli_set(const char * val, uint32_t i){
   }
 
   if (sscanf_status != 1)
-    return PARAM_INCONSISTENT;
+    return ParamStatus::INCONSISTENT;
   else
     return param_registry.setParam(&v, param_p);
 }
@@ -158,7 +158,7 @@ static param_status_t _param_cli_set(const char * val, uint32_t i){
 /**
  *
  */
-static void _param_cli_help(void){
+static void __param_cli_help(void){
   cli_println("Run without parameters to get full parameters list.");
   cli_println("'param save' to save parameters to EEPROM.");
   cli_println("'param help' to get this message.");
@@ -179,7 +179,7 @@ thread_t* param_clicmd(int argc, const char * const * argv, SerialDriver *sdp){
   (void)sdp;
 
   int32_t i = -1;
-  param_status_t status;
+  ParamStatus status;
 
   /* wait until value uninitialized (just to be safe) */
   while (GlobalFlags.parameters_loaded != 1)
@@ -187,12 +187,12 @@ thread_t* param_clicmd(int argc, const char * const * argv, SerialDriver *sdp){
 
   /* no arguments */
   if (argc == 0)
-    _param_print_all();
+    __param_print_all();
 
   /* one argument */
   else if (argc == 1){
     if (strcmp(*argv, "help") == 0)
-      _param_cli_help();
+      __param_cli_help();
     else if (strcmp(*argv, "save") == 0){
       cli_print("Please wait. Saving to EEPROM... ");
       param_registry.saveAll();
@@ -201,8 +201,8 @@ thread_t* param_clicmd(int argc, const char * const * argv, SerialDriver *sdp){
     else{
       i = param_registry.key_index_search(*argv);
       if (i != -1){
-        _param_cli_print_header();
-        _param_cli_print(i, TRUE);
+        __param_cli_print_header();
+        __param_cli_print(i, TRUE);
       }
       else{
         cli_println("ERROR: unknown parameter name.");
@@ -215,8 +215,8 @@ thread_t* param_clicmd(int argc, const char * const * argv, SerialDriver *sdp){
     i = -1;
     i = param_registry.key_index_search(argv[0]);
     if (i != -1){
-      status = _param_cli_set(argv[1], i);
-      _param_cli_confirm(status);
+      status = __param_cli_set(argv[1], i);
+      __param_cli_confirm(status);
     }
     else{
       cli_println("ERROR: unknown parameter name.");

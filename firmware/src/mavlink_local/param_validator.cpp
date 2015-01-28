@@ -52,8 +52,8 @@ static bool sortmtrx_good(uint32_t v){
 /**
  *
  */
-param_status_t ParamValidator::sortmtrx_val(const param_union_t *value,
-                                            const GlobalParam_t *param) {
+ParamStatus ParamValidator::sortmtrx_val(const param_union_t *value,
+                                         const GlobalParam_t *param) {
   uint32_t v = param->valuep->u32;
 
   if ( ! sortmtrx_good(v))
@@ -62,14 +62,14 @@ param_status_t ParamValidator::sortmtrx_val(const param_union_t *value,
   v = value->u32;
 
   if (v == param->valuep->u32)
-    return PARAM_NOT_CHANGED;
+    return ParamStatus::NOT_CHANGED;
 
   if (sortmtrx_good(v)){
     param->valuep->u32 = v;
-    return PARAM_OK;
+    return ParamStatus::OK;
   }
   else{
-    return PARAM_INCONSISTENT;
+    return ParamStatus::INCONSISTENT;
   }
 }
 
@@ -85,31 +85,31 @@ static bool polarity_good(int32_t v) {
     return true;
 }
 
-param_status_t ParamValidator::polarity_val(const param_union_t *value,
-                                            const GlobalParam_t *param) {
+ParamStatus ParamValidator::polarity_val(const param_union_t *value,
+                                         const GlobalParam_t *param) {
   int32_t v = param->valuep->i32;
   if ( ! polarity_good(v))
     param->valuep->i32 = param->def.i32;
 
   v = *(int32_t*)value;
   if (param->valuep->i32 == v)
-    return PARAM_NOT_CHANGED;
+    return ParamStatus::NOT_CHANGED;
 
   if ( ! polarity_good(v))
-    return PARAM_INCONSISTENT;
+    return ParamStatus::INCONSISTENT;
   else
     param->valuep->i32 = v;
 
   /* value good */
-  return PARAM_OK;
+  return ParamStatus::OK;
 }
 
 /**
  * Check send periods for different messages.
  * It must be zero OR between min and max.
  */
-param_status_t ParamValidator::sendtmo_val(const param_union_t *value,
-                                           const GlobalParam_t *param) {
+ParamStatus ParamValidator::sendtmo_val(const param_union_t *value,
+                                        const GlobalParam_t *param) {
 
   uint32_t initial_value = value->u32;
   uint32_t v = initial_value;
@@ -117,10 +117,10 @@ param_status_t ParamValidator::sendtmo_val(const param_union_t *value,
   /**/
   if (v == TELEMETRY_SEND_OFF) {
     if (param->valuep->u32 == v)
-      return PARAM_NOT_CHANGED;
+      return ParamStatus::NOT_CHANGED;
     else{
       param->valuep->u32 = v;
-      return PARAM_OK;
+      return ParamStatus::OK;
     }
   }
 
@@ -129,76 +129,77 @@ param_status_t ParamValidator::sendtmo_val(const param_union_t *value,
   param->valuep->u32 = v;
 
   if (v == initial_value)
-    return PARAM_OK;
+    return ParamStatus::OK;
   else
-    return PARAM_CLAMPED;
+    return ParamStatus::CLAMPED;
 }
 
 /**
  * Uint32 boundary checker.
  */
-param_status_t ParamValidator::uint_val(const param_union_t *value, const GlobalParam_t *param){
+ParamStatus ParamValidator::uint_val(const param_union_t *value,
+                                     const GlobalParam_t *param) {
   uint32_t initial_value = value->u32;
   uint32_t v = initial_value;
 
   if (param->valuep->u32 == v)
-    return PARAM_NOT_CHANGED;
+    return ParamStatus::NOT_CHANGED;
 
   v = putinrange(v, param->min.u32, param->max.u32);
   param->valuep->u32 = v;
 
   if (v == initial_value)
-    return PARAM_OK;
+    return ParamStatus::OK;
   else
-    return PARAM_CLAMPED;
+    return ParamStatus::CLAMPED;
 }
 
 /**
  * Float boundary checker.
  */
-param_status_t ParamValidator::float_val(const param_union_t *value,
-                                         const GlobalParam_t *param) {
+ParamStatus ParamValidator::float_val(const param_union_t *value,
+                                      const GlobalParam_t *param) {
   float initial_value = value->f32;
   float v = initial_value;
 
   // AND only write if new value is NOT "not-a-number" AND is NOT infinity
   if (std::isnan(v) || std::isinf(v))
-    return PARAM_INCONSISTENT;
+    return ParamStatus::INCONSISTENT;
 
   if (param->valuep->f32 == v)
-    return PARAM_NOT_CHANGED;
+    return ParamStatus::NOT_CHANGED;
 
   v = putinrange(v, param->min.f32, param->max.f32);
   param->valuep->f32 = v;
 
   if (v == initial_value)
-    return PARAM_OK;
+    return ParamStatus::OK;
   else
-    return PARAM_CLAMPED;
+    return ParamStatus::CLAMPED;
 }
 
 /**
  * Int32 boundary checker.
  */
-param_status_t ParamValidator::int_val(const param_union_t *value,
-                                       const GlobalParam_t *param) {
+ParamStatus ParamValidator::int_val(const param_union_t *value,
+                                    const GlobalParam_t *param) {
   int32_t initial_value = value->i32;
   int32_t v = initial_value;
 
   if (param->valuep->i32 == v)
-    return PARAM_NOT_CHANGED;
+    return ParamStatus::NOT_CHANGED;
 
   v = putinrange(v, param->min.i32, param->max.i32);
   param->valuep->i32 = v;
 
   if (v == initial_value)
-    return PARAM_OK;
+    return ParamStatus::OK;
   else
-    return PARAM_CLAMPED;
+    return ParamStatus::CLAMPED;
 }
 
-param_status_t ParamValidator::default_val(const param_union_t *value,
-                                           const GlobalParam_t *param) {
+ParamStatus ParamValidator::default_val(const param_union_t *value,
+                                        const GlobalParam_t *param) {
   switch(param->param_type){
   case MAVLINK_TYPE_FLOAT:
     return this->float_val(value, param);
@@ -210,7 +211,7 @@ param_status_t ParamValidator::default_val(const param_union_t *value,
     return this->int_val(value, param);
     break;
   default:
-    return PARAM_WRONG_TYPE;
+    return ParamStatus::WRONG_TYPE;
   }
 }
 
@@ -228,8 +229,8 @@ param_status_t ParamValidator::default_val(const param_union_t *value,
  *
  * @return            operation status.
  */
-param_status_t ParamValidator::set(const param_union_t *value,
-                                   const GlobalParam_t *param) {
+ParamStatus ParamValidator::set(const param_union_t *value,
+                                const GlobalParam_t *param) {
   switch(param->func){
   case PARAM_DEFAULT:
     return this->default_val(value, param);
@@ -247,5 +248,5 @@ param_status_t ParamValidator::set(const param_union_t *value,
     osalSysHalt("Unhandled type");
     break;
   }
-  return PARAM_WRONG_TYPE;/* warning suppressor */
+  return ParamStatus::WRONG_TYPE;/* warning suppressor */
 }

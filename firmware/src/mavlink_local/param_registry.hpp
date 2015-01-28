@@ -13,14 +13,14 @@
 /**
  *
  */
-typedef enum {
-  PARAM_OK = 1,
-  PARAM_NOT_CHANGED = 2,    /* parameter already contains such value */
-  PARAM_CLAMPED = 3,        /* value clamped to limits */
-  PARAM_INCONSISTENT = 4,   /* NaN or INF or something else bad value */
-  PARAM_WRONG_TYPE = 5,     /* unsupported parameter type */
-  PARAM_UNKNOWN_ERROR = 6,  /* general error */
-} param_status_t;
+enum class ParamStatus {
+  OK,
+  NOT_CHANGED,    /* parameter already contains such value */
+  CLAMPED,        /* value clamped to limits */
+  INCONSISTENT,   /* NaN or INF or something else bad value */
+  WRONG_TYPE,     /* unsupported parameter type */
+  UNKNOWN_ERROR   /* general error */
+};
 
 /**
  *
@@ -80,16 +80,16 @@ struct GlobalParam_t {
  */
 class ParamValidator{
 public:
-  param_status_t set(const param_union_t *value, const GlobalParam_t *param);
+  ParamStatus set(const param_union_t *value, const GlobalParam_t *param);
 
 private:
-  param_status_t default_val(const param_union_t *value, const GlobalParam_t *param);
-  param_status_t uint_val(const param_union_t *value, const GlobalParam_t *param);
-  param_status_t int_val(const param_union_t *value, const GlobalParam_t *param);
-  param_status_t float_val(const param_union_t *value, const GlobalParam_t *param);
-  param_status_t sendtmo_val(const param_union_t *value, const GlobalParam_t *param);
-  param_status_t sortmtrx_val(const param_union_t *value, const GlobalParam_t *param);
-  param_status_t polarity_val(const param_union_t *value, const GlobalParam_t *param);
+  ParamStatus default_val(const param_union_t *value, const GlobalParam_t *param);
+  ParamStatus uint_val(const param_union_t *value, const GlobalParam_t *param);
+  ParamStatus int_val(const param_union_t *value, const GlobalParam_t *param);
+  ParamStatus float_val(const param_union_t *value, const GlobalParam_t *param);
+  ParamStatus sendtmo_val(const param_union_t *value, const GlobalParam_t *param);
+  ParamStatus sortmtrx_val(const param_union_t *value, const GlobalParam_t *param);
+  ParamStatus polarity_val(const param_union_t *value, const GlobalParam_t *param);
 };
 
 /**
@@ -103,7 +103,7 @@ public:
   bool loadToRam(void);
   bool saveAll(void);
   bool syncParam(const char* key);
-  param_status_t setParam(const param_union_t *value, const GlobalParam_t *param);
+  ParamStatus setParam(const param_union_t *value, const GlobalParam_t *param);
   template<typename T> int valueSearch(const char *key, T **vp);
   int paramCount(void);
   const GlobalParam_t *getParam(const char *key, int n, int *i);
