@@ -305,7 +305,7 @@ bool ParamRegistry::loadToRam(void) {
     else{
       /* there is not such parameter in EEPROM. Possible reasons:
        * 1) parameter "registry" has been changed.
-       * 2) this is very first run of device with totally empty EEPROM
+       * 2) this is very first run with totally empty EEPROM
        * To correctly fix this situation we just need to
        * save structure to EEPROM after loading of all parameters to RAM.
        */
