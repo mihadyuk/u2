@@ -6,7 +6,7 @@
 #include "chprintf.h"
 
 #include "mav_logger.hpp"
-#include "mav_encode.h"
+#include "mav_codec.h"
 
 using namespace chibios_rt;
 

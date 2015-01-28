@@ -1,5 +1,10 @@
+#include <memory> /* for placement new() */
+
 #include "main.h"
 #include "mav_spam_list.hpp"
+#include "mav_codec.h"
+
+#include "tlsf.h"
 
 /*
  ******************************************************************************
@@ -62,6 +67,8 @@ typedef LinkRegistry <
     MAVLINK_MSG_ID_SET_MODE
 > link_registry;
 
+static uint8_t tlsf_array[8192] __attribute__((section(".ccm")));
+
 /*
  ******************************************************************************
  ******************************************************************************
@@ -91,9 +98,10 @@ int MavSpamList::search(uint8_t msg_id) const {
 /**
  *
  */
-MavSpamList::MavSpamList(void) {
+MavSpamList::MavSpamList(void) : sem(false) {
 
   uint8_t id;
+  int mempool_status;
 
   for (size_t i=0; i<link_registry::reg_len; i++) {
     link_registry::link[i] = nullptr; // just to be safe
@@ -102,6 +110,9 @@ MavSpamList::MavSpamList(void) {
       osalDbgAssert(link_registry::msg_id[n] != id, "Duplicated IDs forbidden");
     }
   }
+
+  mempool_status = init_memory_pool(sizeof(tlsf_array), tlsf_array);
+  osalDbgCheck(-1 != mempool_status);
 }
 
 /**
@@ -116,9 +127,20 @@ void MavSpamList::subscribe(uint8_t msg_id, SubscribeLink *new_link) {
   osalDbgAssert(false == new_link->connected,
       "You can not connect single link twice");
 
+  lock();
+
+  SubscribeLink *head = link_registry::link[idx];
+  while (nullptr != head) {
+    /* protect from message duplication */
+    osalDbgCheck(new_link->mb != head->mb);
+    head = head->next;
+  }
+
   new_link->next = link_registry::link[idx];
   link_registry::link[idx] = new_link;
   new_link->connected = true;
+
+  unlock();
 }
 
 /**
@@ -132,12 +154,14 @@ void MavSpamList::unsubscribe(uint8_t msg_id, SubscribeLink *linkp) {
   osalDbgAssert(true == linkp->connected,
       "This link not connected. Check your program logic");
 
+  lock();
+
   SubscribeLink *head = link_registry::link[idx];
 
   /* special case when we need to delete first link in chain */
   if (head == linkp) {
     head = head->next;
-    linkp->next = NULL;
+    linkp->next = nullptr;
     linkp->connected = false;
     return;
   }
@@ -145,12 +169,14 @@ void MavSpamList::unsubscribe(uint8_t msg_id, SubscribeLink *linkp) {
   while (nullptr != head) {
     if (head->next == linkp){
       head->next = linkp->next;
-      linkp->next = NULL;
+      linkp->next = nullptr;
       linkp->connected = false;
       return;
     }
     head = head->next;
   }
+
+  unlock();
 
   osalSysHalt("Link already deleted. Program logic broken somewhere.");
 }
@@ -160,13 +186,45 @@ void MavSpamList::unsubscribe(uint8_t msg_id, SubscribeLink *linkp) {
  */
 void MavSpamList::dispatch(const mavlink_message_t &msg) {
 
+  void *msgptr;
+  void *mailptr_tmp;
+  SubscribeLink *head = nullptr;
+  msg_t post_result = MSG_TIMEOUT;
   int idx = search(msg.msgid);
 
+  lock();
+
   if (-1 != idx) {
-    SubscribeLink *head = link_registry::link[idx];
+    head = link_registry::link[idx];
     while (nullptr != head) {
-      head->callback(msg);
-      head = head->next;
+      msgptr = tlsf_malloc(mavlink_decode_memsize(&msg));
+      mailptr_tmp = tlsf_malloc(sizeof(mavMail));
+
+      if ((nullptr != msgptr) && (nullptr != mailptr_tmp)) {
+        mavlink_decode(&msg, msgptr);
+        mavMail *mailptr = new(mailptr_tmp) mavMail;
+        mailptr->fill(msgptr, MAV_COMP_ID_ALL, msg.msgid);
+        post_result = head->mb->post(mailptr, TIME_IMMEDIATE);
+        if (MSG_OK != post_result) {
+          tlsf_free(msgptr);
+          tlsf_free(mailptr_tmp);
+          this->drop++;
+        }
+        head = head->next;
+      }
     }
   }
+
+  unlock();
+}
+
+/**
+ *
+ */
+void MavSpamList::free(mavMail *mail) {
+
+  lock();
+  tlsf_free((void *)mail->mavmsg);
+  tlsf_free(mail);
+  unlock();
 }

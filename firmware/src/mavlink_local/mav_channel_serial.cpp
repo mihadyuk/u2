@@ -61,7 +61,7 @@ void mavChannelSerial::start(SerialDriver *sdp){
  *
  */
 void mavChannelSerial::stop(void){
-  if (true == this->ready){
+  if (ready){
     this->sdp = nullptr;
     this->ready = false;
   }
@@ -71,7 +71,7 @@ void mavChannelSerial::stop(void){
  *
  */
 void mavChannelSerial::write(const uint8_t *buf, size_t len) {
-  osalDbgCheck(true == this->ready);
+  osalDbgCheck(ready);
   sdWrite(sdp, buf, len);
 }
 
@@ -79,7 +79,7 @@ void mavChannelSerial::write(const uint8_t *buf, size_t len) {
  *
  */
 msg_t mavChannelSerial::get(systime_t time) {
-  osalDbgCheck(true == this->ready);
+  osalDbgCheck(ready);
   return sdGetTimeout(sdp, time);
 }
 
@@ -87,6 +87,6 @@ msg_t mavChannelSerial::get(systime_t time) {
  *
  */
 size_t mavChannelSerial::read(uint8_t *buf, size_t len, systime_t timeout){
-  osalDbgCheck(true == this->ready);
+  osalDbgCheck(ready);
   return sdReadTimeout(sdp, buf, len, timeout);
 }

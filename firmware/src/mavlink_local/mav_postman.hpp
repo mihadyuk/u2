@@ -7,12 +7,12 @@
 #include "mav_spam_list.hpp"
 
 #if !MAVLINK_UNHANDLED_MSG_DEBUG
-#define WORKER_RX_THREAD_WA_SIZE  512
+#define WORKER_RX_THREAD_WA_SIZE  256
 #else
 #define WORKER_RX_THREAD_WA_SIZE  2048
 #endif
 
-#define WORKER_TX_THREAD_WA_SIZE  1024
+#define WORKER_TX_THREAD_WA_SIZE  512
 
 class MavPostman {
 public:
@@ -20,6 +20,8 @@ public:
   void start(mavChannel *channel);
   void stop(void);
   msg_t post(mavMail &mail);
+  msg_t postAhead(mavMail &mail);
+  void free(mavMail *mail);
   void subscribe(uint8_t msg_id, SubscribeLink *sl);
   void unsubscribe(uint8_t msg_id, SubscribeLink *sl);
   static MavSpamList spam_list;

@@ -1,8 +1,9 @@
 #include "main.h"
+
 #include "mav_postman.hpp"
 #include "mav_spam_list.hpp"
+#include "mav_codec.h"
 #include "multi_buffer.hpp"
-#include "mav_encode.h"
 
 using namespace chibios_rt;
 
@@ -37,7 +38,7 @@ MavSpamList MavPostman::spam_list;
 static mavlink_message_t rx_msg __attribute__((section(".ccm")));
 static mavlink_status_t rx_status __attribute__((section(".ccm")));
 static mavlink_message_t tx_msg __attribute__((section(".ccm")));
-static uint8_t sendbuf[MAVLINK_SENDBUF_SIZE];
+static uint8_t sendbuf[MAVLINK_SENDBUF_SIZE]; /* do not set ccm here. This buffer may be used to send data via DMA */
 
 /*
  ******************************************************************************
@@ -145,13 +146,32 @@ void MavPostman::stop(void){
 /**
  *
  */
-msg_t MavPostman::post(mavMail &mail){
+msg_t MavPostman::post(mavMail &mail) {
   msg_t ret = MSG_RESET;
 
   if (ready == true)
     ret = txmb.post(&mail, TIME_IMMEDIATE);
 
   return ret;
+}
+
+/**
+ *
+ */
+msg_t MavPostman::postAhead(mavMail &mail) {
+  msg_t ret = MSG_RESET;
+
+  if (ready == true)
+    ret = txmb.postAhead(&mail, TIME_IMMEDIATE);
+
+  return ret;
+}
+
+/**
+ *
+ */
+void MavPostman::free(mavMail *mail) {
+  spam_list.free(mail);
 }
 
 /**

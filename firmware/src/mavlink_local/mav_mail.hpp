@@ -1,5 +1,5 @@
-#ifndef MAVMAIL_HPP_
-#define MAVMAIL_HPP_
+#ifndef MAV_MAIL_HPP_
+#define MAV_MAIL_HPP_
 
 #include "main.h"
 #include "mavlink_local.hpp"
@@ -14,9 +14,9 @@ public:
   virtual void release(void);
   bool free(void);
 
-  const void *mavmsg;
-  MAV_COMPONENT compid;
-  uint8_t msgid;
+  const void *mavmsg = nullptr;
+  MAV_COMPONENT compid = MAV_COMP_ID_ALL;
+  uint8_t msgid = 0;
 };
 
 /**
@@ -30,4 +30,4 @@ public:
   void release(void);
 };
 
-#endif /* MAVMAIL_HPP_ */
+#endif /* MAV_MAIL_HPP_ */

@@ -53,7 +53,7 @@
 /*#define USE_MMAP        (0) */
 
 #ifndef USE_PRINTF
-#define USE_PRINTF      (1)
+#define USE_PRINTF      (0)
 #endif
 
 #include <string.h>
@@ -586,6 +586,7 @@ size_t get_used_size(void *mem_pool)
 #if TLSF_STATISTIC
     return ((tlsf_t *) mem_pool)->used_size;
 #else
+    (void)mem_pool;
     return 0;
 #endif
 }
@@ -597,6 +598,7 @@ size_t get_max_size(void *mem_pool)
 #if TLSF_STATISTIC
     return ((tlsf_t *) mem_pool)->max_size;
 #else
+    (void)mem_pool;
     return 0;
 #endif
 }

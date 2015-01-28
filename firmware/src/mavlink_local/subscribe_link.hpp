@@ -1,24 +1,19 @@
 #ifndef SUBSCRIBE_LINK_HPP_
 #define SUBSCRIBE_LINK_HPP_
 
-#include "mavlink_local.hpp"
-
-typedef void (&linkcb_t)(const mavlink_message_t &msg);
+#include "mav_mail.hpp"
 
 class SubscribeLink {
   friend class MavSpamList;
 public:
-  SubscribeLink(linkcb_t f) :
-  callback(f),
-  next(nullptr),
-  connected(false)
-  {
-    osalDbgCheck(nullptr != f);
+  SubscribeLink(void) = delete;
+  SubscribeLink(chibios_rt::MailboxBase<mavMail*> *mb) : mb(mb) {
+    osalDbgCheck(nullptr != mb);
   };
 private:
-  linkcb_t callback;
-  SubscribeLink *next;
-  bool connected;
+  chibios_rt::MailboxBase<mavMail*> *mb = nullptr;
+  SubscribeLink *next = nullptr;
+  bool connected = false;
 };
 
 #endif /* SUBSCRIBE_LINK_HPP_ */

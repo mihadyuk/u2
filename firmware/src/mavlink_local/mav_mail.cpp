@@ -4,10 +4,8 @@
 /**
  *
  */
-mavMail::mavMail(void){
-  mavmsg = NULL;
-  compid = MAV_COMP_ID_ALL;
-  msgid = 0;
+mavMail::mavMail(void) {
+  return;
 }
 
 /**
@@ -15,7 +13,7 @@ mavMail::mavMail(void){
  */
 void mavMail::release(void){
   chSysLock();
-  mavmsg = NULL;
+  mavmsg = nullptr;
   chSysUnlock();
 }
 
@@ -24,7 +22,7 @@ void mavMail::release(void){
  */
 void mavMailSync::release(void){
   chSysLock();
-  mavmsg = NULL;
+  mavmsg = nullptr;
   this->signalI();
   chSysUnlock();
 }
@@ -42,5 +40,5 @@ void mavMail::fill(const void *mavmsg, MAV_COMPONENT compid, uint8_t msgid){
  * @brief     Check if this mail was freed by receiving thread
  */
 bool mavMail::free(void){
-  return NULL == mavmsg;
+  return nullptr == mavmsg;
 }

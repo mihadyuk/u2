@@ -110,8 +110,9 @@ CSRC = $(PORTSRC) \
        lib/uav_utils/cpu_load.c \
        lib/uav_utils/crc.c \
        lib/microrl/src/microrl.c \
+       lib/tlsf/tlsf.c \
        src/fault_handlers.c \
-       src/mavlink_local/mav_encode.c \
+       src/mavlink_local/mav_codec.c \
        benchmark/memcpy_bench.c \
        src/usbcfg.c \
 
@@ -178,6 +179,7 @@ CPPSRC = $(CHCPPSRC) \
 		src/kinematic/ahrs.cpp \
 		lib/filters/fir_test.cpp \
 
+
 # C sources to be compiled in ARM mode regardless of the global setting.
 # NOTE: Mixing ARM and THUMB mode enables the -mthumb-interwork compiler
 #       option that results in lower performance and larger code size.
@@ -211,6 +213,7 @@ INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
          lib/filters \
          lib/onewire \
          lib/24aa/src \
+         lib/tlsf \
          src \
          src/mavlink_local \
          src/kinematic \
