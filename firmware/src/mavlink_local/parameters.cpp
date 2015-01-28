@@ -222,6 +222,9 @@ static void command_long_handler(const mavMail *mail){
   if (!for_me(clp))
     return;
 
+  if (MAV_CMD_PREFLIGHT_STORAGE != clp->command)
+    return;
+
   /* Mavlink protocol claims "This command will be only accepted if
      in pre-flight mode." But in our realization allows to use it in any time. */
   //if ((mavlink_system_struct.mode != MAV_MODE_PREFLIGHT) || (mavlink_system_struct.state != MAV_STATE_STANDBY)){
@@ -229,9 +232,9 @@ static void command_long_handler(const mavMail *mail){
   //}
   //else{
   mavlink_dbg_print(MAV_SEVERITY_INFO, "eeprom operation started", MAV_COMP_ID_SYSTEM_CONTROL);
-  if (clp->param1 == 0)
+  if (roundf(clp->param1) == 0)
     status = param_registry.loadToRam();
-  else if (clp->param1 == 1)
+  else if (roundf(clp->param1) == 1)
     status = param_registry.saveAll();
 
   if (status != OSAL_SUCCESS){
