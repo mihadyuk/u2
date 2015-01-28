@@ -113,11 +113,12 @@ void MavPostman::start(mavChannel *chan){
   this->channel = chan;
 
   rxworker = chThdCreateStatic(RxThreadWA, sizeof(RxThreadWA),
-      LINKPRIO, RxThread, channel);
-  osalDbgAssert(NULL != rxworker, "Can not allocate memory");
+                               LINKPRIO, RxThread, channel);
+  osalDbgAssert(nullptr != rxworker, "Can not allocate memory");
+
   txworker = chThdCreateStatic(TxThreadWA, sizeof(TxThreadWA),
-      LINKPRIO, TxThread, channel);
-  osalDbgAssert(NULL != txworker, "Can not allocate memory");
+                               LINKPRIO, TxThread, channel);
+  osalDbgAssert(nullptr != txworker, "Can not allocate memory");
 
   ready = true;
 }
@@ -135,9 +136,9 @@ void MavPostman::stop(void){
     chThdTerminate(txworker);
     chThdWait(rxworker);
     chThdWait(txworker);
-    rxworker = NULL;
-    txworker = NULL;
-    channel = NULL;
+    rxworker = nullptr;
+    txworker = nullptr;
+    channel = nullptr;
   }
 }
 

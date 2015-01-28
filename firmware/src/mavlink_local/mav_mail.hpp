@@ -7,7 +7,7 @@
 /**
  *
  */
-class mavMail{
+class mavMail {
 public:
   mavMail(void);
   void fill(const void *mavmsg, MAV_COMPONENT compid, uint8_t msgid);

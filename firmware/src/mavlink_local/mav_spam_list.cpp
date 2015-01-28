@@ -72,11 +72,13 @@ typedef LinkRegistry <
 /**
  *
  */
-int MavSpamList::search(const uint8_t msg_id){
+int MavSpamList::search(uint8_t msg_id) const {
+
   for (size_t i=0; i<link_registry::reg_len; i++){
     if (msg_id == link_registry::msg_id[i])
       return i;
   }
+
   return -1; // nothing found
 }
 
@@ -90,12 +92,13 @@ int MavSpamList::search(const uint8_t msg_id){
  *
  */
 MavSpamList::MavSpamList(void) {
+
   uint8_t id;
 
-  for (size_t i=0; i<link_registry::reg_len; i++){
+  for (size_t i=0; i<link_registry::reg_len; i++) {
     link_registry::link[i] = nullptr; // just to be safe
     id = link_registry::msg_id[i];
-    for (size_t n=i+1; n<link_registry::reg_len; n++){
+    for (size_t n=i+1; n<link_registry::reg_len; n++) {
       osalDbgAssert(link_registry::msg_id[n] != id, "Duplicated IDs forbidden");
     }
   }
@@ -104,13 +107,15 @@ MavSpamList::MavSpamList(void) {
 /**
  * @brief     Insert new link in the very begin of chain
  */
-void MavSpamList::subscribe(uint8_t msg_id, SubscribeLink *new_link){
-  int idx;
-  idx = search(msg_id);
+void MavSpamList::subscribe(uint8_t msg_id, SubscribeLink *new_link) {
+
+  int idx = search(msg_id);
+
   osalDbgAssert(-1 != idx,
       "This message ID unregistered. Check generation script");
   osalDbgAssert(false == new_link->connected,
       "You can not connect single link twice");
+
   new_link->next = link_registry::link[idx];
   link_registry::link[idx] = new_link;
   new_link->connected = true;
@@ -119,9 +124,10 @@ void MavSpamList::subscribe(uint8_t msg_id, SubscribeLink *new_link){
 /**
  *
  */
-void MavSpamList::unsubscribe(uint8_t msg_id, SubscribeLink *linkp){
-  int idx;
-  idx = search(msg_id);
+void MavSpamList::unsubscribe(uint8_t msg_id, SubscribeLink *linkp) {
+
+  int idx = search(msg_id);
+
   osalDbgAssert(-1 != idx, "This message ID unregistered");
   osalDbgAssert(true == linkp->connected,
       "This link not connected. Check your program logic");
@@ -129,14 +135,14 @@ void MavSpamList::unsubscribe(uint8_t msg_id, SubscribeLink *linkp){
   SubscribeLink *head = link_registry::link[idx];
 
   /* special case when we need to delete first link in chain */
-  if (head == linkp){
+  if (head == linkp) {
     head = head->next;
     linkp->next = NULL;
     linkp->connected = false;
     return;
   }
 
-  while(NULL != head){
+  while (nullptr != head) {
     if (head->next == linkp){
       head->next = linkp->next;
       linkp->next = NULL;
@@ -153,20 +159,14 @@ void MavSpamList::unsubscribe(uint8_t msg_id, SubscribeLink *linkp){
  *
  */
 void MavSpamList::dispatch(const mavlink_message_t &msg) {
-  int idx;
-  idx = search(msg.msgid);
 
-  if(-1 != idx){
+  int idx = search(msg.msgid);
+
+  if (-1 != idx) {
     SubscribeLink *head = link_registry::link[idx];
-    while (nullptr != head){
+    while (nullptr != head) {
       head->callback(msg);
       head = head->next;
     }
   }
 }
-
-
-
-
-
-

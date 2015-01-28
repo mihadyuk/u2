@@ -13,7 +13,7 @@ public:
   void unsubscribe(uint8_t msg_id, SubscribeLink *sl);
   void dispatch(const mavlink_message_t &msg);
 private:
-  int search(uint8_t msg_id);
+  int search(uint8_t msg_id) const;
 };
 
 #endif /* MAV_SPAM_LIST_HPP_ */

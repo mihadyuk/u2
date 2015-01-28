@@ -3,7 +3,6 @@
 
 #include "main.h"
 #include "mav_channel.hpp"
-#include "subscribe_link.hpp"
 #include "mav_mail.hpp"
 #include "mav_spam_list.hpp"
 
@@ -25,9 +24,9 @@ public:
   void unsubscribe(uint8_t msg_id, SubscribeLink *sl);
   static MavSpamList spam_list;
 private:
-  mavChannel *channel = NULL;
-  thread_t *rxworker = NULL;
-  thread_t *txworker = NULL;
+  mavChannel *channel = nullptr;
+  thread_t *rxworker = nullptr;
+  thread_t *txworker = nullptr;
   bool ready = false;
 };
 
