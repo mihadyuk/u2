@@ -26,10 +26,10 @@ enum class ParamStatus {
  *
  */
 typedef enum {
-  PARAM_DEFAULT = 1,
-  PARAM_SEND_TMO = 2,
-  PARAM_SORT_MTRX = 3,
-  PARAM_POLARITY = 4,
+  PARAM_DEFAULT,
+  PARAM_SEND_TMO,
+  PARAM_SORT_MTRX,
+  PARAM_POLARITY
 } param_checker_t;
 
 /**
