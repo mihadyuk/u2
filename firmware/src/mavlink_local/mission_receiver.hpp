@@ -1,14 +1,13 @@
-#ifndef MISSION_PLANNER_H_
-#define MISSION_PLANNER_H_
+#ifndef MISSION_RECEIVER_HPP_
+#define MISSION_RECEIVER_HPP_
 
-class MissionPlanner : public BaseStaticThread<768>{
+class MissionReceiver : public chibios_rt::BaseStaticThread<768> {
 public:
-  MissionPlanner(EepromFile *p);
+  MissionReceiver(void);
   msg_t main(void);
 
 private:
-  EepromFile *wpdb_file;
   msg_t main_impl(void);
 };
 
-#endif /* MISSION_PLANNER_H_ */
+#endif /* MISSION_RECEIVER_HPP_ */

@@ -42,7 +42,7 @@ Giovanni
 #include "sanity.hpp"
 #include "i2c_local.hpp"
 #include "nvram_local.hpp"
-#include "parameters.hpp"
+#include "param_receiver.hpp"
 #include "timekeeper.hpp"
 //#include "sensors.hpp"
 //#include "pwr_mgmt.hpp"
@@ -53,7 +53,7 @@ Giovanni
 //#include "cmd_executor.hpp"
 #include "blinker.hpp"
 #include "waypoint_db.hpp"
-//#include "mission_planner.hpp"
+#include "mission_receiver.hpp"
 #include "mavlink_local.hpp"
 #include "endianness.h"
 //#include "attitude_unit_rover.hpp"
@@ -130,10 +130,10 @@ control::Stabilizer stabilizer(drivetrain);
 //MavDispatcher mav_dispatcher(acs);
 //
 //CmdExecutor cmd_executor(acs, attitude_unit);
-//
-///**/
-//MissionPlanner mission_planner(&MissionFile);
-//
+
+/**/
+MissionReceiver mission_receiver;
+
 //int64_t TimeUsGps;
 
 sensor_state_registry_t SensorStateRegistry;
@@ -194,7 +194,7 @@ int main(void) {
   NvramInit();
   ParametersInit();   /* read parameters from EEPROM via I2C */
   MavlinkInit();      /* mavlink constants initialization must be called after parameters init */
-//  mission_planner.start(CONTROLLERPRIO);
+  mission_receiver.start(CONTROLLERPRIO);
 //  ControllerInit();
   link_mgr.start();      /* launch after controller to reduce memory fragmentation on thread creation */
 //  PwrMgmtInit();

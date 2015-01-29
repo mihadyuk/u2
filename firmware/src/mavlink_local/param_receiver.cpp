@@ -14,7 +14,7 @@ using namespace chibios_rt;
  ******************************************************************************
  */
 #define PARAM_POST_TIMEOUT    MS2ST(500)
-#define SEND_VALUE_PAUSE      MS2ST(50)
+#define SEND_PAUSE            MS2ST(20)
 #define CHECK_FRESH_PERIOD    MS2ST(50)
 
 /*
@@ -68,7 +68,7 @@ static bool for_me(T *message){
  */
 static void param_value_send(const mavlink_param_value_t &m) {
 
-  size_t retry = PARAM_POST_TIMEOUT / SEND_VALUE_PAUSE;
+  size_t retry = PARAM_POST_TIMEOUT / SEND_PAUSE;
 
   while(retry--) {
     if (param_mail.free()) {
@@ -77,7 +77,7 @@ static void param_value_send(const mavlink_param_value_t &m) {
       return;
     }
     else
-      osalThreadSleep(SEND_VALUE_PAUSE);
+      osalThreadSleep(SEND_PAUSE);
   }
   param_send_drop++;
 }
@@ -104,7 +104,7 @@ static bool send_value(const char *key, int n){
 
     /* inform sending thread */
     param_value_send(mavlink_out_param_value_struct);
-    osalThreadSleep(SEND_VALUE_PAUSE);
+    osalThreadSleep(SEND_PAUSE);
     return OSAL_SUCCESS;
   }
   else
@@ -127,16 +127,16 @@ static void ignore_value(const mavlink_param_set_t *p){
 
   /* inform sending thread */
   param_value_send(mavlink_out_param_value_struct);
-  chThdSleep(SEND_VALUE_PAUSE);
+  chThdSleep(SEND_PAUSE);
 }
 
 /**
  * Send all values one by one.
  */
-static void send_all_values(const mavMail *mail){
+static void send_all_values(const mavMail *recv_mail){
 
   const mavlink_param_request_list_t *prlp
-  = static_cast<const mavlink_param_request_list_t *>(mail->mavmsg);
+  = static_cast<const mavlink_param_request_list_t *>(recv_mail->mavmsg);
 
   if (!for_me(prlp))
     return;
@@ -152,13 +152,13 @@ static void send_all_values(const mavMail *mail){
  * The MAV has to acknowledge the write operation by emitting a
  * PARAM_VALUE value message with the newly written parameter value.
  */
-static void param_set_handler(const mavMail *mail) {
+static void param_set_handler(const mavMail *recv_mail) {
 
   param_union_t *valuep = nullptr;
   const GlobalParam_t *paramp = nullptr;
   ParamStatus status;
   const mavlink_param_set_t *psp
-  = static_cast<const mavlink_param_set_t *>(mail->mavmsg);
+  = static_cast<const mavlink_param_set_t *>(recv_mail->mavmsg);
 
   if (!for_me(psp))
     return;
@@ -201,9 +201,9 @@ static void param_set_handler(const mavMail *mail) {
 /**
  *
  */
-static void param_request_read_handler(const mavMail *mail) {
+static void param_request_read_handler(const mavMail *recv_mail) {
   const mavlink_param_request_read_t *prrp
-  = static_cast<const mavlink_param_request_read_t *>(mail->mavmsg);
+  = static_cast<const mavlink_param_request_read_t *>(recv_mail->mavmsg);
 
   if (!for_me(prrp))
     return;
@@ -217,11 +217,12 @@ static void param_request_read_handler(const mavMail *mail) {
 /**
  * @brief   This function handles only MAV_CMD_PREFLIGHT_STORAGE
  */
-static void command_long_handler(const mavMail *mail){
+static void command_long_handler(const mavMail *recv_mail){
 
   enum MAV_RESULT result = MAV_RESULT_FAILED;
   bool status = OSAL_FAILED;
-  const mavlink_command_long_t *clp = static_cast<const mavlink_command_long_t *>(mail->mavmsg);
+  const mavlink_command_long_t *clp
+  = static_cast<const mavlink_command_long_t *>(recv_mail->mavmsg);
 
   if (!for_me(clp))
     return;
@@ -261,7 +262,7 @@ static THD_FUNCTION(ParametersThread, arg){
   chRegSetThreadName("ParamWorker");
 
   (void)arg;
-  mavMail *mail;
+  mavMail *recv_mail;
   Mailbox<mavMail*, 1> param_mailbox;
   SubscribeLink param_set_link(&param_mailbox);
   SubscribeLink param_request_read_link(&param_mailbox);
@@ -274,30 +275,30 @@ static THD_FUNCTION(ParametersThread, arg){
   mav_postman.subscribe(MAVLINK_MSG_ID_COMMAND_LONG,        &command_long_link);
 
   while (!chThdShouldTerminateX()) {
-    if (MSG_OK == param_mailbox.fetch(&mail, CHECK_FRESH_PERIOD)) {
-      switch(mail->msgid){
+    if (MSG_OK == param_mailbox.fetch(&recv_mail, CHECK_FRESH_PERIOD)) {
+      switch(recv_mail->msgid){
       /* set single parameter */
       case MAVLINK_MSG_ID_PARAM_SET:
-        param_set_handler(mail);
-        mav_postman.free(mail);
+        param_set_handler(recv_mail);
+        mav_postman.free(recv_mail);
         break;
 
       /* request all */
       case MAVLINK_MSG_ID_PARAM_REQUEST_READ:
-        param_request_read_handler(mail);
-        mav_postman.free(mail);
+        param_request_read_handler(recv_mail);
+        mav_postman.free(recv_mail);
         break;
 
       /* request single */
       case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
-        send_all_values(mail);
-        mav_postman.free(mail);
+        send_all_values(recv_mail);
+        mav_postman.free(recv_mail);
         break;
 
       /* command */
       case MAVLINK_MSG_ID_COMMAND_LONG:
-        command_long_handler(mail);
-        mav_postman.free(mail);
+        command_long_handler(recv_mail);
+        mav_postman.free(recv_mail);
         break;
 
       /*error trap*/

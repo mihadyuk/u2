@@ -136,7 +136,8 @@ NVRAMSRC = src/nvram_local.cpp \
 		lib/24aa/src/nvram_fs.cpp \
 		lib/24aa/src/nvram_file.cpp
 
-MAVSRC = src/mavlink_local/parameters.cpp \
+MAVSRC = src/mavlink_local/param_receiver.cpp \
+        src/mavlink_local/mission_receiver.cpp \
 		src/mavlink_local/param_registry.cpp \
 		src/mavlink_local/param_validator.cpp \
 		src/mavlink_local/tlm_sender.cpp \

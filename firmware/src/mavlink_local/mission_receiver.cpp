@@ -1,12 +1,14 @@
-#include <control/old_acs/mission_receiver.hpp>
 #include <stdio.h>
 
 #include "main.h"
+
+#include "mavlink_local.hpp"
+#include "mission_receiver.hpp"
 #include "global_flags.h"
-#include "message.hpp"
 #include "waypoint_db.hpp"
-#include "mavdbg.hpp"
-#include "mavlocal.hpp"
+#include "mav_dbg.hpp"
+
+using namespace chibios_rt;
 
 /*
  ******************************************************************************
@@ -18,6 +20,10 @@
 #define PLANNER_RETRY_TMO         MS2ST(1000)
 #define PLANNER_ADDITIONAL_TMO    MS2ST(10)
 
+#define MISSION_CHECK_PERIOD      MS2ST(50)
+#define MISSION_TIMEOUT           MS2ST(1000)
+
+
 #define TARGET_RADIUS             param2  /* dirty fix to correspond QGC not mavlink lib */
 #define MIN_TARGET_RADIUS_WGS84   5       /* minimal allowed waypoint radius for global frame */
 #define MIN_TARGET_RADIUS_LOCAL   0.5f    /* minimal allowed waypoint radius for local frame */
@@ -27,31 +33,18 @@
  * EXTERNS
  ******************************************************************************
  */
-extern WpDB wpdb;
 
-extern GlobalFlags_t  GlobalFlags;
+static mavMail                        mission_count_mail;
+static mavMail                        mission_request_mail;
+static mavMail                        mission_ack_mail;
+static mavMail                        mission_item_mail;
 
-extern mavlink_mission_count_t        mavlink_in_mission_count_struct;
-extern mavlink_mission_count_t        mavlink_out_mission_count_struct;
+static mavlink_mission_count_t        mavlink_out_mission_count_struct;
+static mavlink_mission_request_t      mavlink_out_mission_request_struct;
+static mavlink_mission_ack_t          mavlink_out_mission_ack_struct;
+static mavlink_mission_item_t         mavlink_out_mission_item_struct;
 
-extern mavlink_mission_request_t      mavlink_in_mission_request_struct;
-extern mavlink_mission_request_t      mavlink_out_mission_request_struct;
-
-extern mavlink_mission_ack_t          mavlink_in_mission_ack_struct;
-extern mavlink_mission_ack_t          mavlink_out_mission_ack_struct;
-
-extern mavlink_mission_item_t         mavlink_in_mission_item_struct;
-extern mavlink_mission_item_t         mavlink_out_mission_item_struct;
-
-extern EventSource event_mavlink_in_mission_clear_all;
-extern EventSource event_mavlink_in_mission_request_list;
-
-extern EventSource event_mavlink_in_mission_item;
-extern EventSource event_mavlink_in_mission_request;
-extern EventSource event_mavlink_in_mission_count;
-extern EventSource event_mavlink_in_mission_ack;
-
-extern EventSource event_mission_updated;
+extern event_source_t event_mission_updated;
 
 /*
  ******************************************************************************
@@ -76,7 +69,8 @@ static char dbg_str[64];
 /**
  *
  */
-static void send_ack(uint8_t type){
+static void send_ack(uint8_t type) {
+
   /* logically the target_component must be MAV_COMP_ID_MISSIONPLANNER,
    * but QGC does not accept them. */
   mavlink_out_mission_ack_struct.target_component = MAV_COMP_ID_ALL;
@@ -84,14 +78,19 @@ static void send_ack(uint8_t type){
   mavlink_out_mission_ack_struct.target_system = GROUND_STATION_ID;
   mavlink_out_mission_ack_struct.type = type;
 
-  MissionAckSend(&mavlink_out_mission_ack_struct, MAV_COMP_ID_MISSIONPLANNER);
+  if (mission_ack_mail.free()) {
+    mission_ack_mail.fill(&mavlink_out_mission_ack_struct,
+                          MAV_COMP_ID_MISSIONPLANNER,
+                          MAVLINK_MSG_ID_MISSION_ITEM);
+    mav_postman.postAhead(mission_ack_mail);
+  }
 }
 
 /**
  * Lazy clear all routine.
  */
 static void mission_clear_all(void){
-  if (CH_SUCCESS == wpdb.clear())
+  if (OSAL_SUCCESS == wpdb.reset())
     send_ack(MAV_MISSION_ACCEPTED);
   else
     send_ack(MAV_MISSION_ERROR);
@@ -101,6 +100,8 @@ static void mission_clear_all(void){
  * Perform waypoint checking
  */
 static uint8_t check_wp(const mavlink_mission_item_t *wp, uint16_t seq){
+
+  return MAV_MISSION_ACCEPTED;
 
   /* check supported frame types */
   if (wp->frame != MAV_FRAME_GLOBAL){
@@ -147,77 +148,50 @@ static uint8_t check_wp(const mavlink_mission_item_t *wp, uint16_t seq){
   return MAV_MISSION_ACCEPTED;
 }
 
+///**
+// *
+// */
+//static msg_t wait_ack(Mailbox<mavMail*, 1> &mission_mailbox) {
+//
+//  const systime_t start = chVTGetSystemTimeX();
+//  const systime_t end   = start + MISSION_TIMEOUT;
+//  mavMail *recv_mail;
+//
+//  while (chVTIsSystemTimeWithinX(start, end)) {
+//    if (MSG_OK == mission_mailbox.fetch(&recv_mail, MISSION_CHECK_PERIOD)) {
+//      if (MAVLINK_MSG_ID_MISSION_ACK == recv_mail->msgid) {
+//        mav_postman.free(recv_mail);
+//        return MSG_OK;
+//      }
+//      mav_postman.free(recv_mail);
+//    }
+//  }
+//
+//  return MSG_TIMEOUT;
+//}
+
 /**
  *
  */
-static bool gcs2mav(uint16_t N){
-  uint32_t seq = 0;
-  uint32_t retry_cnt = PLANNER_RETRY_CNT;
-  eventmask_t evt = 0;
-  mavlink_mission_item_t mi;        /* local copy */
-  uint8_t status = MAV_MISSION_ERROR;
+static void send_mission_item(uint16_t seq) {
 
-  /* check available space */
-  if (N > wpdb.getCapacity()){
-    send_ack(MAV_MISSION_NO_SPACE);
-    return CH_FAILED;
+  size_t retry = 3;
+
+  wpdb.read(&mavlink_out_mission_item_struct, seq);
+  mavlink_out_mission_item_struct.target_component = MAV_COMP_ID_MISSIONPLANNER;
+  mavlink_out_mission_item_struct.target_system = GROUND_STATION_ID;
+
+  while(retry--) {
+    if (mission_item_mail.free()) {
+      mission_item_mail.fill(&mavlink_out_mission_item_struct,
+                             MAV_COMP_ID_MISSIONPLANNER,
+                             MAVLINK_MSG_ID_MISSION_ITEM);
+      mav_postman.postAhead(mission_item_mail);
+      return;
+    }
+    else
+      osalThreadSleep(MISSION_CHECK_PERIOD);
   }
-
-  /* prepare to harvest waypoints */
-  struct EventListener el_mission_item;
-  chEvtRegisterMask(&event_mavlink_in_mission_item, &el_mission_item, EVMSK_MAVLINK_IN_MISSION_ITEM);
-  chEvtWaitOneTimeout(EVMSK_MAVLINK_IN_MISSION_ITEM, 1);/* fake wait to clear "queue" */
-  if (CH_FAILED == wpdb.clear())
-    chDbgPanic("");
-
-  for (seq=0; seq<N; seq++){
-    /* prepare request to ground */
-    mavlink_out_mission_request_struct.target_component = MAV_COMP_ID_MISSIONPLANNER;
-    mavlink_out_mission_request_struct.target_system = GROUND_STATION_ID;
-    mavlink_out_mission_request_struct.seq = seq;
-    retry_cnt = PLANNER_RETRY_CNT;
-    chThdSleep(PLANNER_ADDITIONAL_TMO);
-
-    do{
-      /* drop message */
-      MissionRequestSend(&mavlink_out_mission_request_struct, MAV_COMP_ID_MISSIONPLANNER);
-
-      /* wait answer */
-      evt = chEvtWaitOneTimeout(EVMSK_MAVLINK_IN_MISSION_ITEM, PLANNER_RETRY_TMO);
-      if (EVMSK_MAVLINK_IN_MISSION_ITEM == evt){
-        chSysLock();
-        mi = mavlink_in_mission_item_struct;
-        chSysUnlock();
-
-        /* check waypoint cosherness and write it if cosher */
-        status = check_wp(&mi, seq);
-        if (status != MAV_MISSION_ACCEPTED)
-          goto EXIT;
-        else{
-          if (CH_FAILED == wpdb.save(&mi, seq))
-            chDbgPanic("Can not store waypoint in DB");
-          break; /* do-while */
-        }
-      }
-
-      retry_cnt--;
-      if(0 == retry_cnt)
-        goto EXIT;
-
-    }while(retry_cnt);
-  }
-  /* save waypoint count in eeprom only in the very end of transaction */
-  if (CH_FAILED == wpdb.finalize())
-    chDbgPanic("");
-
-  /* final stuff */
-EXIT:
-  chEvtUnregister(&event_mavlink_in_mission_item, &el_mission_item);
-  send_ack(status);
-  if (0 == retry_cnt)
-    return CH_FAILED;
-  else
-    return CH_SUCCESS;
 }
 
 /**
@@ -229,152 +203,222 @@ EXIT:
  *             gets the WAYPOINT_ACK or another message that starts
  *             a different transaction or a timeout happens.
  */
-static bool mav2gcs(void){
-  eventmask_t evt = 0;
-  bool status = CH_FAILED;
+static msg_t mav2gcs(Mailbox<mavMail*, 1> &mission_mailbox) {
+
   uint32_t retry_cnt = PLANNER_RETRY_CNT;
+  mavMail *recv_mail;
+  uint16_t seq;
 
-  struct EventListener el_mission_request;
-  struct EventListener el_mission_ack;
-  struct EventListener el_mission_request_list;
-  chEvtRegisterMask(&event_mavlink_in_mission_request_list, &el_mission_request_list, EVMSK_MAVLINK_IN_MISSION_REQUEST_LIST);
-  chEvtRegisterMask(&event_mavlink_in_mission_request,      &el_mission_request,      EVMSK_MAVLINK_IN_MISSION_REQUEST);
-  chEvtRegisterMask(&event_mavlink_in_mission_ack,          &el_mission_ack,          EVMSK_MAVLINK_IN_MISSION_ACK);
-
-START:
-  mavlink_out_mission_count_struct.target_component = MAV_COMP_ID_MISSIONPLANNER;
-  mavlink_out_mission_count_struct.target_system = GROUND_STATION_ID;
-  mavlink_out_mission_count_struct.count = wpdb.loadCount();
-  MissionCountSend(&mavlink_out_mission_count_struct, MAV_COMP_ID_MISSIONPLANNER);
-
-  if (0 == mavlink_out_mission_count_struct.count){
-    status = CH_SUCCESS;
-    goto EXIT;
+  if (mission_count_mail.free()){
+    mavlink_out_mission_count_struct.target_component = MAV_COMP_ID_MISSIONPLANNER;
+//    mavlink_out_mission_count_struct.target_component = MAV_COMP_ID_ALL;
+    mavlink_out_mission_count_struct.target_system = GROUND_STATION_ID;
+    mavlink_out_mission_count_struct.count = wpdb.getCount();
+    mission_count_mail.fill(&mavlink_out_mission_count_struct,
+                            MAV_COMP_ID_MISSIONPLANNER,
+                            MAVLINK_MSG_ID_MISSION_COUNT);
+//    mission_count_mail.fill(&mavlink_out_mission_count_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_MISSION_COUNT);
+    mav_postman.postAhead(mission_count_mail);
   }
-
+  else
+    return MSG_RESET;
 
   /* теперь нам надо понять, дошло сообщение с количеством вейпоинтов, или нет.
    * Если нет - земля пришлет повторный запрос MISSION_REQUEST_LIST */
-  evt = chEvtWaitOneTimeout(EVMSK_MAVLINK_IN_MISSION_REQUEST_LIST |
-                            EVMSK_MAVLINK_IN_MISSION_REQUEST |
-                            EVMSK_MAVLINK_IN_MISSION_ACK,
-                            PLANNER_RETRY_TMO * PLANNER_RETRY_CNT);
-  switch(evt){
-  case EVMSK_MAVLINK_IN_MISSION_REQUEST_LIST:
-    /* надобно повторить */
-    goto START;
-
-  /* maint loooong loop */
-  case EVMSK_MAVLINK_IN_MISSION_REQUEST:
-    do{
-      wpdb.load(&mavlink_out_mission_item_struct, mavlink_in_mission_request_struct.seq);
-      mavlink_out_mission_item_struct.target_component = MAV_COMP_ID_MISSIONPLANNER;
-      mavlink_out_mission_item_struct.target_system = GROUND_STATION_ID;
-      MissionItemSend(&mavlink_out_mission_item_struct, MAV_COMP_ID_MISSIONPLANNER);
-
-      /* wait next request or ack */
-      evt = chEvtWaitOneTimeout(EVMSK_MAVLINK_IN_MISSION_REQUEST |
-                                EVMSK_MAVLINK_IN_MISSION_ACK,
-                                PLANNER_RETRY_TMO);
-      switch(evt){
-      case EVMSK_MAVLINK_IN_MISSION_REQUEST:
-        continue;
-
-      case EVMSK_MAVLINK_IN_MISSION_ACK:
-        status = CH_SUCCESS;
-        goto EXIT;
+  do {
+    if (MSG_OK == mission_mailbox.fetch(&recv_mail, MISSION_TIMEOUT)) {
+      switch(recv_mail->msgid) {
+      /* ground want to know how many items we have */
+      case MAVLINK_MSG_ID_MISSION_REQUEST:
+        seq = static_cast<const mavlink_mission_request_t *>(recv_mail->mavmsg)->seq;
+        mav_postman.free(recv_mail);
+        send_mission_item(seq);
         break;
 
+      /*  */
+      case MAVLINK_MSG_ID_MISSION_ACK:
+        mav_postman.free(recv_mail);
+        goto SUCCESS;
+        break;
+
+      /* other messages must be dropped */
       default:
         retry_cnt--;
-        status = CH_FAILED;
         break;
       }
-    }while(retry_cnt);
-    break; /* case EVMSK_MAVLINK_IN_MISSION_REQUEST */
+    }
+    else
+      break;
+  } while (retry_cnt);
 
-  case EVMSK_MAVLINK_IN_MISSION_ACK:
-    status = CH_SUCCESS;
-    break;
+  return MSG_TIMEOUT;
 
-  default:
-    status = CH_FAILED;
-    break;
-  }
-
-EXIT:
-  chEvtUnregister(&event_mavlink_in_mission_request, &el_mission_request);
-  chEvtUnregister(&event_mavlink_in_mission_ack,     &el_mission_ack);
-  chEvtUnregister(&event_mavlink_in_mission_request_list, &el_mission_request_list);
-  return status;
+SUCCESS:
+  return MSG_OK;
 }
 
+/**
+ *
+ */
+static void send_mission_request(uint16_t seq) {
+
+  mavlink_out_mission_request_struct.target_component = MAV_COMP_ID_MISSIONPLANNER;
+  mavlink_out_mission_request_struct.target_system = GROUND_STATION_ID;
+  mavlink_out_mission_request_struct.seq = seq;
+
+  if (mission_request_mail.free()) {
+    mission_request_mail.fill(&mavlink_out_mission_request_struct,
+                              MAV_COMP_ID_MISSIONPLANNER,
+                              MAVLINK_MSG_ID_MISSION_REQUEST);
+    mav_postman.postAhead(mission_request_mail);
+  }
+}
+
+/**
+ *
+ */
+static msg_t gcs2mav(Mailbox<mavMail*, 1> &mission_mailbox, uint16_t N) {
+
+  size_t seq = 0;
+  size_t retry_cnt = PLANNER_RETRY_CNT;
+  mavlink_mission_item_t mi;        /* working copy */
+  uint8_t status = MAV_MISSION_ERROR;
+  mavMail *recv_mail;
+
+  /* check available space */
+  if ((N > wpdb.getCapacity()) || (OSAL_FAILED == wpdb.reset())) {
+    status = MAV_MISSION_NO_SPACE;
+    goto EXIT;
+  }
+
+  for (seq=0; seq<N; seq++) {
+    do {
+      send_mission_request(seq);
+      /* wait answer */
+      if (MSG_OK == mission_mailbox.fetch(&recv_mail, MISSION_TIMEOUT)) {
+        if (MAVLINK_MSG_ID_MISSION_ITEM == recv_mail->msgid) {
+          osalSysLock();
+          memcpy(&mi, recv_mail->mavmsg, sizeof(mi));
+          osalSysUnlock();
+
+          /* check waypoint cosherness and write it if cosher */
+          status = check_wp(&mi, seq);
+          if (status != MAV_MISSION_ACCEPTED)
+            goto EXIT;
+          if (OSAL_FAILED == wpdb.write(&mi, seq)) {
+            status = MAV_MISSION_NO_SPACE;
+            goto EXIT;
+          }
+          break; /* try to send next sequence */
+        }
+        else
+          retry_cnt--;
+      }
+      else
+        retry_cnt--;
+    }while(retry_cnt);
+  }
+
+  /* save waypoint count in eeprom only in the very end of transaction */
+  if (OSAL_FAILED == wpdb.seal()) {
+    status = MAV_MISSION_NO_SPACE;
+    goto EXIT;
+  }
+
+  /* final stuff */
+EXIT:
+  send_ack(status);
+  if (0 == retry_cnt)
+    return OSAL_FAILED;
+  else
+    return OSAL_SUCCESS;
+}
 
 /**
  * Planner thread.
  * process mission commands from ground
  */
-msg_t MissionPlanner::main_impl(void){
+msg_t MissionReceiver::main_impl(void){
 
-  struct EventListener el_mission_request_list;
-  struct EventListener el_mission_count;
-  struct EventListener el_mission_clear_all;
-  struct EventListener el_mission_item;
+  mavMail *recv_mail;
+  Mailbox<mavMail*, 1> mission_mailbox;
+  const mavlink_mission_count_t *mission_count;
 
-  chEvtRegisterMask(&event_mavlink_in_mission_request_list, &el_mission_request_list, EVMSK_MAVLINK_IN_MISSION_REQUEST_LIST);
-  chEvtRegisterMask(&event_mavlink_in_mission_count,        &el_mission_count,        EVMSK_MAVLINK_IN_MISSION_COUNT);
-  chEvtRegisterMask(&event_mavlink_in_mission_clear_all,    &el_mission_clear_all,    EVMSK_MAVLINK_IN_MISSION_CLEAR_ALL);
-  chEvtRegisterMask(&event_mavlink_in_mission_item,         &el_mission_item,         EVMSK_MAVLINK_IN_MISSION_ITEM);
+  SubscribeLink mission_request_list_link(&mission_mailbox);
+  SubscribeLink mission_clear_all_link(&mission_mailbox);
+  SubscribeLink mission_request_link(&mission_mailbox);
+  SubscribeLink mission_count_link(&mission_mailbox);
+  SubscribeLink mission_item_link(&mission_mailbox);
+  SubscribeLink mission_ack_link(&mission_mailbox);
 
-  eventmask_t evt = 0;
-  while (!chThdShouldTerminate()) {
-    evt = chEvtWaitOneTimeout(EVMSK_MAVLINK_IN_MISSION_REQUEST_LIST |
-                              EVMSK_MAVLINK_IN_MISSION_COUNT |
-                              EVMSK_MAVLINK_IN_MISSION_CLEAR_ALL |
-                              EVMSK_MAVLINK_IN_MISSION_ITEM,
-                              MS2ST(100));
-    switch (evt){
+  mav_postman.subscribe(MAVLINK_MSG_ID_MISSION_REQUEST_LIST,  &mission_request_list_link);
+  mav_postman.subscribe(MAVLINK_MSG_ID_MISSION_CLEAR_ALL,     &mission_clear_all_link);
+  mav_postman.subscribe(MAVLINK_MSG_ID_MISSION_REQUEST,       &mission_request_link);
+  mav_postman.subscribe(MAVLINK_MSG_ID_MISSION_COUNT,         &mission_count_link);
+  mav_postman.subscribe(MAVLINK_MSG_ID_MISSION_ITEM,          &mission_item_link);
+  mav_postman.subscribe(MAVLINK_MSG_ID_MISSION_ACK,           &mission_ack_link);
 
-    /* ground want to know how many items we have */
-    case EVMSK_MAVLINK_IN_MISSION_REQUEST_LIST:
-      chEvtUnregister(&event_mavlink_in_mission_request_list, &el_mission_request_list);
-      mav2gcs();
-      chEvtRegisterMask(&event_mavlink_in_mission_request_list, &el_mission_request_list, EVMSK_MAVLINK_IN_MISSION_REQUEST_LIST);
-      break;
+  while (!chThdShouldTerminateX()) {
+    if (MSG_OK == mission_mailbox.fetch(&recv_mail, MISSION_CHECK_PERIOD)) {
+      switch(recv_mail->msgid) {
 
-    /* ground says how many items it wants to send here */
-    case EVMSK_MAVLINK_IN_MISSION_COUNT:
-      /* this event now will be handled inside write loop */
-      chEvtUnregister(&event_mavlink_in_mission_item, &el_mission_item);
-      if (CH_SUCCESS == gcs2mav(mavlink_in_mission_count_struct.count))
-        chEvtBroadcastFlags(&event_mission_updated, EVMSK_MISSION_UPDATED);
-      /* register event back to main cycle */
-      chEvtRegisterMask(&event_mavlink_in_mission_item, &el_mission_item, EVMSK_MAVLINK_IN_MISSION_ITEM);
-      break;
+      /* ground says how many items it wants to send here */
+      case MAVLINK_MSG_ID_MISSION_COUNT:
+        mission_count = static_cast<const mavlink_mission_count_t *>(recv_mail->mavmsg);
+        if (MSG_OK == gcs2mav(mission_mailbox, mission_count->count))
+          chEvtBroadcastFlags(&event_mission_updated, EVMSK_MISSION_UPDATED);
+        mav_postman.free(recv_mail);
+        break;
 
-    /* ground wants erase all wps */
-    case EVMSK_MAVLINK_IN_MISSION_CLEAR_ALL:
-      mission_clear_all();
-      break;
+      /* ground want to know how many items we have */
+      case MAVLINK_MSG_ID_MISSION_REQUEST_LIST:
+        mav2gcs(mission_mailbox);
+        mav_postman.free(recv_mail);
+        break;
 
-    case EVMSK_MAVLINK_IN_MISSION_ITEM:
-      /* If a waypoint planner component receives WAYPOINT messages outside
-       * of transactions it answers with a WAYPOINT_ACK message. */
-      send_ack(MAV_MISSION_DENIED);
-      break;
+      /* ground wants erase all wps */
+      case MAVLINK_MSG_ID_MISSION_CLEAR_ALL:
+        mission_clear_all();
+        mav_postman.free(recv_mail);
+        break;
 
-    default:
-      break;
+      /* message out of order, drop it */
+      case MAVLINK_MSG_ID_MISSION_ACK:
+        mav_postman.free(recv_mail);
+        break;
+
+      /**/
+      case MAVLINK_MSG_ID_MISSION_REQUEST:
+        mav_postman.free(recv_mail);
+        break;
+
+      /**/
+      case MAVLINK_MSG_ID_MISSION_ITEM:
+        /* If a waypoint planner component receives WAYPOINT messages outside
+         * of transactions it answers with a WAYPOINT_ACK message. */
+        mav_postman.free(recv_mail);
+        send_ack(MAV_MISSION_DENIED);
+        break;
+
+      /*error trap*/
+      default:
+        osalSysHalt("Unhandled case");
+        break;
+      }
     }
   }
 
-  chEvtUnregister(&event_mavlink_in_mission_request_list, &el_mission_request_list);
-  chEvtUnregister(&event_mavlink_in_mission_count,        &el_mission_count);
-  chEvtUnregister(&event_mavlink_in_mission_clear_all,    &el_mission_clear_all);
-  chEvtUnregister(&event_mavlink_in_mission_item,         &el_mission_item);
+  mav_postman.unsubscribe(MAVLINK_MSG_ID_MISSION_REQUEST_LIST,  &mission_request_list_link);
+  mav_postman.unsubscribe(MAVLINK_MSG_ID_MISSION_CLEAR_ALL,     &mission_clear_all_link);
+  mav_postman.unsubscribe(MAVLINK_MSG_ID_MISSION_REQUEST,       &mission_request_link);
+  mav_postman.unsubscribe(MAVLINK_MSG_ID_MISSION_COUNT,         &mission_count_link);
+  mav_postman.unsubscribe(MAVLINK_MSG_ID_MISSION_ITEM,          &mission_item_link);
+  mav_postman.unsubscribe(MAVLINK_MSG_ID_MISSION_ACK,           &mission_ack_link);
 
-  chThdExit(0);
-  return 0;
+  mission_mailbox.reset();
+
+  chThdExit(MSG_OK);
+  return MSG_OK;
 }
 
 /*
@@ -385,24 +429,17 @@ msg_t MissionPlanner::main_impl(void){
 /**
  *
  */
-MissionPlanner::MissionPlanner(EepromFile *p){
-  chDbgCheck(NULL != p, "");
-  this->wpdb_file = p;
+MissionReceiver::MissionReceiver(void) {
+  return;
 }
 
 /**
  *
  */
-msg_t MissionPlanner::main(void){
-  chRegSetThreadName("Planner");
+msg_t MissionReceiver::main(void){
+  chRegSetThreadName("MissionRecv");
 
-  while (0 == GlobalFlags.parameters_loaded)
-    chThdSleepMilliseconds(50);
-
-  while(GlobalFlags.messaging_ready == 0)
-    chThdSleepMilliseconds(50);
-
-  wpdb.connect(wpdb_file);
+  wpdb.connect();
 
   return main_impl();
 }

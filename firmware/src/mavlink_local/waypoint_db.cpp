@@ -125,7 +125,7 @@ bool WpDB::write(const mavlink_mission_item_t *wpp, uint16_t seq) {
     return OSAL_FAILED;
 
   crc = crc8((uint8_t *)wpp, WAYPOINT_FOOTPRINT - 1, 0xFF);
-  written = dbfile->put(crc);
+  written = dbfile->write(&crc, sizeof(crc));
   if (sizeof(crc) != written)
     return OSAL_FAILED;
   else {
@@ -165,7 +165,7 @@ bool WpDB::seal(void){
 /**
  * Fast clear without data erasing
  */
-bool WpDB::clear(void) {
+bool WpDB::reset(void) {
   size_t result = 0;
   count = 0;
   dbfile->setPosition(0);

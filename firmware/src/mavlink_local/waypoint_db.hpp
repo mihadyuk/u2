@@ -28,7 +28,7 @@ public:
   uint16_t connect(void);
   bool write(const mavlink_mission_item_t *wpp, uint16_t seq);
   bool read(mavlink_mission_item_t *wpp, uint16_t seq);
-  bool clear(void);
+  bool reset(void);
   uint16_t getCount(void) const;
   uint16_t getCapacity(void) const;
   bool seal(void);
