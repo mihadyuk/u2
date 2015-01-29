@@ -391,20 +391,20 @@ const GlobalParam_t * ParamRegistry::getParam(const char *key, int n, int *i) {
   int index = -1;
   osalDbgCheck(true == ready);
 
-  if (key != NULL){
+  if (key != nullptr){
     index = param_registry.key_index_search(key);
     if (-1 == index)
-      return NULL;
+      return nullptr;
   }
   else{
     if ((n > paramCount()) || (-1 == n))
-      return NULL;
+      return nullptr;
     else
       index = n;
   }
 
   /**/
-  if (NULL != i)
+  if (nullptr != i)
     *i = index;
   return &(param_db[index]);
 }

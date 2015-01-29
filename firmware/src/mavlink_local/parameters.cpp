@@ -54,13 +54,13 @@ static unsigned int                   param_send_drop = 0;
 template <typename T>
 static bool for_me(T *message){
   if (message->target_system != mavlink_system_struct.sysid)
-    return FALSE;
+    return false;
   if (mavlink_system_struct.compid == message->target_component)
-    return TRUE;
+    return true;
   else if (MAV_COMP_ID_ALL == message->target_component)
-    return TRUE;
+    return true;
   else
-    return FALSE;
+    return false;
 }
 
 /**
@@ -135,13 +135,15 @@ static void ignore_value(const mavlink_param_set_t *p){
  */
 static void send_all_values(const mavMail *mail){
 
-  const mavlink_param_request_list_t *prlp = static_cast<const mavlink_param_request_list_t *>(mail->mavmsg);
+  const mavlink_param_request_list_t *prlp
+  = static_cast<const mavlink_param_request_list_t *>(mail->mavmsg);
+
   if (!for_me(prlp))
     return;
 
   int i = 0;
   while (i < param_registry.paramCount()){
-    send_value(NULL, i);
+    send_value(nullptr, i);
     i++;
   }
 }
@@ -152,17 +154,18 @@ static void send_all_values(const mavMail *mail){
  */
 static void param_set_handler(const mavMail *mail) {
 
-  param_union_t *valuep = NULL;
-  const GlobalParam_t *paramp = NULL;
+  param_union_t *valuep = nullptr;
+  const GlobalParam_t *paramp = nullptr;
   ParamStatus status;
-  const mavlink_param_set_t *psp = static_cast<const mavlink_param_set_t *>(mail->mavmsg);
+  const mavlink_param_set_t *psp
+  = static_cast<const mavlink_param_set_t *>(mail->mavmsg);
 
   if (!for_me(psp))
     return;
 
   valuep = (param_union_t *)&(psp->param_value);
-  paramp = param_registry.getParam(psp->param_id, -1, NULL);
-  if (NULL == paramp){
+  paramp = param_registry.getParam(psp->param_id, -1, nullptr);
+  if (nullptr == paramp){
     ignore_value(psp);
     return;
   }
@@ -199,7 +202,8 @@ static void param_set_handler(const mavMail *mail) {
  *
  */
 static void param_request_read_handler(const mavMail *mail) {
-  const mavlink_param_request_read_t *prrp = static_cast<const mavlink_param_request_read_t *>(mail->mavmsg);
+  const mavlink_param_request_read_t *prrp
+  = static_cast<const mavlink_param_request_read_t *>(mail->mavmsg);
 
   if (!for_me(prrp))
     return;
@@ -211,7 +215,7 @@ static void param_request_read_handler(const mavMail *mail) {
 }
 
 /**
- *
+ * @brief   This function handles only MAV_CMD_PREFLIGHT_STORAGE
  */
 static void command_long_handler(const mavMail *mail){
 
