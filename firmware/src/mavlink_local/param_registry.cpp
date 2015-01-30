@@ -320,12 +320,12 @@ bool ParamRegistry::loadToRam(void) {
   }
 
 SUCCESS:
-  ready = true;
+  this->ready = true;
   release();
   return OSAL_SUCCESS;
 
 FAIL:
-  ready = false;
+  this->ready = false;
   release();
   return OSAL_FAILED;
 }
@@ -334,8 +334,11 @@ FAIL:
  *
  */
 void ParamRegistry::start(void) {
+  bool status;
+
   this->open_file();
-  this->loadToRam();
+  status = this->loadToRam();
+  osalDbgCheck(OSAL_SUCCESS == status);
 }
 
 /**

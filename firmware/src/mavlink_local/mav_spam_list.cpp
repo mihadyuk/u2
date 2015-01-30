@@ -68,6 +68,9 @@ typedef LinkRegistry <
 > link_registry;
 
 static uint8_t tlsf_array[8192] __attribute__((section(".ccm")));
+static size_t malloc_cnt = 0, free_cnt = 0;
+
+static chibios_rt::BinarySemaphore malloc_sem(false);
 
 /*
  ******************************************************************************
@@ -76,6 +79,27 @@ static uint8_t tlsf_array[8192] __attribute__((section(".ccm")));
  ******************************************************************************
  ******************************************************************************
  */
+
+static void *uav_malloc(size_t size) {
+
+  malloc_sem.wait();
+  void *ret = tlsf_malloc(size);
+  malloc_sem.signal();
+
+  if (nullptr != ret)
+    malloc_cnt++;
+  return ret;
+}
+
+static void uav_free (void *ptr) {
+
+  free_cnt++;
+
+  malloc_sem.wait();
+  tlsf_free(ptr);
+  malloc_sem.signal();
+}
+
 /**
  *
  */
@@ -197,21 +221,26 @@ void MavSpamList::dispatch(const mavlink_message_t &msg) {
   if (-1 != idx) {
     head = link_registry::link[idx];
     while (nullptr != head) {
-      msgptr = tlsf_malloc(mavlink_decode_memsize(&msg));
-      mailptr_tmp = tlsf_malloc(sizeof(mavMail));
 
-      if ((nullptr != msgptr) && (nullptr != mailptr_tmp)) {
-        mavlink_decode(&msg, msgptr);
-        mavMail *mailptr = new(mailptr_tmp) mavMail;
-        mailptr->fill(msgptr, MAV_COMP_ID_ALL, msg.msgid);
-        post_result = head->mb->post(mailptr, TIME_IMMEDIATE);
-        if (MSG_OK != post_result) {
-          tlsf_free(msgptr);
-          tlsf_free(mailptr_tmp);
-          this->drop++;
-        }
-        head = head->next;
+      msgptr = uav_malloc(mavlink_decode_memsize(&msg));
+      if (nullptr == msgptr)
+        break;
+      mailptr_tmp = uav_malloc(sizeof(mavMail));
+      if (nullptr == mailptr_tmp) {
+        uav_free(msgptr);
+        break;
       }
+
+      mavlink_decode(&msg, msgptr);
+      mavMail *mailptr = new(mailptr_tmp) mavMail;
+      mailptr->fill(msgptr, MAV_COMP_ID_ALL, msg.msgid);
+      post_result = head->mb->post(mailptr, TIME_IMMEDIATE);
+      if (MSG_OK != post_result) {
+        uav_free(msgptr);
+        uav_free(mailptr_tmp);
+        this->drop++;
+      }
+      head = head->next;
     }
   }
 
@@ -222,9 +251,6 @@ void MavSpamList::dispatch(const mavlink_message_t &msg) {
  *
  */
 void MavSpamList::free(mavMail *mail) {
-
-  lock();
-  tlsf_free((void *)mail->mavmsg);
-  tlsf_free(mail);
-  unlock();
+  uav_free((void *)mail->mavmsg);
+  uav_free(mail);
 }

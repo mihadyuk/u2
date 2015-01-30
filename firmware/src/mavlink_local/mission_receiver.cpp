@@ -21,7 +21,7 @@ using namespace chibios_rt;
 #define PLANNER_ADDITIONAL_TMO    MS2ST(10)
 
 #define MISSION_CHECK_PERIOD      MS2ST(50)
-#define MISSION_TIMEOUT           MS2ST(1000)
+#define MISSION_TIMEOUT           MS2ST(2000)
 
 
 #define TARGET_RADIUS             param2  /* dirty fix to correspond QGC not mavlink lib */
@@ -33,16 +33,6 @@ using namespace chibios_rt;
  * EXTERNS
  ******************************************************************************
  */
-
-static mavMail                        mission_count_mail;
-static mavMail                        mission_request_mail;
-static mavMail                        mission_ack_mail;
-static mavMail                        mission_item_mail;
-
-static mavlink_mission_count_t        mavlink_out_mission_count_struct;
-static mavlink_mission_request_t      mavlink_out_mission_request_struct;
-static mavlink_mission_ack_t          mavlink_out_mission_ack_struct;
-static mavlink_mission_item_t         mavlink_out_mission_item_struct;
 
 extern event_source_t event_mission_updated;
 
@@ -57,7 +47,19 @@ extern event_source_t event_mission_updated;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
+static mavMail                        mission_count_mail;
+static mavMail                        mission_request_mail;
+static mavMail                        mission_ack_mail;
+static mavMail                        mission_item_mail;
+
+static mavlink_mission_count_t        mavlink_out_mission_count_struct;
+static mavlink_mission_request_t      mavlink_out_mission_request_struct;
+static mavlink_mission_ack_t          mavlink_out_mission_ack_struct;
+static mavlink_mission_item_t         mavlink_out_mission_item_struct;
+
 static char dbg_str[64];
+
+static size_t drop_mission_item = 0;
 
 /*
  ******************************************************************************
@@ -81,7 +83,7 @@ static void send_ack(uint8_t type) {
   if (mission_ack_mail.free()) {
     mission_ack_mail.fill(&mavlink_out_mission_ack_struct,
                           MAV_COMP_ID_MISSIONPLANNER,
-                          MAVLINK_MSG_ID_MISSION_ITEM);
+                          MAVLINK_MSG_ID_MISSION_ACK);
     mav_postman.postAhead(mission_ack_mail);
   }
 }
@@ -175,23 +177,19 @@ static uint8_t check_wp(const mavlink_mission_item_t *wp, uint16_t seq){
  */
 static void send_mission_item(uint16_t seq) {
 
-  size_t retry = 3;
-
   wpdb.read(&mavlink_out_mission_item_struct, seq);
   mavlink_out_mission_item_struct.target_component = MAV_COMP_ID_MISSIONPLANNER;
   mavlink_out_mission_item_struct.target_system = GROUND_STATION_ID;
 
-  while(retry--) {
-    if (mission_item_mail.free()) {
-      mission_item_mail.fill(&mavlink_out_mission_item_struct,
-                             MAV_COMP_ID_MISSIONPLANNER,
-                             MAVLINK_MSG_ID_MISSION_ITEM);
-      mav_postman.postAhead(mission_item_mail);
-      return;
-    }
-    else
-      osalThreadSleep(MISSION_CHECK_PERIOD);
+  if (mission_item_mail.free()) {
+    mission_item_mail.fill(&mavlink_out_mission_item_struct,
+                           MAV_COMP_ID_MISSIONPLANNER,
+                           MAVLINK_MSG_ID_MISSION_ITEM);
+    mav_postman.postAhead(mission_item_mail);
+    return;
   }
+  else
+    drop_mission_item++;;
 }
 
 /**
@@ -209,7 +207,7 @@ static msg_t mav2gcs(Mailbox<mavMail*, 1> &mission_mailbox) {
   mavMail *recv_mail;
   uint16_t seq;
 
-  if (mission_count_mail.free()){
+  if (mission_count_mail.free()) {
     mavlink_out_mission_count_struct.target_component = MAV_COMP_ID_MISSIONPLANNER;
 //    mavlink_out_mission_count_struct.target_component = MAV_COMP_ID_ALL;
     mavlink_out_mission_count_struct.target_system = GROUND_STATION_ID;
@@ -231,7 +229,6 @@ static msg_t mav2gcs(Mailbox<mavMail*, 1> &mission_mailbox) {
       /* ground want to know how many items we have */
       case MAVLINK_MSG_ID_MISSION_REQUEST:
         seq = static_cast<const mavlink_mission_request_t *>(recv_mail->mavmsg)->seq;
-        mav_postman.free(recv_mail);
         send_mission_item(seq);
         break;
 
@@ -246,6 +243,8 @@ static msg_t mav2gcs(Mailbox<mavMail*, 1> &mission_mailbox) {
         retry_cnt--;
         break;
       }
+
+      mav_postman.free(recv_mail);
     }
     else
       break;
@@ -260,7 +259,7 @@ SUCCESS:
 /**
  *
  */
-static void send_mission_request(uint16_t seq) {
+static msg_t send_mission_request(uint16_t seq) {
 
   mavlink_out_mission_request_struct.target_component = MAV_COMP_ID_MISSIONPLANNER;
   mavlink_out_mission_request_struct.target_system = GROUND_STATION_ID;
@@ -271,7 +270,74 @@ static void send_mission_request(uint16_t seq) {
                               MAV_COMP_ID_MISSIONPLANNER,
                               MAVLINK_MSG_ID_MISSION_REQUEST);
     mav_postman.postAhead(mission_request_mail);
+    return MSG_OK;
   }
+  else {
+    return MSG_RESET;
+  }
+}
+
+/**
+ *
+ */
+static msg_t wait_mission_item(Mailbox<mavMail*, 1> &mission_mailbox,
+                               mavlink_mission_item_t *result, uint16_t seq) {
+
+  systime_t start = chVTGetSystemTimeX();
+  systime_t end = start + MISSION_TIMEOUT;
+  mavMail *recv_mail = nullptr;
+  bool message_good = false;
+
+  do {
+    if (MSG_OK == mission_mailbox.fetch(&recv_mail, MISSION_CHECK_PERIOD)) {
+      if (MAVLINK_MSG_ID_MISSION_ITEM == recv_mail->msgid) {
+        memcpy(result, recv_mail->mavmsg, sizeof(mavlink_mission_item_t));
+        if (result->seq == seq) {
+          message_good = true;
+        }
+      }
+      mav_postman.free(recv_mail);
+      recv_mail = nullptr;
+    }
+  } while(!message_good && chVTIsSystemTimeWithinX(start, end));
+
+  /* check program logic */
+  osalDbgCheck(nullptr == recv_mail);
+
+  /**/
+  if (message_good)
+    return MSG_OK;
+  else
+    return MSG_TIMEOUT;
+}
+
+/**
+ *
+ */
+static msg_t try_exchange(Mailbox<mavMail*, 1> &mission_mailbox,
+                         mavlink_mission_item_t *result, uint16_t seq) {
+  msg_t ret1 = MSG_TIMEOUT;
+  msg_t ret2 = MSG_TIMEOUT;
+  size_t retry_cnt = PLANNER_RETRY_CNT;
+
+  do {
+    ret1 = send_mission_request(seq);
+    if (MSG_OK == ret1)
+      ret2 = wait_mission_item(mission_mailbox, result, seq);
+    else
+      osalThreadSleep(MISSION_CHECK_PERIOD);
+
+    /* check results */
+    if ((MSG_OK == ret1) && (MSG_OK == ret2))
+      break;
+    else
+      retry_cnt--;
+  } while(retry_cnt > 0);
+
+  if (retry_cnt > 0)
+    return MSG_OK;
+  else
+    return MSG_TIMEOUT;
 }
 
 /**
@@ -280,58 +346,48 @@ static void send_mission_request(uint16_t seq) {
 static msg_t gcs2mav(Mailbox<mavMail*, 1> &mission_mailbox, uint16_t N) {
 
   size_t seq = 0;
-  size_t retry_cnt = PLANNER_RETRY_CNT;
   mavlink_mission_item_t mi;        /* working copy */
-  uint8_t status = MAV_MISSION_ERROR;
-  mavMail *recv_mail;
+  uint8_t storage_status = MAV_MISSION_ERROR;
+  msg_t ret = MSG_RESET;
 
   /* check available space */
   if ((N > wpdb.getCapacity()) || (OSAL_FAILED == wpdb.reset())) {
-    status = MAV_MISSION_NO_SPACE;
+    storage_status = MAV_MISSION_NO_SPACE;
     goto EXIT;
   }
 
   for (seq=0; seq<N; seq++) {
-    do {
-      send_mission_request(seq);
-      /* wait answer */
-      if (MSG_OK == mission_mailbox.fetch(&recv_mail, MISSION_TIMEOUT)) {
-        if (MAVLINK_MSG_ID_MISSION_ITEM == recv_mail->msgid) {
-          osalSysLock();
-          memcpy(&mi, recv_mail->mavmsg, sizeof(mi));
-          osalSysUnlock();
-
-          /* check waypoint cosherness and write it if cosher */
-          status = check_wp(&mi, seq);
-          if (status != MAV_MISSION_ACCEPTED)
-            goto EXIT;
-          if (OSAL_FAILED == wpdb.write(&mi, seq)) {
-            status = MAV_MISSION_NO_SPACE;
-            goto EXIT;
-          }
-          break; /* try to send next sequence */
-        }
-        else
-          retry_cnt--;
+    if (MSG_OK == try_exchange(mission_mailbox, &mi, seq)) {
+      /* check waypoint cosherness and write it if cosher */
+      storage_status = check_wp(&mi, seq);
+      if (MAV_MISSION_ACCEPTED != storage_status) {
+        ret = MSG_RESET;
+        goto EXIT;
       }
-      else
-        retry_cnt--;
-    }while(retry_cnt);
+      if (OSAL_FAILED == wpdb.write(&mi, seq)) {
+        storage_status = MAV_MISSION_NO_SPACE;
+        ret = MSG_RESET;
+        goto EXIT;
+      }
+    }
+    else {
+      mission_clear_all();
+      storage_status = MAV_MISSION_ERROR;
+      ret = MSG_RESET;
+      goto EXIT;
+    }
   }
 
   /* save waypoint count in eeprom only in the very end of transaction */
   if (OSAL_FAILED == wpdb.seal()) {
-    status = MAV_MISSION_NO_SPACE;
+    storage_status = MAV_MISSION_NO_SPACE;
     goto EXIT;
   }
 
   /* final stuff */
 EXIT:
-  send_ack(status);
-  if (0 == retry_cnt)
-    return OSAL_FAILED;
-  else
-    return OSAL_SUCCESS;
+  send_ack(storage_status);
+  return ret;
 }
 
 /**
