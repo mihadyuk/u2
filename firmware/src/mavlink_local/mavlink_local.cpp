@@ -18,7 +18,7 @@ using namespace chibios_rt;
  */
 
 /* variable for storing system state */
-mavlink_system_t                mavlink_system_struct;
+mavlink_system_t                mavlink_system_struct                   __attribute__((section(".ccm")));
 
 /* mavlink messages containing telemetry data */
 mavlink_raw_imu_t               mavlink_out_raw_imu_struct;
@@ -32,7 +32,6 @@ mavlink_global_position_int_t   mavlink_out_global_position_int_struct;
 mavlink_attitude_t              mavlink_out_attitude_struct;
 mavlink_attitude_quaternion_t   mavlink_out_attitude_quaternion_struct;
 mavlink_heartbeat_t             mavlink_out_heartbeat_struct;
-mavlink_param_value_t           mavlink_out_param_value_struct;
 mavlink_gps_raw_int_t           mavlink_out_gps_raw_int_struct;
 mavlink_nav_controller_output_t mavlink_out_nav_controller_output_struct;
 mavlink_command_ack_t           mavlink_out_command_ack_struct;
@@ -41,35 +40,6 @@ mavlink_rc_channels_raw_t       mavlink_out_rc_channels_raw_struct;
 mavlink_rc_channels_scaled_t    mavlink_out_rc_channels_scaled_struct;
 mavlink_hil_state_t             mavlink_out_hil_state_struct;
 mavlink_local_position_ned_t    mavlink_out_local_position_ned_struct;
-
-//mavlink_manual_control_t        mavlink_in_manual_control_struct;
-//mavlink_set_mode_t              mavlink_in_set_mode_struct;
-//mavlink_param_set_t             mavlink_in_param_set_struct;
-//mavlink_param_request_read_t    mavlink_in_param_request_read_struct;
-//mavlink_command_long_t          mavlink_in_command_long_struct;
-//mavlink_param_request_list_t    mavlink_in_param_request_list_struct;
-//
-//mavlink_mission_count_t         mavlink_out_mission_count_struct;
-//mavlink_mission_item_t          mavlink_out_mission_item_struct;
-//mavlink_mission_request_t       mavlink_out_mission_request_struct;
-//mavlink_mission_request_list_t  mavlink_out_mission_request_list_struct;
-//mavlink_mission_ack_t           mavlink_out_mission_ack_struct;
-//mavlink_mission_clear_all_t     mavlink_out_mission_clear_all_struct;
-//mavlink_mission_set_current_t   mavlink_out_mission_set_current_struct;
-//mavlink_mission_current_t       mavlink_out_mission_current_struct;
-//mavlink_mission_item_reached_t  mavlink_out_mission_item_reached_struct;
-//
-//mavlink_mission_count_t         mavlink_in_mission_count_struct;
-//mavlink_mission_item_t          mavlink_in_mission_item_struct;
-//mavlink_mission_request_t       mavlink_in_mission_request_struct;
-//mavlink_mission_request_list_t  mavlink_in_mission_request_list_struct;
-//mavlink_mission_ack_t           mavlink_in_mission_ack_struct;
-//mavlink_mission_clear_all_t     mavlink_in_mission_clear_all_struct;
-//mavlink_mission_set_current_t   mavlink_in_mission_set_current_struct;
-//mavlink_mission_current_t       mavlink_in_mission_current_struct;
-//mavlink_mission_item_reached_t  mavlink_in_mission_item_reached_struct;
-//
-//mavlink_heartbeat_t             mavlink_in_heartbeat_struct;
 
 /**
  * @brief   Event sources.

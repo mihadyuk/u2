@@ -37,8 +37,8 @@ extern EvtSource event_parameters_updated;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-static mavMail                        param_mail;
-static mavlink_param_value_t          mavlink_out_param_value_struct;
+static mavMail                        param_mail __attribute__((section(".ccm")));
+static mavlink_param_value_t          mavlink_out_param_value_struct __attribute__((section(".ccm")));
 static unsigned int                   param_send_drop = 0;
 
 /*
@@ -72,7 +72,7 @@ static void param_value_send(const mavlink_param_value_t &m) {
 
   while(retry--) {
     if (param_mail.free()) {
-      param_mail.fill(&m, THIS_COMPONENT_ID, MAVLINK_MSG_ID_PARAM_VALUE);
+      param_mail.fill(&m, GLOBAL_COMPONENT_ID, MAVLINK_MSG_ID_PARAM_VALUE);
       mav_postman.postAhead(param_mail);
       return;
     }
@@ -176,19 +176,19 @@ static void param_set_handler(const mavMail *recv_mail) {
   /* send confirmation */
   switch(status){
   case ParamStatus::CLAMPED:
-    mavlink_dbg_print(MAV_SEVERITY_WARNING, "PARAM: clamped", THIS_COMPONENT_ID);
+    mavlink_dbg_print(MAV_SEVERITY_WARNING, "PARAM: clamped", GLOBAL_COMPONENT_ID);
     break;
   case ParamStatus::NOT_CHANGED:
-    mavlink_dbg_print(MAV_SEVERITY_WARNING, "PARAM: not changed", THIS_COMPONENT_ID);
+    mavlink_dbg_print(MAV_SEVERITY_WARNING, "PARAM: not changed", GLOBAL_COMPONENT_ID);
     break;
   case ParamStatus::INCONSISTENT:
-    mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: inconsistent", THIS_COMPONENT_ID);
+    mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: inconsistent", GLOBAL_COMPONENT_ID);
     break;
   case ParamStatus::WRONG_TYPE:
-    mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: wrong type", THIS_COMPONENT_ID);
+    mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: wrong type", GLOBAL_COMPONENT_ID);
     break;
   case ParamStatus::UNKNOWN_ERROR:
-    mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: unknown error", THIS_COMPONENT_ID);
+    mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: unknown error", GLOBAL_COMPONENT_ID);
     break;
   case ParamStatus::OK:
     break;
@@ -236,22 +236,22 @@ static void command_long_handler(const mavMail *recv_mail){
   //   result = MAV_RESULT_TEMPORARILY_REJECTED;
   //}
   //else{
-  mavlink_dbg_print(MAV_SEVERITY_INFO, "eeprom operation started", THIS_COMPONENT_ID);
+  mavlink_dbg_print(MAV_SEVERITY_INFO, "eeprom operation started", GLOBAL_COMPONENT_ID);
   if (roundf(clp->param1) == 0)
     status = param_registry.loadToRam();
   else if (roundf(clp->param1) == 1)
     status = param_registry.saveAll();
 
   if (status != OSAL_SUCCESS){
-    mavlink_dbg_print(MAV_SEVERITY_ERROR, "ERROR: eeprom operation failed", THIS_COMPONENT_ID);
+    mavlink_dbg_print(MAV_SEVERITY_ERROR, "ERROR: eeprom operation failed", GLOBAL_COMPONENT_ID);
     result = MAV_RESULT_FAILED;
   }
   else{
-    mavlink_dbg_print(MAV_SEVERITY_INFO, "OK: eeprom operation success", THIS_COMPONENT_ID);
+    mavlink_dbg_print(MAV_SEVERITY_INFO, "OK: eeprom operation success", GLOBAL_COMPONENT_ID);
     result = MAV_RESULT_ACCEPTED;
   }
 
-  command_ack(result, clp->command, THIS_COMPONENT_ID);
+  command_ack(result, clp->command, GLOBAL_COMPONENT_ID);
 }
 
 /**

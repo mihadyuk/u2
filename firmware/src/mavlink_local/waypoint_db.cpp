@@ -32,6 +32,8 @@ WpDB wpdb;
  ******************************************************************************
  */
 
+static uint8_t buf[WAYPOINT_FOOTPRINT];
+
 /*
  ******************************************************************************
  ******************************************************************************
@@ -58,7 +60,6 @@ WpDB::WpDB(void) {
 uint16_t WpDB::connect(void) {
 
   size_t offset, readcnt;
-  uint8_t buf[WAYPOINT_FOOTPRINT];
   uint8_t crc;
 
   dbfile = NvramTryOpen(WPDB_FILE_NAME, BOOTSTRAP_WPDB_FILE_SIZE);

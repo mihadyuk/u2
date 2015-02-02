@@ -106,6 +106,7 @@ CSRC = $(PORTSRC) \
        $(FATFSSRC) \
        $(CHIBIOS)/os/various/chprintf.c \
        $(CHIBIOS)/os/various/syscalls.c \
+       $(CHIBIOS)/os/various/memstreams.c \
        lib/uav_utils/endianness.c \
        lib/uav_utils/cpu_load.c \
        lib/uav_utils/crc.c \

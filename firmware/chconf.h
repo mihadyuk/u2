@@ -495,6 +495,8 @@
 /* Port-specific settings (override port settings defaulted in chcore.h).    */
 /*===========================================================================*/
 
+#define CHPRINTF_USE_FLOAT          TRUE
+
 #endif  /* _CHCONF_H_ */
 
 /** @} */

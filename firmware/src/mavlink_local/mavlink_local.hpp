@@ -15,7 +15,7 @@
 
 #define GROUND_SYSTEM_ID            255
 /* this realization uses one global component ID for all */
-#define THIS_COMPONENT_ID           MAV_COMP_ID_SYSTEM_CONTROL
+#define GLOBAL_COMPONENT_ID         MAV_COMP_ID_SYSTEM_CONTROL
 
 void MavlinkInit(void);
 

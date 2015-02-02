@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "main.h"
+#include "chprintf.h"
 
 #include "mavlink_local.hpp"
 #include "mission_receiver.hpp"
@@ -15,14 +16,15 @@ using namespace chibios_rt;
  * DEFINES
  ******************************************************************************
  */
-#define MISSION_CHECKS_ENABLED    FALSE
-#define TARGET_RADIUS             param2  /* dirty fix to correspond QGC not mavlink lib */
-#define MIN_TARGET_RADIUS_WGS84   5       /* minimal allowed waypoint radius for global frame */
-#define MIN_TARGET_RADIUS_LOCAL   0.5f    /* minimal allowed waypoint radius for local frame */
+#define MISSION_WP_CHECKS_ENABLED     TRUE
+#define MIN_TARGET_RADIUS_WGS84       5       /* minimal allowed waypoint radius for global frame */
+#define MIN_TARGET_RADIUS_LOCAL       0.5f    /* minimal allowed waypoint radius for local frame */
+#define MIN_POINTS_PER_MISSION        2       /* minimal number of waypoints in valid mission */
+#define TARGET_RADIUS                 param2  /* convenience alias */
 
-#define MISSION_RETRY_CNT         5
-#define MISSION_CHECK_PERIOD      MS2ST(50)
-#define MISSION_TIMEOUT           MS2ST(2000)
+#define MISSION_RETRY_CNT             5
+#define MISSION_CHECK_PERIOD          MS2ST(50)
+#define MISSION_TIMEOUT               MS2ST(2000)
 
 /*
  ******************************************************************************
@@ -30,7 +32,7 @@ using namespace chibios_rt;
  ******************************************************************************
  */
 
-extern event_source_t event_mission_updated;
+extern EvtSource event_mission_updated;
 
 /*
  ******************************************************************************
@@ -43,17 +45,17 @@ extern event_source_t event_mission_updated;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-static mavMail                        mission_count_mail;
-static mavMail                        mission_request_mail;
-static mavMail                        mission_ack_mail;
-static mavMail                        mission_item_mail;
+static mavMail                        mission_count_mail    __attribute__((section(".ccm")));
+static mavMail                        mission_request_mail  __attribute__((section(".ccm")));
+static mavMail                        mission_ack_mail      __attribute__((section(".ccm")));
+static mavMail                        mission_item_mail     __attribute__((section(".ccm")));
 
-static mavlink_mission_count_t        mavlink_out_mission_count_struct;
-static mavlink_mission_request_t      mavlink_out_mission_request_struct;
-static mavlink_mission_ack_t          mavlink_out_mission_ack_struct;
+static mavlink_mission_count_t        mavlink_out_mission_count_struct    __attribute__((section(".ccm")));
+static mavlink_mission_request_t      mavlink_out_mission_request_struct  __attribute__((section(".ccm")));
+static mavlink_mission_ack_t          mavlink_out_mission_ack_struct      __attribute__((section(".ccm")));
 static mavlink_mission_item_t         mavlink_out_mission_item_struct;
 
-static char dbg_str[64];
+static mavlink_mission_item_t         mavlink_in_mission_item_struct;  /* temporal working copy */
 
 static size_t drop_mission_item = 0;
 
@@ -62,6 +64,8 @@ static size_t drop_mission_item = 0;
  * exchange procedure.
  */
 static MAV_COMPONENT destCompID = MAV_COMP_ID_ALL;
+
+char dbg_str[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN] __attribute__((section(".ccm")));
 
 /*
  ******************************************************************************
@@ -81,7 +85,7 @@ static void send_ack(MAV_MISSION_RESULT result) {
 
   if (mission_ack_mail.free()) {
     mission_ack_mail.fill(&mavlink_out_mission_ack_struct,
-                          THIS_COMPONENT_ID, MAVLINK_MSG_ID_MISSION_ACK);
+                          GLOBAL_COMPONENT_ID, MAVLINK_MSG_ID_MISSION_ACK);
     mav_postman.postAhead(mission_ack_mail);
   }
 }
@@ -101,53 +105,54 @@ static void mission_clear_all(void){
  */
 static MAV_MISSION_RESULT check_wp(const mavlink_mission_item_t *wp, uint16_t seq){
 
-#if ! MISSION_CHECKS_ENABLED
-  return MAV_MISSION_ACCEPTED;
-#endif
-
+#if MISSION_WP_CHECKS_ENABLED
   /* check supported frame types */
-  if (wp->frame != MAV_FRAME_GLOBAL){
-    snprintf(dbg_str, sizeof(dbg_str), "%s%d",
-                                 "PLANNER: Unsupported frame #", (int)wp->seq);
-    mavlink_dbg_print(MAV_SEVERITY_ERROR, dbg_str, MAV_COMP_ID_MISSIONPLANNER);
+  if ((wp->frame != MAV_FRAME_GLOBAL) || (wp->frame == MAV_FRAME_LOCAL_NED)){
+    chsnprintf(dbg_str, sizeof(dbg_str), "%s%d",
+                                 "MISSION: Unsupported frame #", (int)wp->seq);
+    mavlink_dbg_print(MAV_SEVERITY_ERROR, dbg_str, GLOBAL_COMPONENT_ID);
     return MAV_MISSION_UNSUPPORTED_FRAME;
   }
 
   /* first item must be take off */
   if ((0 == seq) && (MAV_CMD_NAV_TAKEOFF != wp->command)){
-    snprintf(dbg_str, sizeof(dbg_str), "%s",
-                             "PLANNER: 0-th item must be TAKEOFF");
-    mavlink_dbg_print(MAV_SEVERITY_ERROR, dbg_str, MAV_COMP_ID_MISSIONPLANNER);
+    chsnprintf(dbg_str, sizeof(dbg_str), "%s",
+                             "MISSION: 0-th item must be TAKEOFF");
+    mavlink_dbg_print(MAV_SEVERITY_ERROR, dbg_str, GLOBAL_COMPONENT_ID);
     return MAV_MISSION_ERROR;
   }
 
   /* there must be one and only one takeoff point in mission */
   if ((0 != seq) && (MAV_CMD_NAV_TAKEOFF == wp->command)){
-    snprintf(dbg_str, sizeof(dbg_str), "%s",
-                             "PLANNER: Multiple TAKEOFF points forbidden");
-    mavlink_dbg_print(MAV_SEVERITY_ERROR, dbg_str, MAV_COMP_ID_MISSIONPLANNER);
+    chsnprintf(dbg_str, sizeof(dbg_str), "%s",
+                             "MISSION: Multiple TAKEOFF points forbidden");
+    mavlink_dbg_print(MAV_SEVERITY_ERROR, dbg_str, GLOBAL_COMPONENT_ID);
     return MAV_MISSION_ERROR;
   }
 
   /* check sequence intergrity */
   if (wp->seq != seq){
-    snprintf(dbg_str, sizeof(dbg_str), "%s%d - %d",
-                        "PLANNER: Invalid sequence #", (int)wp->seq, (int)seq);
-    mavlink_dbg_print(MAV_SEVERITY_ERROR, dbg_str, MAV_COMP_ID_MISSIONPLANNER);
+    chsnprintf(dbg_str, sizeof(dbg_str), "%s%d - %d",
+                        "MISSION: Invalid sequence #", (int)wp->seq, (int)seq);
+    mavlink_dbg_print(MAV_SEVERITY_ERROR, dbg_str, GLOBAL_COMPONENT_ID);
     return MAV_MISSION_INVALID_SEQUENCE;
   }
 
   /* check target radius */
   if (((wp->TARGET_RADIUS < MIN_TARGET_RADIUS_WGS84) && (wp->frame == MAV_FRAME_GLOBAL)) ||
       ((wp->TARGET_RADIUS < MIN_TARGET_RADIUS_LOCAL) && (wp->frame == MAV_FRAME_LOCAL_NED))){
-    snprintf(dbg_str, sizeof(dbg_str), "%s%d",
-                          "PLANNER: Not enough target radius #", (int)wp->seq);
-    mavlink_dbg_print(MAV_SEVERITY_ERROR, dbg_str, MAV_COMP_ID_MISSIONPLANNER);
+    chsnprintf(dbg_str, sizeof(dbg_str), "%s%d",
+                          "MISSION: Not enough target radius #", (int)wp->seq);
+    mavlink_dbg_print(MAV_SEVERITY_ERROR, dbg_str, GLOBAL_COMPONENT_ID);
     return MAV_MISSION_INVALID_PARAM1;
   }
 
   /* no errors found */
   return MAV_MISSION_ACCEPTED;
+
+#else
+  return MAV_MISSION_ACCEPTED;
+#endif /* MISSION_WP_CHECKS_ENABLED */
 }
 
 /**
@@ -161,7 +166,7 @@ static void send_mission_item(uint16_t seq) {
 
   if (mission_item_mail.free()) {
     mission_item_mail.fill(&mavlink_out_mission_item_struct,
-                           THIS_COMPONENT_ID, MAVLINK_MSG_ID_MISSION_ITEM);
+                           GLOBAL_COMPONENT_ID, MAVLINK_MSG_ID_MISSION_ITEM);
     mav_postman.postAhead(mission_item_mail);
     return;
   }
@@ -189,7 +194,7 @@ static msg_t mav2gcs(Mailbox<mavMail*, 1> &mission_mailbox) {
     mavlink_out_mission_count_struct.target_system = GROUND_SYSTEM_ID;
     mavlink_out_mission_count_struct.count = wpdb.getCount();
     mission_count_mail.fill(&mavlink_out_mission_count_struct,
-                            THIS_COMPONENT_ID, MAVLINK_MSG_ID_MISSION_COUNT);
+                            GLOBAL_COMPONENT_ID, MAVLINK_MSG_ID_MISSION_COUNT);
     mav_postman.postAhead(mission_count_mail);
   }
   else
@@ -239,7 +244,7 @@ static msg_t send_mission_request(uint16_t seq) {
 
   if (mission_request_mail.free()) {
     mission_request_mail.fill(&mavlink_out_mission_request_struct,
-                            THIS_COMPONENT_ID, MAVLINK_MSG_ID_MISSION_REQUEST);
+                            GLOBAL_COMPONENT_ID, MAVLINK_MSG_ID_MISSION_REQUEST);
     mav_postman.postAhead(mission_request_mail);
     return MSG_OK;
   }
@@ -314,28 +319,48 @@ static msg_t try_exchange(Mailbox<mavMail*, 1> &mission_mailbox,
 /**
  *
  */
-static msg_t gcs2mav(Mailbox<mavMail*, 1> &mission_mailbox, uint16_t N) {
+static MAV_MISSION_RESULT check_mission(uint16_t N) {
 
-  size_t seq = 0;
-  mavlink_mission_item_t mi;        /* working copy */
-  MAV_MISSION_RESULT storage_status = MAV_MISSION_ERROR;
-  msg_t ret = MSG_RESET;
+  /* check waypoints number */
+  if (N < MIN_POINTS_PER_MISSION) {
+    chsnprintf(dbg_str, sizeof(dbg_str), "%s %d %s",
+        "MISSION: Must consists of at least", MIN_POINTS_PER_MISSION, "points");
+    mavlink_dbg_print(MAV_SEVERITY_ERROR, dbg_str, GLOBAL_COMPONENT_ID);
+    return MAV_MISSION_ERROR;
+  }
 
   /* check available space */
   if ((N > wpdb.getCapacity()) || (OSAL_FAILED == wpdb.reset())) {
-    storage_status = MAV_MISSION_NO_SPACE;
-    goto EXIT;
+    return MAV_MISSION_NO_SPACE;
   }
 
+  return MAV_MISSION_ACCEPTED;
+}
+
+/**
+ *
+ */
+static msg_t gcs2mav(Mailbox<mavMail*, 1> &mission_mailbox, uint16_t N) {
+
+  size_t seq = 0;
+  MAV_MISSION_RESULT storage_status = MAV_MISSION_ERROR;
+  msg_t ret = MSG_RESET;
+
+  /* */
+  storage_status = check_mission(N);
+  if (MAV_MISSION_ACCEPTED != storage_status)
+    goto EXIT;
+
+  /**/
   for (seq=0; seq<N; seq++) {
-    if (MSG_OK == try_exchange(mission_mailbox, &mi, seq)) {
+    if (MSG_OK == try_exchange(mission_mailbox, &mavlink_in_mission_item_struct, seq)) {
       /* check waypoint cosherness and write it if cosher */
-      storage_status = check_wp(&mi, seq);
+      storage_status = check_wp(&mavlink_in_mission_item_struct, seq);
       if (MAV_MISSION_ACCEPTED != storage_status) {
         ret = MSG_RESET;
         goto EXIT;
       }
-      if (OSAL_FAILED == wpdb.write(&mi, seq)) {
+      if (OSAL_FAILED == wpdb.write(&mavlink_in_mission_item_struct, seq)) {
         storage_status = MAV_MISSION_NO_SPACE;
         ret = MSG_RESET;
         goto EXIT;
@@ -394,7 +419,7 @@ msg_t MissionReceiver::main_impl(void){
         mission_count = static_cast<const mavlink_mission_count_t *>(recv_mail->mavmsg);
         destCompID = recv_mail->compid;
         if (MSG_OK == gcs2mav(mission_mailbox, mission_count->count))
-          chEvtBroadcastFlags(&event_mission_updated, EVMSK_MISSION_UPDATED);
+          event_mission_updated.broadcastFlags(EVMSK_MISSION_UPDATED);
         mav_postman.free(recv_mail);
         break;
 

@@ -4,8 +4,8 @@
 #include "mav_mail.hpp"
 #include "mav_postman.hpp"
 
-static mavlink_statustext_t mavlink_out_statustext_struct;
-static mavMail statustext_mail;
+static mavlink_statustext_t mavlink_out_statustext_struct __attribute__((section(".ccm")));
+static mavMail statustext_mail __attribute__((section(".ccm")));
 
 /**
  * Send debug message.
@@ -13,7 +13,7 @@ static mavMail statustext_mail;
  * severity[in]   severity of message
  * text[in]       text to send
  */
-static void mavlink_dbg_print(MAV_SEVERITY severity, const char *text, MAV_COMPONENT comp){
+static void mavlink_dbg_print(MAV_SEVERITY severity, const char *text, MAV_COMPONENT compid){
   uint32_t n = sizeof(mavlink_out_statustext_struct.text);
 
   mavlink_out_statustext_struct.severity = severity;
@@ -21,7 +21,7 @@ static void mavlink_dbg_print(MAV_SEVERITY severity, const char *text, MAV_COMPO
   memcpy(mavlink_out_statustext_struct.text, text, n);
 
   if (statustext_mail.free()) {
-    statustext_mail.fill(&mavlink_out_statustext_struct, comp, MAVLINK_MSG_ID_STATUSTEXT);
+    statustext_mail.fill(&mavlink_out_statustext_struct, compid, MAVLINK_MSG_ID_STATUSTEXT);
     mav_postman.post(statustext_mail);
   }
 }
