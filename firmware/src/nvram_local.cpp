@@ -4,6 +4,7 @@
 #include "fram_mtd.hpp"
 
 using namespace chibios_rt;
+using namespace nvram;
 
 /*
  ******************************************************************************
@@ -28,7 +29,7 @@ static const MtdConfig mtd_cfg = {
 
 static FramMtd nvram_mtd(&mtd_cfg, &fram_cfg);
 
-NvramFs nvram_fs(nvram_mtd);
+Fs nvram_fs(nvram_mtd);
 
 /*
  ******************************************************************************
@@ -75,10 +76,10 @@ void NvramInit(void){
  *
  * @return            pointer to file.
  */
-NvramFile *NvramTryOpen(const char *name, size_t size) {
+File *NvramTryOpen(const char *name, size_t size) {
 
   /* try to open file */
-   NvramFile *file = nvram_fs.open(name);
+   File *file = nvram_fs.open(name);
 
   if (nullptr == file) {
     /* boot strapping when first run */

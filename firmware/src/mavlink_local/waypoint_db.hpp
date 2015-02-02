@@ -26,6 +26,7 @@ class WpDB{
 public:
   WpDB(void);
   uint16_t connect(void);
+  void disconnect(void);
   bool write(const mavlink_mission_item_t *wpp, uint16_t seq);
   bool read(mavlink_mission_item_t *wpp, uint16_t seq);
   bool reset(void);
@@ -34,7 +35,7 @@ public:
   bool seal(void);
 
 private:
-  NvramFile *dbfile = nullptr;
+  nvram::File *dbfile = nullptr;
   size_t bank_offset = 0; /* start of bank in bytes */
   uint16_t count = 0;
 };

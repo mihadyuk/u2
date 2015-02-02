@@ -492,9 +492,13 @@ MissionReceiver::MissionReceiver(void) {
  *
  */
 msg_t MissionReceiver::main(void){
+  msg_t ret;
+
   chRegSetThreadName("MissionRecv");
 
   wpdb.connect();
+  ret = main_impl();
+  wpdb.disconnect();
 
-  return main_impl();
+  return ret;
 }

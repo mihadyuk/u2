@@ -89,6 +89,15 @@ FAILED:
 /**
  *
  */
+void WpDB::disconnect(void) {
+
+  nvram_fs.close(this->dbfile);
+  this->dbfile = nullptr;
+}
+
+/**
+ *
+ */
 bool WpDB::read(mavlink_mission_item_t *wpp, uint16_t seq) {
 
   size_t result;

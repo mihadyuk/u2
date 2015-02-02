@@ -15,8 +15,8 @@
 #define BOOTSTRAP_WPDB_FILE_SIZE      (1024 * 16)
 
 void NvramInit(void);
-NvramFile *NvramTryOpen(const char *name, size_t size);
+nvram::File *NvramTryOpen(const char *name, size_t size);
 
-extern NvramFs nvram_fs;
+extern nvram::Fs nvram_fs;
 
 #endif /* NVRAM_LOCAL_HPP_ */
