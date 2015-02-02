@@ -15,7 +15,7 @@ public:
   bool free(void);
 
   const void *mavmsg = nullptr;
-  MAV_COMPONENT compid = MAV_COMP_ID_ALL;
+  MAV_COMPONENT compid = MAV_COMP_ID_ALL; /* _sending_ component id */
   uint8_t msgid = 0;
 };
 

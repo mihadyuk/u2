@@ -47,9 +47,9 @@ extern mavlink_system_t mavlink_system_struct;
  */
 uint16_t mavlink_encode(uint8_t msgid, mavlink_message_t* msg, const void* mavlink_struct){
   return mavlink_encode_table[msgid](mavlink_system_struct.sysid,
-                                      mavlink_system_struct.compid,
-                                      msg,
-                                      mavlink_struct);
+                                     mavlink_system_struct.compid,
+                                     msg,
+                                     mavlink_struct);
 }
 
 /**

@@ -233,7 +233,7 @@ void MavSpamList::dispatch(const mavlink_message_t &msg) {
 
       mavlink_decode(&msg, msgptr);
       mavMail *mailptr = new(mailptr_tmp) mavMail;
-      mailptr->fill(msgptr, MAV_COMP_ID_ALL, msg.msgid);
+      mailptr->fill(msgptr, static_cast<MAV_COMPONENT>(msg.compid), msg.msgid);
       post_result = head->mb->post(mailptr, TIME_IMMEDIATE);
       if (MSG_OK != post_result) {
         uav_free(msgptr);

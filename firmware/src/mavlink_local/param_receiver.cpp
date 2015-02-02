@@ -72,7 +72,7 @@ static void param_value_send(const mavlink_param_value_t &m) {
 
   while(retry--) {
     if (param_mail.free()) {
-      param_mail.fill(&m, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_PARAM_VALUE);
+      param_mail.fill(&m, THIS_COMPONENT_ID, MAVLINK_MSG_ID_PARAM_VALUE);
       mav_postman.postAhead(param_mail);
       return;
     }
@@ -176,19 +176,19 @@ static void param_set_handler(const mavMail *recv_mail) {
   /* send confirmation */
   switch(status){
   case ParamStatus::CLAMPED:
-    mavlink_dbg_print(MAV_SEVERITY_WARNING, "PARAM: clamped", MAV_COMP_ID_SYSTEM_CONTROL);
+    mavlink_dbg_print(MAV_SEVERITY_WARNING, "PARAM: clamped", THIS_COMPONENT_ID);
     break;
   case ParamStatus::NOT_CHANGED:
-    mavlink_dbg_print(MAV_SEVERITY_WARNING, "PARAM: not changed", MAV_COMP_ID_SYSTEM_CONTROL);
+    mavlink_dbg_print(MAV_SEVERITY_WARNING, "PARAM: not changed", THIS_COMPONENT_ID);
     break;
   case ParamStatus::INCONSISTENT:
-    mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: inconsistent", MAV_COMP_ID_SYSTEM_CONTROL);
+    mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: inconsistent", THIS_COMPONENT_ID);
     break;
   case ParamStatus::WRONG_TYPE:
-    mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: wrong type", MAV_COMP_ID_SYSTEM_CONTROL);
+    mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: wrong type", THIS_COMPONENT_ID);
     break;
   case ParamStatus::UNKNOWN_ERROR:
-    mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: unknown error", MAV_COMP_ID_SYSTEM_CONTROL);
+    mavlink_dbg_print(MAV_SEVERITY_ERROR, "PARAM: unknown error", THIS_COMPONENT_ID);
     break;
   case ParamStatus::OK:
     break;
@@ -236,22 +236,22 @@ static void command_long_handler(const mavMail *recv_mail){
   //   result = MAV_RESULT_TEMPORARILY_REJECTED;
   //}
   //else{
-  mavlink_dbg_print(MAV_SEVERITY_INFO, "eeprom operation started", MAV_COMP_ID_SYSTEM_CONTROL);
+  mavlink_dbg_print(MAV_SEVERITY_INFO, "eeprom operation started", THIS_COMPONENT_ID);
   if (roundf(clp->param1) == 0)
     status = param_registry.loadToRam();
   else if (roundf(clp->param1) == 1)
     status = param_registry.saveAll();
 
   if (status != OSAL_SUCCESS){
-    mavlink_dbg_print(MAV_SEVERITY_ERROR, "ERROR: eeprom operation failed", MAV_COMP_ID_SYSTEM_CONTROL);
+    mavlink_dbg_print(MAV_SEVERITY_ERROR, "ERROR: eeprom operation failed", THIS_COMPONENT_ID);
     result = MAV_RESULT_FAILED;
   }
   else{
-    mavlink_dbg_print(MAV_SEVERITY_INFO, "OK: eeprom operation success", MAV_COMP_ID_SYSTEM_CONTROL);
+    mavlink_dbg_print(MAV_SEVERITY_INFO, "OK: eeprom operation success", THIS_COMPONENT_ID);
     result = MAV_RESULT_ACCEPTED;
   }
 
-  command_ack(result, clp->command, MAV_COMP_ID_SYSTEM_CONTROL);
+  command_ack(result, clp->command, THIS_COMPONENT_ID);
 }
 
 /**

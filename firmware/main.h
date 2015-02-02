@@ -19,9 +19,6 @@
 
 ///* Disarm halting on panic and changing it to soft reset after this amount of time */
 //#define HALT_DISARM_TMO_SEC             30
-//
-///* use hardcoded value instead of measured */
-//#define GYRO_UPDATE_PERIOD_HARDCODED    TRUE
 
 /*
  * Size of mavlink send buffer. It must be big enogh to store
@@ -43,9 +40,6 @@
 #define SHELLPRIO         (NORMALPRIO - 10)
 #define ADISPRIO          (NORMALPRIO)
 #define MPU6050PRIO       (ADISPRIO + 1)
-
-/* константы для мавлинка */
-#define GROUND_STATION_ID   255
 
 /* метка времени для пакетов */
 #if (CH_CFG_ST_FREQUENCY) >= 1000
