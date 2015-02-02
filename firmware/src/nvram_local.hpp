@@ -12,7 +12,7 @@
  *          of totally empty nvram.
  */
 #define BOOTSTRAP_PARAM_FILE_SIZE     (1024 * 6)
-#define BOOTSTRAP_WPDB_FILE_SIZE      (1024 * 8)
+#define BOOTSTRAP_WPDB_FILE_SIZE      (1024 * 16)
 
 void NvramInit(void);
 NvramFile *NvramTryOpen(const char *name, size_t size);
