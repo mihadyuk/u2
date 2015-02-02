@@ -209,13 +209,11 @@ static msg_t mav2gcs(Mailbox<mavMail*, 1> &mission_mailbox) {
 
   if (mission_count_mail.free()) {
     mavlink_out_mission_count_struct.target_component = MAV_COMP_ID_MISSIONPLANNER;
-//    mavlink_out_mission_count_struct.target_component = MAV_COMP_ID_ALL;
     mavlink_out_mission_count_struct.target_system = GROUND_STATION_ID;
     mavlink_out_mission_count_struct.count = wpdb.getCount();
     mission_count_mail.fill(&mavlink_out_mission_count_struct,
                             MAV_COMP_ID_MISSIONPLANNER,
                             MAVLINK_MSG_ID_MISSION_COUNT);
-//    mission_count_mail.fill(&mavlink_out_mission_count_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_MISSION_COUNT);
     mav_postman.postAhead(mission_count_mail);
   }
   else
