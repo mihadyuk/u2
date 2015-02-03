@@ -390,7 +390,9 @@ EXIT:
  * Planner thread.
  * process mission commands from ground
  */
-msg_t MissionReceiver::main_impl(void){
+msg_t MissionReceiver::main(void){
+
+  chRegSetThreadName("MissionRecv");
 
   mavMail *recv_mail;
   Mailbox<mavMail*, 1> mission_mailbox;
@@ -409,6 +411,8 @@ msg_t MissionReceiver::main_impl(void){
   mav_postman.subscribe(MAVLINK_MSG_ID_MISSION_COUNT,         &mission_count_link);
   mav_postman.subscribe(MAVLINK_MSG_ID_MISSION_ITEM,          &mission_item_link);
   mav_postman.subscribe(MAVLINK_MSG_ID_MISSION_ACK,           &mission_ack_link);
+
+  wpdb.connect();
 
   while (!chThdShouldTerminateX()) {
     if (MSG_OK == mission_mailbox.fetch(&recv_mail, MISSION_CHECK_PERIOD)) {
@@ -472,6 +476,8 @@ msg_t MissionReceiver::main_impl(void){
 
   mission_mailbox.reset();
 
+  wpdb.disconnect();
+
   chThdExit(MSG_OK);
   return MSG_OK;
 }
@@ -486,19 +492,4 @@ msg_t MissionReceiver::main_impl(void){
  */
 MissionReceiver::MissionReceiver(void) {
   return;
-}
-
-/**
- *
- */
-msg_t MissionReceiver::main(void){
-  msg_t ret;
-
-  chRegSetThreadName("MissionRecv");
-
-  wpdb.connect();
-  ret = main_impl();
-  wpdb.disconnect();
-
-  return ret;
 }

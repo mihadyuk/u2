@@ -5,9 +5,6 @@ class MissionReceiver : public chibios_rt::BaseStaticThread<640> {
 public:
   MissionReceiver(void);
   msg_t main(void);
-
-private:
-  msg_t main_impl(void);
 };
 
 #endif /* MISSION_RECEIVER_HPP_ */
