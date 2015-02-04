@@ -7,16 +7,26 @@
 #include "param_registry.hpp"
 #include "pack_unpack.h"
 #include "array_len.hpp"
+#include "crc.h"
 
 /*
  ******************************************************************************
  * DEFINES
  ******************************************************************************
  */
+
+typedef uint8_t checksum_t;
+
+typedef struct {
+  uint8_t name[PARAM_ID_SIZE];
+  param_union_t v;
+  checksum_t crc;
+} __attribute__((packed)) param_buf_t;
+
 #define ADDITIONAL_WRITE_TMO    MS2ST(5)
 
 #define PARAM_VALUE_SIZE        (sizeof(param_union_t))
-#define PARAM_RECORD_SIZE       (PARAM_ID_SIZE + PARAM_VALUE_SIZE)
+#define PARAM_RECORD_SIZE       (PARAM_ID_SIZE + PARAM_VALUE_SIZE + sizeof(checksum_t))
 
 #define PARAM_FILE_NAME         ("param")
 
@@ -49,6 +59,26 @@ static uint8_t eeprombuf[PARAM_RECORD_SIZE];
  *******************************************************************************
  *******************************************************************************
  */
+/**
+ *
+ */
+static bool check_param_crc(const uint8_t *buf) {
+  checksum_t sum = crc8(buf, PARAM_RECORD_SIZE - sizeof(checksum_t), 0xFF);
+
+  if (buf[PARAM_RECORD_SIZE - sizeof(checksum_t)] == sum)
+    return OSAL_SUCCESS;
+  else
+    return OSAL_FAILED;
+}
+
+/**
+ *
+ */
+static void fill_param_crc(uint8_t *buf) {
+  buf[PARAM_RECORD_SIZE - sizeof(checksum_t)] =
+      crc8(buf, PARAM_RECORD_SIZE - sizeof(checksum_t), 0xFF);
+}
+
 /**
  *
  */
@@ -119,7 +149,6 @@ bool ParamRegistry::load_extensive(void) {
   int i = 0, n = 0;
   size_t status = 0;
   param_union_t v;
-  v.u32 = 0;
   bool found = false;
 
   for (i = 0; i < this->paramCount(); i++){
@@ -128,24 +157,20 @@ bool ParamRegistry::load_extensive(void) {
 
     for (n=0; n<this->paramCount(); n++){
       status = ParamFile->read(eeprombuf, PARAM_RECORD_SIZE);
-      if (status < PARAM_RECORD_SIZE){
-        osalSysHalt("");
+      if (status < PARAM_RECORD_SIZE)
         return OSAL_FAILED;
-      }
-      if (strcmp((const char *)eeprombuf, param_db[i].name) == 0){
+      if ((OSAL_SUCCESS == check_param_crc(eeprombuf)) &&
+          (0 == strcmp((const char *)eeprombuf, param_db[i].name))){
         found = true;
         break;
       }
     }
 
     /* was parameter previously stored in eeprom */
-    if (found){
-      v.u32 = pack8to32ne(&(eeprombuf[PARAM_ID_SIZE]));
-    }
-    else{
-      /* use hardcoded default */
-      v.u32 = param_db[i].def.u32;
-    }
+    if (found)
+      memcpy(&v, &(eeprombuf[PARAM_ID_SIZE]), sizeof(param_union_t));
+    else
+      memcpy(&v, &param_db[i].def, sizeof(param_union_t));
 
     /* check value acceptability and set it */
     validator.set(&v, &(param_db[i]));
@@ -161,25 +186,32 @@ bool ParamRegistry::save_all(void) {
   int i;
   size_t status = 0;
   uint32_t v = 0;
-  uint8_t tmpbuf[PARAM_RECORD_SIZE];
+  uint8_t checkbuf[PARAM_RECORD_SIZE];
 
   ParamFile->setPosition(0);
 
   for (i = 0; i < this->paramCount(); i++){
 
+    memset(eeprombuf, 0, sizeof(eeprombuf));
+
     /* first copy parameter name into buffer */
-    memcpy(eeprombuf, param_db[i].name, PARAM_ID_SIZE);
+    strcpy((char *)eeprombuf, param_db[i].name);
 
     /* now write data */
     v = param_db[i].valuep->u32;
-    unpack32to8ne(v, &(eeprombuf[PARAM_ID_SIZE]));
+    memcpy(&(eeprombuf[PARAM_ID_SIZE]), &v, sizeof(param_union_t));
+
+    /* put crc */
+    fill_param_crc(eeprombuf);
+
+    /* flush to storage */
     status = ParamFile->write(eeprombuf, PARAM_RECORD_SIZE);
     osalDbgAssert(status == PARAM_RECORD_SIZE, "write failed");
 
     /* check written data */
     ParamFile->setPosition(ParamFile->getPosition() - PARAM_RECORD_SIZE);
-    status = ParamFile->read(tmpbuf, sizeof(tmpbuf));
-    if (0 != memcmp(tmpbuf, eeprombuf, (PARAM_ID_SIZE + sizeof(v))))
+    status = ParamFile->read(checkbuf, sizeof(checkbuf));
+    if (0 != memcmp(checkbuf, eeprombuf, PARAM_RECORD_SIZE))
       osalSysHalt("Verification failed");
 
     osalThreadSleep(ADDITIONAL_WRITE_TMO);
@@ -242,8 +274,8 @@ ParamRegistry::ParamRegistry(void) :
 bool ParamRegistry::syncParam(const char* key) {
   int i = 0;
   size_t status = 0;
-  uint32_t v = 0;
-  uint8_t  tmpbuf[PARAM_RECORD_SIZE];
+  uint32_t v_eeprom, v_ram;
+  uint8_t  checkbuf[PARAM_RECORD_SIZE];
 
   i = key_index_search(key);
   osalDbgAssert(i != -1, "Not found");
@@ -251,19 +283,29 @@ bool ParamRegistry::syncParam(const char* key) {
   acquire();
   ParamFile->setPosition(i * PARAM_RECORD_SIZE);
 
-  /* ensure we found exacly what needed */
-  status = ParamFile->read(tmpbuf, sizeof(tmpbuf));
-  osalDbgAssert(status == sizeof(tmpbuf), "read failed");
-  osalDbgAssert(strcmp((char *)tmpbuf, key) == 0, "param not found in EEPROM");
+  /* ensure we found exacly what we need */
+  status = ParamFile->read(eeprombuf, sizeof(eeprombuf));
+  osalDbgAssert(status == sizeof(eeprombuf), "read failed");
+  osalDbgAssert(strcmp((char *)eeprombuf, key) == 0, "param not found in EEPROM");
 
   /* write only if value differ */
-  ParamFile->setPosition(ParamFile->getPosition() - PARAM_VALUE_SIZE);
-  v = ParamFile->getU32();
-  if (v != param_db[i].valuep->u32){
-    ParamFile->setPosition(ParamFile->getPosition() - PARAM_VALUE_SIZE);
-    status = ParamFile->putU32(param_db[i].valuep->u32);
-    osalDbgAssert(status == sizeof(uint32_t), "read failed");
+  ParamFile->setPosition(i * PARAM_RECORD_SIZE + PARAM_ID_SIZE);
+  v_eeprom = ParamFile->getU32();
+  v_ram = param_db[i].valuep->u32;
+  if (v_eeprom != v_ram){
+    memcpy(&eeprombuf[PARAM_ID_SIZE], &v_ram, sizeof(v_ram));
+    fill_param_crc(eeprombuf);
+    ParamFile->setPosition(i * PARAM_RECORD_SIZE);
+    status = ParamFile->write(eeprombuf, sizeof(eeprombuf));
+    osalDbgAssert(status == sizeof(eeprombuf), "write failed");
     osalThreadSleep(ADDITIONAL_WRITE_TMO);
+
+    /* check written data */
+    ParamFile->setPosition(i * PARAM_RECORD_SIZE);
+    status = ParamFile->read(checkbuf, sizeof(checkbuf));
+    osalDbgAssert(status == sizeof(checkbuf), "read failed");
+    if (0 != memcmp(checkbuf, eeprombuf, PARAM_RECORD_SIZE))
+      osalSysHalt("Verification failed");
   }
 
   release();
@@ -275,14 +317,13 @@ bool ParamRegistry::syncParam(const char* key) {
  */
 bool ParamRegistry::loadToRam(void) {
   int i = 0;
-  int cmpresult = -1;
   size_t status = 0;
   param_union_t v;
   v.u32 = 0;
 
   /* check reserved space in EEPROM */
   osalDbgAssert(((PARAM_RECORD_SIZE * this->paramCount()) < ParamFile->getSize()),
-          "not enough space in file");
+          "not enough room in file");
 
   acquire();
   ParamFile->setPosition(0);
@@ -298,9 +339,10 @@ bool ParamRegistry::loadToRam(void) {
 
     /* if no updates was previously in parameter structure than order of
      * parameters in registry must be the same as in eeprom */
-    cmpresult = strcmp(param_db[i].name, (char *)eeprombuf);
-    if (0 == cmpresult){   /* OK, this parameter already presents in EEPROM */
-      v.u32 = pack8to32ne(&(eeprombuf[PARAM_ID_SIZE]));
+    if (0 == strcmp(param_db[i].name, (char *)eeprombuf) &&
+        OSAL_SUCCESS == check_param_crc(eeprombuf)) {
+      /* OK, this parameter already presents in EEPROM and checksum is correct */
+      memcpy(&v, &(eeprombuf[PARAM_ID_SIZE]), sizeof(v));
     }
     else{
       /* there is not such parameter in EEPROM. Possible reasons:
