@@ -137,8 +137,8 @@ NVRAMSRC = src/nvram_local.cpp \
 		lib/24aa/src/nvram_fs.cpp \
 		lib/24aa/src/nvram_file.cpp
 
-MAVSRC = src/mavlink_local/param_receiver.cpp \
-        src/mavlink_local/mission_receiver.cpp \
+MAVSRC = \
+        src/mavlink_local/param_receiver.cpp \
 		src/mavlink_local/param_registry.cpp \
 		src/mavlink_local/param_validator.cpp \
 		src/mavlink_local/tlm_sender.cpp \
@@ -149,6 +149,7 @@ MAVSRC = src/mavlink_local/param_receiver.cpp \
 		src/mavlink_local/mav_logger.cpp \
 		src/mavlink_local/mav_channel_serial.cpp \
 		src/mavlink_local/mav_channel_usbserial.cpp \
+		src/mavlink_local/mission_receiver.cpp \
 		src/mavlink_local/waypoint_db.cpp \
 
 SENSORSRC = src/i2c_local.cpp \
