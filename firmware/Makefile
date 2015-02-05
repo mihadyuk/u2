@@ -179,6 +179,7 @@ CPPSRC = $(CHCPPSRC) \
 		src/blinker.cpp \
 		src/sanity.cpp \
 		src/timekeeper.cpp \
+		src/nmea.cpp \
 		src/kinematic/ahrs.cpp \
 		lib/filters/fir_test.cpp \
 

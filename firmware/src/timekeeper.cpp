@@ -131,15 +131,11 @@ static void gptcb(GPTDriver *gptp) {
 /**
  *
  */
-static THD_WORKING_AREA(TimekeeperThreadWA, 512) __attribute__((section(".bss.ccm_ram")));
+static THD_WORKING_AREA(TimekeeperThreadWA, 512) __attribute__((section(".ccm")));
 THD_FUNCTION(TimekeeperThread, arg) {
   chRegSetThreadName("Timekeeper");
   TimeKeeper *self = (TimeKeeper *)arg;
-//  int64_t  gps_time = 0;
   msg_t sem_status = MSG_RESET;
-//  time_t t1;
-//  time_t t2;
-//  time_t dt;
 
   while (!chThdShouldTerminateX()) {
     sem_status = ppstimesync_sem.wait(MS2ST(2000));

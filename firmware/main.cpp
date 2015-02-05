@@ -156,6 +156,8 @@ control::Futaba futaba(MS2ST(1000));
 control::FutabaData futaba_data __attribute__((section(".ccm")));
 control::TargetAttitude trgt __attribute__((section(".ccm")));
 
+#include "nmea.hpp"
+
 int main(void) {
 
   halInit();
@@ -217,6 +219,8 @@ int main(void) {
     trgt.a[control::ATTITUDE_CH_YAW] = 0;
     state_vector.yaw = ahrs_data.euler[0];
     stabilizer.update(futaba_data, trgt, state_vector, ahrs_data.dt);
+
+    nmea_test_gga();
 
     //osalThreadSleepMilliseconds(200);
 //    if (ATTITUDE_UNIT_UPDATE_RESULT_OK == attitude_unit.update()){
