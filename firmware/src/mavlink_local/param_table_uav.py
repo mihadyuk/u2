@@ -187,17 +187,17 @@ param = [
 ("PID_speed_D",     -10000.0,   0,          10000.0,    "f", "default",     "NULL"),
 
 #/* intervals between sending different data (mS) */
-("T_raw_imu",       SEND_MIN, 0, SEND_MAX, "u", "send_tmo","Interval of sending this data in milliseconds.\\nSet it to 0 for disabling"),
-("T_scal_imu",      SEND_MIN, 0, SEND_MAX, "u", "send_tmo","NULL"),
-("T_highres_imu",   SEND_MIN, 0, SEND_MAX, "u", "send_tmo","NULL"),
-("T_raw_press",     SEND_MIN, 0, SEND_MAX, "u", "send_tmo","NULL"),
-("T_scal_press",    SEND_MIN, 0, SEND_MAX, "u", "send_tmo","NULL"),
-("T_attitude",      SEND_MIN, 0, SEND_MAX, "u", "send_tmo","NULL"),
-("T_vfr_hud",       SEND_MIN, 0, SEND_MAX, "u", "send_tmo","NULL"),
-("T_gps_int",       SEND_MIN, 0, SEND_MAX, "u", "send_tmo","NULL"),
-("T_sys_status",    SEND_MIN, 0, SEND_MAX, "u", "send_tmo","NULL"),
-("T_position_ned",  SEND_MIN, 0, SEND_MAX, "u", "send_tmo","NULL"),
-("T_nav_output",    SEND_MIN, 0, SEND_MAX, "u", "send_tmo","NULL"),
+("T_raw_imu",       SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "Interval of sending this data in milliseconds.\\nSet it to 0 for disabling"),
+("T_scal_imu",      SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
+("T_highres_imu",   SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
+("T_raw_press",     SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
+("T_scal_press",    SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
+("T_attitude",      SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
+("T_vfr_hud",       SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
+("T_gps_int",       SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
+("T_sys_status",    SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
+("T_position_ned",  SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
+("T_nav_output",    SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 
 #/* Timezone. */
 ("TIME_zone",       -24,    0,      24,     "i", "default",    "Simple offset in hours."),

@@ -140,29 +140,54 @@ void ParamRegistry::store_value(int i, const uint32_t **vp){
 }
 
 /**
+ *
+ */
+static uint8_t get_bit(const uint8_t *map, size_t N) {
+  return (map[N / 8] >> (N % 8)) & 1;
+}
+
+/**
+ *
+ */
+static void set_bit(uint8_t *map, size_t N) {
+  map[N / 8] |= 1 << (N % 8);
+}
+
+/**
  * This functions created for smooth update of parameter registry in case
  * adding of some new parameters somewhere in middle.
  * 1) get name from MCU's flash
  * 2) perform brute force search in EEPROM file
  */
 bool ParamRegistry::load_extensive(void) {
-  int i = 0, n = 0;
-  size_t status = 0;
+  int i = 0;
+  size_t n, status;
   param_union_t v;
   bool found = false;
 
+  const size_t max_param_cnt = ParamFile->getSize() / PARAM_RECORD_SIZE;
+  uint8_t bitmap[max_param_cnt/8 + 1];
+  memset(bitmap, 0, sizeof(bitmap));
+
   for (i = 0; i < this->paramCount(); i++){
-    ParamFile->setPosition(0);
     found = false;
 
-    for (n=0; n<this->paramCount(); n++){
-      status = ParamFile->read(eeprombuf, PARAM_RECORD_SIZE);
-      if (status < PARAM_RECORD_SIZE)
-        return OSAL_FAILED;
-      if ((OSAL_SUCCESS == check_param_crc(eeprombuf)) &&
-          (0 == strcmp((const char *)eeprombuf, param_db[i].name))){
-        found = true;
-        break;
+    for (n=0; n<max_param_cnt; n++){
+      if (0 == get_bit(bitmap, n)){
+        ParamFile->setPosition(PARAM_RECORD_SIZE * n);
+        status = ParamFile->read(eeprombuf, PARAM_RECORD_SIZE);
+        if (status < PARAM_RECORD_SIZE){
+          return OSAL_FAILED;
+        }
+        if (OSAL_SUCCESS != check_param_crc(eeprombuf)){
+          set_bit(bitmap, n);
+          continue;
+        }
+        if (0 == strcmp((const char *)eeprombuf, param_db[i].name)){
+          set_bit(bitmap, n);
+          found = true;
+          break;
+        }
       }
     }
 

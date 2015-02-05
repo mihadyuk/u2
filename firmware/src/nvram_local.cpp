@@ -94,4 +94,3 @@ File *NvramTryOpen(const char *name, size_t size) {
   return file;
 }
 
-
