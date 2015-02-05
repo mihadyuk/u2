@@ -79,10 +79,7 @@ using namespace chibios_rt;
 ////chibios_rt::BinarySemaphore rtc_sem(true);
 chibios_rt::BinarySemaphore ppstimesync_sem(true);  /* for syncing internal RTC with PPS */
 //chibios_rt::BinarySemaphore ppsgps_sem(true);       /* for acquiring data from GPS */
-//
-///* Servo-PID sync */
-//chibios_rt::BinarySemaphore servo_updated_sem(true);
-//
+
 ///* store here time from GPS */
 //struct tm gps_timp;
 
