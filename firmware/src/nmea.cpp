@@ -1,6 +1,7 @@
 #include <time.h>
 #include <cmath>
 #include <cstring>
+#include <cstdlib>
 
 #include "main.h"
 #include "nmea.hpp"
@@ -32,12 +33,6 @@ using namespace gps;
  ******************************************************************************
  */
 
-static int32_t parse_decimal(uint8_t *p);
-static int32_t parse_degrees(uint8_t *p);
-static uint32_t gpsatol(const uint8_t *str);
-static bool gpsisdigit(char c);
-static uint8_t from_hex(uint8_t a);
-
 /*
  *******************************************************************************
  *******************************************************************************
@@ -45,58 +40,6 @@ static uint8_t from_hex(uint8_t a);
  *******************************************************************************
  *******************************************************************************
  */
-/**
- *
- */
-collect_status_t NmeaParser::get_name(const char *name) {
-  if (0 == strncmp("GPGGA", name, 5))
-    return collect_status_t::GPGGA;
-  else if (0 == strncmp("GPRMC", name, 5))
-    return collect_status_t::GPRMC;
-  else
-    return collect_status_t::UNKNOWN;
-}
-
-/**
- *
- */
-static uint8_t from_hex(uint8_t a){
-  if (a >= 'A' && a <= 'F')
-    return a - 'A' + 10;
-  else if (a >= 'a' && a <= 'f')
-    return a - 'a' + 10;
-  else
-    return a - '0';
-}
-
-/**
- *
- */
-collect_status_t NmeaParser::verify_sentece(void) {
-  uint8_t sum = 0;
-  uint8_t sum_from_hex;
-
-  for (size_t i=1; i<tip-5; i++)
-    sum ^= buf[i];
-
-  sum_from_hex = (from_hex(buf[tip-4]) << 4) | from_hex(buf[tip-3]);
-  if (sum != sum_from_hex)
-    return collect_status_t::EMPTY;
-  else
-    return get_name((char *)&buf[1]);
-}
-
-/**
- *
- */
-void NmeaParser::reset_collector(void) {
-  tip = 0;
-  memset(this->buf, 0, sizeof(buf));
-  state = collect_state_t::START;
-}
-
-
-
 /*
 $GPGGA,115436.000,5354.713670,N,02725.690517,E,1,5,2.01,266.711,M,26.294,M,,*5D
 $GPGGA,000103.037,,,,,0,0,,,M,,M,,*4E
@@ -123,68 +66,142 @@ int tm_wday      days since Sunday [0-6]
 int tm_yday      days since January 1st [0-365]
 int tm_isdst     daylight savings indicator (1 = yes, 0 = no, -1 = unknown)
  */
-static void get_time(struct tm *timp, uint8_t *buft, uint8_t *bufd){
+static void get_time(struct tm *timp, const char *buft) {
   timp->tm_hour = 10 * (buft[0] - '0') + (buft[1] - '0');
   timp->tm_min  = 10 * (buft[2] - '0') + (buft[3] - '0');
   timp->tm_sec  = 10 * (buft[4] - '0') + (buft[5] - '0');
+}
 
+static void get_date(struct tm *timp, const char *bufd) {
   timp->tm_mday = 10 * (bufd[0] - '0') + (bufd[1] - '0');
   timp->tm_mon  = 10 * (bufd[2] - '0') + (bufd[3] - '0') - 1;
   timp->tm_year = 10 * (bufd[4] - '0') + (bufd[5] - '0') + 2000 - 1900;
 }
 
+/**
+ *
+ */
+static uint8_t from_hex(uint8_t a){
+  if (a >= 'A' && a <= 'F')
+    return a - 'A' + 10;
+  else if (a >= 'a' && a <= 'f')
+    return a - 'a' + 10;
+  else
+    return a - '0';
+}
 
 /**
- * Возвращает значение с фиксированной точкой с точностью 2 знака после запятой
+ *
  */
-static int32_t parse_decimal(uint8_t *p){
-  bool isneg = (*p == '-');   /* обработаем наличие знака "-" */
-  if (isneg) ++p;
-  uint32_t ret = gpsatol(p);  /* сделаем заготовку для возвращаемого значения */
-  ret = ret * 100UL;          /* сделаем место для 2 знаков после запятой */
+collect_status_t NmeaParser::get_name(const char *name) {
+  if (0 == strncmp("GPGGA", name, 5))
+    return collect_status_t::GPGGA;
+  else if (0 == strncmp("GPRMC", name, 5))
+    return collect_status_t::GPRMC;
+  else
+    return collect_status_t::UNKNOWN;
+}
 
-  while (gpsisdigit(*p)) ++p; /* пропустим все знаки до запятой - мы их уже обработали */
-  if (*p == '.'){             /* запишем 2 знака после запятой */
-    if (gpsisdigit(p[1])){
-      ret += 10 * (p[1] - '0');
-      if (gpsisdigit(p[2]))
-        ret += p[2] - '0';
-    }
+/**
+ *
+ */
+collect_status_t NmeaParser::verify_sentece(void) {
+  uint8_t sum = 0;
+
+  for (size_t i=1; i<tip-5; i++)
+    sum ^= buf[i];
+
+  uint8_t sum_from_hex = (from_hex(buf[tip-4]) << 4) | from_hex(buf[tip-3]);
+  if (sum != sum_from_hex)
+    return collect_status_t::EMPTY;
+  else
+    return get_name((char *)&buf[1]);
+}
+
+/**
+ *
+ */
+void NmeaParser::reset_collector(void) {
+  tip = 0;
+  maptip = 0;
+  memset(this->buf, 0, sizeof(buf));
+  memset(this->token_map, 0, sizeof(this->token_map));
+  state = collect_state_t::START;
+}
+
+/**
+ *
+ */
+const char* NmeaParser::token(char *result, size_t N) {
+
+  const size_t len = token_map[N+1] - (1 + token_map[N]);
+  memset(result, 0, GPS_MAX_TOKEN_LEN);
+
+  if ((len > 0) && (len < GPS_MAX_TOKEN_LEN)) {
+    const char *src = (char *)&buf[token_map[N] + 1];
+    memcpy(result, src, len);
   }
-  return isneg ? -ret : ret;
+
+  return result;
 }
 
-static int32_t parse_degrees(uint8_t *p){
-  uint32_t left = gpsatol(p);                       /* читаем первую часть (ddmm) */
-  uint32_t tenk_minutes = (left % 100UL) * 10000UL; /* отделяем целые части минут */
-
-  while (gpsisdigit(*p)) ++p;
-  if (*p == '.'){
-    uint32_t mult = 1000; /* только 3 знака после запятой */
-    while (gpsisdigit(*++p)){
-      tenk_minutes += mult * (*p - '0');
-      mult /= 10;
-    }
-  }
-  return (left / 100) * 100000 + tenk_minutes / 6;
+/**
+ *
+ */
+static double degrees_sign(const char *sign) {
+  if (('S' == *sign) || ('W' == *sign))
+    return -1;
+  else
+    return 1;
 }
 
-static uint32_t gpsatol(const uint8_t *str){
-  uint32_t ret = 0;
-  while (gpsisdigit(*str))
-    ret = 10 * ret + *str++ - '0';
-  return ret;
-}
+/**
+ *
+ */
+static double gps2deg(double gps) {
+  double deg;
 
-static bool gpsisdigit(char c){
-  return c >= '0' && c <= '9';
+  gps /= 100;
+  deg = floor(gps);
+
+  return deg + (gps - deg) * (double)1.66666666666666666;
 }
 
 /**
  *
  */
 void NmeaParser::unpack(nmeap_gga_t *result) {
+  char tmp[GPS_MAX_TOKEN_LEN];
+  double c;
 
+  c = copysign(atof(token(tmp, 1)), degrees_sign(token(tmp, 2)));
+  result->latitude    = gps2deg(c);
+  c = copysign(atof(token(tmp, 3)), degrees_sign(token(tmp, 4)));
+  result->longitude   = gps2deg(c);
+  result->fix         = atol(token(tmp, 5));
+  result->satellites  = atol(token(tmp, 6));
+  result->hdop        = atof(token(tmp, 7));
+  result->altitude    = atof(token(tmp, 8));
+  result->geoid       = atof(token(tmp, 10));
+}
+
+/**
+ *
+ */
+static float knots2mps(float knots) {
+  return knots * 0.514444444;
+}
+
+/**
+ *
+ */
+void NmeaParser::unpack(nmeap_rmc_t *result) {
+  char tmp[GPS_MAX_TOKEN_LEN];
+
+  get_time(&result->time, token(tmp, 0));
+  result->speed   = knots2mps(atof(token(tmp, 6)));
+  result->course  = atof(token(tmp, 7));
+  get_date(&result->time, token(tmp, 8));
 }
 
 /*
@@ -196,10 +213,12 @@ void NmeaParser::unpack(nmeap_gga_t *result) {
  *
  */
 NmeaParser::NmeaParser(void) :
-    state(collect_state_t::START),
-    tip(0)
+    tip(0),
+    maptip(0),
+    state(collect_state_t::START)
 {
-  memset(this->buf, 0, sizeof(buf));
+  memset(this->buf, 0, sizeof(this->buf));
+  memset(this->token_map, 0, sizeof(this->token_map));
 }
 
 /**
@@ -221,6 +240,10 @@ collect_status_t NmeaParser::collect(uint8_t byte) {
 
   case collect_state_t::DATA:
     buf[tip] = byte;
+    if ((',' == byte) || ('*' == byte)) {
+      token_map[maptip] = tip;
+      maptip++;
+    }
     tip++;
     if (tip >= sizeof(buf) - 4)
       reset_collector();
@@ -269,15 +292,15 @@ collect_status_t NmeaParser::collect(uint8_t byte) {
   return ret;
 }
 
-
-
 /**
  *
  */
 static const uint8_t gga1[] = "$GPGGA,115436.000,5354.713670,N,02725.690517,E,1,5,2.01,266.711,M,26.294,M,,*5D\r\n";
-static const uint8_t gga2[] = "$GPGGA,000103.037,,,,,0,0,,,M,,M,,*4E";
-
-static nmeap_gga_t unpacked_gga;
+static const uint8_t gga2[] = "$GPGGA,000103.037,,,,,0,0,,,M,,M,,*4E\r\n";
+static const uint8_t rmc1[] = "$GPRMC,115436.000,A,5354.713670,N,02725.690517,E,0.20,210.43,010611,,,A*66\r\n";
+nmeap_gga_t unpacked_gga;
+nmeap_rmc_t unpacked_rmc;
+time_measurement_t tmu_nmea;
 
 /**
  *
@@ -286,17 +309,29 @@ collect_status_t nmea_test_gga(void) {
   collect_status_t ret;
   NmeaParser myparser;
 
-  for (size_t i=0; i<sizeof(gga1); i++) {
-    ret = myparser.collect(gga1[i]);
-    if (ret != collect_status_t::GPGGA)
+  for (size_t i=0; i<sizeof(rmc1); i++) {
+    ret = myparser.collect(rmc1[i]);
+    if (ret == collect_status_t::GPGGA) {
+      chTMStartMeasurementX(&tmu_nmea);
       myparser.unpack(&unpacked_gga);
+      chTMStopMeasurementX(&tmu_nmea);
+    }
+    else if (ret == collect_status_t::GPRMC) {
+      chTMStartMeasurementX(&tmu_nmea);
+      myparser.unpack(&unpacked_rmc);
+      chTMStopMeasurementX(&tmu_nmea);
+    }
   }
 
   return ret;
 }
 
 
-
+collect_status_t nmea_benchmark(void) {
+  collect_status_t ret;
+  ret = nmea_test_gga();
+  return ret;
+}
 
 
 

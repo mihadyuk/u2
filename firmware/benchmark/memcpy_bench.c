@@ -1,7 +1,7 @@
+#include "stdlib.h"
+#include "stdio.h"
 #include "string.h"
 #include "ch.h"
-
-//static volatile uint32_t i1 = 0; i2 = 0;
 
 static time_measurement_t tmu_memcpy;
 static time_measurement_t tmu;

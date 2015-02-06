@@ -220,7 +220,7 @@ int main(void) {
     state_vector.yaw = ahrs_data.euler[0];
     stabilizer.update(futaba_data, trgt, state_vector, ahrs_data.dt);
 
-    nmea_test_gga();
+    nmea_benchmark();
 
     //osalThreadSleepMilliseconds(200);
 //    if (ATTITUDE_UNIT_UPDATE_RESULT_OK == attitude_unit.update()){
