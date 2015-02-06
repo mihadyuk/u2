@@ -161,6 +161,7 @@ SENSORSRC = src/i2c_local.cpp \
 		sensors/ak8975.cpp \
 		sensors/lsm303_acc.cpp \
 		sensors/lsm303_mag.cpp \
+		sensors/gps_eb500.cpp \
           
 CLISRC = src/cli/cli.cpp \
 		src/cli/cli_cmd.cpp \

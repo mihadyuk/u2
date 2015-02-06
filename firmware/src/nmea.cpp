@@ -121,17 +121,6 @@ collect_status_t NmeaParser::verify_sentece(void) {
 /**
  *
  */
-void NmeaParser::reset_collector(void) {
-  tip = 0;
-  maptip = 0;
-  memset(this->buf, 0, sizeof(buf));
-  memset(this->token_map, 0, sizeof(this->token_map));
-  state = collect_state_t::START;
-}
-
-/**
- *
- */
 const char* NmeaParser::token(char *result, size_t N) {
 
   const size_t len = token_map[N+1] - (1 + token_map[N]);
@@ -204,6 +193,17 @@ void NmeaParser::unpack(nmeap_rmc_t *result) {
   get_date(&result->time, token(tmp, 8));
 }
 
+/**
+ *
+ */
+void NmeaParser::reset_collector(void) {
+  tip = 0;
+  maptip = 0;
+  memset(this->buf, 0, sizeof(this->buf));
+  memset(this->token_map, 0, sizeof(this->token_map));
+  state = collect_state_t::START;
+}
+
 /*
  *******************************************************************************
  * EXPORTED FUNCTIONS
@@ -227,15 +227,17 @@ NmeaParser::NmeaParser(void) :
 collect_status_t NmeaParser::collect(uint8_t byte) {
   collect_status_t ret = collect_status_t::EMPTY;
 
+  osalDbgCheck(tip < GPS_MSG_LEN);
+  osalDbgCheck(maptip < GPS_TOKEN_MAP_LEN);
+
   switch (state) {
   case collect_state_t::START:
     if ('$' == byte) {
+      reset_collector();
       buf[0] = byte;
       tip = 1;
       state = collect_state_t::DATA;
     }
-    else
-      reset_collector();
     break;
 
   case collect_state_t::DATA:
@@ -292,46 +294,46 @@ collect_status_t NmeaParser::collect(uint8_t byte) {
   return ret;
 }
 
-/**
- *
- */
-static const uint8_t gga1[] = "$GPGGA,115436.000,5354.713670,N,02725.690517,E,1,5,2.01,266.711,M,26.294,M,,*5D\r\n";
-static const uint8_t gga2[] = "$GPGGA,000103.037,,,,,0,0,,,M,,M,,*4E\r\n";
-static const uint8_t rmc1[] = "$GPRMC,115436.000,A,5354.713670,N,02725.690517,E,0.20,210.43,010611,,,A*66\r\n";
-nmeap_gga_t unpacked_gga;
-nmeap_rmc_t unpacked_rmc;
-time_measurement_t tmu_nmea;
-
-/**
- *
- */
-collect_status_t nmea_test_gga(void) {
-  collect_status_t ret;
-  NmeaParser myparser;
-
-  for (size_t i=0; i<sizeof(rmc1); i++) {
-    ret = myparser.collect(rmc1[i]);
-    if (ret == collect_status_t::GPGGA) {
-      chTMStartMeasurementX(&tmu_nmea);
-      myparser.unpack(&unpacked_gga);
-      chTMStopMeasurementX(&tmu_nmea);
-    }
-    else if (ret == collect_status_t::GPRMC) {
-      chTMStartMeasurementX(&tmu_nmea);
-      myparser.unpack(&unpacked_rmc);
-      chTMStopMeasurementX(&tmu_nmea);
-    }
-  }
-
-  return ret;
-}
-
-
-collect_status_t nmea_benchmark(void) {
-  collect_status_t ret;
-  ret = nmea_test_gga();
-  return ret;
-}
-
+///**
+// *
+// */
+//static const uint8_t gga1[] = "$GPGGA,115436.000,5354.713670,N,02725.690517,E,1,5,2.01,266.711,M,26.294,M,,*5D\r\n";
+//static const uint8_t gga2[] = "$GPGGA,000103.037,,,,,0,0,,,M,,M,,*4E\r\n";
+//static const uint8_t rmc1[] = "$GPRMC,115436.000,A,5354.713670,N,02725.690517,E,0.20,210.43,010611,,,A*66\r\n";
+//nmeap_gga_t unpacked_gga;
+//nmeap_rmc_t unpacked_rmc;
+//time_measurement_t tmu_nmea;
+//
+///**
+// *
+// */
+//collect_status_t nmea_test_gga(void) {
+//  collect_status_t ret;
+//  NmeaParser myparser;
+//
+//  for (size_t i=0; i<sizeof(rmc1); i++) {
+//    ret = myparser.collect(rmc1[i]);
+//    if (ret == collect_status_t::GPGGA) {
+//      chTMStartMeasurementX(&tmu_nmea);
+//      myparser.unpack(&unpacked_gga);
+//      chTMStopMeasurementX(&tmu_nmea);
+//    }
+//    else if (ret == collect_status_t::GPRMC) {
+//      chTMStartMeasurementX(&tmu_nmea);
+//      myparser.unpack(&unpacked_rmc);
+//      chTMStopMeasurementX(&tmu_nmea);
+//    }
+//  }
+//
+//  return ret;
+//}
+//
+//
+//collect_status_t nmea_benchmark(void) {
+//  collect_status_t ret;
+//  ret = nmea_test_gga();
+//  return ret;
+//}
+//
 
 

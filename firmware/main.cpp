@@ -38,7 +38,7 @@ Giovanni
 #include "global_flags.h"
 #include "fault_handlers.h"
 #include "mavlink_local.hpp"
-//#include "gps_eb500.hpp"
+#include "gps_eb500.hpp"
 #include "sanity.hpp"
 #include "i2c_local.hpp"
 #include "nvram_local.hpp"
@@ -204,6 +204,7 @@ int main(void) {
 //  attitude_unit.start();
 //  acs.start();
 //  sins.start(&state_vector);
+  GPSInit();
   mav_logger.start(NORMALPRIO);
 
   ahrs.start();
@@ -219,8 +220,6 @@ int main(void) {
     trgt.a[control::ATTITUDE_CH_YAW] = 0;
     state_vector.yaw = ahrs_data.euler[0];
     stabilizer.update(futaba_data, trgt, state_vector, ahrs_data.dt);
-
-    nmea_benchmark();
 
     //osalThreadSleepMilliseconds(200);
 //    if (ATTITUDE_UNIT_UPDATE_RESULT_OK == attitude_unit.update()){

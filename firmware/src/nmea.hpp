@@ -77,6 +77,6 @@ private:
 
 //gps::collect_status_t nmea_test_gga(void);
 //gps::collect_status_t nmea_test_rmc(void);
-gps::collect_status_t nmea_benchmark(void);
+//gps::collect_status_t nmea_benchmark(void);
 
 #endif /* NMEA_HPP_ */
