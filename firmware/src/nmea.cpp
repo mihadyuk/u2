@@ -159,7 +159,7 @@ static double gps2deg(double gps) {
 /**
  *
  */
-void NmeaParser::unpack(nmeap_gga_t *result) {
+void NmeaParser::unpack(nmea_gga_t *result) {
   char tmp[GPS_MAX_TOKEN_LEN];
   double c;
 
@@ -184,7 +184,7 @@ static float knots2mps(float knots) {
 /**
  *
  */
-void NmeaParser::unpack(nmeap_rmc_t *result) {
+void NmeaParser::unpack(nmea_rmc_t *result) {
   char tmp[GPS_MAX_TOKEN_LEN];
 
   get_time(&result->time, token(tmp, 0));

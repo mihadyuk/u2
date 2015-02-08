@@ -4,6 +4,8 @@
 #include "adis.hpp"
 #include "mpu6050.hpp"
 #include "lsm303_mag.hpp"
+#include "time_keeper.hpp"
+#include "gps_eb500.hpp"
 
 /*
  ******************************************************************************
@@ -58,9 +60,22 @@ static void rtcwakeup_cb(EXTDriver *extp, expchannel_t channel){
 /**
  *
  */
+static void pps_cb(EXTDriver *extp, expchannel_t channel){
+  (void)extp;
+  (void)channel;
+
+  osalSysLockFromISR();
+  TimeKeeper::PPS_ISR_I();
+  GPS_PPS_ISR_I();
+  osalSysUnlockFromISR();
+}
+
+/**
+ *
+ */
 static const EXTConfig extcfg = {
   {
-    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_RISING_EDGE | EXT_MODE_GPIOA, pps_cb},
     {EXT_CH_MODE_FALLING_EDGE | EXT_MODE_GPIOE, Adis::extiISR},
     {EXT_CH_MODE_DISABLED, NULL},
     {EXT_CH_MODE_RISING_EDGE | EXT_MODE_GPIOE, MPU6050::extiISR},
@@ -148,7 +163,7 @@ void ExtiPnc::stop(void){
  * Enables interrupts from ADIS
  */
 void ExtiPnc::adis(bool flag){
-  osalDbgCheck(ready == true);
+  osalDbgCheck(ready);
   if (flag)
     extChannelEnable(&EXTD1, GPIOE_ADIS_INT);
   else
@@ -159,7 +174,7 @@ void ExtiPnc::adis(bool flag){
  * Enables interrupts from MPU
  */
 void ExtiPnc::mpu6050(bool flag){
-  osalDbgCheck(ready == true);
+  osalDbgCheck(ready);
   if (flag)
     extChannelEnable(&EXTD1, GPIOE_MPU9150_INT);
   else
@@ -170,9 +185,20 @@ void ExtiPnc::mpu6050(bool flag){
  * Enables interrupts from MPU
  */
 void ExtiPnc::lsm303(bool flag){
-  osalDbgCheck(ready == true);
+  osalDbgCheck(ready);
   if (flag)
     extChannelEnable(&EXTD1, GPIOE_MAG_INT);
   else
     extChannelDisable(&EXTD1, GPIOE_MAG_INT);
+}
+
+/**
+ * Enables interrupts from MPU
+ */
+void ExtiPnc::pps(bool flag){
+  osalDbgCheck(ready);
+  if (flag)
+    extChannelEnable(&EXTD1, GPIOA_GPS_PPS);
+  else
+    extChannelDisable(&EXTD1, GPIOA_GPS_PPS);
 }

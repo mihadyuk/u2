@@ -1,11 +1,13 @@
-#include <time.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <ctime>
+#include <cstdio>
+#include <cstdlib>
 
 #include "main.h"
 #include "pads.h"
 #include "global_flags.h"
-#include "timekeeper.hpp"
+#include "time_keeper.hpp"
+#include "exti_local.hpp"
+#include "gps_eb500.hpp"
 
 /*
  * Время работает следующим образом:
@@ -36,7 +38,7 @@
  */
 
 /* delta between RTC and GPS (sec.) */
-#define TIME_CORRECTION_THRESHOLD       2
+#define TIME_CORRECTION_THRESHOLD       4
 
 /* Approximated build time stamp. Needed to prevent setting of current
  * time in past. Probably it must be automatically calculated every build. */
@@ -45,16 +47,27 @@
 /* timer autoreload value */
 #define RTC_TIMER_STEP                  65535
 
-#define RTC_TIMER_CORRECTION            3
+/* Very dirty oscillator correction. Please remove it */
+#define RTC_TIMER_SKEW                  3
 
 #define RTC_GPTD                        GPTD6
+
+/**
+ * structure for PPS jitter statistic
+ */
+struct time_staticstic_t {
+  int32_t               max;            /**< @brief Minimal measurement.    */
+  int32_t               min;            /**< @brief Maximum measurement.    */
+  int32_t               last;           /**< @brief Last measurement.       */
+  size_t                n;              /**< @brief Number of measurements. */
+  int32_t               cumulative;     /**< @brief Cumulative measurement. */
+};
 
 /*
  ******************************************************************************
  * EXTERNS
  ******************************************************************************
  */
-extern chibios_rt::BinarySemaphore ppstimesync_sem;
 
 /*
  ******************************************************************************
@@ -69,8 +82,11 @@ static void gptcb(GPTDriver *gptp);
  ******************************************************************************
  */
 
-static int64_t UnixUsec;
-static int64_t TimeUsGps;
+static int64_t unix_usec = TIME_INVALID;
+static int64_t time_gps_us = TIME_INVALID;
+
+static int64_t pps_sample_us_prev = TIME_INVALID;
+static int64_t pps_sample_us = TIME_INVALID;
 
 bool TimeKeeper::ready = false;
 
@@ -84,6 +100,12 @@ static const GPTConfig gptcfg = {
   0
 };
 
+static chibios_rt::BinarySemaphore ppstimesync_sem(true);
+
+static gps::gps_data_t gps_data __attribute__((section(".ccm")));
+
+static time_staticstic_t time_stat __attribute__((section(".ccm")));
+
 /*
  *******************************************************************************
  *******************************************************************************
@@ -91,11 +113,46 @@ static const GPTConfig gptcfg = {
  *******************************************************************************
  *******************************************************************************
  */
+/*
+ * GPT callback.
+ */
+static void gptcb(GPTDriver *gptp) {
+  (void)gptp;
+
+  osalSysLockFromISR();
+  unix_usec += RTC_TIMER_STEP + RTC_TIMER_SKEW;
+  osalSysUnlockFromISR();
+}
 
 /**
  *
  */
-static void rtc_set_time_unix_sec(time_t t) {
+static void jitter_stats_update(void) {
+
+  int32_t speed_delta = (pps_sample_us - pps_sample_us_prev) - 1000000;
+
+  time_stat.n++;
+  time_stat.cumulative += speed_delta;
+  time_stat.last = speed_delta;
+  if (speed_delta < time_stat.min)
+    time_stat.min = speed_delta;
+  else if (speed_delta > time_stat.max)
+    time_stat.max = speed_delta;
+}
+
+/**
+ *
+ */
+static void rtc_set_time(struct tm *tim) {
+  RTCDateTime timespec;
+  rtcConvertStructTmToDateTime(tim, 0, &timespec);
+  rtcSetTime(&RTCD1, &timespec);
+}
+
+/**
+ *
+ */
+static void rtc_set_time_unix(time_t t) {
   RTCDateTime timespec;
   struct tm tim;
 
@@ -107,25 +164,22 @@ static void rtc_set_time_unix_sec(time_t t) {
 /**
  *
  */
-static int64_t rtc_get_time_unix_usec(void) {
+static time_t rtc_get_time_unix(void) {
   RTCDateTime timespec;
   struct tm tim;
 
   rtcGetTime(&RTCD1, &timespec);
   rtcConvertDateTimeToStructTm(&timespec, &tim);
 
-  return (int64_t)mktime(&tim) * 1000000;
+  return mktime(&tim);
 }
 
-/*
- * GPT callback.
+/**
+ *
  */
-static void gptcb(GPTDriver *gptp) {
-  (void)gptp;
+static int64_t rtc_get_time_unix_usec(void) {
 
-  osalSysLockFromISR();
-  UnixUsec += RTC_TIMER_STEP + RTC_TIMER_CORRECTION;
-  osalSysUnlockFromISR();
+  return (int64_t)rtc_get_time_unix() * 1000000;
 }
 
 /**
@@ -135,40 +189,53 @@ static THD_WORKING_AREA(TimekeeperThreadWA, 512) __attribute__((section(".ccm"))
 THD_FUNCTION(TimekeeperThread, arg) {
   chRegSetThreadName("Timekeeper");
   TimeKeeper *self = (TimeKeeper *)arg;
+  (void)self;
   msg_t sem_status = MSG_RESET;
+  chibios_rt::EvtListener el;
+  event_gps.registerOne(&el, EVMSK_GPS_UPATED);
+  eventmask_t gps_evt;
 
   while (!chThdShouldTerminateX()) {
-    sem_status = ppstimesync_sem.wait(MS2ST(2000));
-    if (sem_status == MSG_OK && (1 == GlobalFlags.time_gps_good)){
-      osalThreadSleepMilliseconds(100);
-      (void)self;
-//      chSysLock();
-//      gps_time = TimeUsGps;
-//      chSysUnlock();
-//
-//      /* now correct time in internal RTC (if needed) */
-//      t1 = gps_time / 1000000;
-//      t2 = rtcGetTimeUnixSec(&RTCD1);
-//      dt = t1 - t2;
-//
-//      if (abs(dt) > TIME_CORRECTION_THRESHOLD)
-//        rtcSetTimeUnixSec(&RTCD1, t1);
+    sem_status = ppstimesync_sem.wait(MS2ST(1200));
+    if (MSG_OK == sem_status) {
+      el.getAndClearFlags();
+
+      jitter_stats_update();
+
+      gps_evt = chEvtWaitOneTimeout(EVMSK_GPS_UPATED, MS2ST(300));
+      if (EVMSK_GPS_UPATED == gps_evt) {
+        GPSGetData(gps_data);
+        if (gps_data.fix_valid) {
+          int64_t tmp = 1000000;
+          tmp *= mktime(&gps_data.time);
+          osalSysLock();
+          time_gps_us = tmp;
+          osalSysUnlock();
+
+          /* now correct time in internal RTC (if needed) */
+          int32_t t1 = time_gps_us / 1000000;
+          int32_t t2 = rtc_get_time_unix();
+          int32_t dt = t1 - t2;
+
+          if (abs(dt) > TIME_CORRECTION_THRESHOLD)
+            rtc_set_time(&gps_data.time);
+        }
+      }
     }
   }
 
+  event_gps.unregister(&el);
   chThdExit(MSG_OK);
   return MSG_OK;
 }
 
-/**
- *
+
+
+/*
+ *******************************************************************************
+ * EXPORTED FUNCTIONS
+ *******************************************************************************
  */
-void TimeKeeper::PPS_ISR(void) {
-
-  chSysLockFromISR();
-  chSysUnlockFromISR();
-}
-
 /**
  *
  */
@@ -181,7 +248,7 @@ TimeKeeper::TimeKeeper(void) {
  */
 void TimeKeeper::start(void) {
 
-  UnixUsec = rtc_get_time_unix_usec();
+  unix_usec = rtc_get_time_unix_usec();
 
   gptStart(&RTC_GPTD, &gptcfg);
   gptStartContinuous(&RTC_GPTD, RTC_TIMER_STEP);
@@ -189,6 +256,7 @@ void TimeKeeper::start(void) {
   worker = chThdCreateStatic(TimekeeperThreadWA, sizeof(TimekeeperThreadWA),
                           TIMEKEEPERPRIO, TimekeeperThread, this);
   osalDbgCheck(nullptr != worker); // Can not allocate memory
+  Exti.pps(true);
   ready = true;
 }
 
@@ -196,12 +264,14 @@ void TimeKeeper::start(void) {
  *
  */
 void TimeKeeper::stop(void) {
+
   ready = false;
 
   chThdTerminate(worker);
   ppstimesync_sem.signal(); /* speed up termination */
   chThdWait(worker);
   worker = nullptr;
+  Exti.pps(false);
 }
 
 /**
@@ -210,17 +280,18 @@ void TimeKeeper::stop(void) {
 int64_t TimeKeeper::utc(void) {
   int64_t ret;
   uint32_t cnt1, cnt2;
+  syssts_t sts;
 
-  osalSysLock();
+  sts = osalSysGetStatusAndLockX();
   cnt1 = RTC_GPTD.tim->CNT;
-  ret  = UnixUsec;
+  ret  = unix_usec;
   cnt2 = RTC_GPTD.tim->CNT;
-  osalSysUnlock();
+  osalSysRestoreStatusX(sts);
 
   if (cnt2 >= cnt1)
     return ret + cnt1;
   else
-    return ret + cnt1 + RTC_TIMER_STEP + RTC_TIMER_CORRECTION;
+    return ret + cnt1 + RTC_TIMER_STEP + RTC_TIMER_SKEW;
 }
 
 /**
@@ -231,7 +302,7 @@ void TimeKeeper::utc(int64_t t) {
   osalDbgCheck(true == ready);
 
   osalSysLock();
-  UnixUsec = t;
+  unix_usec = t;
   osalSysUnlock();
 }
 
@@ -259,11 +330,17 @@ int TimeKeeper::format_time(int64_t time, char *str, size_t len){
   return snprintf(str+used, len-used, ".%06lu", usec);
 }
 
-/*
- *******************************************************************************
- * EXPORTED FUNCTIONS
- *******************************************************************************
+/**
+ *
  */
+void TimeKeeper::PPS_ISR_I(void) {
+
+  chSysLockFromISR();
+  pps_sample_us_prev = pps_sample_us;
+  pps_sample_us = utc();
+  ppstimesync_sem.signalI();
+  chSysUnlockFromISR();
+}
 
 /**
  * Command to handle RTC.
@@ -285,14 +362,14 @@ thread_t* date_clicmd(int argc, const char * const * argv, SerialDriver *sdp) {
     else{
       tv_usec = tv_sec;
       tv_usec *= 1000000;
-      rtc_set_time_unix_sec(tv_sec);
+      rtc_set_time_unix(tv_sec);
       TimeKeeper::utc(tv_usec);
     }
   }
 
   /* error handler */
   else{
-    int n = 40;
+    const int n = 40;
     int nres = 0;
     char str[n];
 
@@ -313,7 +390,7 @@ thread_t* date_clicmd(int argc, const char * const * argv, SerialDriver *sdp) {
     cli_println(str);
 
     chSysLock();
-    tv_usec = TimeUsGps;
+    tv_usec = time_gps_us;
     chSysUnlock();
     nres = snprintf(str, n, "%lld", tv_usec);
     cli_print("GPS: ");
@@ -322,6 +399,23 @@ thread_t* date_clicmd(int argc, const char * const * argv, SerialDriver *sdp) {
     TimeKeeper::format_time(tv_usec, str, n);
     cli_println(str);
 
+    cli_println("PPS jitter:");
+    nres = snprintf(str, n, "%ld", time_stat.last);
+    cli_print("last:       ");
+    cli_print_long(str, n, nres);
+    nres = snprintf(str, n, "%ld", time_stat.min);
+    cli_print("min:        ");
+    cli_print_long(str, n, nres);
+    nres = snprintf(str, n, "%ld", time_stat.max);
+    cli_print("max:        ");
+    cli_print_long(str, n, nres);
+    nres = snprintf(str, n, "%ld", time_stat.cumulative);
+    cli_print("cumulative: ");
+    cli_print_long(str, n, nres);
+    nres = snprintf(str, n, "%u", time_stat.n);
+    cli_print("iterations: ");
+    cli_print_long(str, n, nres);
+
     cli_println("");
     cli_println("To adjust time run 'date N'");
     cli_println("    where 'N' is count of seconds (UTC) since Unix epoch.");
@@ -329,5 +423,5 @@ thread_t* date_clicmd(int argc, const char * const * argv, SerialDriver *sdp) {
   }
 
   /* stub */
-  return NULL;
+  return nullptr;
 }

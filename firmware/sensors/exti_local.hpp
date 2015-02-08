@@ -9,6 +9,7 @@ public:
   void adis(bool);
   void mpu6050(bool);
   void lsm303(bool flag);
+  void pps(bool flag);
 private:
   bool ready;
 };

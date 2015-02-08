@@ -18,7 +18,7 @@ using namespace chibios_rt;
  */
 
 /* variable for storing system state */
-mavlink_system_t                mavlink_system_struct                   __attribute__((section(".ccm")));
+mavlink_system_t                mavlink_system_struct __attribute__((section(".ccm")));
 
 /* mavlink messages containing telemetry data */
 mavlink_raw_imu_t               mavlink_out_raw_imu_struct;

@@ -62,7 +62,7 @@ extern int64_t TimeUsGps;
 extern mavlink_global_position_int_t  mavlink_out_global_position_int_struct;
 extern mavlink_vfr_hud_t              mavlink_out_vfr_hud_struct;
 
-extern event_source_t event_gps_updated;
+extern event_source_t event_gps;
 
 extern struct tm gps_timp;
 
@@ -262,7 +262,7 @@ static void parse_gga(uint8_t *ggabuf, mavlink_global_position_int_t *global_pos
     state_vector.alt  = (float)gps_altitude / 1000.0f;
     state_vector.gpsfix = 2;
 
-    chEvtBroadcastFlags(&event_gps_updated, EVMSK_GPS_UPATED);
+    chEvtBroadcastFlags(&event_gps, EVMSK_GPS_UPATED);
 	}
 	else{
 	  raw_data.gps_valid = FALSE;

@@ -19,7 +19,7 @@ typedef struct {
   float   geoid;
   uint8_t satellites;
   uint8_t fix;
-} nmeap_gga_t;
+} nmea_gga_t;
 
 /**
  *
@@ -28,7 +28,7 @@ typedef struct {
   struct tm time;
   float     speed;
   float     course;
-} nmeap_rmc_t;
+} nmea_rmc_t;
 
 /**
  *
@@ -59,8 +59,8 @@ class NmeaParser {
 public:
   NmeaParser(void);
   collect_status_t collect(uint8_t byte);
-  void unpack(nmeap_rmc_t *result);
-  void unpack(nmeap_gga_t *result);
+  void unpack(nmea_rmc_t *result);
+  void unpack(nmea_gga_t *result);
 private:
   void reset_collector(void);
   const char* token(char *result, size_t number);

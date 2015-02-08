@@ -43,7 +43,7 @@ Giovanni
 #include "i2c_local.hpp"
 #include "nvram_local.hpp"
 #include "param_receiver.hpp"
-#include "timekeeper.hpp"
+#include "time_keeper.hpp"
 //#include "sensors.hpp"
 //#include "pwr_mgmt.hpp"
 #include "tlm_sender.hpp"
@@ -75,13 +75,6 @@ using namespace chibios_rt;
  * EXTERNS
  ******************************************************************************
  */
-///* RTC-GPS sync */
-////chibios_rt::BinarySemaphore rtc_sem(true);
-chibios_rt::BinarySemaphore ppstimesync_sem(true);  /* for syncing internal RTC with PPS */
-//chibios_rt::BinarySemaphore ppsgps_sem(true);       /* for acquiring data from GPS */
-
-///* store here time from GPS */
-//struct tm gps_timp;
 
 /* reset all global flags */
 GlobalFlags_t GlobalFlags = {0,0,0,0,0,0,0,0,
@@ -155,8 +148,6 @@ Ahrs ahrs;
 control::Futaba futaba(MS2ST(1000));
 control::FutabaData futaba_data __attribute__((section(".ccm")));
 control::TargetAttitude trgt __attribute__((section(".ccm")));
-
-#include "nmea.hpp"
 
 int main(void) {
 
