@@ -104,9 +104,9 @@ CSRC = $(PORTSRC) \
        $(PLATFORMSRC) \
        $(BOARDSRC) \
        $(FATFSSRC) \
-       $(CHIBIOS)/os/various/chprintf.c \
        $(CHIBIOS)/os/various/syscalls.c \
-       $(CHIBIOS)/os/various/memstreams.c \
+       $(CHIBIOS)/os/hal/lib/streams/chprintf.c \
+       $(CHIBIOS)/os/hal/lib/streams/memstreams.c \
        lib/uav_utils/endianness.c \
        lib/uav_utils/cpu_load.c \
        lib/uav_utils/crc.c \
@@ -211,6 +211,7 @@ ASMSRC = $(PORTASM)
 INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
          $(HALINC) $(OSALINC) $(PLATFORMINC) $(BOARDINC) $(FATFSINC) \
          $(CHIBIOS)/os/various \
+         $(CHIBIOS)/os/hal/lib/streams \
          $(CHIBIOS)/os/various/cpp_wrappers \
          sensors \
          lib/microrl/src \
