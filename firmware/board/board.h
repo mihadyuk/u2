@@ -399,11 +399,11 @@
                                 PIN_OSPEED_2M(GPIOC_AN_RESERVED) |            \
                                 PIN_OSPEED_2M(GPIOC_USART6_TX_UEXT) |         \
                                 PIN_OSPEED_2M(GPIOC_USART6_RX_UEXT) |         \
-                                PIN_OSPEED_100M(GPIOC_SDIO_D0) |               \
-                                PIN_OSPEED_100M(GPIOC_SDIO_D1) |               \
-                                PIN_OSPEED_100M(GPIOC_SDIO_D2) |               \
-                                PIN_OSPEED_100M(GPIOC_SDIO_D3) |               \
-                                PIN_OSPEED_100M(GPIOC_SDIO_CK) |               \
+                                PIN_OSPEED_100M(GPIOC_SDIO_D0) |              \
+                                PIN_OSPEED_100M(GPIOC_SDIO_D1) |              \
+                                PIN_OSPEED_100M(GPIOC_SDIO_D2) |              \
+                                PIN_OSPEED_100M(GPIOC_SDIO_D3) |              \
+                                PIN_OSPEED_100M(GPIOC_SDIO_CK) |              \
                                 PIN_OSPEED_2M(GPIOC_TAMPER_RTC) |             \
                                 PIN_OSPEED_2M(GPIOC_OSC32_IN) |               \
                                 PIN_OSPEED_2M(GPIOC_OSC32_OUT))
