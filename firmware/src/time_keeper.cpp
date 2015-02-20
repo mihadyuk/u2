@@ -192,7 +192,7 @@ THD_FUNCTION(TimekeeperThread, arg) {
   (void)self;
   msg_t sem_status = MSG_RESET;
   chibios_rt::EvtListener el;
-  event_gps.registerOne(&el, EVMSK_GPS_UPATED);
+  event_gps.registerMask(&el, EVMSK_GPS_UPATED);
   eventmask_t gps_evt;
 
   while (!chThdShouldTerminateX()) {
@@ -202,7 +202,7 @@ THD_FUNCTION(TimekeeperThread, arg) {
 
       jitter_stats_update();
 
-      gps_evt = chEvtWaitOneTimeout(EVMSK_GPS_UPATED, MS2ST(300));
+      gps_evt = chEvtWaitOneTimeout(EVMSK_GPS_UPATED, MS2ST(1300));
       if (EVMSK_GPS_UPATED == gps_evt) {
         GPSGetData(gps_data);
         if (gps_data.fix_valid) {
@@ -335,11 +335,9 @@ int TimeKeeper::format_time(int64_t time, char *str, size_t len){
  */
 void TimeKeeper::PPS_ISR_I(void) {
 
-  chSysLockFromISR();
   pps_sample_us_prev = pps_sample_us;
   pps_sample_us = utc();
   ppstimesync_sem.signalI();
-  chSysUnlockFromISR();
 }
 
 /**

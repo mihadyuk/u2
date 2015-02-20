@@ -48,13 +48,12 @@ static const uint8_t msg_gga_rmc_only[] =
 // confirmation: $PMTK001,314,3*36
 
 /* time between fixes (mS) */
-static const uint8_t fix_period_5hz[] =
-    "$PMTK300,200,0,0,0,0*2F\r\n";
+static const uint8_t fix_period_5hz[] = "$PMTK300,200,0,0,0,0*2F\r\n";
+static const uint8_t fix_period_2hz[] = "$PMTK300,500,0,0,0,0*28\r\n";
 // confirmation: $PMTK001,300,3*33
 
 /* set serial port baudrate */
-static const uint8_t gps_high_baudrate[] =
-    "$PMTK251,57600*2C\r\n";
+static const uint8_t gps_high_baudrate[] = "$PMTK251,57600*2C\r\n";
 
 static NmeaParser nmea_parser __attribute__((section(".ccm")));
 
@@ -92,13 +91,6 @@ static void release(void) {
   protect_sem.signal();
 }
 
-/* рассчет количества милисекунд, необходимых для отправки заданного количества
- байт на заданном бодрейте. 13 - это количество бод в одном байте (взято
- с запасом). 2 - это дополнительные запасные милисекунды */
-static systime_t byte2msec(size_t bytes, size_t baudrate) {
-  return ((bytes * 13 * 1000) / baudrate) + 2;
-}
-
 /**
  *
  */
@@ -109,7 +101,7 @@ static void gps_configure(void) {
 
 //  /* смена скорости ПРИЁМНИКА на повышенную */
 //  sdWrite(&GPSSD, gps_high_baudrate, sizeof(gps_high_baudrate));
-//  chThdSleepMilliseconds(byte2msec(sizeof(gps_high_baudrate), GPS_DEFAULT_BAUDRATE));
+//  chThdSleepSeconds(1);
 //
 //  /* перезапуск порта контроллера на повышенной частоте */
 //  sdStop(&GPSSD);
@@ -118,17 +110,18 @@ static void gps_configure(void) {
 
   /* установка выдачи только GGA и RMC */
   sdWrite(&GPSSD, msg_gga_rmc_only, sizeof(msg_gga_rmc_only));
-  chThdSleepMilliseconds(byte2msec(sizeof(msg_gga_rmc_only), GPS_DEFAULT_BAUDRATE));
+  chThdSleepSeconds(1);
 
-  /* установка частоты обновления 5 Гц */
-  sdWrite(&GPSSD, fix_period_5hz, sizeof(fix_period_5hz));
-  chThdSleepMilliseconds(byte2msec(sizeof(fix_period_5hz), GPS_DEFAULT_BAUDRATE));
+  /* установка частоты обновления */
+//  sdWrite(&GPSSD, fix_period_5hz, sizeof(fix_period_5hz));
+//  sdWrite(&GPSSD, fix_period_2hz, sizeof(fix_period_2hz));
+//  chThdSleepSeconds(1);
 }
 
 /**
  *
  */
-static THD_WORKING_AREA(gpsRxThreadWA, 128) __attribute__((section(".ccm")));
+static THD_WORKING_AREA(gpsRxThreadWA, 256) __attribute__((section(".ccm")));
 static msg_t gpsRxThread(void *arg) {
   chRegSetThreadName("gpsRx");
   (void)arg;
@@ -212,7 +205,5 @@ void GPSGetData(gps_data_t &result) {
  */
 void GPS_PPS_ISR_I(void) {
 
-  chSysLockFromISR();
   pps_sem.signalI();
-  chSysUnlockFromISR();
 }
