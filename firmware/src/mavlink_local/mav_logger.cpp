@@ -47,8 +47,9 @@ using namespace chibios_rt;
  */
 
 /* SDIO configuration. */
-static const SDCConfig sdccfg = {
-  0
+static SDCConfig sdccfg = {
+    SDC_MODE_4BIT,
+    NULL
 };
 
 /* FS object.*/
@@ -78,13 +79,18 @@ static virtual_timer_t sync_vt;
  */
 static void insert_handler(void) {
   FRESULT err;
+  bool status;
 
   sdcStart(&SDCD1, &sdccfg);
   microsd_power_on();
   osalThreadSleep(SDC_POWER_TIMEOUT);
 
   /* On insertion SDC initialization and FS mount. */
-  if (HAL_FAILED == sdcConnect(&SDCD1))
+  uint8_t scratchpad[512];
+  sdccfg.scratchpad = scratchpad;
+  status = sdcConnect(&SDCD1);
+  sdccfg.scratchpad = NULL;
+  if (HAL_FAILED == status)
     return;
 
   err = f_mount(&SDC_FS, "/", 1);
