@@ -6,6 +6,7 @@
 #include "lsm303_mag.hpp"
 #include "time_keeper.hpp"
 #include "gps_eb500.hpp"
+#include "bmp085.hpp"
 
 /*
  ******************************************************************************
@@ -75,11 +76,11 @@ static void pps_cb(EXTDriver *extp, expchannel_t channel){
  */
 static const EXTConfig extcfg = {
   {
-    {EXT_CH_MODE_RISING_EDGE | EXT_MODE_GPIOA, pps_cb},
+    {EXT_CH_MODE_RISING_EDGE  | EXT_MODE_GPIOA, pps_cb},
     {EXT_CH_MODE_FALLING_EDGE | EXT_MODE_GPIOE, Adis::extiISR},
     {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_RISING_EDGE | EXT_MODE_GPIOE, MPU6050::extiISR},
-    {EXT_CH_MODE_DISABLED, NULL},//4
+    {EXT_CH_MODE_RISING_EDGE  | EXT_MODE_GPIOE, MPU6050::extiISR},
+    {EXT_CH_MODE_RISING_EDGE  | EXT_MODE_GPIOE, BMP085::extiISR},//4
     {EXT_CH_MODE_FALLING_EDGE | EXT_MODE_GPIOE, LSM303_mag::extiISR},
     {EXT_CH_MODE_DISABLED, NULL},
     {EXT_CH_MODE_DISABLED, NULL},
@@ -182,7 +183,7 @@ void ExtiPnc::mpu6050(bool flag){
 }
 
 /**
- * Enables interrupts from MPU
+ *
  */
 void ExtiPnc::lsm303(bool flag){
   osalDbgCheck(ready);
@@ -193,7 +194,7 @@ void ExtiPnc::lsm303(bool flag){
 }
 
 /**
- * Enables interrupts from MPU
+ *
  */
 void ExtiPnc::pps(bool flag){
   osalDbgCheck(ready);
@@ -201,4 +202,15 @@ void ExtiPnc::pps(bool flag){
     extChannelEnable(&EXTD1, GPIOA_GPS_PPS);
   else
     extChannelDisable(&EXTD1, GPIOA_GPS_PPS);
+}
+
+/**
+ *
+ */
+void ExtiPnc::bmp085(bool flag) {
+  osalDbgCheck(ready);
+  if (flag)
+    extChannelEnable(&EXTD1, GPIOE_BMP085_EOC);
+  else
+    extChannelDisable(&EXTD1, GPIOE_BMP085_EOC);
 }

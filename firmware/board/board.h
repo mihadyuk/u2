@@ -611,7 +611,7 @@
                                 PIN_PUPDR_PULLDOWN(GPIOE_ADIS_INT) |          \
                                 PIN_PUPDR_PULLDOWN(GPIOE_USB_PRESENCE) |      \
                                 PIN_PUPDR_PULLUP(GPIOE_MPU9150_INT) |         \
-                                PIN_PUPDR_PULLUP(GPIOE_BMP085_EOC) |          \
+                                PIN_PUPDR_PULLDOWN(GPIOE_BMP085_EOC) |        \
                                 PIN_PUPDR_PULLUP(GPIOE_MAG_INT) |             \
                                 PIN_PUPDR_FLOATING(GPIOE_PIN6) |              \
                                 PIN_PUPDR_FLOATING(GPIOE_PIN7) |              \

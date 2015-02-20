@@ -44,7 +44,7 @@ Giovanni
 #include "nvram_local.hpp"
 #include "param_receiver.hpp"
 #include "time_keeper.hpp"
-//#include "sensors.hpp"
+#include "bmp085.hpp"
 //#include "pwr_mgmt.hpp"
 #include "tlm_sender.hpp"
 #include "link_mgr.hpp"
@@ -129,6 +129,7 @@ TlmSender tlm_sender;
 static LinkMgr link_mgr;
 MavLogger mav_logger;
 Ahrs ahrs;
+BMP085 bmp_085(&I2CD_SLOW, bmp085addr);
 
 /*
  ******************************************************************************
@@ -195,6 +196,7 @@ int main(void) {
 //  attitude_unit.start();
 //  acs.start();
 //  sins.start(&state_vector);
+  bmp_085.start();
   GPSInit();
   mav_logger.start(NORMALPRIO);
 

@@ -10,6 +10,7 @@ public:
   void mpu6050(bool);
   void lsm303(bool flag);
   void pps(bool flag);
+  void bmp085(bool flag);
 private:
   bool ready;
 };

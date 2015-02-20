@@ -1,8 +1,10 @@
 #include <cmath>
 
 #include "main.h"
+#include "mavlink_local.hpp"
 #include "bmp085.hpp"
 #include "param_registry.hpp"
+#include "exti_local.hpp"
 
 /*
  ******************************************************************************
@@ -13,9 +15,31 @@
 // sensor precision (see datasheet)
 #define OSS 3 // 3 -- max
 
-#define TEMP_DECIMATOR  0x1F      /* decimation value for temperature measurements */
-#define PRESS_READ_TMO  MS2ST(50) /* wait pressure results (datasheet says 25.5 ms) */
-#define TEMP_READ_TMO   MS2ST(10) /* wait temperature results (datasheet says 4.5 ms) */
+#define BOSCH_CTL           0xF4 // control register address
+#define BOSCH_TEMP          0x2E
+#define BOSCH_PRES          0xF4 // pressure with OSRS=3 (page 17 in manual)
+#define BOSCH_ADC_MSB       0xF6
+#define BOSCH_ADC_LSB       0xF7
+#define BOSCH_ADC_XLSB      0xF8
+#define BOSCH_TYPE          0xD0
+
+#define PRESSURE_CONVERSION_TIME_MS        27
+#define TEMPERATURE_CONVERSION_TIME_MS     6
+
+/**
+ *
+ */
+class ClimbMeter {
+public:
+  ClimbMeter(void);
+  void time_sample_I(void);
+  float get(float alt);
+private:
+  filters::AlphaBetaFixedLen<float, 8> filter;
+  rtcnt_t t1, t2, t3;
+  size_t warmup;
+  float altitude_prev;
+};
 
 /*
  ******************************************************************************
@@ -32,13 +56,8 @@ extern mavlink_raw_pressure_t     mavlink_out_raw_pressure_struct;
  ******************************************************************************
  */
 
-/* value to calculate time between measurements and climb rate */
-static systime_t measurement_time_prev;
-static systime_t measurement_time;
-
-static float altitude = 0;
-static float altitude_prev = 0;
-static float climb = 0;
+static chibios_rt::BinarySemaphore isr_sem(true);
+static ClimbMeter climb_meter;
 
 /*
  *******************************************************************************
@@ -50,7 +69,7 @@ static float climb = 0;
 /**
  * Calculate height in meters using proved formulae
  */
-static float press_to_height_f32(uint32_t pval){
+static float press_to_height_f32(uint32_t pval) {
   const float p0 = 101325;
   const float e = 0.1902949571836346; // 1/5.255;
 
@@ -60,8 +79,8 @@ static float press_to_height_f32(uint32_t pval){
 /**
  * Move pressure value to MSL as it done by meteo sites in iternet.
  */
-static float press_to_msl(uint32_t pval, int32_t above_msl){
-  float p = 1.0f - above_msl / 44330.0f;
+static float press_to_msl(uint32_t pval, int32_t height) {
+  float p = 1.0f - height / 44330.0f;
   return pval / powf(p, 5.255f);
 }
 
@@ -69,15 +88,12 @@ static float press_to_msl(uint32_t pval, int32_t above_msl){
  * Calculate compensated pressure value using black magic from datasheet.
  *
  * @ut[in]    uncompensated temperature value.
- * @ut[in]    uncompensated pressure value.
+ * @up[in]    uncompensated pressure value.
  *
  * @return    compensated pressure in Pascals.
  */
-uint32_t BMP085::bmp085_calc_pressure(uint32_t ut, uint32_t up){
-  // compensated temperature and pressure values
-  uint32_t pval = 0;
-  int32_t  tval = 0;
-
+void BMP085::calc_pressure(void) {
+  int32_t  tval;
   int32_t  x1, x2, x3, b3, b5, b6, p;
   uint32_t  b4, b7;
 
@@ -85,6 +101,7 @@ uint32_t BMP085::bmp085_calc_pressure(uint32_t ut, uint32_t up){
   x2 = ((int32_t) mc << 11) / (x1 + md);
   b5 = x1 + x2;
   tval = (b5 + 8) >> 4;
+  (void)tval;
 
   b6 = b5 - 4000;
   x1 = (b2 * (b6 * b6 >> 12)) >> 11;
@@ -105,39 +122,167 @@ uint32_t BMP085::bmp085_calc_pressure(uint32_t ut, uint32_t up){
   x1 = (p >> 8) * (p >> 8);
   x1 = (x1 * 3038) >> 16;
   x2 = (-7357L * p) >> 16;
-  pval = p + ((x1 + x2 + 3791) >> 4);
+  pressure_compensated = p + ((x1 + x2 + 3791) >> 4);
+}
 
-  raw_data.temp_bmp085 = (int16_t)tval;
-  return pval;
+///**
+// *
+// */
+//bool BMP085::get_raw(void) {
+//  bool fresh = false;
+//
+//  if (this->state != SENSOR_STATE_READY) {
+//    return false;
+//  }
+//
+//  switch(measure_type){
+//  case MEASURE_NONE:
+//    /* start temerature measurement */
+//    txbuf[0] = BOSCH_CTL;
+//    txbuf[1] = BOSCH_TEMP;
+//    if (MSG_OK != transmit(txbuf, 2, rxbuf, 0))
+//      goto failed;
+//    measure_type = MEASURE_T;
+//    fresh = false;
+//    break;
+//
+//  case MEASURE_T:
+//    /* acquire temperature measurement */
+//    txbuf[0] = BOSCH_ADC_MSB;
+//    if (MSG_OK != transmit(txbuf, 1, rxbuf, 2))
+//      goto failed;
+//    ut = (rxbuf[0] << 8) + rxbuf[1];
+//
+//    /* fire up pressure measurement */
+//    txbuf[0] = BOSCH_CTL;
+//    txbuf[1] = (0x34 + (OSS<<6));
+//    if (MSG_OK != transmit(txbuf, 2, rxbuf, 0))
+//      goto failed;
+//    measure_type = MEASURE_P;
+//    fresh = false;
+//    break;
+//
+//  case MEASURE_P:
+//    /* acqure pressure value */
+//    txbuf[0] = BOSCH_ADC_MSB;
+//    if (MSG_OK != transmit(txbuf, 1, rxbuf, 3))
+//      goto failed;
+//    up = ((rxbuf[0] << 16) + (rxbuf[1] << 8) + rxbuf[2]) >> (8 - OSS);
+//
+//    /* start temperature measurement */
+//    txbuf[0] = BOSCH_CTL;
+//    txbuf[1] = BOSCH_TEMP;
+//    if (MSG_OK != transmit(txbuf, 2, rxbuf, 0))
+//      goto failed;
+//    measure_type = MEASURE_T;
+//    calc_pressure();
+//    fresh = true;
+//    break;
+//  }
+//
+//  return fresh;
+//
+//failed:
+//  this->state = SENSOR_STATE_DEAD;
+//  return false;
+//}
+
+
+bool BMP085::start_t_measurement(void) {
+
+  txbuf[0] = BOSCH_CTL;
+  txbuf[1] = BOSCH_TEMP;
+  if (MSG_OK != transmit(txbuf, 2, rxbuf, 0))
+    return OSAL_FAILED;
+  else
+    return OSAL_SUCCESS;
+}
+
+bool BMP085::start_p_measurement(void) {
+  txbuf[0] = BOSCH_CTL;
+  txbuf[1] = (0x34 + (OSS<<6));
+  if (MSG_OK != transmit(txbuf, 2, rxbuf, 0))
+    return OSAL_FAILED;
+  else
+    return OSAL_SUCCESS;
+}
+
+bool BMP085::acquire_t(void) {
+  txbuf[0] = BOSCH_ADC_MSB;
+  if (MSG_OK != transmit(txbuf, 1, rxbuf, 2))
+    return OSAL_FAILED;
+  else {
+    ut = (rxbuf[0] << 8) + rxbuf[1];
+    return OSAL_SUCCESS;
+  }
+}
+
+bool BMP085::acquire_p(void) {
+  txbuf[0] = BOSCH_ADC_MSB;
+  if (MSG_OK != transmit(txbuf, 1, rxbuf, 3))
+    return OSAL_FAILED;
+  else {
+    up = ((rxbuf[0] << 16) + (rxbuf[1] << 8) + rxbuf[2]) >> (8 - OSS);
+    return OSAL_SUCCESS;
+  }
 }
 
 /**
  * Calculate height and climb from pressure value
  * @pval[in]    pressure in Pascals.
  */
-void BMP085::process_pressure(uint32_t pval){
+void BMP085::picle(abs_pressure_data_t &result) {
 
-  altitude = press_to_height_f32(pval);
+  float altitude = press_to_height_f32(pressure_compensated);
 
-  if (*flen_pres_stat == flen_pres_stat_cached)
-    comp_data.baro_altitude = bmp085_filter.update(altitude, *flen_pres_stat);
-  else{
-    bmp085_filter.reset(altitude, *flen_pres_stat);
-    flen_pres_stat_cached = *flen_pres_stat;
+  result.altitude = altitude_filter.update(altitude);
+  //result.altitude = altitude;
+  result.climb = climb_meter.get(result.altitude);
+  result.p = pressure_compensated;
+  result.p_msl_adjusted = press_to_msl(pressure_compensated, *above_msl);
+
+  mavlink_out_vfr_hud_struct.alt = result.altitude;
+  mavlink_out_vfr_hud_struct.climb = result.climb;
+  //mavlink_out_scaled_pressure_struct.press_abs = result.p_msl_adjusted / 100.0f;
+  mavlink_out_scaled_pressure_struct.press_abs = pressure_compensated / 100.0f;
+  mavlink_out_raw_pressure_struct.press_abs = pressure_compensated / 100;
+}
+
+/**
+ *
+ */
+static THD_WORKING_AREA(bmp085ThreadWA, 256) __attribute__((section(".ccm")));
+msg_t bmp085Thread(void *arg) {
+  chRegSetThreadName("bmp085");
+  BMP085 *sensor = (BMP085 *)arg;
+  abs_pressure_data_t result;
+  systime_t starttime;
+
+  while (!chThdShouldTerminateX()) {
+    if (SENSOR_STATE_READY == sensor->state) {
+      sensor->acquire_p();
+      starttime = chVTGetSystemTime();
+      sensor->start_t_measurement();
+      chThdSleepUntilWindowed(starttime, starttime + MS2ST(TEMPERATURE_CONVERSION_TIME_MS));
+
+      sensor->acquire_t();
+      starttime += MS2ST(TEMPERATURE_CONVERSION_TIME_MS);
+      sensor->start_p_measurement();
+      chThdSleepUntilWindowed(starttime, starttime + MS2ST(PRESSURE_CONVERSION_TIME_MS));
+
+      sensor->calc_pressure();
+      sensor->picle(result);
+      osalSysLock();
+      sensor->cache = result;
+      osalSysUnlock();
+    }
+    else {
+      osalThreadSleepMilliseconds(TEMPERATURE_CONVERSION_TIME_MS + PRESSURE_CONVERSION_TIME_MS);
+    }
   }
 
-  measurement_time = chTimeNow();
-  climb = (altitude_prev - comp_data.baro_altitude) *
-          (float)(CH_FREQUENCY / (measurement_time - measurement_time_prev));
-  measurement_time_prev = measurement_time;
-  altitude_prev = comp_data.baro_altitude;
-
-  comp_data.baro_climb = bmp085_climb_filter.update(climb, *flen_climb);
-
-  mavlink_out_vfr_hud_struct.alt = comp_data.baro_altitude;
-  mavlink_out_vfr_hud_struct.climb = comp_data.baro_climb;
-  mavlink_out_scaled_pressure_struct.press_abs = press_to_msl(pval, *above_msl) / 100.0f;
-  mavlink_out_raw_pressure_struct.press_abs = pval / 100;
+  chThdExit(MSG_OK);
+  return MSG_OK;
 }
 
 /*
@@ -150,132 +295,170 @@ void BMP085::process_pressure(uint32_t pval){
  */
 BMP085::BMP085(I2CDriver* i2cdp, i2caddr_t addr):
 I2CSensor(i2cdp, addr)
+//measure_type(MEASURE_NONE),
+//up(0),  ut(0),
+//ac1(0), ac2(0), ac3(0), b1(0), b2(0), mb(0), mc(0), md(0),
+//ac4(0), ac5(0), ac6(0)
 {
-  measure = MEASURE_NONE;
-  up  = 0; ut  = 0;
-  ac1 = 0; ac2 = 0; ac3 = 0; b1 = 0; b2 = 0; mb = 0; mc = 0; md = 0;
-  ac4 = 0; ac5 = 0; ac6 = 0;
   flen_pres_stat_cached = 1;
-  ready = false;
-}
-
-/**
- *
- */
-void BMP085::update(void){
-
-  osalDbgCheck(ready);
-
-  switch(measure){
-  case MEASURE_NONE:
-    /* start temerature measurement */
-    txbuf[0] = BOSCH_CTL;
-    txbuf[1] = BOSCH_TEMP;
-    transmit(txbuf, 2, rxbuf, 0);
-    measure = MEASURE_T;
-    break;
-
-  case MEASURE_T:
-    /* acquire temperature measurement */
-    txbuf[0] = BOSCH_ADC_MSB;
-    transmit(txbuf, 1, rxbuf, 2);
-    ut = (rxbuf[0] << 8) + rxbuf[1];
-
-    /* fire up pressure measurement */
-    txbuf[0] = BOSCH_CTL;
-    txbuf[1] = (0x34 + (OSS<<6));
-    transmit(txbuf, 2, rxbuf, 0);
-    measure = MEASURE_P;
-    break;
-
-  case MEASURE_P:
-    /* acqure pressure value */
-    txbuf[0] = BOSCH_ADC_MSB;
-    transmit(txbuf, 1, rxbuf, 3);
-    up = ((rxbuf[0] << 16) + (rxbuf[1] << 8) + rxbuf[2]) >> (8 - OSS);
-
-    /* start temerature measurement */
-    txbuf[0] = BOSCH_CTL;
-    txbuf[1] = BOSCH_TEMP;
-    transmit(txbuf, 2, rxbuf, 0);
-    measure = MEASURE_T;
-    break;
-
-  default:
-    osalSysHalt("unhanlded case");
-    break;
-  }
-
-  this->pickle();
-}
-
-/**
- *
- */
-msg_t BMP085::start(void) {
-  if (need_full_init())
-    hw_init_full();
-  else
-    hw_init_fast();
-
-  param_registry.valueSearch("FLEN_pres_stat", &flen_pres_stat);
-  param_registry.valueSearch("FLEN_climb", &flen_climb);
-  param_registry.valueSearch("PMU_above_msl", &above_msl);
-
-  ready = true;
-
-  return RDY_OK;
+  state = SENSOR_STATE_STOP;
 }
 
 /**
  *
  */
 void BMP085::stop(void) {
-  measure = MEASURE_NONE;
-  ready = false;
+  if (this->state == SENSOR_STATE_STOP)
+    return;
+
+  osalDbgAssert((this->state == SENSOR_STATE_READY) ||
+                (this->state == SENSOR_STATE_SLEEP), "Invalid state");
+  this->state = SENSOR_STATE_STOP;
+  chThdTerminate(worker);
+  chThdWait(worker);
+  Exti.bmp085(false);
+  measure_type = MEASURE_NONE;
 }
 
 /**
  *
  */
-void BMP085::pickle(void) {
-  raw_data.pressure_static = bmp085_calc_pressure(ut, up);
-  process_pressure(raw_data.pressure_static);
+void BMP085::sleep(void) {
+  if (this->state == SENSOR_STATE_SLEEP)
+    return;
+
+  osalDbgAssert(this->state == SENSOR_STATE_READY, "Invalid state");
+  this->state = SENSOR_STATE_SLEEP;
 }
 
 /**
  *
  */
-msg_t BMP085::hw_init_full(void) {
+sensor_state_t BMP085::get(abs_pressure_data_t &result) {
+  result = cache;
+  return this->state;
+}
+
+/**
+ *
+ */
+sensor_state_t BMP085::wakeup(void) {
+  if (this->state == SENSOR_STATE_READY)
+    return this->state;
+
+  osalDbgAssert(this->state == SENSOR_STATE_SLEEP, "Invalid state");
+  this->state = SENSOR_STATE_READY;
+  return this->state;
+}
+
+/**
+ *
+ */
+bool BMP085::hw_init_full(void) {
+  msg_t ret = MSG_RESET;
+
   /* get calibration coefficients from sensor */
   txbuf[0] = 0xAA;
-  transmit(txbuf, 1, rxbuf, 22);
+  ret = transmit(txbuf, 1, rxbuf, 22);
 
-  ac1 = (rxbuf[0]  << 8) + rxbuf[1];
-  ac2 = (rxbuf[2]  << 8) + rxbuf[3];
-  ac3 = (rxbuf[4]  << 8) + rxbuf[5];
-  ac4 = (rxbuf[6]  << 8) + rxbuf[7];
-  ac5 = (rxbuf[8]  << 8) + rxbuf[9];
-  ac6 = (rxbuf[10] << 8) + rxbuf[11];
-  b1  = (rxbuf[12] << 8) + rxbuf[13];
-  b2  = (rxbuf[14] << 8) + rxbuf[15];
-  mb  = (rxbuf[16] << 8) + rxbuf[17];
-  mc  = (rxbuf[18] << 8) + rxbuf[19];
-  md  = (rxbuf[20] << 8) + rxbuf[21];
-
-  return RDY_OK;
+  if (MSG_OK != ret) // does not responding
+    return OSAL_FAILED;
+  else {
+    ac1 = (rxbuf[0]  << 8) + rxbuf[1];
+    ac2 = (rxbuf[2]  << 8) + rxbuf[3];
+    ac3 = (rxbuf[4]  << 8) + rxbuf[5];
+    ac4 = (rxbuf[6]  << 8) + rxbuf[7];
+    ac5 = (rxbuf[8]  << 8) + rxbuf[9];
+    ac6 = (rxbuf[10] << 8) + rxbuf[11];
+    b1  = (rxbuf[12] << 8) + rxbuf[13];
+    b2  = (rxbuf[14] << 8) + rxbuf[15];
+    mb  = (rxbuf[16] << 8) + rxbuf[17];
+    mc  = (rxbuf[18] << 8) + rxbuf[19];
+    md  = (rxbuf[20] << 8) + rxbuf[21];
+    return OSAL_SUCCESS;
+  }
 }
 
 /**
  *
  */
-msg_t BMP085::hw_init_fast(void) {
+bool BMP085::hw_init_fast(void) {
   return this->hw_init_full();
 }
 
 /**
  *
  */
-bool TrigCalibrateBaro(){
-  return CH_FAILED;
+sensor_state_t BMP085::start(void) {
+  bool init_status = OSAL_FAILED;
+
+  if (SENSOR_STATE_STOP == this->state) {
+    if (need_full_init())
+      init_status = hw_init_full();
+    else
+      init_status = hw_init_fast();
+
+    /* check state */
+    if (OSAL_SUCCESS != init_status) {
+      this->state = SENSOR_STATE_DEAD;
+      return this->state;
+    }
+    else {
+      param_registry.valueSearch("FLEN_pres_stat",  &flen_pres_stat);
+      param_registry.valueSearch("FLEN_climb",      &flen_climb);
+      param_registry.valueSearch("PMU_above_msl",   &above_msl);
+      worker = chThdCreateStatic(bmp085ThreadWA, sizeof(bmp085ThreadWA),
+                                 NORMALPRIO, bmp085Thread, this);
+      osalDbgCheck(nullptr != worker);
+      Exti.bmp085(true);
+      this->state = SENSOR_STATE_READY;
+    }
+  }
+
+  return this->state;
 }
+
+/**
+ *
+ */
+void BMP085::extiISR(EXTDriver *extp, expchannel_t channel) {
+  (void)extp;
+  (void)channel;
+
+  osalSysLockFromISR();
+  isr_sem.signalI();
+  osalSysUnlockFromISR();
+}
+
+/**
+ *
+ */
+ClimbMeter::ClimbMeter(void) :
+warmup(10)
+{
+  return;
+}
+
+/**
+ *
+ */
+float ClimbMeter::get(float alt) {
+
+  float dt, climb;
+  dt = TEMPERATURE_CONVERSION_TIME_MS + PRESSURE_CONVERSION_TIME_MS;
+  dt /= 1000;
+
+  if (warmup == 0) {
+    //climb = filter.update((altitude_prev - alt) / dt);
+    climb = (altitude_prev - alt) / dt;
+  }
+  else {
+    climb = 0;
+    warmup--;
+  }
+
+  altitude_prev = alt;
+
+  return climb;
+}
+

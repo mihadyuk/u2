@@ -63,6 +63,14 @@ public:
   /**
    * Constructor resetting current value to specified one
    */
+  AlphaBetaFixedLen(void){
+    static_assert(L != 0, "Zero length forbidden");
+    reset(0);
+  };
+
+  /**
+   * Constructor resetting current value to specified one
+   */
   AlphaBetaFixedLen(T val){
     static_assert(L != 0, "Zero length forbidden");
     reset(val);
@@ -74,7 +82,7 @@ public:
    */
   T update(T val){
     T tmp = S / L;
-    S -= tmp + val;
+    S = S - tmp + val;
     return tmp;
   };
 
