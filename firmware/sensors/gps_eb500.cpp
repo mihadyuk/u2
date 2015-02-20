@@ -49,6 +49,7 @@ static const uint8_t msg_gga_rmc_only[] =
 
 /* time between fixes (mS) */
 static const uint8_t fix_period_5hz[] = "$PMTK300,200,0,0,0,0*2F\r\n";
+static const uint8_t fix_period_4hz[] = "$PMTK300,250,0,0,0,0*2A\r\n";
 static const uint8_t fix_period_2hz[] = "$PMTK300,500,0,0,0,0*28\r\n";
 // confirmation: $PMTK001,300,3*33
 
@@ -113,9 +114,10 @@ static void gps_configure(void) {
   chThdSleepSeconds(1);
 
   /* установка частоты обновления */
-//  sdWrite(&GPSSD, fix_period_5hz, sizeof(fix_period_5hz));
+  sdWrite(&GPSSD, fix_period_5hz, sizeof(fix_period_5hz));
+//  sdWrite(&GPSSD, fix_period_4hz, sizeof(fix_period_4hz));
 //  sdWrite(&GPSSD, fix_period_2hz, sizeof(fix_period_2hz));
-//  chThdSleepSeconds(1);
+  chThdSleepSeconds(1);
 }
 
 /**
@@ -158,12 +160,13 @@ static msg_t gpsRxThread(void *arg) {
           gps_data.fix_valid = true;
         else
           gps_data.fix_valid = false;
-        gps_data.altitude = gga.altitude;
-        gps_data.latitude = gga.latitude;
-        gps_data.longitude = gga.longitude;
-        gps_data.course = rmc.course;
-        gps_data.speed = rmc.speed;
-        gps_data.time = rmc.time;
+        gps_data.altitude   = gga.altitude;
+        gps_data.latitude   = gga.latitude;
+        gps_data.longitude  = gga.longitude;
+        gps_data.course     = rmc.course;
+        gps_data.speed      = rmc.speed;
+        gps_data.time       = rmc.time;
+        gps_data.sec_round  = rmc.sec_round;
         release();
 
         event_gps.broadcastFlags(EVMSK_GPS_UPATED);

@@ -15,6 +15,7 @@ typedef struct {
   float     speed;
   float     course;
   struct tm time;
+  bool      sec_round; /* no fractional part in seconds field*/
   bool      fix_valid;
 } gps_data_t;
 

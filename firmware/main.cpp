@@ -165,7 +165,7 @@ int main(void) {
     chThdSleepMilliseconds(200);
 
   /* give power to all needys */
-//  pwr5v_power_on(); // TODO: check main voltage first using internal ADC
+//  pwr5v_power_on(); // TODO: check main voltage (>=5.2V) first using internal ADC
   gps_power_on();
   xbee_reset_clear();
   eeprom_power_on();

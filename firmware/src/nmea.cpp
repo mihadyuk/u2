@@ -66,10 +66,16 @@ int tm_wday      days since Sunday [0-6]
 int tm_yday      days since January 1st [0-365]
 int tm_isdst     daylight savings indicator (1 = yes, 0 = no, -1 = unknown)
  */
-static void get_time(struct tm *timp, const char *buft) {
+static void get_time(struct tm *timp, bool *round, const char *buft) {
   timp->tm_hour = 10 * (buft[0] - '0') + (buft[1] - '0');
   timp->tm_min  = 10 * (buft[2] - '0') + (buft[3] - '0');
   timp->tm_sec  = 10 * (buft[4] - '0') + (buft[5] - '0');
+
+  /* check fractional part */
+  if (('.' == buft[6]) && ('0' == buft[7]) && ('0' == buft[8]))
+    *round = true;
+  else
+    *round = false;
 }
 
 static void get_date(struct tm *timp, const char *bufd) {
@@ -187,7 +193,7 @@ static float knots2mps(float knots) {
 void NmeaParser::unpack(nmea_rmc_t *result) {
   char tmp[GPS_MAX_TOKEN_LEN];
 
-  get_time(&result->time, token(tmp, 0));
+  get_time(&result->time, &result->sec_round, token(tmp, 0));
   result->speed   = knots2mps(atof(token(tmp, 6)));
   result->course  = atof(token(tmp, 7));
   get_date(&result->time, token(tmp, 8));

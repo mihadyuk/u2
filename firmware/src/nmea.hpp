@@ -28,6 +28,7 @@ typedef struct {
   struct tm time;
   float     speed;
   float     course;
+  bool      sec_round; /* no fractional part in seconds field*/
 } nmea_rmc_t;
 
 /**
