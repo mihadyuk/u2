@@ -205,7 +205,7 @@ THD_FUNCTION(TimekeeperThread, arg) {
       gps_evt = chEvtWaitOneTimeout(EVMSK_GPS_UPATED, MS2ST(1300));
       if (EVMSK_GPS_UPATED == gps_evt) {
         GPSGetData(gps_data);
-        if (gps_data.fix_valid) {
+        if (gps_data.fix_valid && gps_data.sec_round) {
           int64_t tmp = 1000000;
           tmp *= mktime(&gps_data.time);
           osalSysLock();

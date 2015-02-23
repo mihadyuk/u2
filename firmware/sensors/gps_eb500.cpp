@@ -118,6 +118,11 @@ static void gps_configure(void) {
 //  sdWrite(&GPSSD, fix_period_4hz, sizeof(fix_period_4hz));
 //  sdWrite(&GPSSD, fix_period_2hz, sizeof(fix_period_2hz));
   chThdSleepSeconds(1);
+
+  (void)fix_period_5hz;
+  (void)fix_period_4hz;
+  (void)fix_period_2hz;
+  (void)gps_high_baudrate;
 }
 
 /**
@@ -189,8 +194,8 @@ static msg_t gpsRxThread(void *arg) {
  */
 void GPSInit(void){
 
-  chThdCreateStatic(gpsRxThreadWA, sizeof(gpsRxThreadWA), GPSPRIO,
-                    gpsRxThread, NULL);
+  chThdCreateStatic(gpsRxThreadWA, sizeof(gpsRxThreadWA),
+                    GPSPRIO, gpsRxThread, NULL);
 }
 
 /**
