@@ -45,7 +45,6 @@ Giovanni
 #include "param_receiver.hpp"
 #include "time_keeper.hpp"
 #include "bmp085.hpp"
-//#include "pwr_mgmt.hpp"
 #include "tlm_sender.hpp"
 #include "link_mgr.hpp"
 //#include "controller.hpp"
@@ -63,6 +62,8 @@ Giovanni
 #include "exti_local.hpp"
 #include "ahrs.hpp"
 #include "mav_logger.hpp"
+#include "adc_local.hpp"
+#include "pwr_mgr.hpp"
 
 using namespace chibios_rt;
 
@@ -156,7 +157,7 @@ int main(void) {
     chThdSleepMilliseconds(200);
 
   /* give power to all needys */
-//  pwr5v_power_on(); // TODO: check main voltage (>=5.9V) first using internal ADC
+  ADCInitLocal();
   gps_power_on();
   xbee_reset_clear();
   eeprom_power_on();
@@ -171,6 +172,11 @@ int main(void) {
   I2CInitLocal();
   NvramInit();
   ParametersInit();   /* read parameters from EEPROM via I2C */
+
+  PwrMgrInit();
+  if (PwrMgr6vGood())
+    pwr5v_power_on();
+
   MavlinkInit();      /* mavlink constants initialization must be called after parameters init */
   mission_receiver.start(CONTROLLERPRIO);
 //  ControllerInit();
@@ -203,6 +209,8 @@ int main(void) {
     trgt.a[control::ATTITUDE_CH_YAW] = 0;
     state_vector.yaw = ahrs_data.euler[0];
     stabilizer.update(futaba_data, trgt, state_vector, ahrs_data.dt);
+
+    PwrMgrUpdate();
 
     //osalThreadSleepMilliseconds(200);
 //    if (ATTITUDE_UNIT_UPDATE_RESULT_OK == attitude_unit.update()){

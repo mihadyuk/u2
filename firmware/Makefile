@@ -164,6 +164,8 @@ SENSORSRC = src/i2c_local.cpp \
 		sensors/gps_eb500.cpp \
 		sensors/bmp085.cpp \
 		sensors/maxsonar.cpp \
+		sensors/adc_local.cpp \
+		sensors/pwr_mgr.cpp \
           
 CLISRC = src/cli/cli.cpp \
 		src/cli/cli_cmd.cpp \
