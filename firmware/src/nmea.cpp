@@ -1,4 +1,4 @@
-#include <time.h>
+#include <ctime>
 #include <cmath>
 #include <cstring>
 #include <cstdlib>
