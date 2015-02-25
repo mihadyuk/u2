@@ -48,8 +48,8 @@ using namespace chibios_rt;
 
 /* SDIO configuration. */
 static SDCConfig sdccfg = {
-    SDC_MODE_4BIT,
-    NULL
+    NULL,
+    SDC_MODE_4BIT
 };
 
 /* FS object.*/
@@ -68,7 +68,8 @@ static bool fresh_data = false;
 static virtual_timer_t sync_vt;
 
 static unpacked_sdc_cid_t cidsdc  __attribute__((section(".ccm")));
-static unmacked_sdc_csd_20_t csd20 __attribute__((section(".ccm")));
+static unpacked_sdc_csd_20_t csd20 __attribute__((section(".ccm")));
+static unpacked_sdc_csd_10_t csd10 __attribute__((section(".ccm")));
 
 /*
  ******************************************************************************
@@ -82,22 +83,18 @@ static unmacked_sdc_csd_20_t csd20 __attribute__((section(".ccm")));
  */
 static void insert_handler(void) {
   FRESULT err;
-  bool status;
 
   sdcStart(&SDCD1, &sdccfg);
   microsd_power_on();
   osalThreadSleep(SDC_POWER_TIMEOUT);
 
   /* On insertion SDC initialization and FS mount. */
-  uint8_t scratchpad[512];
-  sdccfg.scratchpad = scratchpad;
-  status = sdcConnect(&SDCD1);
-  sdccfg.scratchpad = NULL;
-  if (HAL_FAILED == status)
+  if (HAL_FAILED == sdcConnect(&SDCD1))
     return;
   else {
-    sdcUnpackCID((MMCSDBlockDevice *)&SDCD1, &cidsdc);
-    sdcUnpackCSDv20((MMCSDBlockDevice *)&SDCD1, &csd20);
+    _mmcsd_unpack_sdc_cid((MMCSDBlockDevice *)&SDCD1, &cidsdc);
+    _mmcsd_unpack_csd_v20((MMCSDBlockDevice *)&SDCD1, &csd20);
+    _mmcsd_unpack_csd_v10((MMCSDBlockDevice *)&SDCD1, &csd10);
   }
 
   err = f_mount(&SDC_FS, "/", 1);

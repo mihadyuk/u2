@@ -86,12 +86,6 @@ GlobalFlags_t GlobalFlags = {0,0,0,0,0,0,0,0,
 memory_heap_t ThdHeap;
 static uint8_t link_thd_buf[THREAD_HEAP_SIZE + sizeof(stkalign_t)];
 
-///**/
-//uint8_t currWpFrame = MAV_FRAME_GLOBAL;
-//
-///* new waypoint number for overwriting of the current one */
-//uint16_t WpSeqNew = 0;
-//
 ///* save here flags before clear them from MCU register */
 //uint32_t LastResetFlags;
 
@@ -118,11 +112,7 @@ control::Stabilizer stabilizer(drivetrain);
 //
 //CmdExecutor cmd_executor(acs, attitude_unit);
 
-/**/
 MissionReceiver mission_receiver;
-
-//int64_t TimeUsGps;
-
 sensor_state_registry_t SensorStateRegistry;
 TimeKeeper time_keeper;
 TlmSender tlm_sender;
