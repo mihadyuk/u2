@@ -102,34 +102,6 @@ static const EXTConfig extcfg = {
   }
 };
 
-//static const EXTConfig extcfg = {
-//  {
-//    {EXT_CH_MODE_DISABLED, NULL},
-//    {EXT_CH_MODE_DISABLED, NULL},
-//    {EXT_CH_MODE_DISABLED, NULL},
-//    {EXT_CH_MODE_DISABLED, NULL},
-//    {EXT_CH_MODE_RISING_EDGE | EXT_MODE_GPIOE, TimeKeeper::normal_pps_isr},     //4
-//    {EXT_CH_MODE_RISING_EDGE | EXT_MODE_GPIOE, imcuc_data_received_cb},
-//    {EXT_CH_MODE_RISING_EDGE | EXT_MODE_GPIOD, nand_ready_cb},
-//    {EXT_CH_MODE_DISABLED, NULL},
-//    {EXT_CH_MODE_DISABLED, NULL}, //8
-//    {EXT_CH_MODE_DISABLED, NULL},
-//    {EXT_CH_MODE_DISABLED, NULL},
-//    {EXT_CH_MODE_DISABLED, NULL},
-//    {EXT_CH_MODE_DISABLED, NULL},//12
-//    {EXT_CH_MODE_DISABLED, NULL},
-//    {EXT_CH_MODE_DISABLED, NULL},
-//    {EXT_CH_MODE_DISABLED, NULL},
-//    {EXT_CH_MODE_DISABLED, NULL},//16
-//    {EXT_CH_MODE_RISING_EDGE, rtcalarm_cb},
-//    {EXT_CH_MODE_DISABLED, NULL},
-//    {EXT_CH_MODE_DISABLED, NULL},
-//    {EXT_CH_MODE_DISABLED, NULL},
-//    {EXT_CH_MODE_DISABLED, NULL},
-//    {EXT_CH_MODE_RISING_EDGE, rtcwakeup_cb},
-//  }
-//};
-
 /*
  *******************************************************************************
  * EXPORTED FUNCTIONS
