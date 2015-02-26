@@ -195,7 +195,7 @@
 #define VAL_GPIOA_OSPEEDR      (PIN_OSPEED_2M(GPIOA_GPS_PPS) |                \
                                 PIN_OSPEED_2M(GPIOA_NVRAM_PWR_EN) |           \
                                 PIN_OSPEED_2M(GPIOA_SONAR_PWM) |              \
-                                PIN_OSPEED_2M(GPIOA_AD_CLK) |                 \
+                                PIN_OSPEED_100M(GPIOA_AD_CLK) |               \
                                 PIN_OSPEED_2M(GPIOA_ADIS_NSS) |               \
                                 PIN_OSPEED_25M(GPIOA_ADIS_SCK) |              \
                                 PIN_OSPEED_25M(GPIOA_ADIS_MISO) |             \
@@ -211,7 +211,7 @@
 #define VAL_GPIOA_PUPDR        (PIN_PUPDR_PULLDOWN(GPIOA_GPS_PPS) |           \
                                 PIN_PUPDR_FLOATING(GPIOA_NVRAM_PWR_EN) |      \
                                 PIN_PUPDR_PULLDOWN(GPIOA_SONAR_PWM) |         \
-                                PIN_PUPDR_PULLUP(GPIOA_AD_CLK) |              \
+                                PIN_PUPDR_PULLDOWN(GPIOA_AD_CLK) |            \
                                 PIN_PUPDR_PULLUP(GPIOA_ADIS_NSS) |            \
                                 PIN_PUPDR_PULLUP(GPIOA_ADIS_SCK) |            \
                                 PIN_PUPDR_PULLUP(GPIOA_ADIS_MISO) |           \
@@ -227,7 +227,7 @@
 #define VAL_GPIOA_ODR          (PIN_ODR_HIGH(GPIOA_GPS_PPS) |                 \
                                 PIN_ODR_LOW(GPIOA_NVRAM_PWR_EN) |             \
                                 PIN_ODR_HIGH(GPIOA_SONAR_PWM) |               \
-                                PIN_ODR_HIGH(GPIOA_AD_CLK) |                  \
+                                PIN_ODR_LOW(GPIOA_AD_CLK) |                   \
                                 PIN_ODR_HIGH(GPIOA_ADIS_NSS) |                \
                                 PIN_ODR_HIGH(GPIOA_ADIS_SCK) |                \
                                 PIN_ODR_HIGH(GPIOA_ADIS_MISO) |               \
@@ -491,8 +491,8 @@
                                 PIN_OTYPE_PUSHPULL(GPIOD_TIM4_PWM2) |         \
                                 PIN_OTYPE_PUSHPULL(GPIOD_TIM4_PWM3) |         \
                                 PIN_OTYPE_PUSHPULL(GPIOD_TIM4_PWM4))
-#define VAL_GPIOD_OSPEEDR      (PIN_OSPEED_2M(GPIOD_AD_CS) |                  \
-                                PIN_OSPEED_2M(GPIOD_AD_SDI) |                 \
+#define VAL_GPIOD_OSPEEDR      (PIN_OSPEED_100M(GPIOD_AD_CS) |                \
+                                PIN_OSPEED_100M(GPIOD_AD_SDI) |               \
                                 PIN_OSPEED_100M(GPIOD_SDIO_CMD) |             \
                                 PIN_OSPEED_2M(GPIOD_USART2_CTS) |             \
                                 PIN_OSPEED_2M(GPIOD_USART2_RTS) |             \

@@ -20,6 +20,7 @@ extern mavlink_sys_status_t mavlink_out_sys_status_struct;
  * DEFINES
  ******************************************************************************
  */
+#define SECONDARY_VOLTAGE_GOOD    5200 // mV
 
 /*
  ******************************************************************************
@@ -50,13 +51,10 @@ static uint32_t const *adc_mv_gain;   /* main voltage gain */
  * пересчет из условных единиц АЦП в mV
  */
 static uint16_t comp_secondary_voltage(uint16_t raw) {
-  uint32_t tmp = raw;
+  uint32_t uV = raw;
 
-  tmp *= *adc_sv_gain;
-  return tmp / 1000;
-
-  //return (uint16_t)(((uint32_t)raw * *adc_sv_gain) / 1000);
-  //return voltage_filter.update(raw);
+  uV *= *adc_sv_gain;
+  return uV / 1000;
 }
 
 /* STUB */
@@ -94,8 +92,7 @@ void PwrMgrUpdate(void) {
   uint32_t main_current = get_comp_main_current(ADCgetCurrent());
 
   mavlink_out_sys_status_struct.current_battery   = (uint16_t)(main_current / 10);
-  //mavlink_out_sys_status_struct.voltage_battery   = comp_secondary_voltage(ADCget6v());
-  mavlink_out_sys_status_struct.voltage_battery   = ADCgetMPXVtemp();
+  mavlink_out_sys_status_struct.voltage_battery   = comp_secondary_voltage(ADCget6v());
 }
 
 /*
@@ -126,15 +123,15 @@ void PwrMgrInit(void){
 /**
  *
  */
-// TODO: check main voltage (>=5.2V) first using internal ADC
-#define SECONDARY_VOLTAGE_GOOD    5200 // mV
 bool PwrMgr6vGood(void) {
   const int32_t len = 16;
   int32_t tmp;
   filters::AlphaBetaFixedLen<int32_t, len> voltage_filter(ADCget6v());
 
-  for (size_t i=0; i<len; i++)
+  for (size_t i=0; i<len*2; i++) {
     tmp = voltage_filter.update(ADCget6v());
+    osalThreadSleepMilliseconds(1);
+  }
 
   return comp_secondary_voltage(tmp) >= SECONDARY_VOLTAGE_GOOD;
 }
