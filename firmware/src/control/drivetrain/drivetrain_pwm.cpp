@@ -42,8 +42,8 @@ static void pwm_cb(PWMDriver *pwmp) {
 
   if (&PWMD1 == pwmp)
     val = pwm1;
-  else if (&PWMD4 == pwmp)
-    val = pwm4;
+//  else if (&PWMD4 == pwmp)
+//    val = pwm4;
   else {
     val = NULL;
     osalSysHalt("Unhandled case");
@@ -107,8 +107,8 @@ void PWM::start(void) {
   /* pause between starts needs for spread PWM ISRs through time */
   osalThreadSleepMicroseconds(DRIVETRAIN_PWM_PERIOD / 2);
 
-  pwmStart(&PWMD4, &pwm_default_cfg);
-  pwmEnablePeriodicNotification(&PWMD4);
+//  pwmStart(&PWMD4, &pwm_default_cfg);
+//  pwmEnablePeriodicNotification(&PWMD4);
 
   ready = true;
 }
@@ -123,7 +123,7 @@ void PWM::stop(void) {
 
   ready = false;
 
-  pwmStop(&PWMD4);
+  //pwmStop(&PWMD4);
   pwmStop(&PWMD1);
 }
 

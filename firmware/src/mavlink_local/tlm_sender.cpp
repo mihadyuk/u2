@@ -32,6 +32,8 @@ extern const mavlink_local_position_ned_t mavlink_out_local_position_ned_struct;
 extern const mavlink_nav_controller_output_t mavlink_out_nav_controller_output_struct;
 extern const mavlink_raw_pressure_t mavlink_out_raw_pressure_struct;
 extern const mavlink_scaled_pressure_t mavlink_out_scaled_pressure_struct;
+extern const mavlink_debug_vect_t mavlink_out_debug_vect_struct;
+extern const mavlink_debug_t mavlink_out_debug_struct;
 
 
 /*
@@ -61,6 +63,8 @@ static void send_position_ned(void);
 static void send_nav_output(void);
 static void send_raw_press(void);
 static void send_scal_press(void);
+static void send_debug_vect(void);
+static void send_debug(void);
 
 /*
  ******************************************************************************
@@ -82,6 +86,8 @@ static mavMail local_position_ned_mail;
 static mavMail nav_controller_output_mail;
 static mavMail raw_pressure_mail;
 static mavMail scaled_pressure_mail;
+static mavMail debug_vect_mail;
+static mavMail debug_mail;
 
 /* autoinitialized array */
 static tlm_registry_t Registry[] = {
@@ -95,6 +101,8 @@ static tlm_registry_t Registry[] = {
     {18, NULL, send_nav_output},
     {19, NULL, send_raw_press},
     {20, NULL, send_scal_press},
+    {21, NULL, send_debug_vect},
+    {22, NULL, send_debug},
 };
 
 /*
@@ -244,6 +252,34 @@ static void send_scal_press(void){
     mail_undelivered++;
 }
 
+static void send_debug_vect(void){
+  msg_t status = MSG_RESET;
+  if (debug_vect_mail.free()){
+    debug_vect_mail.fill(&mavlink_out_debug_vect_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_DEBUG_VECT);
+    status = mav_postman.post(debug_vect_mail);
+    if (status != MSG_OK){
+      mailbox_overflow++;
+      debug_vect_mail.release();
+    }
+  }
+  else
+    mail_undelivered++;
+}
+
+static void send_debug(void){
+  msg_t status = MSG_RESET;
+  if (debug_mail.free()){
+    debug_mail.fill(&mavlink_out_debug_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_DEBUG);
+    status = mav_postman.post(debug_mail);
+    if (status != MSG_OK){
+      mailbox_overflow++;
+      debug_mail.release();
+    }
+  }
+  else
+    mail_undelivered++;
+}
+
 
 /**
  *
@@ -320,6 +356,8 @@ static void load_parameters(void) {
   param_registry.valueSearch("T_nav_output", &(Registry[7].sleepperiod));
   param_registry.valueSearch("T_raw_press", &(Registry[8].sleepperiod));
   param_registry.valueSearch("T_scal_press", &(Registry[9].sleepperiod));
+  param_registry.valueSearch("T_debug_vect", &(Registry[10].sleepperiod));
+  param_registry.valueSearch("T_debug", &(Registry[11].sleepperiod));
 }
 
 /*

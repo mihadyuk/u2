@@ -1,6 +1,9 @@
+#pragma GCC optimize "-O0"
+
 #include "main.h"
 #include "pads.h"
 #include "maxsonar.hpp"
+#include "mavlink_local.hpp"
 
 using namespace chibios_rt;
 
@@ -15,6 +18,7 @@ using namespace chibios_rt;
  * EXTERNS
  ******************************************************************************
  */
+extern mavlink_debug_vect_t  mavlink_out_debug_vect_struct;
 
 /*
  ******************************************************************************
@@ -28,29 +32,47 @@ using namespace chibios_rt;
  ******************************************************************************
  */
 
-static uint32_t last_width, last_period;
-
-static void icuwidthcb(ICUDriver *icup) {
-
-  red_led_on();
-  last_width = icuGetWidthX(icup);
-}
-
-static void icuperiodcb(ICUDriver *icup) {
-
+void sonar_cb(EICUDriver *eicup, eicuchannel_t channel) {
+  mavlink_out_debug_vect_struct.x = eicuGetWidth(eicup, channel) * 0.0001724137;
   red_led_off();
-  last_period = icuGetPeriodX(icup);
 }
 
-static ICUConfig icucfg = {
-  ICU_INPUT_ACTIVE_HIGH,
-  10000,                                    /* 10kHz ICU clock frequency.   */
-  icuwidthcb,
-  icuperiodcb,
-  NULL,
-  ICU_CHANNEL_1,
-  0
+void overflow_cb(EICUDriver *eicup, eicuchannel_t channel) {
+  (void)eicup;
+  (void)channel;
+  if (EICU_CHANNEL_3 == channel) {
+    red_led_on();
+  }
+}
+
+static EICU_IC_Settings sonarcfg = {
+    EICU_INPUT_ACTIVE_HIGH,
+    sonar_cb
 };
+
+static EICUConfig eicucfg = {
+    EICU_INPUT_PULSE,
+    (1000 * 1000),
+    {
+        NULL,
+        NULL,
+        &sonarcfg,
+        NULL
+    },
+    NULL,
+    overflow_cb,
+    0
+};
+
+//static ICUConfig icucfg = {
+//  ICU_INPUT_ACTIVE_HIGH,
+//  10000,                                    /* 10kHz ICU clock frequency.   */
+//  icuwidthcb,
+//  icuperiodcb,
+//  NULL,
+//  ICU_CHANNEL_1,
+//  0
+//};
 
 /*
  ******************************************************************************
@@ -69,7 +91,8 @@ static ICUConfig icucfg = {
  *
  */
 void MaxSonar::start(void) {
-  icuStart(&ICUD2, &icucfg);
-  icuStartCapture(&ICUD2);
-  icuEnableNotifications(&ICUD2);
+  eicuStart(&EICUD4, &eicucfg);
+  eicuEnable(&EICUD4);
 }
+
+

@@ -141,6 +141,13 @@ control::Futaba futaba(MS2ST(1000));
 control::FutabaData futaba_data __attribute__((section(".ccm")));
 control::TargetAttitude trgt __attribute__((section(".ccm")));
 
+
+
+#include "maxsonar.hpp"
+static MaxSonar max_sonar;
+
+
+
 int main(void) {
 
   halInit();
@@ -199,6 +206,7 @@ int main(void) {
   ahrs.start();
   stabilizer.start();
   futaba.start();
+  max_sonar.start();
 
   while (TRUE) {
     ahrs_data_t ahrs_data;

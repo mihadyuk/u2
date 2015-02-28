@@ -26,8 +26,12 @@ static inline void mpu6050_power_off(void)    {palClearPad(GPIOE, GPIOE_MPU6050_
 
 static inline void blue_led_on(void)          {palClearPad(GPIOB, GPIOB_LED_B);}
 static inline void blue_led_off(void)         {palSetPad(GPIOB,   GPIOB_LED_B);}
+static inline void blue_led_toggle(void)      {palTogglePad(GPIOB,GPIOB_LED_B);}
+
 static inline void red_led_on(void)           {palClearPad(GPIOB, GPIOB_LED_R);}
 static inline void red_led_off(void)          {palSetPad(GPIOB,   GPIOB_LED_R);}
+static inline void red_led_toggle(void)       {palTogglePad(GPIOB,GPIOB_LED_R);}
+
 static inline void green_led_on(void)         {palClearPad(GPIOB, GPIOB_LED_G);}
 static inline void green_led_off(void)        {palSetPad(GPIOB,   GPIOB_LED_G);}
 static inline void green_led_toggle(void)     {palTogglePad(GPIOB,GPIOB_LED_G);}

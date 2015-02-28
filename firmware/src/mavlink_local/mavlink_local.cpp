@@ -40,6 +40,8 @@ mavlink_rc_channels_raw_t       mavlink_out_rc_channels_raw_struct;
 mavlink_rc_channels_scaled_t    mavlink_out_rc_channels_scaled_struct;
 mavlink_hil_state_t             mavlink_out_hil_state_struct;
 mavlink_local_position_ned_t    mavlink_out_local_position_ned_struct;
+mavlink_debug_vect_t            mavlink_out_debug_vect_struct;
+mavlink_debug_t                 mavlink_out_debug_struct;
 
 /**
  * @brief   Event sources.

@@ -20,6 +20,8 @@ names_uav = [
     ["nav_output", "nav_controller_output"],
     ["raw_press", "raw_pressure"],
     ["scal_press", "scaled_pressure"],
+    ["debug_vect", "debug_vect"],
+    ["debug", "debug"],
 ]
 
 names = names_uav

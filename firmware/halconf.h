@@ -83,7 +83,7 @@
  * @brief   Enables the ICU subsystem.
  */
 #if !defined(HAL_USE_ICU) || defined(__DOXYGEN__)
-#define HAL_USE_ICU                 TRUE
+#define HAL_USE_ICU                 FALSE
 #endif
 
 /**
@@ -321,6 +321,12 @@
 #if !defined(SPI_USE_MUTUAL_EXCLUSION) || defined(__DOXYGEN__)
 #define SPI_USE_MUTUAL_EXCLUSION    TRUE
 #endif
+
+/*===========================================================================*/
+/* Community drivers's includes                                              */
+/*===========================================================================*/
+
+#include "halconf_community.h"
 
 #endif /* _HALCONF_H_ */
 
