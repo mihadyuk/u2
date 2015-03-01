@@ -247,7 +247,7 @@
                                 PIN_ODR_HIGH(GPIOA_JTDI))
 #define VAL_GPIOA_AFRL         (PIN_AFIO_AF(GPIOA_GPS_PPS, 0) |               \
                                 PIN_AFIO_AF(GPIOA_NVRAM_PWR_EN, 0) |          \
-                                PIN_AFIO_AF(GPIOA_SONAR_PWM, 1) |             \
+                                PIN_AFIO_AF(GPIOA_SONAR_PWM, 3) |             \
                                 PIN_AFIO_AF(GPIOA_AD_CLK, 0) |                \
                                 PIN_AFIO_AF(GPIOA_ADIS_NSS, 0) |              \
                                 PIN_AFIO_AF(GPIOA_ADIS_SCK, 5) |              \
