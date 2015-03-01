@@ -52,7 +52,7 @@ static EICU_IC_Settings sonarcfg = {
 
 static EICUConfig eicucfg = {
     EICU_INPUT_PULSE,
-    (1000 * 1000),
+    (1000 * 1000),      /* EICU clock frequency.   */
     {
         NULL,
         NULL,
@@ -63,16 +63,6 @@ static EICUConfig eicucfg = {
     overflow_cb,
     0
 };
-
-//static ICUConfig icucfg = {
-//  ICU_INPUT_ACTIVE_HIGH,
-//  10000,                                    /* 10kHz ICU clock frequency.   */
-//  icuwidthcb,
-//  icuperiodcb,
-//  NULL,
-//  ICU_CHANNEL_1,
-//  0
-//};
 
 /*
  ******************************************************************************
@@ -91,8 +81,8 @@ static EICUConfig eicucfg = {
  *
  */
 void MaxSonar::start(void) {
-  eicuStart(&EICUD4, &eicucfg);
-  eicuEnable(&EICUD4);
+  eicuStart(&EICUD5, &eicucfg);
+  eicuEnable(&EICUD5);
 }
 
 

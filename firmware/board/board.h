@@ -18,8 +18,13 @@
 #define _BOARD_H_
 
 /*
- * Setup for STMicroelectronics STM32F4-Discovery board.
+ * Human readable aliases for different peripheral drivers.
  */
+#define I2CD_SLOW               I2CD1
+#define I2CD_FAST               I2CD2
+
+#define XBEESD                  SD3
+#define GPSSD                   SD1
 
 /*
  * Board identifier.
@@ -48,10 +53,10 @@
 /*
  * IO pins assignments.
  */
-#define GPIOA_GPS_PPS           0
-#define GPIOA_NVRAM_PWR_EN      1
-#define GPIOA_SONAR_PWM         2 /* tim2_ch3 */
-#define GPIOA_AD_CLK            3
+#define GPIOA_GPS_PPS           0 /* tim2_ch1 OR tim5_ch1 */
+#define GPIOA_NVRAM_PWR_EN      1 /* tim2_ch2 OR tim5_ch2 */
+#define GPIOA_SONAR_PWM         2 /* tim2_ch3 OR tim5_ch3 OR tim9_ch1 */
+#define GPIOA_AD_CLK            3 /* tim2_ch4 OR tim5_ch4 OR tim9_ch2 */
 #define GPIOA_ADIS_NSS          4 /* spi1 */
 #define GPIOA_ADIS_SCK          5 /* spi1 */
 #define GPIOA_ADIS_MISO         6 /* spi1 */
