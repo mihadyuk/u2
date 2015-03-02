@@ -10,18 +10,20 @@ parser.add_argument('-f', '--filename', metavar='F', type=str, required=True,
 args = parser.parse_args()
 
 names_uav = [
-    ["raw_imu", "raw_imu"],
+    ["attitude",    "attitude"],
+    ["debug",       "debug"],
+    ["debug_vect",  "debug_vect"],
+    ["gps_int",     "global_position_int"],
     ["highres_imu", "highres_imu"],
-    ["sys_status", "sys_status"],
-    ["gps_int", "global_position_int"],
-    ["attitude", "attitude"],
-    ["vfr_hud", "vfr_hud"],
-    ["position_ned", "local_position_ned"],
-    ["nav_output", "nav_controller_output"],
-    ["raw_press", "raw_pressure"],
-    ["scal_press", "scaled_pressure"],
-    ["debug_vect", "debug_vect"],
-    ["debug", "debug"],
+    ["nav_output",  "nav_controller_output"],
+    ["position_ned","local_position_ned"],
+    ["raw_imu",     "raw_imu"],
+    ["raw_press",   "raw_pressure"],
+    ["rc_raw",      "rc_channels_raw"],
+    ["rc_scaled",   "rc_channels_scaled"],
+    ["scal_press",  "scaled_pressure"],
+    ["sys_status",  "sys_status"],
+    ["vfr_hud",     "vfr_hud"],
 ]
 
 names = names_uav

@@ -146,7 +146,9 @@ control::TargetAttitude trgt __attribute__((section(".ccm")));
 #include "maxsonar.hpp"
 static MaxSonar max_sonar;
 
-
+#include "futaba_pwm.hpp"
+static FutabaPWM futaba_pwm;
+static uint16_t fut_data[FUTABA_PWM_CHANNELS];
 
 int main(void) {
 
@@ -208,6 +210,8 @@ int main(void) {
   futaba.start();
   max_sonar.start();
 
+  futaba_pwm.start();
+
   while (TRUE) {
     ahrs_data_t ahrs_data;
     ahrs.get(ahrs_data, MS2ST(200));
@@ -219,6 +223,7 @@ int main(void) {
     stabilizer.update(futaba_data, trgt, state_vector, ahrs_data.dt);
 
     PwrMgrUpdate();
+    futaba_pwm.update(fut_data);
 
     //osalThreadSleepMilliseconds(200);
 //    if (ATTITUDE_UNIT_UPDATE_RESULT_OK == attitude_unit.update()){

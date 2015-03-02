@@ -167,6 +167,7 @@ SENSORSRC = src/i2c_local.cpp \
 		sensors/adc_local.cpp \
 		sensors/pwr_mgr.cpp \
 		sensors/mpxv.cpp \
+		sensors/futaba_pwm.cpp \
           
 CLISRC = src/cli/cli.cpp \
 		src/cli/cli_cmd.cpp \

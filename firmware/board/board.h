@@ -540,10 +540,10 @@
                                 PIN_ODR_HIGH(GPIOD_FROM_XBEE) |               \
                                 PIN_ODR_LOW(GPIOD_5V_ENABLE) |                \
                                 PIN_ODR_HIGH(GPIOD_XBEE_CTS) |                \
-                                PIN_ODR_HIGH(GPIOD_TIM4_PWM1) |               \
-                                PIN_ODR_HIGH(GPIOD_TIM4_PWM2) |               \
-                                PIN_ODR_HIGH(GPIOD_TIM4_PWM3) |               \
-                                PIN_ODR_HIGH(GPIOD_TIM4_PWM4))
+                                PIN_ODR_LOW(GPIOD_TIM4_PWM1) |                \
+                                PIN_ODR_LOW(GPIOD_TIM4_PWM2) |                \
+                                PIN_ODR_LOW(GPIOD_TIM4_PWM3) |                \
+                                PIN_ODR_LOW(GPIOD_TIM4_PWM4))
 #define VAL_GPIOD_AFRL         (PIN_AFIO_AF(GPIOD_AD_CS, 0) |                 \
                                 PIN_AFIO_AF(GPIOD_AD_SDI, 0) |                \
                                 PIN_AFIO_AF(GPIOD_SDIO_CMD, 12) |             \
