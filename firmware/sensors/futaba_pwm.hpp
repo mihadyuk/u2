@@ -8,7 +8,7 @@ public:
   void start(void);
   void stop(void);
   void update(uint16_t *pwm);
-  friend void futaba_cb(EICUDriver *eicup, eicuchannel_t channel);
+  friend void futaba_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p);
 private:
   bool ready = false;
   static uint16_t cache[FUTABA_PWM_CHANNELS];

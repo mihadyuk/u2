@@ -38,8 +38,16 @@ uint16_t FutabaPWM::cache[FUTABA_PWM_CHANNELS];
 /**
  *
  */
-void futaba_cb(EICUDriver *eicup, eicuchannel_t channel) {
-  FutabaPWM::cache[channel] = eicuGetTime(eicup, channel);
+void futaba_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p) {
+  (void)eicup;
+  (void)channel;
+
+//  if (EICU_INPUT_EDGE == eicup->channel[channel].config->mode)
+//    FutabaPWM::cache[channel] = p;
+//  else
+//    FutabaPWM::cache[channel] = w;
+    FutabaPWM::cache[0] = w;
+    FutabaPWM::cache[1] = p;
 }
 
 /**
@@ -47,26 +55,40 @@ void futaba_cb(EICUDriver *eicup, eicuchannel_t channel) {
  */
 static EICUChannelConfig futabacfg = {
     EICU_INPUT_ACTIVE_HIGH,
+    EICU_INPUT_BOTH,
     futaba_cb
 };
 
+///**
+// *
+// */
+//static EICUConfig eicucfg = {
+//    EICU_SLOW,
+//    (1000 * 1000),      /* EICU clock frequency (Hz).*/
+//    {
+//        &futabacfg,
+//        &futabacfg,
+//        &futabacfg,
+//        &futabacfg,
+//    },
+//    NULL,//overflow_cb,
+//    0
+//};
 /**
  *
  */
 static EICUConfig eicucfg = {
-    EICU_INPUT_PULSE,
+    EICU_SLOW,
     (1000 * 1000),      /* EICU clock frequency (Hz).*/
     {
         &futabacfg,
-        &futabacfg,
-        &futabacfg,
-        &futabacfg,
+        NULL,
+        NULL,
+        NULL,
     },
-    NULL,
     NULL,//overflow_cb,
     0
 };
-
 /*
  ******************************************************************************
  ******************************************************************************

@@ -32,9 +32,13 @@ extern mavlink_debug_vect_t  mavlink_out_debug_vect_struct;
  ******************************************************************************
  */
 
-void sonar_cb(EICUDriver *eicup, eicuchannel_t channel) {
+void sonar_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p) {
+  (void)eicup;
+  (void)channel;
+
   //mavlink_out_debug_vect_struct.x = eicuGetWidth(eicup, channel) * 0.0001724137;
-  mavlink_out_debug_vect_struct.x = eicuGetTime(eicup, channel);
+  mavlink_out_debug_vect_struct.x = w;
+  mavlink_out_debug_vect_struct.y = p;
   red_led_toggle();
 }
 
@@ -47,38 +51,23 @@ void overflow_cb(EICUDriver *eicup, eicuchannel_t channel) {
 
 static EICUChannelConfig sonarcfg = {
     EICU_INPUT_ACTIVE_HIGH,
+    EICU_INPUT_BOTH,
     sonar_cb
 };
 
 /* for timer 9 */
 static EICUConfig eicucfg = {
-    EICU_INPUT_PULSE,//EICU_INPUT_EDGE,//,
-    (1000 * 1000),      /* EICU clock frequency (Hz).*/
+    EICU_SLOW,
+    (100 * 1000),      /* EICU clock frequency (Hz).*/
     {
         &sonarcfg,
         NULL,
         NULL,
         NULL
     },
-    NULL,
     NULL,//overflow_cb,
     0
 };
-
-///* for timers 2 or 5 */
-//static EICUConfig eicucfg = {
-//    EICU_INPUT_PULSE,
-//    (1000 * 1000),      /* EICU clock frequency (Hz).*/
-//    {
-//        NULL,
-//        NULL,
-//        &sonarcfg,
-//        NULL
-//    },
-//    NULL,
-//    NULL,//overflow_cb,
-//    0
-//};
 
 /*
  ******************************************************************************
