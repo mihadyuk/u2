@@ -39,33 +39,25 @@ void sonar_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p) 
   //mavlink_out_debug_vect_struct.x = eicuGetWidth(eicup, channel) * 0.0001724137;
   mavlink_out_debug_vect_struct.x = w;
   mavlink_out_debug_vect_struct.y = p;
+  mavlink_out_debug_vect_struct.z = (w * 1000) / 58;
   red_led_toggle();
-}
-
-void overflow_cb(EICUDriver *eicup, eicuchannel_t channel) {
-  (void)eicup;
-  (void)channel;
-
-  //blue_led_toggle();
 }
 
 static EICUChannelConfig sonarcfg = {
     EICU_INPUT_ACTIVE_HIGH,
-    EICU_INPUT_BOTH,
+    EICU_INPUT_PULSE,
     sonar_cb
 };
 
 /* for timer 9 */
 static EICUConfig eicucfg = {
-    EICU_SLOW,
-    (100 * 1000),      /* EICU clock frequency (Hz).*/
+    (1000 * 1000),      /* EICU clock frequency (Hz).*/
     {
         &sonarcfg,
         NULL,
         NULL,
         NULL
     },
-    NULL,//overflow_cb,
     0
 };
 
@@ -86,7 +78,6 @@ static EICUConfig eicucfg = {
  *
  */
 void MaxSonar::start(void) {
-  (void)overflow_cb; // warning suppressor
 
   eicuStart(&EICUD9, &eicucfg);
   eicuEnable(&EICUD9);
