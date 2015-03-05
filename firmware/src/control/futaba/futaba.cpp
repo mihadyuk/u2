@@ -3,6 +3,7 @@
 #include "array_len.hpp"
 #include "geometry.hpp"
 #include "param_registry.hpp"
+#include "mavlink_local.hpp"
 
 #include <control/futaba/futaba.hpp>
 
@@ -52,6 +53,8 @@ static const OverrideLevel switch_pos[] = {
  * EXTERNS
  ******************************************************************************
  */
+extern mavlink_rc_channels_raw_t      mavlink_out_rc_channels_raw_struct;
+extern mavlink_rc_channels_scaled_t   mavlink_out_rc_channels_scaled_struct;
 
 /*
  ******************************************************************************
@@ -75,6 +78,24 @@ static const route_table_attitude_t   route_attitude;
  ******************************************************************************
  ******************************************************************************
  */
+/**
+ *
+ */
+static void futaba2mavlink(const uint16_t *pwm) {
+
+  mavlink_out_rc_channels_raw_struct.time_boot_ms = TIME_BOOT_MS;
+  mavlink_out_rc_channels_raw_struct.chan1_raw = pwm[0];
+  mavlink_out_rc_channels_raw_struct.chan2_raw = pwm[1];
+  mavlink_out_rc_channels_raw_struct.chan3_raw = pwm[2];
+  mavlink_out_rc_channels_raw_struct.chan4_raw = pwm[3];
+
+  mavlink_out_rc_channels_scaled_struct.time_boot_ms = TIME_BOOT_MS;
+  mavlink_out_rc_channels_scaled_struct.chan1_scaled = pwm[0];
+  mavlink_out_rc_channels_scaled_struct.chan2_scaled = pwm[1];
+  mavlink_out_rc_channels_scaled_struct.chan3_scaled = pwm[2];
+  mavlink_out_rc_channels_scaled_struct.chan4_scaled = pwm[3];
+}
+
 /**
  *
  */
@@ -119,7 +140,7 @@ static void pwm2attitude(TargetAttitude &att, const uint16_t *pwm) {
 }
 
 /**
- *
+ * @brief   Direct write through to PWM outputs
  */
 static void pwm2pwm(PwmVector &pwm_out, const uint16_t *pwm) {
   osalSysHalt("Unrealized/Untested");
@@ -131,7 +152,7 @@ static void pwm2pwm(PwmVector &pwm_out, const uint16_t *pwm) {
 /**
  *
  */
-static bool is_data_fresh(receiver_data_t &recv) {
+static bool is_data_good(receiver_data_t &recv) {
 
   if ((recv.status & RECEIVER_STATUS_CONN_LOST) != RECEIVER_STATUS_CONN_LOST)
     return true;
@@ -143,19 +164,23 @@ static bool is_data_fresh(receiver_data_t &recv) {
  *
  */
 msg_t process_pwm(FutabaData &result, const Receiver &receiver) {
-  msg_t ret = MSG_TIMEOUT;
+
   receiver_data_t recv;
 
   receiver.update(recv);
 
-  if (is_data_fresh(recv)) {
+  if (is_data_good(recv)) {
+    futaba2mavlink(recv.pwm);
+
     pwm2direction(result.direction, recv.pwm);
     pwm2attitude(result.attitude, recv.pwm);
     pwm2impact(result.impact, recv.pwm);
     pwm2pwm(result.pwm_vector, recv.pwm);
-  }
 
-  return ret;
+    return MSG_OK;
+  }
+  else
+    return MSG_TIMEOUT;
 }
 
 /*
@@ -187,7 +212,7 @@ void Futaba::stop(void){
 }
 
 /**
- *
+ * @brief   Process all futabas in priorities order (high to low)
  */
 msg_t Futaba::update(FutabaData &result) {
 
@@ -195,26 +220,26 @@ msg_t Futaba::update(FutabaData &result) {
 
   osalDbgCheck(ready);
 
-//  /* RC has priority over mavlink futaba */
-//  ret = process_pwm(result, receiver_rc);
-//  if (MSG_OK == ret) {
-//    // TODO: set apropriate override flags here
-//    //if manual_switch_RC
-//    return ret;
-//  }
-//
-//  /* */
-//  ret = process_pwm(result, receiver_mavlink);
-//  if (MSG_OK == ret) {
-//    // TODO: set apropriate override flags here
-//    //if manual_switch_Mavlink
-//    return ret;
-//  }
+  /* RC */
+  ret = process_pwm(result, receiver_rc);
+  if (MSG_OK == ret) {
+    // TODO: set appropriate override flags here
+    //if manual_switch_RC
+    return ret;
+  }
+
+  /* Mavlink */
+  ret = process_pwm(result, receiver_mavlink);
+  if (MSG_OK == ret) {
+    // TODO: set appropriate override flags here
+    //if manual_switch_Mavlink
+    return ret;
+  }
 
   /* */
   ret = process_pwm(result, receiver_synth);
   if (MSG_OK == ret) {
-    // TODO: set apropriate override flags here
+    // TODO: set appropriate override flags here
     //if manual_switch_Mavlink
     result.level = OverrideLevel::none;
     result.impact.mask = 0;

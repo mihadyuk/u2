@@ -1,7 +1,6 @@
 #include "main.h"
 #include "pads.h"
 #include "receiver_pwm.hpp"
-#include "mavlink_local.hpp"
 
 using namespace chibios_rt;
 using namespace control;
@@ -17,8 +16,6 @@ using namespace control;
  * EXTERNS
  ******************************************************************************
  */
-extern mavlink_rc_channels_raw_t      mavlink_out_rc_channels_raw_struct;
-extern mavlink_rc_channels_scaled_t   mavlink_out_rc_channels_scaled_struct;
 
 /*
  ******************************************************************************
@@ -73,23 +70,6 @@ static EICUConfig eicucfg = {
  ******************************************************************************
  ******************************************************************************
  */
-/**
- *
- */
-static void futaba2mavlink(const uint16_t *pwm) {
-
-  mavlink_out_rc_channels_raw_struct.time_boot_ms = TIME_BOOT_MS;
-  mavlink_out_rc_channels_raw_struct.chan1_raw = pwm[0];
-  mavlink_out_rc_channels_raw_struct.chan2_raw = pwm[1];
-  mavlink_out_rc_channels_raw_struct.chan3_raw = pwm[2];
-  mavlink_out_rc_channels_raw_struct.chan4_raw = pwm[3];
-
-  mavlink_out_rc_channels_scaled_struct.time_boot_ms = TIME_BOOT_MS;
-  mavlink_out_rc_channels_scaled_struct.chan1_scaled = pwm[0];
-  mavlink_out_rc_channels_scaled_struct.chan2_scaled = pwm[1];
-  mavlink_out_rc_channels_scaled_struct.chan3_scaled = pwm[2];
-  mavlink_out_rc_channels_scaled_struct.chan4_scaled = pwm[3];
-}
 
 /*
  ******************************************************************************

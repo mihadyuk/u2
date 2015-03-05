@@ -169,6 +169,10 @@ param = [
 #/* car specific settings */
 ("SRV_rud_dz",      1,          16,         64,         "u", "default",     "NULL"),
 
+# Radio control settings
+("RC_timeout",      500,        2000,       10000,      "u", "default",     "NULL"),
+("RC_override",     0,          0,          3,          "u", "default",     "NULL"),
+
 # PID settings
 ("PID_roll_P",      -200.0,     0,          200.0,      "f", "default",     "NULL"),
 ("PID_roll_I",      -2.0,       0,          2.0,        "f", "default",     "NULL"),

@@ -141,11 +141,8 @@ control::Futaba futaba;
 control::FutabaData futaba_data __attribute__((section(".ccm")));
 control::TargetAttitude trgt __attribute__((section(".ccm")));
 
-
-
 #include "maxsonar.hpp"
 static MaxSonar max_sonar;
-
 
 int main(void) {
 
