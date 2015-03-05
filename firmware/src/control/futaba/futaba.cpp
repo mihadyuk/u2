@@ -2,6 +2,7 @@
 #include "putinrange.hpp"
 #include "array_len.hpp"
 #include "geometry.hpp"
+#include "param_registry.hpp"
 
 #include <control/futaba/futaba.hpp>
 
@@ -77,7 +78,7 @@ static const route_table_attitude_t   route_attitude;
 /**
  *
  */
-float pwm_normalize(uint16_t v) {
+static float pwm_normalize(uint16_t v) {
   const float shift = 1500;
   const float scale = 500;
   float ret;
@@ -89,7 +90,7 @@ float pwm_normalize(uint16_t v) {
 /**
  *
  */
-void pwm2direction(TargetDirection &dir, const uint16_t *pwm) {
+static void pwm2direction(TargetDirection &dir, const uint16_t *pwm) {
   osalSysHalt("Unrealized/Untested");
   dir.a[DIRECTION_CH_COURSE] = pwm[route_direction.course] / 1000.0f;
 }
@@ -97,7 +98,7 @@ void pwm2direction(TargetDirection &dir, const uint16_t *pwm) {
 /**
  *
  */
-void pwm2impact(Impact &impact, const uint16_t *pwm) {
+static void pwm2impact(Impact &impact, const uint16_t *pwm) {
   osalSysHalt("Unrealized/Untested");
   impact.a[IMPACT_CH_ROLL]  = pwm_normalize(pwm[route_impact.roll]);
   impact.a[IMPACT_CH_PITCH] = pwm_normalize(pwm[route_impact.pitch]);
@@ -108,7 +109,7 @@ void pwm2impact(Impact &impact, const uint16_t *pwm) {
 /**
  *
  */
-void pwm2attitude(TargetAttitude &att, const uint16_t *pwm) {
+static void pwm2attitude(TargetAttitude &att, const uint16_t *pwm) {
 
   float tmp;
   osalSysHalt("Unrealized/Untested");
@@ -120,7 +121,7 @@ void pwm2attitude(TargetAttitude &att, const uint16_t *pwm) {
 /**
  *
  */
-void pwm2pwm(PwmVector &pwm_out, const uint16_t *pwm) {
+static void pwm2pwm(PwmVector &pwm_out, const uint16_t *pwm) {
   osalSysHalt("Unrealized/Untested");
   for (size_t i=0; i<ArrayLen(pwm_out.pwm); i++) {
     pwm_out.pwm[i] = pwm[i];
@@ -130,16 +131,28 @@ void pwm2pwm(PwmVector &pwm_out, const uint16_t *pwm) {
 /**
  *
  */
+static bool is_data_fresh(receiver_data_t &recv) {
+
+  if ((recv.status & RECEIVER_STATUS_CONN_LOST) != RECEIVER_STATUS_CONN_LOST)
+    return true;
+  else
+    return false;
+}
+
+/**
+ *
+ */
 msg_t process_pwm(FutabaData &result, const Receiver &receiver) {
   msg_t ret = MSG_TIMEOUT;
-  uint16_t pwm[FUTABA_RECEIVER_PWM_CHANNELS];
+  receiver_data_t recv;
 
-  ret = receiver.update(pwm);
-  if (MSG_OK == ret) {
-    pwm2direction(result.direction, pwm);
-    pwm2attitude(result.attitude, pwm);
-    pwm2impact(result.impact, pwm);
-    pwm2pwm(result.pwm_vector, pwm);
+  receiver.update(recv);
+
+  if (is_data_fresh(recv)) {
+    pwm2direction(result.direction, recv.pwm);
+    pwm2attitude(result.attitude, recv.pwm);
+    pwm2impact(result.impact, recv.pwm);
+    pwm2pwm(result.pwm_vector, recv.pwm);
   }
 
   return ret;
@@ -153,22 +166,13 @@ msg_t process_pwm(FutabaData &result, const Receiver &receiver) {
 /**
  *
  */
-Futaba::Futaba(systime_t timeout) :
-timeout(timeout),
-receiver_mavlink(timeout),
-receiver_rc(timeout),
-receiver_synth(timeout)
-{
-  return;
-}
+void Futaba::start(void) {
 
-/**
- *
- */
-void Futaba::start(void){
-  receiver_mavlink.start();
-  receiver_rc.start();
-  receiver_synth.start();
+  param_registry.valueSearch("RC_timeout", &timeout);
+
+  receiver_mavlink.start(*timeout);
+  receiver_rc.start(*timeout);
+  receiver_synth.start(*timeout);
   ready = true;
 }
 
@@ -189,7 +193,7 @@ msg_t Futaba::update(FutabaData &result) {
 
   msg_t ret = MSG_TIMEOUT;
 
-  chDbgCheck(ready);
+  osalDbgCheck(ready);
 
 //  /* RC has priority over mavlink futaba */
 //  ret = process_pwm(result, receiver_rc);

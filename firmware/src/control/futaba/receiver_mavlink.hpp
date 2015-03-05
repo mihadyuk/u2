@@ -10,10 +10,9 @@ namespace control {
  */
 class ReceiverMavlink : public Receiver {
 public:
-  ReceiverMavlink(systime_t timeout);
-  void start(void);
+  void start(systime_t timeout);
   void stop(void);
-  msg_t update(uint16_t *pwm) const;
+  void update(receiver_data_t &result) const;
 };
 
 } /* namespace */

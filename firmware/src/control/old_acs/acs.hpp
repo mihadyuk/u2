@@ -1,7 +1,8 @@
 #ifndef ACS_HPP_
 #define ACS_HPP_
 
-#include <control/futaba/futaba_old.hpp>
+#include <futaba/__futaba_old.hpp>
+
 #include "message.hpp"
 #include "stabilizer.hpp"
 #include "navigator.hpp"

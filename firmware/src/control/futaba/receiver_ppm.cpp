@@ -1,6 +1,5 @@
 #include "main.h"
-
-#include <futaba/receiver_rc.hpp>
+#include <futaba/receiver_ppm.hpp>
 
 using namespace control;
 
@@ -41,41 +40,31 @@ using namespace control;
  * EXPORTED FUNCTIONS
  ******************************************************************************
  */
-/**
- *
- */
-ReceiverRC::ReceiverRC(systime_t timeout) : Receiver(timeout) {
-  return;
-}
 
 /**
  *
  */
-void ReceiverRC::start(void) {
+void ReceiverPPM::start(systime_t timeout) {
+  this->timeout = timeout;
   ready = true;
 }
 
 /**
  *
  */
-void ReceiverRC::stop(void) {
+void ReceiverPPM::stop(void) {
   ready = false;
 }
 
 /**
  *
  */
-msg_t ReceiverRC::update(uint16_t *pwm) const {
+void ReceiverPPM::update(receiver_data_t &result) const {
 
-  msg_t ret = MSG_TIMEOUT;
+  osalDbgCheck(ready);
 
-  chDbgCheck(ready);
-
-  for (size_t i=0; i<FUTABA_RECEIVER_PWM_CHANNELS; i++)
-    pwm[i] = 1500;
-
-  ret = MSG_TIMEOUT;
-  return ret;
+  for (size_t i=0; i<RECEIVER_MAX_CHANNELS; i++)
+    result.pwm[i] = 1500;
 }
 
 

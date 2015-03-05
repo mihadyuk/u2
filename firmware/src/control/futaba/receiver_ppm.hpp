@@ -1,5 +1,5 @@
-#ifndef FUTABA_RECEIVER_SYNTH_HPP_
-#define FUTABA_RECEIVER_SYNTH_HPP_
+#ifndef RECEIVER_PPM_HPP_
+#define RECEIVER_PPM_HPP_
 
 #include <futaba/receiver.hpp>
 
@@ -8,7 +8,7 @@ namespace control {
 /**
  *
  */
-class ReceiverSynth : public Receiver {
+class ReceiverPPM : public Receiver {
 public:
   void start(systime_t timeout);
   void stop(void);
@@ -17,4 +17,4 @@ public:
 
 } /* namespace */
 
-#endif /* FUTABA_RECEIVER_SYNTH_HPP_ */
+#endif /* RECEIVER_PPM_HPP_ */

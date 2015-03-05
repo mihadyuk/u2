@@ -4,8 +4,9 @@
 #include <control/futaba/tumbler.hpp>
 #include <control/futaba_data.hpp>
 #include <control/futaba/receiver_mavlink.hpp>
-#include <control/futaba/receiver_rc.hpp>
 #include <control/futaba/receiver_synth.hpp>
+#include <futaba/receiver_ppm.hpp>
+#include <futaba/receiver_pwm.hpp>
 
 namespace control {
 
@@ -23,16 +24,14 @@ typedef enum {
  */
 class Futaba {
 public:
-  Futaba() = delete;
-  Futaba(systime_t timeout);
   msg_t update(FutabaData &result);
   void start(void);
   void stop(void);
 private:
   bool ready = false;
-  const systime_t timeout;
+  const uint32_t *timeout = NULL;
   ReceiverMavlink receiver_mavlink;
-  ReceiverRC receiver_rc;
+  ReceiverPWM receiver_rc;
   ReceiverSynth receiver_synth;
   Tumbler3<int, 900, 1200, 1400, 1600, 1800, 2100> switch_mavlink;
   Tumbler3<int, 900, 1200, 1400, 1600, 1800, 2100> switch_rc;

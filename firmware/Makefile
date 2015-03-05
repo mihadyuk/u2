@@ -40,7 +40,7 @@ endif
 
 # Enable this if you want to see the full log while compiling.
 ifeq ($(USE_VERBOSE_COMPILE),)
-  USE_VERBOSE_COMPILE = no
+  USE_VERBOSE_COMPILE = yes
 endif
 
 #
@@ -127,7 +127,8 @@ CONTROLSRC =\
 		src/control/drivetrain/engine.cpp \
 		src/control/futaba/futaba.cpp \
 		src/control/futaba/receiver_mavlink.cpp \
-		src/control/futaba/receiver_rc.cpp \
+		src/control/futaba/receiver_ppm.cpp \
+		src/control/futaba/receiver_pwm.cpp \
 		src/control/futaba/receiver_synth.cpp \
 
 NVRAMSRC = src/nvram_local.cpp \
@@ -167,7 +168,6 @@ SENSORSRC = src/i2c_local.cpp \
 		sensors/adc_local.cpp \
 		sensors/pwr_mgr.cpp \
 		sensors/mpxv.cpp \
-		sensors/futaba_pwm.cpp \
           
 CLISRC = src/cli/cli.cpp \
 		src/cli/cli_cmd.cpp \

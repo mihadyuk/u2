@@ -41,17 +41,12 @@ using namespace control;
  * EXPORTED FUNCTIONS
  ******************************************************************************
  */
-/**
- *
- */
-ReceiverMavlink::ReceiverMavlink(systime_t timeout) : Receiver(timeout) {
-  return;
-}
 
 /**
  *
  */
-void ReceiverMavlink::start(void) {
+void ReceiverMavlink::start(systime_t timeout) {
+  this->timeout = timeout;
   ready = true;
 }
 
@@ -65,17 +60,12 @@ void ReceiverMavlink::stop(void) {
 /**
  *
  */
-msg_t ReceiverMavlink::update(uint16_t *pwm) const {
+void ReceiverMavlink::update(receiver_data_t &result) const {
 
-  msg_t ret = MSG_TIMEOUT;
+  osalDbgCheck(ready);
 
-  chDbgCheck(ready);
-
-  for (size_t i=0; i<FUTABA_RECEIVER_PWM_CHANNELS; i++)
-    pwm[i] = 1500;
-
-  ret = MSG_TIMEOUT;
-  return ret;
+  for (size_t i=0; i<RECEIVER_MAX_CHANNELS; i++)
+    result.pwm[i] = 1500;
 }
 
 

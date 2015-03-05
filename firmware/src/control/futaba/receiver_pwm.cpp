@@ -1,11 +1,10 @@
-#pragma GCC optimize "-O0"
-
 #include "main.h"
 #include "pads.h"
-#include "futaba_pwm.hpp"
+#include "receiver_pwm.hpp"
 #include "mavlink_local.hpp"
 
 using namespace chibios_rt;
+using namespace control;
 
 /*
  ******************************************************************************
@@ -18,8 +17,8 @@ using namespace chibios_rt;
  * EXTERNS
  ******************************************************************************
  */
-extern mavlink_rc_channels_raw_t    mavlink_out_rc_channels_raw_struct;
-extern mavlink_rc_channels_scaled_t mavlink_out_rc_channels_scaled_struct;
+extern mavlink_rc_channels_raw_t      mavlink_out_rc_channels_raw_struct;
+extern mavlink_rc_channels_scaled_t   mavlink_out_rc_channels_scaled_struct;
 
 /*
  ******************************************************************************
@@ -32,8 +31,7 @@ extern mavlink_rc_channels_scaled_t mavlink_out_rc_channels_scaled_struct;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-
-uint16_t FutabaPWM::cache[FUTABA_PWM_CHANNELS];
+static receiver_data_t cache;
 
 /**
  *
@@ -41,14 +39,9 @@ uint16_t FutabaPWM::cache[FUTABA_PWM_CHANNELS];
 void futaba_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p) {
   (void)eicup;
   (void)channel;
+  (void)p;
 
-  if (EICU_INPUT_PULSE == eicup->channel[channel].config->mode)
-    FutabaPWM::cache[channel] = w;
-  else {
-    /* debug output */
-    FutabaPWM::cache[0] = w;
-    FutabaPWM::cache[1] = p;
-  }
+  cache.pwm[channel] = w;
 }
 
 /**
@@ -106,10 +99,9 @@ static void futaba2mavlink(const uint16_t *pwm) {
 /**
  *
  */
-void FutabaPWM::start(void) {
+void ReceiverPWM::start(systime_t timeout) {
 
-  for(size_t i=0; i<FUTABA_PWM_CHANNELS; i++)
-    cache[i] = 1500;
+  this->timeout = timeout;
 
   eicuStart(&EICUD4, &eicucfg);
   eicuEnable(&EICUD4);
@@ -120,7 +112,7 @@ void FutabaPWM::start(void) {
 /**
  *
  */
-void FutabaPWM::stop(void) {
+void ReceiverPWM::stop(void) {
 
   ready = false;
   eicuDisable(&EICUD4);
@@ -130,8 +122,14 @@ void FutabaPWM::stop(void) {
 /**
  *
  */
-void FutabaPWM::update(uint16_t *pwm) {
+void ReceiverPWM::update(receiver_data_t &result) const {
+
   osalDbgCheck(ready);
-  memcpy(pwm, cache, sizeof(cache));
-  futaba2mavlink(cache);
+
+  osalSysLock();
+  result = cache;
+  osalSysUnlock();
 }
+
+
+
