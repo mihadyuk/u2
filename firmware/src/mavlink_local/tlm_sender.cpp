@@ -31,7 +31,7 @@ extern const mavlink_nav_controller_output_t mavlink_out_nav_controller_output_s
 extern const mavlink_local_position_ned_t mavlink_out_local_position_ned_struct;
 extern const mavlink_raw_imu_t mavlink_out_raw_imu_struct;
 extern const mavlink_raw_pressure_t mavlink_out_raw_pressure_struct;
-extern const mavlink_rc_channels_raw_t mavlink_out_rc_channels_raw_struct;
+extern const mavlink_rc_channels_t mavlink_out_rc_channels_struct;
 extern const mavlink_rc_channels_scaled_t mavlink_out_rc_channels_scaled_struct;
 extern const mavlink_scaled_pressure_t mavlink_out_scaled_pressure_struct;
 extern const mavlink_sys_status_t mavlink_out_sys_status_struct;
@@ -64,7 +64,7 @@ static void send_nav_output(void);
 static void send_position_ned(void);
 static void send_raw_imu(void);
 static void send_raw_press(void);
-static void send_rc_raw(void);
+static void send_rc(void);
 static void send_rc_scaled(void);
 static void send_scal_press(void);
 static void send_sys_status(void);
@@ -89,7 +89,7 @@ static mavMail nav_controller_output_mail;
 static mavMail local_position_ned_mail;
 static mavMail raw_imu_mail;
 static mavMail raw_pressure_mail;
-static mavMail rc_channels_raw_mail;
+static mavMail rc_channels_mail;
 static mavMail rc_channels_scaled_mail;
 static mavMail scaled_pressure_mail;
 static mavMail sys_status_mail;
@@ -106,7 +106,7 @@ static tlm_registry_t Registry[] = {
     {17, NULL, send_position_ned},
     {18, NULL, send_raw_imu},
     {19, NULL, send_raw_press},
-    {20, NULL, send_rc_raw},
+    {20, NULL, send_rc},
     {21, NULL, send_rc_scaled},
     {22, NULL, send_scal_press},
     {23, NULL, send_sys_status},
@@ -246,14 +246,14 @@ static void send_raw_press(void){
     mail_undelivered++;
 }
 
-static void send_rc_raw(void){
+static void send_rc(void){
   msg_t status = MSG_RESET;
-  if (rc_channels_raw_mail.free()){
-    rc_channels_raw_mail.fill(&mavlink_out_rc_channels_raw_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_RC_CHANNELS_RAW);
-    status = mav_postman.post(rc_channels_raw_mail);
+  if (rc_channels_mail.free()){
+    rc_channels_mail.fill(&mavlink_out_rc_channels_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_RC_CHANNELS);
+    status = mav_postman.post(rc_channels_mail);
     if (status != MSG_OK){
       mailbox_overflow++;
-      rc_channels_raw_mail.release();
+      rc_channels_mail.release();
     }
   }
   else
@@ -391,7 +391,7 @@ static void load_parameters(void) {
   param_registry.valueSearch("T_position_ned", &(Registry[6].sleepperiod));
   param_registry.valueSearch("T_raw_imu", &(Registry[7].sleepperiod));
   param_registry.valueSearch("T_raw_press", &(Registry[8].sleepperiod));
-  param_registry.valueSearch("T_rc_raw", &(Registry[9].sleepperiod));
+  param_registry.valueSearch("T_rc", &(Registry[9].sleepperiod));
   param_registry.valueSearch("T_rc_scaled", &(Registry[10].sleepperiod));
   param_registry.valueSearch("T_scal_press", &(Registry[11].sleepperiod));
   param_registry.valueSearch("T_sys_status", &(Registry[12].sleepperiod));

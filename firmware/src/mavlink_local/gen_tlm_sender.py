@@ -19,7 +19,7 @@ names_uav = [
     ["position_ned","local_position_ned"],
     ["raw_imu",     "raw_imu"],
     ["raw_press",   "raw_pressure"],
-    ["rc_raw",      "rc_channels_raw"],
+    ["rc",          "rc_channels"],
     ["rc_scaled",   "rc_channels_scaled"],
     ["scal_press",  "scaled_pressure"],
     ["sys_status",  "sys_status"],

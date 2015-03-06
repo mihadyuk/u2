@@ -147,7 +147,7 @@ const GlobalParam_t ParamRegistry::param_db[] = {
 {"T_nav_output", {.u32 = 10}, {.u32 = 0}, {.u32 = 5000}, &gp_val[132], PARAM_SEND_TMO, MAVLINK_TYPE_UINT32_T, NULL},
 {"T_debug", {.u32 = 10}, {.u32 = 0}, {.u32 = 5000}, &gp_val[133], PARAM_SEND_TMO, MAVLINK_TYPE_UINT32_T, NULL},
 {"T_debug_vect", {.u32 = 10}, {.u32 = 0}, {.u32 = 5000}, &gp_val[134], PARAM_SEND_TMO, MAVLINK_TYPE_UINT32_T, NULL},
-{"T_rc_raw", {.u32 = 10}, {.u32 = 0}, {.u32 = 5000}, &gp_val[135], PARAM_SEND_TMO, MAVLINK_TYPE_UINT32_T, NULL},
+{"T_rc", {.u32 = 10}, {.u32 = 0}, {.u32 = 5000}, &gp_val[135], PARAM_SEND_TMO, MAVLINK_TYPE_UINT32_T, NULL},
 {"T_rc_scaled", {.u32 = 10}, {.u32 = 0}, {.u32 = 5000}, &gp_val[136], PARAM_SEND_TMO, MAVLINK_TYPE_UINT32_T, NULL},
 {"TIME_zone", {.i32 = -24}, {.i32 = 0}, {.i32 = 24}, &gp_val[137], PARAM_DEFAULT, MAVLINK_TYPE_INT32_T,  "Simple offset in hours."},
 {"FLEN_adc", {.i32 = 1}, {.i32 = 16}, {.i32 = 32768}, &gp_val[138], PARAM_DEFAULT, MAVLINK_TYPE_INT32_T,  NULL},

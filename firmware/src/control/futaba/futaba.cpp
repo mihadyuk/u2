@@ -53,7 +53,7 @@ static const OverrideLevel switch_pos[] = {
  * EXTERNS
  ******************************************************************************
  */
-extern mavlink_rc_channels_raw_t      mavlink_out_rc_channels_raw_struct;
+extern mavlink_rc_channels_t          mavlink_out_rc_channels_struct;
 extern mavlink_rc_channels_scaled_t   mavlink_out_rc_channels_scaled_struct;
 
 /*
@@ -82,18 +82,27 @@ static const route_table_attitude_t   route_attitude;
  *
  */
 static void futaba2mavlink(const uint16_t *pwm) {
+  // A value of UINT16_MAX implies the channel is unused.
 
-  mavlink_out_rc_channels_raw_struct.time_boot_ms = TIME_BOOT_MS;
-  mavlink_out_rc_channels_raw_struct.chan1_raw = pwm[0];
-  mavlink_out_rc_channels_raw_struct.chan2_raw = pwm[1];
-  mavlink_out_rc_channels_raw_struct.chan3_raw = pwm[2];
-  mavlink_out_rc_channels_raw_struct.chan4_raw = pwm[3];
+  memset(&mavlink_out_rc_channels_struct, 0xFF, sizeof(mavlink_out_rc_channels_struct));
+  mavlink_out_rc_channels_struct.time_boot_ms = TIME_BOOT_MS;
+  mavlink_out_rc_channels_struct.chan1_raw = pwm[0];
+  mavlink_out_rc_channels_struct.chan2_raw = pwm[1];
+  mavlink_out_rc_channels_struct.chan3_raw = pwm[2];
+  mavlink_out_rc_channels_struct.chan4_raw = pwm[3];
+  mavlink_out_rc_channels_struct.chancount = RECEIVER_MAX_CHANNELS;
 
   mavlink_out_rc_channels_scaled_struct.time_boot_ms = TIME_BOOT_MS;
   mavlink_out_rc_channels_scaled_struct.chan1_scaled = pwm[0];
   mavlink_out_rc_channels_scaled_struct.chan2_scaled = pwm[1];
   mavlink_out_rc_channels_scaled_struct.chan3_scaled = pwm[2];
   mavlink_out_rc_channels_scaled_struct.chan4_scaled = pwm[3];
+  mavlink_out_rc_channels_scaled_struct.chan5_scaled = UINT16_MAX;
+  mavlink_out_rc_channels_scaled_struct.chan6_scaled = UINT16_MAX;
+  mavlink_out_rc_channels_scaled_struct.chan7_scaled = UINT16_MAX;
+  mavlink_out_rc_channels_scaled_struct.chan8_scaled = UINT16_MAX;
+  mavlink_out_rc_channels_scaled_struct.rssi = 255;
+  mavlink_out_rc_channels_scaled_struct.port = 0;
 }
 
 /**

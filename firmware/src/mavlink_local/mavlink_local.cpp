@@ -36,7 +36,7 @@ mavlink_gps_raw_int_t           mavlink_out_gps_raw_int_struct;
 mavlink_nav_controller_output_t mavlink_out_nav_controller_output_struct;
 mavlink_command_ack_t           mavlink_out_command_ack_struct;
 mavlink_highres_imu_t           mavlink_out_highres_imu_struct;
-mavlink_rc_channels_raw_t       mavlink_out_rc_channels_raw_struct;
+mavlink_rc_channels_t           mavlink_out_rc_channels_struct;
 mavlink_rc_channels_scaled_t    mavlink_out_rc_channels_scaled_struct;
 mavlink_hil_state_t             mavlink_out_hil_state_struct;
 mavlink_local_position_ned_t    mavlink_out_local_position_ned_struct;

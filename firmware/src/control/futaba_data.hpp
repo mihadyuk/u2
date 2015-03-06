@@ -12,11 +12,12 @@ namespace control {
  *
  */
 enum class OverrideLevel {
-  none,
-  direction,
-  attitude,
-  impact,
   pwm,
+  impact,
+  attitude,
+  direction,
+  none,
+  enum_end
 };
 
 /**

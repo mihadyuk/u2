@@ -204,7 +204,7 @@ param = [
 ("T_nav_output",    SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 ("T_debug",         SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 ("T_debug_vect",    SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
-("T_rc_raw",        SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
+("T_rc",            SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 ("T_rc_scaled",     SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 
 #/* Timezone. */
