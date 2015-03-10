@@ -53,7 +53,6 @@ static const OverrideLevel switch_pos[] = {
  * EXTERNS
  ******************************************************************************
  */
-extern mavlink_rc_channels_t          mavlink_out_rc_channels_struct;
 extern mavlink_rc_channels_scaled_t   mavlink_out_rc_channels_scaled_struct;
 
 /*
@@ -82,16 +81,8 @@ static const route_table_attitude_t   route_attitude;
  *
  */
 static void futaba2mavlink(const uint16_t *pwm) {
+
   // A value of UINT16_MAX implies the channel is unused.
-
-  memset(&mavlink_out_rc_channels_struct, 0xFF, sizeof(mavlink_out_rc_channels_struct));
-  mavlink_out_rc_channels_struct.time_boot_ms = TIME_BOOT_MS;
-  mavlink_out_rc_channels_struct.chan1_raw = pwm[0];
-  mavlink_out_rc_channels_struct.chan2_raw = pwm[1];
-  mavlink_out_rc_channels_struct.chan3_raw = pwm[2];
-  mavlink_out_rc_channels_struct.chan4_raw = pwm[3];
-  mavlink_out_rc_channels_struct.chancount = RECEIVER_MAX_CHANNELS;
-
   mavlink_out_rc_channels_scaled_struct.time_boot_ms = TIME_BOOT_MS;
   mavlink_out_rc_channels_scaled_struct.chan1_scaled = pwm[0];
   mavlink_out_rc_channels_scaled_struct.chan2_scaled = pwm[1];
@@ -108,44 +99,9 @@ static void futaba2mavlink(const uint16_t *pwm) {
 /**
  *
  */
-static float pwm_normalize(uint16_t v) {
-  const float shift = 1500;
-  const float scale = 500;
-  float ret;
-
-  ret = ((float)v - shift) / scale;
-  return putinrange(ret, -1, 1);
-}
-
-/**
- *
- */
 static void pwm2direction(TargetDirection &dir, const uint16_t *pwm) {
   osalSysHalt("Unrealized/Untested");
   dir.a[DIRECTION_CH_COURSE] = pwm[route_direction.course] / 1000.0f;
-}
-
-/**
- *
- */
-static void pwm2impact(Impact &impact, const uint16_t *pwm) {
-  osalSysHalt("Unrealized/Untested");
-  impact.a[IMPACT_CH_ROLL]  = pwm_normalize(pwm[route_impact.roll]);
-  impact.a[IMPACT_CH_PITCH] = pwm_normalize(pwm[route_impact.pitch]);
-  impact.a[IMPACT_CH_YAW]   = pwm_normalize(pwm[route_impact.yaw]);
-  impact.a[IMPACT_CH_SPEED] = pwm_normalize(pwm[route_impact.speed]);
-}
-
-/**
- *
- */
-static void pwm2attitude(TargetAttitude &att, const uint16_t *pwm) {
-
-  float tmp;
-  osalSysHalt("Unrealized/Untested");
-  tmp = pwm_normalize(pwm[route_attitude.roll]);
-  tmp = putinrange(tmp, deg2rad(-30), deg2rad(30));
-  att.a[ATTITUDE_CH_ROLL]  = tmp;
 }
 
 /**
@@ -172,24 +128,13 @@ static bool is_data_good(receiver_data_t &recv) {
 /**
  *
  */
-msg_t process_pwm(FutabaData &result, const Receiver &receiver) {
+msg_t process_pwm(FutabaData &result, Receiver &receiver) {
 
   receiver_data_t recv;
 
   receiver.update(recv);
 
-  if (is_data_good(recv)) {
-    futaba2mavlink(recv.pwm);
-
-    pwm2direction(result.direction, recv.pwm);
-    pwm2attitude(result.attitude, recv.pwm);
-    pwm2impact(result.impact, recv.pwm);
-    pwm2pwm(result.pwm_vector, recv.pwm);
-
-    return MSG_OK;
-  }
-  else
-    return MSG_TIMEOUT;
+  return MSG_TIMEOUT;
 }
 
 /*

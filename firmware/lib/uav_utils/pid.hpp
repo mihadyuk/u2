@@ -11,7 +11,10 @@
 template <typename T>
 class PidControlBase {
 public:
-  PidControlBase(void) : pGain(nullptr), iGain(nullptr), dGain(nullptr) {
+  PidControlBase(T (*postproc)(T)) :
+  postproc(postproc),
+  pGain(nullptr), iGain(nullptr), dGain(nullptr)
+  {
     iState = 0;
   }
 
@@ -51,6 +54,8 @@ public:
   }
 
 protected:
+  /* Pointer to postprocessing function. Set to nullptr if unneeded. */
+  T (*postproc)(T);
   T iState;           /* Integrator state */
   T errorPrev;        /* Previous error value for trapezoidal integration */
   T const *pGain;     /* proportional gain */
@@ -58,6 +63,22 @@ protected:
   T const *dGain;     /* derivative gain */
   const T iMax = 1;
   const T iMin = -1;
+
+  /**
+   * @brief   Combines all terms and gains. Apply post processing
+   *          function when needed.
+   */
+  T do_pid(T error, T dTerm) {
+
+    T ret = *this->pGain * error +
+            *this->iGain * this->iState +
+            *this->dGain * dTerm;
+
+    if (nullptr == postproc)
+      return ret;
+    else
+      return postproc(ret);
+  }
 };
 
 /**
@@ -74,14 +95,14 @@ public:
    * @param[in] dT      Time delta between measurement
    */
   T update(T error, T dTerm, T dT) {
+    T ret;
+
     /* calculate the integral state with appropriate limiting */
     this->iState += (error + this->errorPrev) * dT / 2;
     this->iState  = putinrange(this->iState, this->iMin, this->iMax);
     this->errorPrev = error;
 
-    return *this->pGain * error +
-           *this->iGain * this->iState +
-           *this->dGain * dTerm;
+    return this->do_pid(error, dTerm);
   }
 };
 
@@ -91,6 +112,12 @@ public:
 template <typename T>
 class PidControlSelfDerivative : public PidControlBase <T> {
 public:
+  /**
+   *
+   */
+  PidControlSelfDerivative(T (*postproc)(T)):
+  PidControlBase<T>(postproc),
+  need_filter(false){;}
 
   /**
    *
@@ -134,9 +161,7 @@ public:
     if (need_filter)
       dTerm = filter.update(dTerm);
 
-    return *this->pGain * error +
-           *this->iGain * this->iState +
-           *this->dGain * dTerm;
+    return this->do_pid(error, dTerm);
   }
 
 private:

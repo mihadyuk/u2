@@ -52,7 +52,7 @@ private:
   chibios_rt::BinarySemaphore data_ready_sem;
   thread_t *worker;
   adis_measurement_t measurement;
-  const uint32_t *smplrtdiv = NULL;
+  const uint32_t *smplrtdiv = nullptr;
   uint8_t smplrtdiv_current;
 };
 

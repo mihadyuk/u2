@@ -126,10 +126,14 @@ CONTROLSRC =\
 		src/control/drivetrain/drivetrain.cpp \
 		src/control/drivetrain/engine.cpp \
 		src/control/futaba/futaba.cpp \
-		src/control/futaba/receiver_mavlink.cpp \
+		src/control/futaba/receiver.cpp \
 		src/control/futaba/receiver_ppm.cpp \
 		src/control/futaba/receiver_pwm.cpp \
 		src/control/futaba/receiver_synth.cpp \
+		src/control/futaba/receiver_mavlink.cpp \
+		src/control/pid_link.cpp \
+		src/control/pid_chain.cpp \
+		src/control/pid_uber.cpp \
 
 NVRAMSRC = src/nvram_local.cpp \
 		lib/24aa/src/mtd.cpp \

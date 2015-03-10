@@ -60,12 +60,10 @@ void ReceiverMavlink::stop(void) {
 /**
  *
  */
-void ReceiverMavlink::update(receiver_data_t &result) const {
+void ReceiverMavlink::update(receiver_data_t &result) {
 
   osalDbgCheck(ready);
-
-  for (size_t i=0; i<RECEIVER_MAX_CHANNELS; i++)
-    result.pwm[i] = 1500;
+  (void)result;
 }
 
 

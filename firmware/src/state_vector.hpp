@@ -51,6 +51,6 @@ typedef struct {
 
   uint8_t   gpsfix;   // fix type (0-1: no fix, 2: 2D fix, 3: 3D fix)
 
-}StateVector;
+} StateVector;
 
 #endif /* STATE_VECTOR_H_ */

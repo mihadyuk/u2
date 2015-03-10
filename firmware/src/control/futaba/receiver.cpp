@@ -1,7 +1,8 @@
 #include "main.h"
+#include "receiver.hpp"
+#include "putinrange.hpp"
 
-#include <futaba/receiver_synth.hpp>
-
+using namespace chibios_rt;
 using namespace control;
 
 /*
@@ -35,39 +36,22 @@ using namespace control;
  ******************************************************************************
  ******************************************************************************
  */
+/**
+ *
+ */
+float Receiver::pwm_normalize(uint16_t v) const {
+  const float shift = 1500;
+  const float scale = 500;
+  float ret;
+  ret = ((float)v - shift) / scale;
+  return putinrange(ret, -1, 1);
+}
 
 /*
  ******************************************************************************
  * EXPORTED FUNCTIONS
  ******************************************************************************
  */
-
-/**
- *
- */
-void ReceiverSynth::start(systime_t timeout) {
-  this->timeout = timeout;
-  ready = true;
-}
-
-/**
- *
- */
-void ReceiverSynth::stop(void) {
-  ready = false;
-}
-
-/**
- *
- */
-void ReceiverSynth::update(receiver_data_t &result) {
-
-  osalDbgCheck(ready);
-
-  (void)result;
-}
-
-
 
 
 

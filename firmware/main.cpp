@@ -135,11 +135,6 @@ BMP085 bmp_085(&I2CD_SLOW, bmp085addr);
  *******************************************************************************
  *******************************************************************************
  */
-#include <control/futaba/futaba.hpp>
-
-control::Futaba futaba;
-control::FutabaData futaba_data __attribute__((section(".ccm")));
-control::TargetAttitude trgt __attribute__((section(".ccm")));
 
 #include "maxsonar.hpp"
 static MaxSonar max_sonar;
@@ -200,19 +195,11 @@ int main(void) {
   mav_logger.start(NORMALPRIO);
 
   ahrs.start();
-  stabilizer.start();
-  futaba.start();
   max_sonar.start();
 
   while (TRUE) {
     ahrs_data_t ahrs_data;
     ahrs.get(ahrs_data, MS2ST(200));
-
-    futaba.update(futaba_data);
-
-    trgt.a[control::ATTITUDE_CH_YAW] = 0;
-    state_vector.yaw = ahrs_data.euler[0];
-    stabilizer.update(futaba_data, trgt, state_vector, ahrs_data.dt);
 
     PwrMgrUpdate();
 

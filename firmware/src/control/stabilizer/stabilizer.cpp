@@ -48,6 +48,10 @@ using namespace control;
  */
 Stabilizer::Stabilizer(Drivetrain &drivetrain) :
 drivetrain(drivetrain),
+pid_speed(nullptr),
+pid_roll(nullptr),
+pid_pitch(nullptr),
+pid_yaw(nullptr),
 ready(false)
 {
   return;

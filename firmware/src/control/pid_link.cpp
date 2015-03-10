@@ -1,6 +1,5 @@
 #include "main.h"
-
-#include <futaba/receiver_synth.hpp>
+#include "pid_link.hpp"
 
 using namespace control;
 
@@ -41,33 +40,39 @@ using namespace control;
  * EXPORTED FUNCTIONS
  ******************************************************************************
  */
+/**
+ *
+ */
+PIDLink::PIDLink(float const &position, PidControlSelfDerivative<float> &pid) :
+position(position),
+pid(pid),
+ready(false)
+{
+  return;
+}
 
 /**
  *
  */
-void ReceiverSynth::start(systime_t timeout) {
-  this->timeout = timeout;
+void PIDLink::start(float const *pGain, float const *iGain, float const *dGain) {
+  pid.start(pGain, iGain, dGain, nullptr, nullptr);
   ready = true;
 }
 
 /**
  *
  */
-void ReceiverSynth::stop(void) {
+void PIDLink::stop(void) {
   ready = false;
 }
 
 /**
  *
  */
-void ReceiverSynth::update(receiver_data_t &result) {
-
+float PIDLink::update(float target, float dT) {
   osalDbgCheck(ready);
 
-  (void)result;
+  return pid.update(position, target, dT);
 }
-
-
-
 
 
