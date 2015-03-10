@@ -120,7 +120,6 @@ CSRC = $(PORTSRC) \
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
 CONTROLSRC =\
-		src/control/stabilizer/stabilizer.cpp \
 		src/control/drivetrain/drivetrain_pwm.cpp \
 		src/control/drivetrain/servo_tree.cpp \
 		src/control/drivetrain/drivetrain.cpp \
@@ -131,9 +130,9 @@ CONTROLSRC =\
 		src/control/futaba/receiver_pwm.cpp \
 		src/control/futaba/receiver_synth.cpp \
 		src/control/futaba/receiver_mavlink.cpp \
-		src/control/pid_link.cpp \
-		src/control/pid_chain.cpp \
-		src/control/pid_uber.cpp \
+		src/control/stabilizer/pid_link.cpp \
+		src/control/stabilizer/pid_chain.cpp \
+		src/control/stabilizer/stabilizer.cpp \
 
 NVRAMSRC = src/nvram_local.cpp \
 		lib/24aa/src/mtd.cpp \

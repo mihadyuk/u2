@@ -1,6 +1,7 @@
 #include "main.h"
 #include "engine.hpp"
-#include "putinrange.hpp"
+#include "float2pwm.hpp"
+#include "param_registry.hpp"
 
 using namespace control;
 
@@ -35,14 +36,6 @@ using namespace control;
  ******************************************************************************
  ******************************************************************************
  */
-/**
- *
- */
-int16_t float2pwm(float a) {
-  int16_t ret = DRIVETRAIN_PWM_PERIOD * a;
-
-  return putinrange(ret, -DRIVETRAIN_PWM_PERIOD, DRIVETRAIN_PWM_PERIOD);
-}
 
 /*
  ******************************************************************************
@@ -62,6 +55,11 @@ pwm(pwm) {
  *
  */
 void Engine::start(void) {
+
+  param_registry.valueSearch("SRV_thr_min", &thr_min);
+  param_registry.valueSearch("SRV_thr_mid", &thr_mid);
+  param_registry.valueSearch("SRV_thr_max", &thr_max);
+
   ready = true;
 }
 
@@ -75,24 +73,12 @@ void Engine::stop(void) {
 /**
  *
  */
-void Engine::update(const FutabaData &futaba_data, const Impact &impact) {
+void Engine::update(const DrivetrainImpact &impact) {
   int16_t tmp;
 
   osalDbgCheck(ready);
 
-  if (OverrideLevel::pwm == futaba_data.level) {
-    osalSysHalt("Unrealized");
-  }
-  else {
-    tmp = float2pwm(impact.a[IMPACT_CH_SPEED]);
-    if (tmp > 0) {
-      pwm.update(tmp, PWM_CH_THRUST_FORTH);
-      pwm.update(0,   PWM_CH_THRUST_BACK);
-    }
-    else {
-      pwm.update(0,   PWM_CH_THRUST_FORTH);
-      pwm.update(tmp, PWM_CH_THRUST_BACK);
-    }
-  }
+  tmp = float2pwm(impact.thr, *thr_min, *thr_mid, *thr_max);
+  pwm.update(tmp, PWM_CH_THR);
 }
 

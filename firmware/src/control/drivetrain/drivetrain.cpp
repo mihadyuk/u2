@@ -77,26 +77,12 @@ void Drivetrain::stop(void) {
 /**
  *
  */
-msg_t Drivetrain::update(const FutabaData &futaba_data, const Impact &impact) {
+msg_t Drivetrain::update(const DrivetrainImpact &impact) {
 
   osalDbgCheck(ready);
 
-  if (OverrideLevel::impact == futaba_data.level) {
-    osalSysHalt("Unrealized/Untested");
-    servo.update(futaba_data, futaba_data.impact);
-    engine.update(futaba_data, futaba_data.impact);
-  }
-  else {
-    servo.update(futaba_data, impact);
-    engine.update(futaba_data, impact);
-  }
+  servo.update(impact);
+  engine.update(impact);
 
   return MSG_OK;
-}
-
-/**
- *
- */
-void Drivetrain::futaba_override(const PwmVector &override) {
-  pwm.futaba_override(override);
 }

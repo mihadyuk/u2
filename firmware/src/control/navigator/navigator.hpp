@@ -1,8 +1,9 @@
 #ifndef NAVIGATOR_HPP_
 #define NAVIGATOR_HPP_
 
+#include <old_stabilizer/stabilizer.hpp>
+
 #include "message.hpp"
-#include "stabilizer.hpp"
 #include "nav_sphere.hpp"
 #include "nav_plane.hpp"
 #include "state_vector.hpp"

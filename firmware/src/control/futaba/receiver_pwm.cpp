@@ -21,6 +21,7 @@ using namespace control;
  ******************************************************************************
  */
 extern mavlink_rc_channels_t          mavlink_out_rc_channels_struct;
+extern mavlink_rc_channels_scaled_t   mavlink_out_rc_channels_scaled_struct;
 
 /*
  ******************************************************************************
@@ -90,7 +91,7 @@ float ReceiverPWM::get_ch(int32_t map) const {
 /**
  *
  */
-void futaba2mavlink(const uint16_t *pwm) {
+static void receiver2mavlink(const uint16_t *pwm) {
   // A value of UINT16_MAX implies the channel is unused.
 
   memset(&mavlink_out_rc_channels_struct, 0xFF, sizeof(mavlink_out_rc_channels_struct));
@@ -100,6 +101,19 @@ void futaba2mavlink(const uint16_t *pwm) {
   mavlink_out_rc_channels_struct.chan3_raw = pwm[2];
   mavlink_out_rc_channels_struct.chan4_raw = pwm[3];
   mavlink_out_rc_channels_struct.chancount = 4;
+
+  // A value of UINT16_MAX implies the channel is unused.
+  mavlink_out_rc_channels_scaled_struct.time_boot_ms = TIME_BOOT_MS;
+  mavlink_out_rc_channels_scaled_struct.chan1_scaled = pwm[0];
+  mavlink_out_rc_channels_scaled_struct.chan2_scaled = pwm[1];
+  mavlink_out_rc_channels_scaled_struct.chan3_scaled = pwm[2];
+  mavlink_out_rc_channels_scaled_struct.chan4_scaled = pwm[3];
+  mavlink_out_rc_channels_scaled_struct.chan5_scaled = UINT16_MAX;
+  mavlink_out_rc_channels_scaled_struct.chan6_scaled = UINT16_MAX;
+  mavlink_out_rc_channels_scaled_struct.chan7_scaled = UINT16_MAX;
+  mavlink_out_rc_channels_scaled_struct.chan8_scaled = UINT16_MAX;
+  mavlink_out_rc_channels_scaled_struct.rssi = 255;
+  mavlink_out_rc_channels_scaled_struct.port = 0;
 }
 
 /*
@@ -149,6 +163,8 @@ void ReceiverPWM::stop(void) {
 void ReceiverPWM::update(receiver_data_t &result) {
 
   osalDbgCheck(ready);
+
+  receiver2mavlink(cache);
 
   result.ail = get_ch(*map_ail);
   result.ele = get_ch(*map_ele);

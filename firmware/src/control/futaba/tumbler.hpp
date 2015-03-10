@@ -32,7 +32,7 @@ public:
 private:
   void __ctor(T val){
     static_assert((max0 < min1), "");
-    chDbgCheck(val < 2);
+    osalDbgCheck(val < 2);
     prev = val;
   }
 
@@ -72,7 +72,7 @@ public:
 private:
   void __ctor(T val){
     static_assert((max0 < min1) && (max1 < min2), "There must be some room between hysteresises");
-    chDbgCheck(val < 3);                      //Incorrect initial value
+    osalDbgCheck(val < 3);                      //Incorrect initial value
     prev = val;
   }
 

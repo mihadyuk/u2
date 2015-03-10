@@ -1,24 +1,21 @@
 #ifndef DRIVETRAIN_HPP_
 #define DRIVETRAIN_HPP_
 
-#include "futaba_data.hpp"
+#include "drivetrain_impact.hpp"
 #include "servo_tree.hpp"
-#include "impact.hpp"
-#include "drivetrain_pwm.hpp"
 #include "engine.hpp"
 
 namespace control {
 
 /**
- * @brief   Convert different impact values to servo angles
+ * @brief   Convert impact values to servo and engine values.
  */
 class Drivetrain {
 public:
   Drivetrain(void);
   void start(void);
   void stop(void);
-  msg_t update(const FutabaData &futaba_data, const Impact &impact);
-  void futaba_override(const PwmVector &override);
+  msg_t update(const DrivetrainImpact &impact);
 
 private:
   bool ready = false;

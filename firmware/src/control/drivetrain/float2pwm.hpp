@@ -1,0 +1,28 @@
+#ifndef FLOAT2PWM_HPP_
+#define FLOAT2PWM_HPP_
+
+#include "putinrange.hpp"
+
+namespace control {
+
+#define SRV_MIN 1000
+#define SRV_MID 1500
+#define SRV_MAX 2000
+
+/**
+ *
+ */
+static inline uint16_t float2pwm(float a, int min, int mid, int max) {
+  uint16_t ret;
+
+  if (a > 0)
+    ret = mid + (max - mid) * a;
+  else
+    ret = mid + (mid - min) * a;
+
+  return putinrange(ret, SRV_MIN, SRV_MAX);
+}
+
+} // namespace
+
+#endif /* FLOAT2PWM_HPP_ */

@@ -1,8 +1,7 @@
 #include "main.h"
+#include "stabilizer.hpp"
+#include "geometry.hpp"
 #include "param_registry.hpp"
-
-#include "stabilizer/stabilizer.hpp"
-#include "impact.hpp"
 
 using namespace control;
 
@@ -29,6 +28,21 @@ using namespace control;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
+static PidControlSelfDerivative<float> pid_ail_h(wrap_pi);
+static PidControlSelfDerivative<float> pid_ail_m(wrap_2pi);
+static PidControlSelfDerivative<float> pid_ail_l(nullptr);
+
+static PidControlSelfDerivative<float> pid_ele_h(nullptr);
+static PidControlSelfDerivative<float> pid_ele_m(nullptr);
+static PidControlSelfDerivative<float> pid_ele_l(nullptr);
+
+static PidControlSelfDerivative<float> pid_rud_h(nullptr);
+static PidControlSelfDerivative<float> pid_rud_m(nullptr);
+static PidControlSelfDerivative<float> pid_rud_l(nullptr);
+
+static PidControlSelfDerivative<float> pid_thr_h(nullptr);
+static PidControlSelfDerivative<float> pid_thr_m(nullptr);
+static PidControlSelfDerivative<float> pid_thr_l(nullptr);
 
 /*
  ******************************************************************************
@@ -46,90 +60,109 @@ using namespace control;
 /**
  *
  */
-Stabilizer::Stabilizer(Drivetrain &drivetrain) :
+Stabilizer::Stabilizer(Drivetrain &drivetrain, const StateVector &s) :
 drivetrain(drivetrain),
-pid_speed(nullptr),
-pid_roll(nullptr),
-pid_pitch(nullptr),
-pid_yaw(nullptr),
-ready(false)
+ail_chain(s.alt, s.alt, s.alt, pid_ail_h, pid_ail_m, pid_ail_m),
+ele_chain(s.alt, s.alt, s.alt, pid_ele_h, pid_ele_m, pid_ele_m),
+rud_chain(s.alt, s.alt, s.alt, pid_rud_h, pid_rud_m, pid_rud_m),
+thr_chain(s.alt, s.alt, s.alt, pid_thr_h, pid_thr_m, pid_thr_m)
 {
   return;
-}
-
-//  impact.a[IMPACT_ROLL]  = pid_roll.update(state.roll   - trgt.roll,  state.wx);
-//  impact.a[IMPACT_PITCH] = pid_pitch.update(state.pitch - trgt.pitch, state.wy);
-//  impact.a[IMPACT_YAW]   = pid_yaw.update(state.yaw     - trgt.yaw,   state.wz);
-//  impact.a[IMPACT_SPEED] = pid_speed.update(state.vair  - trgt.speed, 0);
-
-/**
- *
- */
-void Stabilizer::update(const FutabaData &futaba_data,
-                        const TargetAttitude &target_attitude,
-                        const StateVector &state,
-                        float dT) {
-  Impact impact;
-  const float *ta;
-
-  osalDbgCheck(ready);
-
-  if (OverrideLevel::attitude == futaba_data.level) {
-    osalSysHalt("Unrealized/Untested");
-    ta = futaba_data.attitude.a;
-  }
-  else {
-    ta = target_attitude.a;
-  }
-
-  impact.a[IMPACT_CH_ROLL]  = pid_roll.update(state.roll,   ta[ATTITUDE_CH_ROLL],   dT);
-  impact.a[IMPACT_CH_PITCH] = pid_pitch.update(state.pitch, ta[ATTITUDE_CH_PITCH],  dT);
-  impact.a[IMPACT_CH_YAW]   = pid_yaw.update(state.yaw,     ta[ATTITUDE_CH_YAW],    dT);
-  impact.a[IMPACT_CH_SPEED] = pid_speed.update(state.vair,  ta[ATTITUDE_CH_SPEED],  dT);
-
-  this->drivetrain.update(futaba_data, impact);
 }
 
 /**
  *
  */
 void Stabilizer::start(void) {
+  float *ph, *ih, *dh;
+  float *pm, *im, *dm;
+  float *pl, *il, *dl;
 
-  float *p, *i, *d;
+  param_registry.valueSearch("PID_ail_h_P", &ph),
+  param_registry.valueSearch("PID_ail_h_I", &ih),
+  param_registry.valueSearch("PID_ail_h_D", &dh);
 
-  param_registry.valueSearch("PID_roll_P", &p),
-  param_registry.valueSearch("PID_roll_I", &i),
-  param_registry.valueSearch("PID_roll_D", &d);
-  pid_roll.start(p, i, d, nullptr, nullptr);
+  param_registry.valueSearch("PID_ail_m_P", &pm),
+  param_registry.valueSearch("PID_ail_m_I", &im),
+  param_registry.valueSearch("PID_ail_m_D", &dm);
 
-  param_registry.valueSearch("PID_pitch_P", &p),
-  param_registry.valueSearch("PID_pitch_I", &i),
-  param_registry.valueSearch("PID_pitch_D", &d);
-  pid_pitch.start(p, i, d, nullptr, nullptr);
+  param_registry.valueSearch("PID_ail_l_P", &pl),
+  param_registry.valueSearch("PID_ail_l_I", &il),
+  param_registry.valueSearch("PID_ail_l_D", &dl);
 
-  param_registry.valueSearch("PID_yaw_P", &p),
-  param_registry.valueSearch("PID_yaw_I", &i),
-  param_registry.valueSearch("PID_yaw_D", &d);
-  pid_yaw.start(p, i, d, nullptr, nullptr);
+  ail_chain.start(ph, ih, dh,
+                  pm, im, dm,
+                  pl, il, dl);
 
-  param_registry.valueSearch("PID_speed_P", &p),
-  param_registry.valueSearch("PID_speed_I", &i),
-  param_registry.valueSearch("PID_speed_D", &d);
-  pid_speed.start(p, i, d, nullptr, nullptr);
+  /**/
+  param_registry.valueSearch("PID_ele_h_P", &ph),
+  param_registry.valueSearch("PID_ele_h_I", &ih),
+  param_registry.valueSearch("PID_ele_h_D", &dh);
 
-  drivetrain.start();
+  param_registry.valueSearch("PID_ele_m_P", &pm),
+  param_registry.valueSearch("PID_ele_m_I", &im),
+  param_registry.valueSearch("PID_ele_m_D", &dm);
 
+  param_registry.valueSearch("PID_ele_l_P", &pl),
+  param_registry.valueSearch("PID_ele_l_I", &il),
+  param_registry.valueSearch("PID_ele_l_D", &dl);
+
+  ele_chain.start(ph, ih, dh,
+                  pm, im, dm,
+                  pl, il, dl);
+
+  /**/
+  param_registry.valueSearch("PID_rud_h_P", &ph),
+  param_registry.valueSearch("PID_rud_h_I", &ih),
+  param_registry.valueSearch("PID_rud_h_D", &dh);
+
+  param_registry.valueSearch("PID_rud_m_P", &pm),
+  param_registry.valueSearch("PID_rud_m_I", &im),
+  param_registry.valueSearch("PID_rud_m_D", &dm);
+
+  param_registry.valueSearch("PID_rud_l_P", &pl),
+  param_registry.valueSearch("PID_rud_l_I", &il),
+  param_registry.valueSearch("PID_rud_l_D", &dl);
+
+  rud_chain.start(ph, ih, dh,
+                  pm, im, dm,
+                  pl, il, dl);
+
+  /**/
+  param_registry.valueSearch("PID_thr_h_P", &ph),
+  param_registry.valueSearch("PID_thr_h_I", &ih),
+  param_registry.valueSearch("PID_thr_h_D", &dh);
+
+  param_registry.valueSearch("PID_thr_m_P", &pm),
+  param_registry.valueSearch("PID_thr_m_I", &im),
+  param_registry.valueSearch("PID_thr_m_D", &dm);
+
+  param_registry.valueSearch("PID_thr_l_P", &pl),
+  param_registry.valueSearch("PID_thr_l_I", &il),
+  param_registry.valueSearch("PID_thr_l_D", &dl);
+
+  thr_chain.start(ph, ih, dh,
+                  pm, im, dm,
+                  pl, il, dl);
+
+  /**/
   ready = true;
 }
 
 /**
  *
  */
-void Stabilizer::reset(void) {
-  pid_roll.reset();
-  pid_pitch.reset();
-  pid_yaw.reset();
-  pid_speed.reset();
+void Stabilizer::update(const pid_in &in) {
+  DrivetrainImpact out;
+
+  osalDbgCheck(ready);
+
+  out.ail = ail_chain.update(in.ail, in.dT, in.ol_ail);
+  out.ele = ele_chain.update(in.ele, in.dT, in.ol_ele);
+  out.rud = rud_chain.update(in.rud, in.dT, in.ol_rud);
+  out.thr = thr_chain.update(in.thr, in.dT, in.ol_thr);
+
+  drivetrain.update(out);
 }
 
 /**
@@ -137,5 +170,5 @@ void Stabilizer::reset(void) {
  */
 void Stabilizer::stop(void) {
   ready = false;
-  drivetrain.stop();
 }
+

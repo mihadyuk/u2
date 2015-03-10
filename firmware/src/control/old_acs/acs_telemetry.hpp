@@ -1,7 +1,7 @@
 #ifndef ACS_TELEMETRY_HPP_
 #define ACS_TELEMETRY_HPP_
 
-#include "impact.hpp"
+#include <drivetrain_impact.hpp>
 #include "pwm_vector.hpp"
 #include "pid.hpp"
 

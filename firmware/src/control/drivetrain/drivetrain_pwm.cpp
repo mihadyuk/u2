@@ -2,7 +2,6 @@
 
 #include "main.h"
 #include "drivetrain_pwm.hpp"
-#include "impact.hpp"
 
 using namespace control;
 
@@ -104,7 +103,7 @@ void PWM::start(void) {
   pwmStart(&PWMD1, &pwm_default_cfg);
   pwmEnablePeriodicNotification(&PWMD1);
 
-  /* pause between starts needs for spread PWM ISRs through time */
+  /* pause between starts needs to spread PWM ISRs through time */
   osalThreadSleepMicroseconds(DRIVETRAIN_PWM_PERIOD / 2);
 
 //  pwmStart(&PWMD4, &pwm_default_cfg);
@@ -140,19 +139,5 @@ void PWM::update(uint16_t pwm, size_t channel) {
     pwm4[channel - 4] = pwm;
   else
     return;
-}
-
-/**
- *
- */
-void PWM::futaba_override(const PwmVector &override) {
-  size_t i;
-
-  osalDbgCheck(ready);
-
-  for (i=0; i<4; i++)
-    pwm1[i] = override.pwm[i];
-  for (; i<8; i++)
-    pwm1[i-4] = override.pwm[i];
 }
 

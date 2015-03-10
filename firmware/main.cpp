@@ -57,8 +57,8 @@ Giovanni
 #include "endianness.h"
 //#include "attitude_unit_rover.hpp"
 //#include "acs.hpp"
-#include "control/stabilizer/stabilizer.hpp"
-#include "control/drivetrain/drivetrain.hpp"
+#include "stabilizer/stabilizer.hpp"
+#include "drivetrain/drivetrain.hpp"
 #include "exti_local.hpp"
 #include "ahrs.hpp"
 #include "mav_logger.hpp"
@@ -94,7 +94,7 @@ static uint8_t link_thd_buf[THREAD_HEAP_SIZE + sizeof(stkalign_t)];
 StateVector state_vector __attribute__((section(".ccm")));
 
 control::Drivetrain drivetrain;
-control::Stabilizer stabilizer(drivetrain);
+control::Stabilizer stabilizer(drivetrain, state_vector);
 
 //MARGRover marg;
 //AttitudeUnitRover attitude_unit(0.01f, state_vector);
@@ -196,6 +196,7 @@ int main(void) {
 
   ahrs.start();
   max_sonar.start();
+  stabilizer.start();
 
   while (TRUE) {
     ahrs_data_t ahrs_data;

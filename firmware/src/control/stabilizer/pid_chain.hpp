@@ -2,19 +2,9 @@
 #define PID_CHAIN_HPP_
 
 #include "pid_link.hpp"
+#include "override_level.hpp"
 
 namespace control {
-
-/**
- *
- */
-enum class PIDChainOverrideLevel {
-  none,
-  medium,
-  low,
-  bypass,
-  enum_end
-};
 
 /**
  *
@@ -30,7 +20,7 @@ public:
   void start(float const *pGain_h, float const *iGain_h, float const *dGain_h,
              float const *pGain_m, float const *iGain_m, float const *dGain_m,
              float const *pGain_l, float const *iGain_l, float const *dGain_l);
-  float update(float target, float dT, PIDChainOverrideLevel ol);
+  float update(float target, float dT, OverrideLevel ol);
 private:
   PIDLink link_h, link_m, link_l;
 };

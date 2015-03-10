@@ -1,38 +1,53 @@
 #ifndef STABILIZER_HPP_
 #define STABILIZER_HPP_
 
-#include <target_attitude.hpp>
-#include "drivetrain/drivetrain.hpp"
+#include "pid_chain.hpp"
 #include "state_vector.hpp"
-#include "futaba_data.hpp"
-#include "pid.hpp"
+#include "override_level.hpp"
+#include "drivetrain/drivetrain.hpp"
 
 namespace control {
 
 /**
  *
  */
-class Stabilizer {
-public:
-  Stabilizer(Drivetrain &drivetrain);
-  void update(const FutabaData &futaba_data,
-              const TargetAttitude &target_attitude,
-              const StateVector &state,
-              float dT);
-  void reset(void);
-  void start(void);
-  void stop(void);
-  void dryRun(void);
-
-protected:
-  Drivetrain &drivetrain;
-  PidControlSelfDerivative<float> pid_speed;
-  PidControlSelfDerivative<float> pid_roll;
-  PidControlSelfDerivative<float> pid_pitch;
-  PidControlSelfDerivative<float> pid_yaw;
-  bool ready;
+struct pid_in {
+  OverrideLevel ol_ail;
+  OverrideLevel ol_ele;
+  OverrideLevel ol_rud;
+  OverrideLevel ol_thr;
+  float ail;
+  float ele;
+  float rud;
+  float thr;
+  float dT;
 };
 
-} /* namespace */
+/**
+ *
+ */
+struct pid_out {
+  float ail;
+  float ele;
+  float rud;
+  float thr;
+};
+
+/**
+ *
+ */
+class Stabilizer {
+public:
+  Stabilizer(Drivetrain &drivetrain, const StateVector &s);
+  void start(void);
+  void update(const pid_in &in);
+  void stop(void);
+private:
+  Drivetrain &drivetrain;
+  bool ready = false;
+  PIDChain ail_chain, ele_chain, rud_chain, thr_chain;
+};
+
+} // namespace
 
 #endif /* STABILIZER_HPP_ */

@@ -1,17 +1,18 @@
-#ifndef ENGINE_HPP_
-#define ENGINE_HPP_
+#ifndef ENGINE_2CH_HPP_
+#define ENGINE_2CH_HPP_
 
-#include "drivetrain_impact.hpp"
+#include <drivetrain_impact.hpp>
 #include "drivetrain/drivetrain_pwm.hpp"
+#include "futaba_data.hpp"
 
 namespace control {
 
-class Engine {
+class Engine2ch {
 public:
-  Engine(PWM &pwm);
+  Engine2ch(PWM &pwm);
   void start(void);
   void stop(void);
-  void update(const DrivetrainImpact &impact);
+  void update(const FutabaData &futaba_data, const Impact &impact);
 private:
   PWM &pwm;
   bool ready = false;
@@ -20,4 +21,4 @@ private:
 
 } /* namespace */
 
-#endif /* ENGINE_HPP_ */
+#endif /* ENGINE_2CH_HPP_ */

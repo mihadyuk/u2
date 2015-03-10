@@ -1,8 +1,6 @@
 #include "main.h"
-
-#include "servo_tree.hpp"
-#include "param_registry.hpp"
-#include "float2pwm.hpp"
+#include "engine_2ch.hpp"
+#include "putinrange.hpp"
 
 using namespace control;
 
@@ -37,6 +35,14 @@ using namespace control;
  ******************************************************************************
  ******************************************************************************
  */
+/**
+ *
+ */
+int16_t float2pwm(float a) {
+  int16_t ret = DRIVETRAIN_PWM_PERIOD * a;
+
+  return putinrange(ret, -DRIVETRAIN_PWM_PERIOD, DRIVETRAIN_PWM_PERIOD);
+}
 
 /*
  ******************************************************************************
@@ -47,54 +53,47 @@ using namespace control;
 /**
  *
  */
-ServoTree::ServoTree(PWM &pwm) : pwm(pwm) {
+Engine2ch::Engine2ch(PWM &pwm) :
+pwm(pwm) {
   return;
 }
 
 /**
  *
  */
-void ServoTree::start(void) {
-
-  param_registry.valueSearch("SRV_ail_min", &ail_min);
-  param_registry.valueSearch("SRV_ail_mid", &ail_mid);
-  param_registry.valueSearch("SRV_ail_max", &ail_max);
-
-  param_registry.valueSearch("SRV_ele_min", &ele_min);
-  param_registry.valueSearch("SRV_ele_mid", &ele_mid);
-  param_registry.valueSearch("SRV_ele_max", &ele_max);
-
-  param_registry.valueSearch("SRV_rud_min", &rud_min);
-  param_registry.valueSearch("SRV_rud_mid", &rud_mid);
-  param_registry.valueSearch("SRV_rud_max", &rud_max);
+void Engine2ch::start(void) {
 
   ready = true;
 }
 
-
 /**
  *
  */
-void ServoTree::stop(void) {
+void Engine2ch::stop(void) {
   ready = false;
 }
 
 /**
  *
  */
-void ServoTree::update(const DrivetrainImpact &impact) {
-  uint16_t tmp;
+void Engine2ch::update(const FutabaData &futaba_data, const Impact &impact) {
+  int16_t tmp;
 
   osalDbgCheck(ready);
 
-  tmp = float2pwm(impact.ail, *ail_min, *ail_mid, *ail_max);
-  pwm.update(tmp, PWM_CH_AIL);
-
-  tmp = float2pwm(impact.ele, *ele_min, *ele_mid, *ele_max);
-  pwm.update(tmp, PWM_CH_ELE);
-
-  tmp = float2pwm(impact.rud, *rud_min, *rud_mid, *rud_max);
-  pwm.update(tmp, PWM_CH_RUD);
+  if (OverrideLevel::pwm == futaba_data.level) {
+    osalSysHalt("Unrealized");
+  }
+  else {
+    tmp = float2pwm(impact.a[IMPACT_CH_SPEED]);
+    if (tmp > 0) {
+      pwm.update(tmp, PWM_CH_THRUST_FORTH);
+      pwm.update(0,   PWM_CH_THRUST_BACK);
+    }
+    else {
+      pwm.update(0,   PWM_CH_THRUST_FORTH);
+      pwm.update(tmp, PWM_CH_THRUST_BACK);
+    }
+  }
 }
-
 
