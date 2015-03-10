@@ -29,7 +29,7 @@ typedef struct {
   TargetAttitude attitude;
   Impact impact;
   PwmVector pwm_vector;
-}FutabaData;
+} FutabaData;
 
 } /* namespace */
 

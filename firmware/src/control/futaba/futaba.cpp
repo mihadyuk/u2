@@ -149,9 +149,9 @@ void Futaba::start(void) {
 
   param_registry.valueSearch("RC_timeout", &timeout);
 
-  receiver_mavlink.start(*timeout);
-  receiver_rc.start(*timeout);
-  receiver_synth.start(*timeout);
+  receiver_mavlink.start(timeout);
+  receiver_rc.start(timeout);
+  receiver_synth.start(timeout);
   ready = true;
 }
 

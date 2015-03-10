@@ -110,7 +110,7 @@ void futaba2mavlink(const uint16_t *pwm) {
 /**
  *
  */
-void ReceiverPWM::start(systime_t timeout) {
+void ReceiverPWM::start(const uint32_t *timeout) {
 
   this->timeout = timeout;
 
@@ -157,6 +157,7 @@ void ReceiverPWM::update(receiver_data_t &result) {
 
   result.man = static_cast<ManualSwitch>(manual_switch.update(cache[*map_man]));
 
+  /* TODO: fill status word here */
   result.status = 0;
 }
 

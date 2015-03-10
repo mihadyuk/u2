@@ -51,14 +51,14 @@ struct receiver_data_t {
  */
 class Receiver {
 public:
-  virtual void start(systime_t timeout) = 0;
+  virtual void start(const uint32_t *timeout) = 0;
   virtual void stop(void) = 0;
   virtual void update(receiver_data_t &result) = 0;
 protected:
   float pwm_normalize(uint16_t v) const;
   bool ready = false;
-  systime_t timeout = S2ST(3);
-  Tumbler3<int, 900, 1200, 1400, 1600, 1800, 2100> manual_switch;
+  const uint32_t *timeout = nullptr;
+  Tumbler3<int, 800, 1200, 1400, 1600, 1800, 2200> manual_switch;
 };
 
 } /* namespace */

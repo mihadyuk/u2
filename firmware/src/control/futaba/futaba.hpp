@@ -29,7 +29,7 @@ public:
   void stop(void);
 private:
   bool ready = false;
-  const uint32_t *timeout = NULL;
+  const uint32_t *timeout = nullptr;
   ReceiverMavlink receiver_mavlink;
   ReceiverPWM receiver_rc;
   ReceiverSynth receiver_synth;

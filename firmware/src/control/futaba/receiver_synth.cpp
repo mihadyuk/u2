@@ -45,7 +45,7 @@ using namespace control;
 /**
  *
  */
-void ReceiverSynth::start(systime_t timeout) {
+void ReceiverSynth::start(const uint32_t *timeout) {
   this->timeout = timeout;
   ready = true;
 }

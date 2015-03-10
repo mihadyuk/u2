@@ -10,7 +10,7 @@ namespace control {
  */
 class ReceiverPWM : public Receiver {
 public:
-  void start(systime_t timeout);
+  void start(const uint32_t *timeout);
   void stop(void);
   void update(receiver_data_t &result);
   friend void futaba_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p);
