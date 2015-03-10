@@ -156,6 +156,8 @@ void ReceiverPWM::update(receiver_data_t &result) {
   result.thr = get_ch(*map_thr);
 
   result.man = static_cast<ManualSwitch>(manual_switch.update(cache[*map_man]));
+
+  result.status = 0;
 }
 
 
