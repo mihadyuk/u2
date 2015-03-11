@@ -56,7 +56,7 @@ Giovanni
 #include "mavlink_local.hpp"
 #include "endianness.h"
 //#include "attitude_unit_rover.hpp"
-//#include "acs.hpp"
+#include "acs.hpp"
 #include "stabilizer/stabilizer.hpp"
 #include "drivetrain/drivetrain.hpp"
 #include "exti_local.hpp"
@@ -94,14 +94,13 @@ static uint8_t link_thd_buf[THREAD_HEAP_SIZE + sizeof(stkalign_t)];
 StateVector state_vector __attribute__((section(".ccm")));
 
 control::Drivetrain drivetrain;
-control::Stabilizer stabilizer(drivetrain, state_vector);
 
 //MARGRover marg;
 //AttitudeUnitRover attitude_unit(0.01f, state_vector);
-//
-///* automated control system */
-//ACS acs(impact, state_vector, pwm_receiver, stabilizer);
-//
+
+/* automated control system */
+control::ACS acs(drivetrain, state_vector);
+
 ///* automated control system */
 //SINS sins;
 //
@@ -196,11 +195,12 @@ int main(void) {
 
   ahrs.start();
   max_sonar.start();
-  stabilizer.start();
+  acs.start();
 
   while (TRUE) {
     ahrs_data_t ahrs_data;
     ahrs.get(ahrs_data, MS2ST(200));
+    acs.update(ahrs_data.dt);
 
     PwrMgrUpdate();
 

@@ -146,21 +146,22 @@ void Stabilizer::start(void) {
                   pl, il, dl);
 
   /**/
+  drivetrain.start();
   ready = true;
 }
 
 /**
  *
  */
-void Stabilizer::update(const pid_in &in) {
+void Stabilizer::update(const pid_in &in, float dT) {
   DrivetrainImpact out;
 
   osalDbgCheck(ready);
 
-  out.ail = ail_chain.update(in.ail, in.dT, in.ol_ail);
-  out.ele = ele_chain.update(in.ele, in.dT, in.ol_ele);
-  out.rud = rud_chain.update(in.rud, in.dT, in.ol_rud);
-  out.thr = thr_chain.update(in.thr, in.dT, in.ol_thr);
+  out.ail = ail_chain.update(in.ail, dT, in.ol_ail);
+  out.ele = ele_chain.update(in.ele, dT, in.ol_ele);
+  out.rud = rud_chain.update(in.rud, dT, in.ol_rud);
+  out.thr = thr_chain.update(in.thr, dT, in.ol_thr);
 
   drivetrain.update(out);
 }

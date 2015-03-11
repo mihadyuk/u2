@@ -1,7 +1,8 @@
 #ifndef FUTABA_DATA_HPP_
 #define FUTABA_DATA_HPP_
 
-#include <override_level.hpp>
+#include "override_level.hpp"
+#include "manual_switch.hpp"
 
 namespace control {
 
@@ -10,6 +11,7 @@ namespace control {
  */
 typedef struct {
   OverrideLevel level;
+  ManualSwitch man;
   float ail = 0;
   float ele = 0;
   float rud = 0;

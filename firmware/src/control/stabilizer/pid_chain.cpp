@@ -75,7 +75,7 @@ float PIDChain::update(float target, float dT, OverrideLevel ol) {
   float ret;
 
   switch (ol) {
-  case OverrideLevel::none:
+  case OverrideLevel::high:
     ret = link_h.update(target, dT);
     ret = link_m.update(ret,    dT);
     ret = link_l.update(ret,    dT);

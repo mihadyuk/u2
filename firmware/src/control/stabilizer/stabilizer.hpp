@@ -20,7 +20,6 @@ struct pid_in {
   float ele;
   float rud;
   float thr;
-  float dT;
 };
 
 /**
@@ -40,7 +39,7 @@ class Stabilizer {
 public:
   Stabilizer(Drivetrain &drivetrain, const StateVector &s);
   void start(void);
-  void update(const pid_in &in);
+  void update(const pid_in &in, float dT);
   void stop(void);
 private:
   Drivetrain &drivetrain;

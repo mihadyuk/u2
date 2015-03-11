@@ -36,6 +36,7 @@ extern mavlink_rc_channels_scaled_t   mavlink_out_rc_channels_scaled_struct;
  */
 
 static uint16_t cache[CHANNEL_CNT];
+static systime_t timestamp[CHANNEL_CNT]; // timestamp array for timeout detect
 
 /**
  *
@@ -46,6 +47,7 @@ void futaba_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p)
   (void)p;
 
   cache[channel] = w;
+  timestamp[channel] = chVTGetSystemTimeX();
 }
 
 /**
@@ -81,16 +83,6 @@ static EICUConfig eicucfg = {
 /**
  *
  */
-float ReceiverPWM::get_ch(int32_t map) const {
-  if (map != -1)
-    return pwm_normalize(cache[map]);
-  else
-    return 0;
-}
-
-/**
- *
- */
 static void receiver2mavlink(const uint16_t *pwm) {
   // A value of UINT16_MAX implies the channel is unused.
 
@@ -116,6 +108,65 @@ static void receiver2mavlink(const uint16_t *pwm) {
   mavlink_out_rc_channels_scaled_struct.port = 0;
 }
 
+/**
+ * retval   true == timeout
+ *          fasle == OK
+ */
+static bool check_timeout(int32_t map, systime_t timeout) {
+  bool ret;
+
+  osalSysLock();
+  if ((chVTGetSystemTimeX() - timestamp[map]) >= timeout) {
+    ret = true;
+    /* prevent false positive when system timer overflows */
+    timestamp[map] = chVTGetSystemTimeX() - timeout;
+  }
+  else {
+    ret = false;
+  }
+  osalSysUnlock();
+
+  return ret;
+}
+
+/**
+ *
+ */
+void ReceiverPWM::get_ch(int32_t map, float *result, uint32_t *status,
+                         uint32_t error_bit) const {
+
+  if (-1 == map) { /* channel unused */
+    *result = 0;
+    *status &= ~error_bit;
+  }
+  else {
+    *result = pwm_normalize(cache[map]);
+    if (check_timeout(map, MS2ST(this->timeout)))
+      *status |= error_bit;
+    else
+      *status &= ~error_bit;
+  }
+}
+
+/**
+ *
+ */
+void ReceiverPWM::get_tumbler(int32_t map, ManualSwitch *result,
+                              uint32_t *status, uint32_t error_bit) {
+
+  if (-1 == map) { /* channel unused */
+    *result = ManualSwitch::fullauto;
+    *status &= ~error_bit;
+  }
+  else {
+    *result = static_cast<ManualSwitch>(manual_switch.update(cache[map]));
+    if (check_timeout(map, MS2ST(this->timeout)))
+      *status |= error_bit;
+    else
+      *status &= ~error_bit;
+  }
+}
+
 /*
  ******************************************************************************
  * EXPORTED FUNCTIONS
@@ -128,11 +179,11 @@ void ReceiverPWM::start(const uint32_t *timeout) {
 
   this->timeout = timeout;
 
-  param_registry.valueSearch("RECV_map_ail", &map_ail);
-  param_registry.valueSearch("RECV_map_ele", &map_ele);
-  param_registry.valueSearch("RECV_map_rud", &map_rud);
-  param_registry.valueSearch("RECV_map_thr", &map_thr);
-  param_registry.valueSearch("RECV_map_man", &map_man);
+  param_registry.valueSearch("RC_map_ail", &map_ail);
+  param_registry.valueSearch("RC_map_ele", &map_ele);
+  param_registry.valueSearch("RC_map_rud", &map_rud);
+  param_registry.valueSearch("RC_map_thr", &map_thr);
+  param_registry.valueSearch("RC_map_man", &map_man);
 
   osalDbgCheck(CHANNEL_CNT > *map_ail);
   osalDbgCheck(CHANNEL_CNT > *map_ele);
@@ -166,16 +217,11 @@ void ReceiverPWM::update(receiver_data_t &result) {
 
   receiver2mavlink(cache);
 
-  result.ail = get_ch(*map_ail);
-  result.ele = get_ch(*map_ele);
-  result.rud = get_ch(*map_rud);
-  result.thr = get_ch(*map_thr);
+  get_ch(*map_ail, &result.ail, &result.status, RECEIVER_STATUS_AIL_CH_ERROR);
+  get_ch(*map_ele, &result.ele, &result.status, RECEIVER_STATUS_ELE_CH_ERROR);
+  get_ch(*map_rud, &result.rud, &result.status, RECEIVER_STATUS_RUD_CH_ERROR);
+  get_ch(*map_thr, &result.thr, &result.status, RECEIVER_STATUS_THR_CH_ERROR);
 
-  result.man = static_cast<ManualSwitch>(manual_switch.update(cache[*map_man]));
-
-  /* TODO: fill status word here */
-  result.status = 0;
+  get_tumbler(*map_man, &result.man, &result.status, RECEIVER_STATUS_MAN_CH_ERROR);
 }
-
-
 

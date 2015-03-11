@@ -4,7 +4,7 @@
 namespace control {
 
 enum class OverrideLevel {
-  none,   /* you may call it "high" too */
+  high,
   medium,
   low,
   bypass,
