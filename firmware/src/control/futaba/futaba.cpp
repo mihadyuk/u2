@@ -53,14 +53,19 @@ typedef enum {
 /**
  *
  */
-static msg_t futaba2high(receiver_data_t const &recv, FutabaData &result) {
+static msg_t futaba2high(RecevierOutput const &recv, FutabaOutput &result) {
+
   result.ail = recv.ail;
   result.ele = recv.ele;
   result.rud = recv.rud;
   result.thr = recv.thr;
 
   result.man = ManualSwitch::semiauto;
-  result.level = OverrideLevel::high;
+
+  result.ol_ail = OverrideLevel::high;
+  result.ol_ele = OverrideLevel::high;
+  result.ol_rud = OverrideLevel::high;
+  result.ol_thr = OverrideLevel::high;
 
   return MSG_OK;
 }
@@ -68,14 +73,19 @@ static msg_t futaba2high(receiver_data_t const &recv, FutabaData &result) {
 /**
  *
  */
-static msg_t futaba2medium(receiver_data_t const &recv, FutabaData &result) {
+static msg_t futaba2medium(RecevierOutput const &recv, FutabaOutput &result) {
+
   result.ail = recv.ail;
   result.ele = recv.ele;
   result.rud = recv.rud;
   result.thr = recv.thr;
 
   result.man = ManualSwitch::semiauto;
-  result.level = OverrideLevel::medium;
+
+  result.ol_ail = OverrideLevel::medium;
+  result.ol_ele = OverrideLevel::medium;
+  result.ol_rud = OverrideLevel::medium;
+  result.ol_thr = OverrideLevel::medium;
 
   return MSG_OK;
 }
@@ -83,14 +93,19 @@ static msg_t futaba2medium(receiver_data_t const &recv, FutabaData &result) {
 /**
  *
  */
-static msg_t futaba2low(receiver_data_t const &recv, FutabaData &result) {
+static msg_t futaba2low(RecevierOutput const &recv, FutabaOutput &result) {
+
   result.ail = recv.ail;
   result.ele = recv.ele;
   result.rud = recv.rud;
   result.thr = recv.thr;
 
   result.man = ManualSwitch::semiauto;
-  result.level = OverrideLevel::low;
+
+  result.ol_ail = OverrideLevel::low;
+  result.ol_ele = OverrideLevel::low;
+  result.ol_rud = OverrideLevel::low;
+  result.ol_thr = OverrideLevel::low;
 
   return MSG_OK;
 }
@@ -98,22 +113,8 @@ static msg_t futaba2low(receiver_data_t const &recv, FutabaData &result) {
 /**
  *
  */
-static msg_t pulse_generator(receiver_data_t const &recv, FutabaData &result) {
-  result.ail = recv.ail;
-  result.ele = recv.ele;
-  result.rud = recv.rud;
-  result.thr = recv.thr;
-
-  result.man = ManualSwitch::semiauto;
-  result.level = OverrideLevel::medium;
-
-  return MSG_OK;
-}
-
-/**
- *
- */
-msg_t Futaba::semiauto_interpret(receiver_data_t const &recv, FutabaData &result) {
+msg_t Futaba::semiauto_interpret(RecevierOutput const &recv,
+                                 FutabaOutput &result, float dT) {
   msg_t ret = MSG_OK;
 
   switch(*override){
@@ -127,7 +128,7 @@ msg_t Futaba::semiauto_interpret(receiver_data_t const &recv, FutabaData &result
     ret = futaba2low(recv, result);
     break;
   case RC_OVERRIDE_PULSE_GENERATOR:
-    ret = pulse_generator(recv, result);
+    ret = alcoi.update(result, dT);
     break;
   }
 
@@ -137,7 +138,8 @@ msg_t Futaba::semiauto_interpret(receiver_data_t const &recv, FutabaData &result
 /**
  *
  */
-msg_t Futaba::man_switch_interpret(receiver_data_t const &recv, FutabaData &result) {
+msg_t Futaba::man_switch_interpret(RecevierOutput const &recv,
+                                   FutabaOutput &result, float dT) {
   msg_t ret = MSG_OK;
 
   switch(recv.man) {
@@ -147,18 +149,24 @@ msg_t Futaba::man_switch_interpret(receiver_data_t const &recv, FutabaData &resu
     result.rud = recv.rud;
     result.thr = recv.thr;
     result.man = ManualSwitch::manual;
-    result.level = OverrideLevel::bypass;
+    result.ol_ail = OverrideLevel::bypass;
+    result.ol_ele = OverrideLevel::bypass;
+    result.ol_rud = OverrideLevel::bypass;
+    result.ol_thr = OverrideLevel::bypass;
     ret = MSG_OK;
     break;
 
   case ManualSwitch::fullauto:
     result.man = ManualSwitch::fullauto;
-    result.level = OverrideLevel::high;
+    result.ol_ail = OverrideLevel::high;
+    result.ol_ele = OverrideLevel::high;
+    result.ol_rud = OverrideLevel::high;
+    result.ol_thr = OverrideLevel::high;
     ret = MSG_OK;
     break;
 
   case ManualSwitch::semiauto:
-    ret = semiauto_interpret(recv, result);
+    ret = semiauto_interpret(recv, result, dT);
     break;
   }
 
@@ -195,6 +203,7 @@ void Futaba::start(void) {
 
   receiver_rc.start(timeout);
   receiver_mavlink.start(timeout);
+  alcoi.start();
 
   ready = true;
 }
@@ -206,6 +215,7 @@ void Futaba::stop(void){
 
   ready = false;
 
+  alcoi.stop();
   receiver_mavlink.stop();
   receiver_rc.stop();
 }
@@ -213,18 +223,18 @@ void Futaba::stop(void){
 /**
  * @brief   Process all receivers in priorities order (higher to lower)
  */
-msg_t Futaba::update(FutabaData &result) {
-  receiver_data_t recv;
+msg_t Futaba::update(FutabaOutput &result, float dT) {
+  RecevierOutput recv;
 
   osalDbgCheck(ready);
 
   receiver_rc.update(recv);
   if (RECEIVER_STATUS_NO_ERRORS == recv.status)
-    return man_switch_interpret(recv, result);
+    return man_switch_interpret(recv, result, dT);
 
   receiver_mavlink.update(recv);
   if (RECEIVER_STATUS_NO_ERRORS == recv.status)
-    return man_switch_interpret(recv, result);
+    return man_switch_interpret(recv, result, dT);
 
   return MSG_TIMEOUT;
 }

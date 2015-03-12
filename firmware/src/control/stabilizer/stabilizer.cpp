@@ -153,7 +153,7 @@ void Stabilizer::start(void) {
 /**
  *
  */
-void Stabilizer::update(const pid_in &in, float dT) {
+void Stabilizer::update(const StabInput &in, float dT) {
   DrivetrainImpact out;
 
   osalDbgCheck(ready);

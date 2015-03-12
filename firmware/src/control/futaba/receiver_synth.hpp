@@ -12,7 +12,7 @@ class ReceiverSynth : public Receiver {
 public:
   void start(const uint32_t *timeout);
   void stop(void);
-  void update(receiver_data_t &result);
+  void update(RecevierOutput &result);
 };
 
 } /* namespace */

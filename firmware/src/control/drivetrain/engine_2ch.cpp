@@ -76,7 +76,7 @@ void Engine2ch::stop(void) {
 /**
  *
  */
-void Engine2ch::update(const FutabaData &futaba_data, const Impact &impact) {
+void Engine2ch::update(const FutabaOutput &futaba_data, const Impact &impact) {
   int16_t tmp;
 
   osalDbgCheck(ready);

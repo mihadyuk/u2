@@ -60,7 +60,7 @@ void ReceiverSynth::stop(void) {
 /**
  *
  */
-void ReceiverSynth::update(receiver_data_t &result) {
+void ReceiverSynth::update(RecevierOutput &result) {
 
   osalDbgCheck(ready);
 

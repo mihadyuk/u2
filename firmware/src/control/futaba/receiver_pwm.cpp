@@ -13,7 +13,12 @@ using namespace control;
  * DEFINES
  ******************************************************************************
  */
-#define CHANNEL_CNT     4
+#define CHANNEL_CNT         4
+
+/* middle point in uS */
+#define NORMALIZE_SHIFT     1500
+/* max - mid. Good futabas have maximum at 2000uS but not all futabas good enough */
+#define NORMALIZE_SCALE     400
 
 /*
  ******************************************************************************
@@ -140,7 +145,7 @@ void ReceiverPWM::get_ch(int32_t map, float *result, uint32_t *status,
     *status &= ~error_bit;
   }
   else {
-    *result = pwm_normalize(cache[map]);
+    *result = pwm_normalize(cache[map], NORMALIZE_SHIFT, NORMALIZE_SCALE);
     if (check_timeout(map, MS2ST(this->timeout)))
       *status |= error_bit;
     else
@@ -211,7 +216,7 @@ void ReceiverPWM::stop(void) {
 /**
  *
  */
-void ReceiverPWM::update(receiver_data_t &result) {
+void ReceiverPWM::update(RecevierOutput &result) {
 
   osalDbgCheck(ready);
 

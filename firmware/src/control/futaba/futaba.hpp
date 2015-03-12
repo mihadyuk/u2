@@ -1,10 +1,11 @@
 #ifndef FUTABA_HPP_
 #define FUTABA_HPP_
 
-#include <futaba_data.hpp>
+#include <futaba_output.hpp>
 #include <futaba/tumbler.hpp>
 #include <futaba/receiver_mavlink.hpp>
 #include <futaba/receiver_pwm.hpp>
+#include <futaba/alcoi.hpp>
 
 namespace control {
 
@@ -16,15 +17,16 @@ public:
   Futaba(void);
   void start(void);
   void stop(void);
-  msg_t update(FutabaData &result);
+  msg_t update(FutabaOutput &result, float dT);
 private:
-  msg_t semiauto_interpret(receiver_data_t const &recv, FutabaData &result);
-  msg_t man_switch_interpret(receiver_data_t const &recv, FutabaData &result);
+  msg_t semiauto_interpret(RecevierOutput const &recv, FutabaOutput &result, float dT);
+  msg_t man_switch_interpret(RecevierOutput const &recv, FutabaOutput &result, float dT);
   bool ready = false;
   const uint32_t *timeout = nullptr;
   const uint32_t *override = nullptr;
   ReceiverPWM receiver_rc;
   ReceiverMavlink receiver_mavlink;
+  Alcoi alcoi;
 };
 
 } /* namespace */

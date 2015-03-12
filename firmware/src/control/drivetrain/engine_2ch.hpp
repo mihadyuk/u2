@@ -12,7 +12,7 @@ public:
   Engine2ch(PWM &pwm);
   void start(void);
   void stop(void);
-  void update(const FutabaData &futaba_data, const Impact &impact);
+  void update(const FutabaOutput &futaba_data, const Impact &impact);
 private:
   PWM &pwm;
   bool ready = false;

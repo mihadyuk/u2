@@ -1,6 +1,7 @@
 #include "main.h"
-#include <futaba/receiver_ppm.hpp>
+#include "alcoi.hpp"
 
+using namespace chibios_rt;
 using namespace control;
 
 /*
@@ -40,33 +41,39 @@ using namespace control;
  * EXPORTED FUNCTIONS
  ******************************************************************************
  */
-
 /**
  *
  */
-void ReceiverPPM::start(const uint32_t *timeout) {
-  this->timeout = timeout;
+void Alcoi::start(void) {
   ready = true;
 }
 
 /**
  *
  */
-void ReceiverPPM::stop(void) {
+void Alcoi::stop(void) {
   ready = false;
 }
 
 /**
  *
  */
-void ReceiverPPM::update(RecevierOutput &result) {
+msg_t Alcoi::update(FutabaOutput &result, float dT) {
+  (void)dT;
 
   osalDbgCheck(ready);
 
-  (void)result;
+  result.ail = 0;
+  result.ele = 0;
+  result.rud = 0;
+  result.thr = 0;
+
+  result.man = ManualSwitch::semiauto;
+
+  result.ol_ail = OverrideLevel::medium;
+  result.ol_ele = OverrideLevel::medium;
+  result.ol_rud = OverrideLevel::medium;
+  result.ol_thr = OverrideLevel::medium;
+
+  return MSG_OK;
 }
-
-
-
-
-

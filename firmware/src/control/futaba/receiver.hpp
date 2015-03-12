@@ -1,13 +1,10 @@
 #ifndef FUTABA_RECEIVER_HPP_
 #define FUTABA_RECEIVER_HPP_
 
+#include "putinrange.hpp"
 #include "tumbler.hpp"
 #include "manual_switch.hpp"
 
-
-#define RECEIVER_MIN_WIDTH                1000
-#define RECEIVER_NEUTRAL_WIDTH            1500
-#define RECEIVER_MAX_WIDTH                2000
 
 #define RECEIVER_STATUS_NO_ERRORS         0
 #define RECEIVER_STATUS_AIL_CH_ERROR      ((uint32_t)1 << 0)
@@ -23,7 +20,7 @@ namespace control {
 /**
  *
  */
-struct receiver_data_t {
+struct RecevierOutput {
   /**
    * @brief   Status register
    * @details Low 16 bits reserved for 16 channels error flags (1 == error)
@@ -46,12 +43,14 @@ class Receiver {
 public:
   virtual void start(const uint32_t *timeout) = 0;
   virtual void stop(void) = 0;
-  virtual void update(receiver_data_t &result) = 0;
+  virtual void update(RecevierOutput &result) = 0;
 protected:
-  float pwm_normalize(uint16_t v) const;
+  float pwm_normalize(uint16_t v, float shift, float scale) const {
+    return putinrange(((float)v - shift) / scale, -1, 1);
+  }
   bool ready = false;
   const uint32_t *timeout = nullptr;
-  Tumbler3<int, 800, 1200, 1400, 1600, 1800, 2200> manual_switch;
+  Tumbler3<int, 1000, 1500, 2000, 150> manual_switch;
 };
 
 } /* namespace */

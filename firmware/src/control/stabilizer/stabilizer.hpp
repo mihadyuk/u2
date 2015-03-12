@@ -11,7 +11,7 @@ namespace control {
 /**
  *
  */
-struct pid_in {
+struct StabInput {
   OverrideLevel ol_ail;
   OverrideLevel ol_ele;
   OverrideLevel ol_rud;
@@ -39,7 +39,7 @@ class Stabilizer {
 public:
   Stabilizer(Drivetrain &drivetrain, const StateVector &s);
   void start(void);
-  void update(const pid_in &in, float dT);
+  void update(const StabInput &in, float dT);
   void stop(void);
 private:
   Drivetrain &drivetrain;

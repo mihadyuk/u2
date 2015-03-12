@@ -12,7 +12,7 @@ class ReceiverPWM : public Receiver {
 public:
   void start(const uint32_t *timeout);
   void stop(void);
-  void update(receiver_data_t &result);
+  void update(RecevierOutput &result);
   friend void futaba_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p);
 private:
   void get_ch(int32_t map, float *result, uint32_t *status, uint32_t error_bit) const;

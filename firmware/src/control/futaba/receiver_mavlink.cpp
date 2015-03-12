@@ -60,7 +60,7 @@ void ReceiverMavlink::stop(void) {
 /**
  *
  */
-void ReceiverMavlink::update(receiver_data_t &result) {
+void ReceiverMavlink::update(RecevierOutput &result) {
 
   osalDbgCheck(ready);
   (void)result;
