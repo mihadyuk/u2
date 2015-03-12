@@ -160,20 +160,20 @@ MAVSRC = \
 		src/mavlink_local/link_mgr.cpp \
 
 SENSORSRC = src/i2c_local.cpp \
-		sensors/adis.cpp \
-		sensors/exti_local.cpp \
-		sensors/i2c_sensor.cpp \
-		sensors/marg.cpp \
-		sensors/mpu6050.cpp \
-		sensors/ak8975.cpp \
-		sensors/lsm303_acc.cpp \
-		sensors/lsm303_mag.cpp \
-		sensors/gps_eb500.cpp \
-		sensors/bmp085.cpp \
-		sensors/maxsonar.cpp \
-		sensors/adc_local.cpp \
-		sensors/pwr_mgr.cpp \
-		sensors/mpxv.cpp \
+		src/sensors/adis.cpp \
+		src/sensors/exti_local.cpp \
+		src/sensors/i2c_sensor.cpp \
+		src/sensors/marg.cpp \
+		src/sensors/mpu6050.cpp \
+		src/sensors/ak8975.cpp \
+		src/sensors/lsm303_acc.cpp \
+		src/sensors/lsm303_mag.cpp \
+		src/sensors/gps_eb500.cpp \
+		src/sensors/bmp085.cpp \
+		src/sensors/maxsonar.cpp \
+		src/sensors/adc_local.cpp \
+		src/sensors/pwr_mgr.cpp \
+		src/sensors/mpxv.cpp \
           
 CLISRC = src/cli/cli.cpp \
 		src/cli/cli_cmd.cpp \
@@ -224,7 +224,7 @@ INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
          $(CHIBIOS)/os/various \
          $(CHIBIOS)/os/hal/lib/streams \
          $(CHIBIOS)/os/various/cpp_wrappers \
-         sensors \
+         src/sensors \
          lib/microrl/src \
          lib/uav_utils \
          lib/filters \
