@@ -15,7 +15,6 @@
  * DEFINES
  ******************************************************************************
  */
-#define BAUDRATE_XBEE           115200
 #define DEBOUNCE_PERIOD         MS2ST(50)
 
 /*
@@ -32,11 +31,15 @@ SerialUSBDriver SDU1;
  ******************************************************************************
  */
 
-static SerialConfig xbee_ser_cfg = {
-    BAUDRATE_XBEE,
+static const SerialConfig xbee_ser_cfg = {
+    XBEE_BAUDRATE,
     0,
     0,
-    0//USART_CR3_CTSE | USART_CR3_RTSE
+#if XBEE_USE_CTS_RTS
+    USART_CR3_CTSE | USART_CR3_RTSE
+#else
+    0
+#endif
 };
 
 static const uint32_t *sh_overxbee;

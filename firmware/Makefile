@@ -157,6 +157,7 @@ MAVSRC = \
 		src/mavlink_local/mav_channel_usbserial.cpp \
 		src/mavlink_local/mission_receiver.cpp \
 		src/mavlink_local/waypoint_db.cpp \
+		src/mavlink_local/link_mgr.cpp \
 
 SENSORSRC = src/i2c_local.cpp \
 		sensors/adis.cpp \
@@ -186,7 +187,6 @@ CPPSRC = $(CHCPPSRC) \
 		$(CONTROLSRC) \
 		main.cpp \
 		src/instantiator.cpp \
-		src/link_mgr.cpp \
 		src/debouncer.cpp \
 		src/blinker.cpp \
 		src/sanity.cpp \
