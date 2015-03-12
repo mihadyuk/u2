@@ -43,14 +43,14 @@ void sonar_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p) 
   red_led_toggle();
 }
 
-static EICUChannelConfig sonarcfg = {
+static const EICUChannelConfig sonarcfg = {
     EICU_INPUT_ACTIVE_HIGH,
     EICU_INPUT_PULSE,
     sonar_cb
 };
 
 /* for timer 9 */
-static EICUConfig eicucfg = {
+static const EICUConfig eicucfg = {
     (1000 * 1000),      /* EICU clock frequency (Hz).*/
     {
         &sonarcfg,

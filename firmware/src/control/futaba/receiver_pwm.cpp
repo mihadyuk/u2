@@ -58,7 +58,7 @@ void futaba_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p)
 /**
  *
  */
-static EICUChannelConfig futabacfg = {
+static const EICUChannelConfig futabacfg = {
     EICU_INPUT_ACTIVE_HIGH,
     EICU_INPUT_PULSE,
     futaba_cb
@@ -67,7 +67,7 @@ static EICUChannelConfig futabacfg = {
 /**
  *
  */
-static EICUConfig eicucfg = {
+static const EICUConfig eicucfg = {
     (1000 * 1000),      /* EICU clock frequency (Hz).*/
     {
         &futabacfg,
