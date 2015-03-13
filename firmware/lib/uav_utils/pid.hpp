@@ -94,7 +94,8 @@ public:
    * @param[in] dTerm   Differental part _measured_ some way, NOT calculated
    * @param[in] dT      Time delta between measurement
    */
-  T update(T error, T dTerm, T dT) {
+
+  T operator()(T error, T dTerm, T dT) {
     T ret;
 
     /* calculate the integral state with appropriate limiting */
@@ -146,7 +147,7 @@ public:
    * @param[in] target    Target value
 
    */
-  T update(T position, T target, T dT) {
+  T operator()(T position, T target, T dT) {
 
     T error = position - target;
 

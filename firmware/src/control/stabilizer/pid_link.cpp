@@ -72,7 +72,7 @@ void PIDLink::stop(void) {
 float PIDLink::update(float target, float dT) {
   osalDbgCheck(ready);
 
-  return pid.update(position, target, dT);
+  return pid(position, target, dT);
 }
 
 
