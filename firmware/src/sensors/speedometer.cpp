@@ -1,6 +1,8 @@
+#pragma GCC optimize "-O0"
+
 #include "main.h"
 #include "pads.h"
-#include "maxsonar.hpp"
+#include "speedometer.hpp"
 #include "mavlink_local.hpp"
 
 using namespace chibios_rt;
@@ -30,29 +32,25 @@ extern mavlink_debug_vect_t  mavlink_out_debug_vect_struct;
  ******************************************************************************
  */
 
-void sonar_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p) {
+void speedometer_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p) {
   (void)eicup;
   (void)channel;
-  (void)p;
+  (void)w;
 
-  //mavlink_out_debug_vect_struct.x = eicuGetWidth(eicup, channel) * 0.0001724137;
-  mavlink_out_debug_vect_struct.x = w;
-//  mavlink_out_debug_vect_struct.y = p;
-//  mavlink_out_debug_vect_struct.z = (w * 1000) / 58;
-//  red_led_toggle();
+  mavlink_out_debug_vect_struct.y = p;
 }
 
-static const EICUChannelConfig sonarcfg = {
-    EICU_INPUT_ACTIVE_HIGH,
-    EICU_INPUT_PULSE,
-    sonar_cb
+static const EICUChannelConfig speedometercfg = {
+    EICU_INPUT_ACTIVE_LOW,
+    EICU_INPUT_EDGE,
+    speedometer_cb
 };
 
 /* for timer 9 */
 static const EICUConfig eicucfg = {
-    (1000 * 1000),      /* EICU clock frequency (Hz).*/
+    (1000 * 50), /* EICU clock frequency (about 50kHz for meaningful results).*/
     {
-        &sonarcfg,
+        &speedometercfg,
         NULL,
         NULL,
         NULL
@@ -76,18 +74,17 @@ static const EICUConfig eicucfg = {
 /**
  *
  */
-void MaxSonar::start(void) {
+void Speedometer::start(void) {
 
-  eicuStart(&EICUD9, &eicucfg);
-  eicuEnable(&EICUD9);
+  eicuStart(&EICUD11, &eicucfg);
+  eicuEnable(&EICUD11);
 }
 
 /**
  *
  */
-void MaxSonar::stop(void) {
+void Speedometer::stop(void) {
 
-  eicuDisable(&EICUD9);
-  eicuStop(&EICUD9);
+  eicuDisable(&EICUD11);
+  eicuStop(&EICUD11);
 }
-

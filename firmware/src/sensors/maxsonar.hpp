@@ -4,6 +4,7 @@
 class MaxSonar {
 public:
   void start(void);
+  void stop(void);
   float height(void);
 private:
   float cache;

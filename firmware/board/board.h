@@ -276,7 +276,7 @@
                                 PIN_MODE_ALTERNATE(GPIOB_I2C_SLOW_SCL) |      \
                                 PIN_MODE_ALTERNATE(GPIOB_I2C_SLOW_SDA) |      \
                                 PIN_MODE_INPUT(GPIOB_TACHOMETER) |            \
-                                PIN_MODE_INPUT(GPIOB_RECEIVER_PPM) |          \
+                                PIN_MODE_ALTERNATE(GPIOB_RECEIVER_PPM) |      \
                                 PIN_MODE_ALTERNATE(GPIOB_I2C_FAST_SCL) |      \
                                 PIN_MODE_ALTERNATE(GPIOB_I2C_FAST_SDA) |      \
                                 PIN_MODE_ALTERNATE(GPIOB_SPI2_NSS_UEXT) |     \
@@ -324,7 +324,7 @@
                                 PIN_PUPDR_FLOATING(GPIOB_I2C_SLOW_SCL) |      \
                                 PIN_PUPDR_FLOATING(GPIOB_I2C_SLOW_SDA) |      \
                                 PIN_PUPDR_PULLUP(GPIOB_TACHOMETER) |          \
-                                PIN_PUPDR_PULLDOWN(GPIOB_RECEIVER_PPM) |      \
+                                PIN_PUPDR_PULLUP(GPIOB_RECEIVER_PPM) |        \
                                 PIN_PUPDR_FLOATING(GPIOB_I2C_FAST_SCL) |      \
                                 PIN_PUPDR_FLOATING(GPIOB_I2C_FAST_SDA) |      \
                                 PIN_PUPDR_PULLUP(GPIOB_SPI2_NSS_UEXT) |       \
@@ -356,7 +356,7 @@
                                 PIN_AFIO_AF(GPIOB_I2C_SLOW_SCL, 4) |          \
                                 PIN_AFIO_AF(GPIOB_I2C_SLOW_SDA, 4))
 #define VAL_GPIOB_AFRH         (PIN_AFIO_AF(GPIOB_TACHOMETER, 2) |            \
-                                PIN_AFIO_AF(GPIOB_RECEIVER_PPM, 0) |          \
+                                PIN_AFIO_AF(GPIOB_RECEIVER_PPM, 3) |          \
                                 PIN_AFIO_AF(GPIOB_I2C_FAST_SCL, 4) |          \
                                 PIN_AFIO_AF(GPIOB_I2C_FAST_SDA, 4) |          \
                                 PIN_AFIO_AF(GPIOB_SPI2_NSS_UEXT, 5) |         \

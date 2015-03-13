@@ -136,7 +136,9 @@ BMP085 bmp_085(&I2CD_SLOW, bmp085addr);
  */
 
 #include "maxsonar.hpp"
-static MaxSonar max_sonar;
+#include "speedometer.hpp"
+static MaxSonar maxsonar;
+static Speedometer speedometer;
 
 int main(void) {
 
@@ -194,7 +196,8 @@ int main(void) {
   mav_logger.start(NORMALPRIO);
 
   ahrs.start();
-  max_sonar.start();
+  maxsonar.start();
+  speedometer.start();
   acs.start();
 
   while (TRUE) {

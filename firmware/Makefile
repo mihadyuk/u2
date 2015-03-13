@@ -171,6 +171,7 @@ SENSORSRC = src/i2c_local.cpp \
 		src/sensors/gps_eb500.cpp \
 		src/sensors/bmp085.cpp \
 		src/sensors/maxsonar.cpp \
+		src/sensors/speedometer.cpp \
 		src/sensors/adc_local.cpp \
 		src/sensors/pwr_mgr.cpp \
 		src/sensors/mpxv.cpp \

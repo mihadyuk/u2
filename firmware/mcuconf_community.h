@@ -42,7 +42,11 @@
 #define STM32_EICU_USE_TIM5                 FALSE
 #define STM32_EICU_USE_TIM8                 FALSE
 #define STM32_EICU_USE_TIM9                 TRUE
+#define STM32_EICU_USE_TIM10                FALSE
+#define STM32_EICU_USE_TIM11                TRUE
 #define STM32_EICU_USE_TIM12                FALSE
+#define STM32_EICU_USE_TIM13                FALSE
+#define STM32_EICU_USE_TIM14                FALSE
 #define STM32_EICU_TIM1_IRQ_PRIORITY        7
 #define STM32_EICU_TIM2_IRQ_PRIORITY        7
 #define STM32_EICU_TIM3_IRQ_PRIORITY        7
@@ -50,4 +54,9 @@
 #define STM32_EICU_TIM5_IRQ_PRIORITY        7
 #define STM32_EICU_TIM8_IRQ_PRIORITY        7
 #define STM32_EICU_TIM9_IRQ_PRIORITY        7
+#define STM32_EICU_TIM10_IRQ_PRIORITY       7
+#define STM32_EICU_TIM11_IRQ_PRIORITY       7
 #define STM32_EICU_TIM12_IRQ_PRIORITY       7
+#define STM32_EICU_TIM13_IRQ_PRIORITY       7
+#define STM32_EICU_TIM14_IRQ_PRIORITY       7
+
