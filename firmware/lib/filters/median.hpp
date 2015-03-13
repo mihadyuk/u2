@@ -27,7 +27,7 @@ public:
   /**
    * Update filter state and return filtered value
    */
-  T update(T sample){
+  T operator() (T sample) {
     unsigned int j = 0, i = 0;
     T tmp;
 

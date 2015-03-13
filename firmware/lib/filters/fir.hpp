@@ -131,9 +131,9 @@ public:
   }
 
   /**
-   *
+   * @brief   Fastest variant for cortex-m4.
    */
-  T update(dataT sample) {
+  T update_(dataT sample) {
     T s;
 
     tip--;
@@ -146,6 +146,13 @@ public:
       tip = L;
 
     return s;
+  }
+
+  /**
+   *
+   */
+  T operator() (dataT sample) {
+    return update_(sample);
   }
 
 private:

@@ -159,7 +159,7 @@ public:
     T dTerm = (position - this->positionPrev) * dT;
     this->positionPrev = position;
     if (need_filter)
-      dTerm = filter.update(dTerm);
+      dTerm = filter(dTerm);
 
     return this->do_pid(error, dTerm);
   }

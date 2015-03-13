@@ -37,7 +37,7 @@ public:
   /**
    *
    */
-  T update(T sample) {
+  T update_(T sample) {
 
     unsigned int i;
     T s;
@@ -56,6 +56,13 @@ public:
     a_state[0] = s;
 
     return s;
+  }
+
+  /**
+   *
+   */
+  T operator() (T sample) {
+    return update_(sample);
   }
 
 protected:

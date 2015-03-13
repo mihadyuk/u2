@@ -7,19 +7,19 @@ namespace filters {
  * Template of alpha-beta filter class with length changed on the fly
  */
 template<typename T>
-class AlphaBeta{
+class AlphaBeta {
 public:
   /**
    * default constructor
    */
-  AlphaBeta(void){
+  AlphaBeta(void) {
     S = 0;
   };
 
   /**
    * Constructor resetting current value to specified one
    */
-  AlphaBeta(T val, int len){
+  AlphaBeta(T val, int len) {
     reset(val, len);
   };
 
@@ -27,7 +27,7 @@ public:
    * Perform addition of new sample to filter and return current filtered
    * result
    */
-  T update(T val, int len){
+  T operator() (T val, int len) {
     T tmp = S / len;
     S = S - tmp + val;
     return tmp;
@@ -36,14 +36,14 @@ public:
   /**
    * Return current result without updating
    */
-  T get(int len){
+  T get(int len) {
     return S / len;
   };
 
   /**
    * Reset filter state
    */
-  void reset(T val, int len){
+  void reset(T val, int len) {
     S = val * len;
   }
 
@@ -58,12 +58,12 @@ private:
  * Template of alpha-beta filter class with fixed length
  */
 template<typename T, int L>
-class AlphaBetaFixedLen{
+class AlphaBetaFixedLen {
 public:
   /**
    * Constructor resetting current value to specified one
    */
-  AlphaBetaFixedLen(void){
+  AlphaBetaFixedLen(void) {
     static_assert(L != 0, "Zero length forbidden");
     reset(0);
   };
@@ -71,7 +71,7 @@ public:
   /**
    * Constructor resetting current value to specified one
    */
-  AlphaBetaFixedLen(T val){
+  AlphaBetaFixedLen(T val) {
     static_assert(L != 0, "Zero length forbidden");
     reset(val);
   };
@@ -80,30 +80,30 @@ public:
    * Perform addition of new sample to filter and return current filtered
    * result
    */
-  T update(T val){
+  T operator() (T val) {
     T tmp = S / L;
     S = S - tmp + val;
     return tmp;
-  };
+  }
 
   /**
    * Return current result without updating
    */
-  T get(void){
+  T get(void) {
     return S / L;
   };
 
   /**
    * Return length of filter
    */
-  int getLen(void){
+  int getLen(void) {
     return L;
   };
 
   /**
    * Reset filter state
    */
-  void reset(T val){
+  void reset(T val) {
     S = val * L;
   }
 

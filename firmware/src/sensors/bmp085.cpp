@@ -168,7 +168,7 @@ void BMP085::picle(abs_pressure_data_t &result) {
 
   float altitude = press_to_height_f32(pressure_compensated);
 
-  result.altitude = altitude_filter.update(altitude, *flen_pres_stat);
+  result.altitude = altitude_filter(altitude, *flen_pres_stat);
   //result.altitude = altitude;
   result.climb = climb(result.altitude);
   result.p = pressure_compensated;
@@ -227,7 +227,7 @@ float BMP085::climb(float alt) {
 
   dt = TEMPERATURE_CONVERSION_TIME_MS + PRESSURE_CONVERSION_TIME_MS;
   dt /= 1000;
-  climb = climb_filter.update((altitude_prev - alt) / dt, *flen_climb);
+  climb = climb_filter((altitude_prev - alt) / dt, *flen_climb);
   altitude_prev = alt;
 
   return climb;

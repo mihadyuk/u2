@@ -43,7 +43,7 @@ volatile size_t spi_delay;
 static float mpxv_temp(uint16_t raw) {
   int32_t uV = raw * 803;
   const int32_t zero_uV = 1375000;
-  return temp_filter.update((uV - zero_uV) / 22.500);
+  return temp_filter((uV - zero_uV) / 22.500);
 }
 
 static inline void cs_low(void)     {palClearPad(GPIOD, GPIOD_AD_CS);}

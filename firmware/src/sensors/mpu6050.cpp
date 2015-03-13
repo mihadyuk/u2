@@ -449,8 +449,8 @@ void MPU6050::pickle_fifo(float *acc, float *gyr, const size_t sample_cnt) {
   for (size_t n=0; n<sample_cnt; n++) {
     for (size_t i=0; i<3; i++){
       size_t shift = n * BYTES_IN_SAMPLE / 2 + i;
-      acc[i] = acc_fir[i].update(rxbuf_fifo[shift + acc_fifo_offset]);
-      gyr[i] = gyr_fir[i].update(rxbuf_fifo[shift + gyr_fifo_offset]);
+      acc[i] = acc_fir[i](rxbuf_fifo[shift + acc_fifo_offset]);
+      gyr[i] = gyr_fir[i](rxbuf_fifo[shift + gyr_fifo_offset]);
     }
   }
   if (sample_cnt == 10)

@@ -129,7 +129,7 @@ bool PwrMgr6vGood(void) {
   filters::AlphaBetaFixedLen<int32_t, len> voltage_filter(ADCget6v());
 
   for (size_t i=0; i<len*2; i++) {
-    tmp = voltage_filter.update(ADCget6v());
+    tmp = voltage_filter(ADCget6v());
     osalThreadSleepMilliseconds(1);
   }
 
