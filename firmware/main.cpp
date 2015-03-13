@@ -138,7 +138,10 @@ BMP085 bmp_085(&I2CD_SLOW, bmp085addr);
 #include "maxsonar.hpp"
 #include "speedometer.hpp"
 static MaxSonar maxsonar;
+
 static Speedometer speedometer;
+float speed;
+uint32_t path;
 
 int main(void) {
 
@@ -203,6 +206,7 @@ int main(void) {
   while (TRUE) {
     ahrs_data_t ahrs_data;
     ahrs.get(ahrs_data, MS2ST(200));
+    speedometer.update(speed, path, ahrs_data.dt);
     acs.update(ahrs_data.dt);
 
     PwrMgrUpdate();

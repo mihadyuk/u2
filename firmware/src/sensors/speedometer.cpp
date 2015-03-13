@@ -4,6 +4,7 @@
 #include "pads.h"
 #include "speedometer.hpp"
 #include "mavlink_local.hpp"
+#include "param_registry.hpp"
 
 using namespace chibios_rt;
 
@@ -12,6 +13,8 @@ using namespace chibios_rt;
  * DEFINES
  ******************************************************************************
  */
+/* EICU clock frequency (about 50kHz for meaningful results).*/
+#define EICU_FREQ       (1000 * 50)
 
 /*
  ******************************************************************************
@@ -32,11 +35,18 @@ extern mavlink_debug_vect_t  mavlink_out_debug_vect_struct;
  ******************************************************************************
  */
 
+static const systime_t timeout = MS2ST((32768 * 1000) / EICU_FREQ);
+
+uint32_t Speedometer::total_path = 0;
+uint16_t Speedometer::period_cache = 0;
+
 void speedometer_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p) {
   (void)eicup;
   (void)channel;
   (void)w;
 
+  Speedometer::total_path++;
+  Speedometer::period_cache = p;
   mavlink_out_debug_vect_struct.y = p;
 }
 
@@ -48,7 +58,7 @@ static const EICUChannelConfig speedometercfg = {
 
 /* for timer 9 */
 static const EICUConfig eicucfg = {
-    (1000 * 50), /* EICU clock frequency (about 50kHz for meaningful results).*/
+    EICU_FREQ,    /* EICU clock frequency in Hz.*/
     {
         &speedometercfg,
         NULL,
@@ -65,6 +75,66 @@ static const EICUConfig eicucfg = {
  ******************************************************************************
  ******************************************************************************
  */
+/**
+ * @brief   Drop some first (potentially inaccurate) samples.
+ *
+ * @retval  OSAL_SUCCESS if measurement considered good.
+ */
+bool Speedometer::check_sample(uint32_t &path_ret,
+                               uint16_t &last_pulse_period, float dT) {
+  bool ret = OSAL_FAILED;
+  const size_t clearance = 3;
+  uint32_t path; /* cache value for atomicity */
+
+  osalSysLock();
+  path = total_path;
+  last_pulse_period = period_cache;
+  osalSysUnlock();
+
+  /* timeout handling */
+  if (total_path_prev == path) { /* no updates sins last call */
+    capture_time += US2ST(roundf(dT * 1000000));
+    if (capture_time > 3 * timeout) /* prevent wrap and false good result */
+      capture_time = 2 * timeout;
+  }
+  else {
+    capture_time = 0;
+    total_path_prev = path;
+
+    new_sample_seq++;
+    if (new_sample_seq > clearance) /* prevent overflow */
+      new_sample_seq = clearance;
+  }
+
+  /**/
+  switch (sample_state) {
+  case SampleCosher::bad:
+    if (capture_time < timeout && new_sample_seq >= clearance) {
+      sample_state = SampleCosher::good;
+      ret = OSAL_SUCCESS;
+    }
+    else
+      ret = OSAL_FAILED;
+    break;
+
+  case SampleCosher::good:
+    if (capture_time > timeout) {
+      sample_state = SampleCosher::bad;
+      new_sample_seq = 0;
+      ret = OSAL_FAILED;
+    }
+    else
+      ret = OSAL_SUCCESS;
+    break;
+
+  default:
+    osalSysHalt("Unhandle case");
+    break;
+  }
+
+  path_ret = path;
+  return ret;
+}
 
 /*
  ******************************************************************************
@@ -76,8 +146,19 @@ static const EICUConfig eicucfg = {
  */
 void Speedometer::start(void) {
 
+  param_registry.valueSearch("SPD_pulse2m", &pulse2m);
+
+  capture_time = 2 * timeout;
+  total_path = 0;
+  total_path_prev = 0;
+  new_sample_seq = 0;
+
+  sample_state = SampleCosher::bad;
+
   eicuStart(&EICUD11, &eicucfg);
   eicuEnable(&EICUD11);
+
+  ready = true;
 }
 
 /**
@@ -85,6 +166,53 @@ void Speedometer::start(void) {
  */
 void Speedometer::stop(void) {
 
+  ready = false;
+
   eicuDisable(&EICUD11);
   eicuStop(&EICUD11);
 }
+
+static uint32_t hack_path_prev = 0;
+static systime_t hack_time = 0;
+static float hack_speed = 0;
+
+float Speedometer::speed_hack(uint32_t path) {
+
+  if ((chVTGetSystemTimeX() - hack_time) > S2ST(1)) {
+    hack_speed = *pulse2m * (path - hack_path_prev);
+    hack_time = chVTGetSystemTimeX();
+    hack_path_prev = path;
+  }
+
+  return hack_speed;
+}
+
+/**
+ *
+ */
+void Speedometer::update(float &speed, uint32_t &path, float dT) {
+  float pps; /* pulse per second */
+  uint16_t last_pulse_period;
+  bool status;
+
+  osalDbgCheck(ready);
+
+  status = check_sample(path, last_pulse_period, dT);
+  if (OSAL_FAILED == status)
+    pps = 0;
+  else {
+    pps = static_cast<float>(EICU_FREQ) / static_cast<float>(last_pulse_period);
+  }
+
+  /* now calculate speed */
+  pps = filter_alphabeta(pps);
+  speed = *pulse2m * pps;
+  mavlink_out_debug_vect_struct.z = speed * 3.6;
+//  mavlink_out_debug_vect_struct.z = path;
+//  mavlink_out_debug_vect_struct.z = 3.6 * speed_hack(path);
+}
+
+
+
+
+
