@@ -1,12 +1,10 @@
 #include "main.h"
 
 #include "nmea.hpp"
-#include "global_flags.h"
 #include "mavlink_local.hpp"
 #include "gps_eb500.hpp"
-#include "bkp.hpp"
 #include "geometry.hpp"
-#include "exti_local.hpp"
+#include "time_keeper.hpp"
 
 using namespace gps;
 
@@ -20,13 +18,17 @@ using namespace gps;
 #define GPS_DEFAULT_BAUDRATE    9600
 #define GPS_HI_BAUDRATE         57600
 
+#define DEG_TO_MAVLINK          (10 * 1000 * 1000)
+
 /*
  ******************************************************************************
  * EXTERNS
  ******************************************************************************
  */
-
 chibios_rt::EvtSource event_gps;
+
+extern mavlink_gps_raw_int_t           mavlink_out_gps_raw_int_struct;
+extern mavlink_global_position_int_t   mavlink_out_global_position_int_struct;
 
 /*
  ******************************************************************************
@@ -58,9 +60,9 @@ static const uint8_t gps_high_baudrate[] = "$PMTK251,57600*2C\r\n";
 
 static NmeaParser nmea_parser __attribute__((section(".ccm")));
 
-static nmea_gga_t gga       __attribute__((section(".ccm")));
-static nmea_rmc_t rmc       __attribute__((section(".ccm")));
-static gps_data_t gps_data  __attribute__((section(".ccm")));
+static nmea_gga_t gga   __attribute__((section(".ccm")));
+static nmea_rmc_t rmc   __attribute__((section(".ccm")));
+static gps_data_t cache __attribute__((section(".ccm")));
 
 static chibios_rt::BinarySemaphore pps_sem(true);
 static chibios_rt::BinarySemaphore protect_sem(false);
@@ -78,6 +80,30 @@ static chibios_rt::BinarySemaphore protect_sem(false);
  *******************************************************************************
  *******************************************************************************
  */
+
+/**
+ *
+ */
+static void gps2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc) {
+
+  mavlink_out_gps_raw_int_struct.time_usec = TimeKeeper::utc();
+  mavlink_out_gps_raw_int_struct.lat = gga.latitude  * DEG_TO_MAVLINK;
+  mavlink_out_gps_raw_int_struct.lon = gga.longitude * DEG_TO_MAVLINK;
+  mavlink_out_gps_raw_int_struct.alt = gga.altitude * 1000;
+  mavlink_out_gps_raw_int_struct.eph = gga.hdop * 100;
+  mavlink_out_gps_raw_int_struct.epv = UINT16_MAX;
+  mavlink_out_gps_raw_int_struct.fix_type = gga.fix;
+  mavlink_out_gps_raw_int_struct.satellites_visible = gga.satellites;
+  mavlink_out_gps_raw_int_struct.cog = rmc.course * 100;
+  mavlink_out_gps_raw_int_struct.vel = rmc.speed * 100;
+
+  mavlink_out_global_position_int_struct.time_boot_ms = TIME_BOOT_MS;
+  mavlink_out_global_position_int_struct.alt = mavlink_out_gps_raw_int_struct.alt;
+  mavlink_out_global_position_int_struct.lat = mavlink_out_gps_raw_int_struct.lat;
+  mavlink_out_global_position_int_struct.lon = mavlink_out_gps_raw_int_struct.lon;
+  mavlink_out_global_position_int_struct.hdg = mavlink_out_gps_raw_int_struct.cog;
+}
+
 /**
  *
  */
@@ -147,11 +173,11 @@ static msg_t gpsRxThread(void *arg) {
 
       switch(status) {
       case collect_status_t::GPGGA:
-        nmea_parser.unpack(&gga);
+        nmea_parser.unpack(gga);
         gga_acquired = true;
         break;
       case collect_status_t::GPRMC:
-        nmea_parser.unpack(&rmc);
+        nmea_parser.unpack(rmc);
         rmc_acquired = true;
         break;
       default:
@@ -160,18 +186,23 @@ static msg_t gpsRxThread(void *arg) {
 
       /* */
       if (gga_acquired && rmc_acquired) {
+        gga_acquired = false;
+        rmc_acquired = false;
+
+        gps2mavlink(gga, rmc);
+
         acquire();
         if (gga.fix > 0)
-          gps_data.fix_valid = true;
+          cache.fix_valid = true;
         else
-          gps_data.fix_valid = false;
-        gps_data.altitude   = gga.altitude;
-        gps_data.latitude   = gga.latitude;
-        gps_data.longitude  = gga.longitude;
-        gps_data.course     = rmc.course;
-        gps_data.speed      = rmc.speed;
-        gps_data.time       = rmc.time;
-        gps_data.sec_round  = rmc.sec_round;
+          cache.fix_valid = false;
+        cache.altitude   = gga.altitude;
+        cache.latitude   = gga.latitude;
+        cache.longitude  = gga.longitude;
+        cache.course     = rmc.course;
+        cache.speed      = rmc.speed;
+        cache.time       = rmc.time;
+        cache.sec_round  = rmc.sec_round;
         release();
 
         event_gps.broadcastFlags(EVMSK_GPS_UPATED);
@@ -188,7 +219,6 @@ static msg_t gpsRxThread(void *arg) {
  * EXPORTED FUNCTIONS
  *******************************************************************************
  */
-
 /**
  *
  */
@@ -204,7 +234,7 @@ void GPSInit(void){
 void GPSGetData(gps_data_t &result) {
 
   acquire();
-  result = gps_data;
+  result = cache;
   release();
 }
 

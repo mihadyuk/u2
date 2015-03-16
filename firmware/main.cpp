@@ -137,11 +137,18 @@ BMP085 bmp_085(&I2CD_SLOW, bmp085addr);
 
 #include "maxsonar.hpp"
 #include "speedometer.hpp"
+#include "gps_eb500.hpp"
 static MaxSonar maxsonar;
 
 static Speedometer speedometer;
 float speed;
 uint32_t path;
+
+static gps::gps_data_t gps_data __attribute__((section(".ccm")));
+static ahrs_data_t ahrs_data __attribute__((section(".ccm")));
+
+
+
 
 int main(void) {
 
@@ -204,8 +211,8 @@ int main(void) {
   acs.start();
 
   while (TRUE) {
-    ahrs_data_t ahrs_data;
     ahrs.get(ahrs_data, MS2ST(200));
+    GPSGetData(gps_data);
     speedometer.update(speed, path, ahrs_data.dt);
     acs.update(ahrs_data.dt);
 

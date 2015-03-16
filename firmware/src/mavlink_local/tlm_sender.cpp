@@ -26,6 +26,7 @@ extern const mavlink_attitude_t mavlink_out_attitude_struct;
 extern const mavlink_debug_t mavlink_out_debug_struct;
 extern const mavlink_debug_vect_t mavlink_out_debug_vect_struct;
 extern const mavlink_global_position_int_t mavlink_out_global_position_int_struct;
+extern const mavlink_gps_raw_int_t mavlink_out_gps_raw_int_struct;
 extern const mavlink_highres_imu_t mavlink_out_highres_imu_struct;
 extern const mavlink_nav_controller_output_t mavlink_out_nav_controller_output_struct;
 extern const mavlink_local_position_ned_t mavlink_out_local_position_ned_struct;
@@ -58,7 +59,8 @@ typedef struct tlm_registry_t {
 static void send_attitude(void);
 static void send_debug(void);
 static void send_debug_vect(void);
-static void send_gps_int(void);
+static void send_global_pos(void);
+static void send_gps_raw_int(void);
 static void send_highres_imu(void);
 static void send_nav_output(void);
 static void send_position_ned(void);
@@ -84,6 +86,7 @@ static mavMail attitude_mail;
 static mavMail debug_mail;
 static mavMail debug_vect_mail;
 static mavMail global_position_int_mail;
+static mavMail gps_raw_int_mail;
 static mavMail highres_imu_mail;
 static mavMail nav_controller_output_mail;
 static mavMail local_position_ned_mail;
@@ -100,17 +103,18 @@ static tlm_registry_t Registry[] = {
     {11, NULL, send_attitude},
     {12, NULL, send_debug},
     {13, NULL, send_debug_vect},
-    {14, NULL, send_gps_int},
-    {15, NULL, send_highres_imu},
-    {16, NULL, send_nav_output},
-    {17, NULL, send_position_ned},
-    {18, NULL, send_raw_imu},
-    {19, NULL, send_raw_press},
-    {20, NULL, send_rc},
-    {21, NULL, send_rc_scaled},
-    {22, NULL, send_scal_press},
-    {23, NULL, send_sys_status},
-    {24, NULL, send_vfr_hud},
+    {14, NULL, send_global_pos},
+    {15, NULL, send_gps_raw_int},
+    {16, NULL, send_highres_imu},
+    {17, NULL, send_nav_output},
+    {18, NULL, send_position_ned},
+    {19, NULL, send_raw_imu},
+    {20, NULL, send_raw_press},
+    {21, NULL, send_rc},
+    {22, NULL, send_rc_scaled},
+    {23, NULL, send_scal_press},
+    {24, NULL, send_sys_status},
+    {25, NULL, send_vfr_hud},
 };
 
 /*
@@ -162,7 +166,7 @@ static void send_debug_vect(void){
     mail_undelivered++;
 }
 
-static void send_gps_int(void){
+static void send_global_pos(void){
   msg_t status = MSG_RESET;
   if (global_position_int_mail.free()){
     global_position_int_mail.fill(&mavlink_out_global_position_int_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_GLOBAL_POSITION_INT);
@@ -170,6 +174,20 @@ static void send_gps_int(void){
     if (status != MSG_OK){
       mailbox_overflow++;
       global_position_int_mail.release();
+    }
+  }
+  else
+    mail_undelivered++;
+}
+
+static void send_gps_raw_int(void){
+  msg_t status = MSG_RESET;
+  if (gps_raw_int_mail.free()){
+    gps_raw_int_mail.fill(&mavlink_out_gps_raw_int_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_GPS_RAW_INT);
+    status = mav_postman.post(gps_raw_int_mail);
+    if (status != MSG_OK){
+      mailbox_overflow++;
+      gps_raw_int_mail.release();
     }
   }
   else
@@ -385,17 +403,18 @@ static void load_parameters(void) {
   param_registry.valueSearch("T_attitude", &(Registry[0].sleepperiod));
   param_registry.valueSearch("T_debug", &(Registry[1].sleepperiod));
   param_registry.valueSearch("T_debug_vect", &(Registry[2].sleepperiod));
-  param_registry.valueSearch("T_gps_int", &(Registry[3].sleepperiod));
-  param_registry.valueSearch("T_highres_imu", &(Registry[4].sleepperiod));
-  param_registry.valueSearch("T_nav_output", &(Registry[5].sleepperiod));
-  param_registry.valueSearch("T_position_ned", &(Registry[6].sleepperiod));
-  param_registry.valueSearch("T_raw_imu", &(Registry[7].sleepperiod));
-  param_registry.valueSearch("T_raw_press", &(Registry[8].sleepperiod));
-  param_registry.valueSearch("T_rc", &(Registry[9].sleepperiod));
-  param_registry.valueSearch("T_rc_scaled", &(Registry[10].sleepperiod));
-  param_registry.valueSearch("T_scal_press", &(Registry[11].sleepperiod));
-  param_registry.valueSearch("T_sys_status", &(Registry[12].sleepperiod));
-  param_registry.valueSearch("T_vfr_hud", &(Registry[13].sleepperiod));
+  param_registry.valueSearch("T_global_pos", &(Registry[3].sleepperiod));
+  param_registry.valueSearch("T_gps_raw_int", &(Registry[4].sleepperiod));
+  param_registry.valueSearch("T_highres_imu", &(Registry[5].sleepperiod));
+  param_registry.valueSearch("T_nav_output", &(Registry[6].sleepperiod));
+  param_registry.valueSearch("T_position_ned", &(Registry[7].sleepperiod));
+  param_registry.valueSearch("T_raw_imu", &(Registry[8].sleepperiod));
+  param_registry.valueSearch("T_raw_press", &(Registry[9].sleepperiod));
+  param_registry.valueSearch("T_rc", &(Registry[10].sleepperiod));
+  param_registry.valueSearch("T_rc_scaled", &(Registry[11].sleepperiod));
+  param_registry.valueSearch("T_scal_press", &(Registry[12].sleepperiod));
+  param_registry.valueSearch("T_sys_status", &(Registry[13].sleepperiod));
+  param_registry.valueSearch("T_vfr_hud", &(Registry[14].sleepperiod));
 }
 
 /*

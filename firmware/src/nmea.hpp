@@ -12,9 +12,9 @@ namespace gps {
  *
  */
 typedef struct {
-  double  latitude;
-  double  longitude;
-  float   altitude;
+  double  latitude;     // deg
+  double  longitude;    // deg
+  float   altitude;     // m
   float   hdop;
   float   geoid;
   uint8_t satellites;
@@ -26,9 +26,9 @@ typedef struct {
  */
 typedef struct {
   struct tm time;
-  float     speed;
-  float     course;
-  bool      sec_round; /* no fractional part in seconds field*/
+  float     speed;    // m/s
+  float     course;   // deg
+  bool      sec_round; /* there is no fractional part in seconds' field */
 } nmea_rmc_t;
 
 /**
@@ -60,12 +60,12 @@ class NmeaParser {
 public:
   NmeaParser(void);
   collect_status_t collect(uint8_t byte);
-  void unpack(nmea_rmc_t *result);
-  void unpack(nmea_gga_t *result);
+  void unpack(nmea_rmc_t &result);
+  void unpack(nmea_gga_t &result);
 private:
   void reset_collector(void);
   const char* token(char *result, size_t number);
-  collect_status_t verify_sentece(void);
+  collect_status_t validate_sentece(void);
   collect_status_t get_name(const char *name);
   size_t tip;
   size_t maptip;
@@ -75,9 +75,5 @@ private:
 };
 
 } /* namespace */
-
-//gps::collect_status_t nmea_test_gga(void);
-//gps::collect_status_t nmea_test_rmc(void);
-//gps::collect_status_t nmea_benchmark(void);
 
 #endif /* NMEA_HPP_ */

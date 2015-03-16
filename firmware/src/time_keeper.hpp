@@ -1,7 +1,7 @@
 #ifndef TIME_KEEPER_HPP_
 #define TIME_KEEPER_HPP_
 
-/* Always use this constant if correct time value can not be determined */
+/* Use this constant if correct time value can not be determined */
 #define TIME_INVALID    0
 
 /**

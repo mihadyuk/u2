@@ -13,7 +13,7 @@ using namespace gps;
  * DEFINES
  ******************************************************************************
  */
-
+#define GPS_MIN_MSG_LEN       12
 
 /*
  ******************************************************************************
@@ -111,9 +111,34 @@ collect_status_t NmeaParser::get_name(const char *name) {
 /**
  *
  */
-collect_status_t NmeaParser::verify_sentece(void) {
+collect_status_t NmeaParser::validate_sentece(void) {
   uint8_t sum = 0;
 
+  if (tip < GPS_MIN_MSG_LEN)
+    return collect_status_t::EMPTY;
+
+  if ('$' != buf[0])
+    return collect_status_t::EMPTY;
+
+  if (',' != buf[6])  /* comma after GPGGA */
+    return collect_status_t::EMPTY;
+
+  if ('\n' != buf[tip-1])
+    return collect_status_t::EMPTY;
+
+  if ('\r' != buf[tip-2])
+    return collect_status_t::EMPTY;
+
+  if ('*' != buf[tip-5])
+    return collect_status_t::EMPTY;
+
+  for (size_t i=1; i<6; i++) {
+    /* letters from 'A' to 'Z' */
+    if ((buf[i] < 'A') || (buf[i] > 'Z'))
+      return collect_status_t::EMPTY;
+  }
+
+  /* now calc checksum */
   for (size_t i=1; i<tip-5; i++)
     sum ^= buf[i];
 
@@ -159,25 +184,25 @@ static double gps2deg(double gps) {
   gps /= 100;
   deg = floor(gps);
 
-  return deg + (gps - deg) * (double)1.66666666666666666;
+  return deg + (gps - deg) * static_cast<double>(1.66666666666666666);
 }
 
 /**
  *
  */
-void NmeaParser::unpack(nmea_gga_t *result) {
+void NmeaParser::unpack(nmea_gga_t &result) {
   char tmp[GPS_MAX_TOKEN_LEN];
   double c;
 
   c = copysign(atof(token(tmp, 1)), degrees_sign(token(tmp, 2)));
-  result->latitude    = gps2deg(c);
+  result.latitude    = gps2deg(c);
   c = copysign(atof(token(tmp, 3)), degrees_sign(token(tmp, 4)));
-  result->longitude   = gps2deg(c);
-  result->fix         = atol(token(tmp, 5));
-  result->satellites  = atol(token(tmp, 6));
-  result->hdop        = atof(token(tmp, 7));
-  result->altitude    = atof(token(tmp, 8));
-  result->geoid       = atof(token(tmp, 10));
+  result.longitude   = gps2deg(c);
+  result.fix         = atol(token(tmp, 5));
+  result.satellites  = atol(token(tmp, 6));
+  result.hdop        = atof(token(tmp, 7));
+  result.altitude    = atof(token(tmp, 8));
+  result.geoid       = atof(token(tmp, 10));
 }
 
 /**
@@ -190,13 +215,13 @@ static float knots2mps(float knots) {
 /**
  *
  */
-void NmeaParser::unpack(nmea_rmc_t *result) {
+void NmeaParser::unpack(nmea_rmc_t &result) {
   char tmp[GPS_MAX_TOKEN_LEN];
 
-  get_time(&result->time, &result->sec_round, token(tmp, 0));
-  result->speed   = knots2mps(atof(token(tmp, 6)));
-  result->course  = atof(token(tmp, 7));
-  get_date(&result->time, token(tmp, 8));
+  get_time(&result.time, &result.sec_round, token(tmp, 0));
+  result.speed   = knots2mps(atof(token(tmp, 6)));
+  result.course  = atof(token(tmp, 7));
+  get_date(&result.time, token(tmp, 8));
 }
 
 /**
@@ -219,9 +244,9 @@ void NmeaParser::reset_collector(void) {
  *
  */
 NmeaParser::NmeaParser(void) :
-    tip(0),
-    maptip(0),
-    state(collect_state_t::START)
+tip(0),
+maptip(0),
+state(collect_state_t::START)
 {
   memset(this->buf, 0, sizeof(this->buf));
   memset(this->token_map, 0, sizeof(this->token_map));
@@ -230,50 +255,52 @@ NmeaParser::NmeaParser(void) :
 /**
  *
  */
-collect_status_t NmeaParser::collect(uint8_t byte) {
+collect_status_t NmeaParser::collect(uint8_t c) {
   collect_status_t ret = collect_status_t::EMPTY;
 
-  osalDbgCheck(tip < GPS_MSG_LEN);
-  osalDbgCheck(maptip < GPS_TOKEN_MAP_LEN);
+  /* prevent overflow */
+  if ((tip >= GPS_MSG_LEN) || (maptip >= GPS_TOKEN_MAP_LEN)) {
+    reset_collector();
+  }
 
   switch (state) {
   case collect_state_t::START:
-    if ('$' == byte) {
+    if ('$' == c) {
       reset_collector();
-      buf[0] = byte;
+      buf[0] = c;
       tip = 1;
       state = collect_state_t::DATA;
     }
     break;
 
   case collect_state_t::DATA:
-    buf[tip] = byte;
-    if ((',' == byte) || ('*' == byte)) {
+    buf[tip] = c;
+    if ((',' == c) || ('*' == c)) {
       token_map[maptip] = tip;
       maptip++;
     }
     tip++;
     if (tip >= sizeof(buf) - 4)
       reset_collector();
-    if ('*' == byte)
+    if ('*' == c)
       state = collect_state_t::CHECKSUM1;
     break;
 
   case collect_state_t::CHECKSUM1:
-    buf[tip] = byte;
+    buf[tip] = c;
     tip++;
     state = collect_state_t::CHECKSUM2;
     break;
 
   case collect_state_t::CHECKSUM2:
-    buf[tip] = byte;
+    buf[tip] = c;
     tip++;
     state = collect_state_t::EOL_CR;
     break;
 
   case collect_state_t::EOL_CR:
-    if ('\r' == byte) {
-      buf[tip] = byte;
+    if ('\r' == c) {
+      buf[tip] = c;
       tip++;
       state = collect_state_t::EOL_LF;
     }
@@ -282,10 +309,12 @@ collect_status_t NmeaParser::collect(uint8_t byte) {
     break;
 
   case collect_state_t::EOL_LF:
-    if ('\n' == byte) {
-      buf[tip] = byte;
+    if ('\n' == c) {
+      buf[tip] = c;
       tip++;
-      ret = verify_sentece();
+      ret = validate_sentece();
+      if (collect_status_t::EMPTY == ret)
+        reset_collector();
       state = collect_state_t::START;
     }
     else

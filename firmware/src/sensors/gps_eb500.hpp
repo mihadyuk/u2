@@ -9,13 +9,13 @@ namespace gps {
  *
  */
 typedef struct {
-  double    latitude;
-  double    longitude;
-  float     altitude;
-  float     speed;
-  float     course;
+  double    latitude;   // deg
+  double    longitude;  // deg
+  float     altitude;   // m
+  float     speed;      // m/s
+  float     course;     // deg
   struct tm time;
-  bool      sec_round; /* no fractional part in seconds field*/
+  bool      sec_round;  /* there is no fractional part in seconds' field */
   bool      fix_valid;
 } gps_data_t;
 

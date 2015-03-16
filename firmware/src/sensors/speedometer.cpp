@@ -14,7 +14,9 @@ using namespace chibios_rt;
  ******************************************************************************
  */
 /* EICU clock frequency (about 50kHz for meaningful results).*/
-#define EICU_FREQ       (1000 * 50)
+#define EICU_FREQ             (1000 * 50)
+/* speedometer driver needs to drop some first samples because of theirs inaccurate */
+#define FIRST_SAMPLES_DROP    3
 
 /*
  ******************************************************************************
@@ -28,6 +30,7 @@ extern mavlink_debug_vect_t  mavlink_out_debug_vect_struct;
  * PROTOTYPES
  ******************************************************************************
  */
+void speedometer_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p);
 
 /*
  ******************************************************************************
@@ -40,23 +43,12 @@ static const systime_t timeout = MS2ST((32768 * 1000) / EICU_FREQ);
 uint32_t Speedometer::total_path = 0;
 uint16_t Speedometer::period_cache = 0;
 
-void speedometer_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p) {
-  (void)eicup;
-  (void)channel;
-  (void)w;
-
-  Speedometer::total_path++;
-  Speedometer::period_cache = p;
-  mavlink_out_debug_vect_struct.y = p;
-}
-
 static const EICUChannelConfig speedometercfg = {
     EICU_INPUT_ACTIVE_LOW,
     EICU_INPUT_EDGE,
     speedometer_cb
 };
 
-/* for timer 9 */
 static const EICUConfig eicucfg = {
     EICU_FREQ,    /* EICU clock frequency in Hz.*/
     {
@@ -76,6 +68,19 @@ static const EICUConfig eicucfg = {
  ******************************************************************************
  */
 /**
+ *
+ */
+void speedometer_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p) {
+  (void)eicup;
+  (void)channel;
+  (void)w;
+
+  Speedometer::total_path++;
+  Speedometer::period_cache = p;
+  mavlink_out_debug_vect_struct.y = p;
+}
+
+/**
  * @brief   Drop some first (potentially inaccurate) samples.
  *
  * @retval  OSAL_SUCCESS if measurement considered good.
@@ -83,7 +88,6 @@ static const EICUConfig eicucfg = {
 bool Speedometer::check_sample(uint32_t &path_ret,
                                uint16_t &last_pulse_period, float dT) {
   bool ret = OSAL_FAILED;
-  const size_t clearance = 3;
   uint32_t path; /* cache value for atomicity */
 
   osalSysLock();
@@ -102,14 +106,14 @@ bool Speedometer::check_sample(uint32_t &path_ret,
     total_path_prev = path;
 
     new_sample_seq++;
-    if (new_sample_seq > clearance) /* prevent overflow */
-      new_sample_seq = clearance;
+    if (new_sample_seq > FIRST_SAMPLES_DROP) /* prevent overflow */
+      new_sample_seq = FIRST_SAMPLES_DROP;
   }
 
   /**/
   switch (sample_state) {
   case SampleCosher::bad:
-    if (capture_time < timeout && new_sample_seq >= clearance) {
+    if (capture_time < timeout && new_sample_seq >= FIRST_SAMPLES_DROP) {
       sample_state = SampleCosher::good;
       ret = OSAL_SUCCESS;
     }
@@ -172,21 +176,6 @@ void Speedometer::stop(void) {
   eicuStop(&EICUD11);
 }
 
-static uint32_t hack_path_prev = 0;
-static systime_t hack_time = 0;
-static float hack_speed = 0;
-
-float Speedometer::speed_hack(uint32_t path) {
-
-  if ((chVTGetSystemTimeX() - hack_time) > S2ST(1)) {
-    hack_speed = *pulse2m * (path - hack_path_prev);
-    hack_time = chVTGetSystemTimeX();
-    hack_path_prev = path;
-  }
-
-  return hack_speed;
-}
-
 /**
  *
  */
@@ -208,11 +197,5 @@ void Speedometer::update(float &speed, uint32_t &path, float dT) {
   pps = filter_alphabeta(pps);
   speed = *pulse2m * pps;
   mavlink_out_debug_vect_struct.z = speed * 3.6;
-//  mavlink_out_debug_vect_struct.z = path;
-//  mavlink_out_debug_vect_struct.z = 3.6 * speed_hack(path);
 }
-
-
-
-
 
