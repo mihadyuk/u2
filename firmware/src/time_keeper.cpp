@@ -45,10 +45,10 @@
 #define BUILD_TIME                      1418207643
 
 /* timer autoreload value */
-#define RTC_TIMER_STEP                  65535
+#define RTC_TIMER_STEP                  UINT16_MAX
 
 /* Very dirty oscillator correction. Please remove it */
-#define RTC_TIMER_SKEW                  3
+#define RTC_TIMER_SKEW                  -3
 
 #define RTC_GPTD                        GPTD6
 
@@ -202,23 +202,27 @@ THD_FUNCTION(TimekeeperThread, arg) {
 
       jitter_stats_update();
 
-      gps_evt = chEvtWaitOneTimeout(EVMSK_GPS_UPATED, MS2ST(1300));
-      if (EVMSK_GPS_UPATED == gps_evt) {
-        GPSGetData(gps_data);
-        if (gps_data.fix_valid && gps_data.sec_round) {
-          int64_t tmp = 1000000;
-          tmp *= mktime(&gps_data.time);
-          osalSysLock();
-          time_gps_us = tmp;
-          osalSysUnlock();
+      while (true) { /* wait first measurement with rounde seconds */
+        gps_evt = chEvtWaitOneTimeout(EVMSK_GPS_UPATED, MS2ST(1200));
+        if (EVMSK_GPS_UPATED == gps_evt) {
+          GPSGetData(gps_data);
+          if (gps_data.fix_valid && gps_data.sec_round) {
+            int64_t tmp = 1000000;
+            tmp *= mktime(&gps_data.time);
+            osalSysLock();
+            time_gps_us = tmp;
+            osalSysUnlock();
 
-          /* now correct time in internal RTC (if needed) */
-          int32_t t1 = time_gps_us / 1000000;
-          int32_t t2 = rtc_get_time_unix();
-          int32_t dt = t1 - t2;
+            /* now correct time in internal RTC (if needed) */
+            int32_t t1 = time_gps_us / 1000000;
+            int32_t t2 = rtc_get_time_unix();
+            int32_t dt = t1 - t2;
 
-          if (abs(dt) > TIME_CORRECTION_THRESHOLD)
-            rtc_set_time(&gps_data.time);
+            if (abs(dt) > TIME_CORRECTION_THRESHOLD)
+              rtc_set_time(&gps_data.time);
+
+            break; // while(true)
+          }
         }
       }
     }
