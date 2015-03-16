@@ -120,7 +120,12 @@ collect_status_t NmeaParser::validate_sentece(void) {
   if ('$' != buf[0])
     return collect_status_t::EMPTY;
 
-  if (',' != buf[6])  /* comma after GPGGA */
+  for (size_t i=1; i<6; i++) {
+    if ((buf[i] < 'A') || (buf[i] > 'Z'))   /* letters from 'A' to 'Z' */
+      return collect_status_t::EMPTY;
+  }
+
+  if (',' != buf[6])                        /* comma after GPGGA */
     return collect_status_t::EMPTY;
 
   if ('\n' != buf[tip-1])
@@ -131,12 +136,6 @@ collect_status_t NmeaParser::validate_sentece(void) {
 
   if ('*' != buf[tip-5])
     return collect_status_t::EMPTY;
-
-  for (size_t i=1; i<6; i++) {
-    /* letters from 'A' to 'Z' */
-    if ((buf[i] < 'A') || (buf[i] > 'Z'))
-      return collect_status_t::EMPTY;
-  }
 
   /* now calc checksum */
   for (size_t i=1; i<tip-5; i++)
