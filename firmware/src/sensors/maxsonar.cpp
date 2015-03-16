@@ -30,16 +30,13 @@ extern mavlink_debug_vect_t  mavlink_out_debug_vect_struct;
  ******************************************************************************
  */
 
-void sonar_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p) {
+static void sonar_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p) {
   (void)eicup;
   (void)channel;
   (void)p;
 
   //mavlink_out_debug_vect_struct.x = eicuGetWidth(eicup, channel) * 0.0001724137;
-  mavlink_out_debug_vect_struct.x = w;
-//  mavlink_out_debug_vect_struct.y = p;
-//  mavlink_out_debug_vect_struct.z = (w * 1000) / 58;
-//  red_led_toggle();
+  (void)w;
 }
 
 static const EICUChannelConfig sonarcfg = {

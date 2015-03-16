@@ -254,7 +254,7 @@ void TimeKeeper::start(void) {
   gptStartContinuous(&RTC_GPTD, RTC_TIMER_STEP);
 
   worker = chThdCreateStatic(TimekeeperThreadWA, sizeof(TimekeeperThreadWA),
-                          TIMEKEEPERPRIO, TimekeeperThread, this);
+                             TIMEKEEPERPRIO, TimekeeperThread, this);
   osalDbgCheck(nullptr != worker); // Can not allocate memory
   Exti.pps(true);
   ready = true;

@@ -168,7 +168,7 @@
 /*
  * GPIOA setup
  */
-#define VAL_GPIOA_MODER        (PIN_MODE_INPUT(GPIOA_GPS_PPS) |               \
+#define VAL_GPIOA_MODER        (PIN_MODE_ALTERNATE(GPIOA_GPS_PPS) |           \
                                 PIN_MODE_OUTPUT(GPIOA_NVRAM_PWR_EN) |         \
                                 PIN_MODE_ALTERNATE(GPIOA_SONAR_PWM) |         \
                                 PIN_MODE_OUTPUT(GPIOA_AD_CLK) |               \
@@ -248,7 +248,7 @@
                                 PIN_ODR_HIGH(GPIOA_JTMS) |                    \
                                 PIN_ODR_HIGH(GPIOA_JTCK) |                    \
                                 PIN_ODR_HIGH(GPIOA_JTDI))
-#define VAL_GPIOA_AFRL         (PIN_AFIO_AF(GPIOA_GPS_PPS, 0) |               \
+#define VAL_GPIOA_AFRL         (PIN_AFIO_AF(GPIOA_GPS_PPS, 2) |               \
                                 PIN_AFIO_AF(GPIOA_NVRAM_PWR_EN, 0) |          \
                                 PIN_AFIO_AF(GPIOA_SONAR_PWM, 3) |             \
                                 PIN_AFIO_AF(GPIOA_AD_CLK, 0) |                \

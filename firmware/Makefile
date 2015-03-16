@@ -5,7 +5,7 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -O2 -ggdb -fomit-frame-pointer -falign-functions=16
+  USE_OPT = -O0 -ggdb -fomit-frame-pointer -falign-functions=16
 endif
 
 # C specific options here (added to USE_OPT).
@@ -175,6 +175,7 @@ SENSORSRC = src/i2c_local.cpp \
 		src/sensors/adc_local.cpp \
 		src/sensors/pwr_mgr.cpp \
 		src/sensors/mpxv.cpp \
+		src/sensors/pps.cpp \
           
 CLISRC = src/cli/cli.cpp \
 		src/cli/cli_cmd.cpp \

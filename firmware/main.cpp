@@ -136,6 +136,7 @@ BMP085 bmp_085(&I2CD_SLOW, bmp085addr);
  */
 
 #include "maxsonar.hpp"
+#include "pps.hpp"
 #include "speedometer.hpp"
 #include "gps_eb500.hpp"
 static MaxSonar maxsonar;
@@ -147,7 +148,7 @@ uint32_t path;
 static gps::gps_data_t gps_data __attribute__((section(".ccm")));
 static ahrs_data_t ahrs_data __attribute__((section(".ccm")));
 
-
+static PPS pps;
 
 
 int main(void) {
@@ -209,6 +210,7 @@ int main(void) {
   maxsonar.start();
   speedometer.start();
   acs.start();
+  pps.start();
 
   while (TRUE) {
     ahrs.get(ahrs_data, MS2ST(200));

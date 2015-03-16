@@ -20,8 +20,8 @@ public:
   void start(void);
   void stop(void);
   void update(float &speed, uint32_t &path, float dT);
-  friend void speedometer_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p) ;
 private:
+  friend void speedometer_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p);
   bool check_sample(uint32_t &path_ret, uint16_t &last_pulse_period, float dT);
   systime_t capture_time;
   uint32_t total_path_prev; /* for timeout detection */
