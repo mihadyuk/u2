@@ -80,12 +80,12 @@ static void log_append(void) {
 
   if (attitude_mail.free()) {
     attitude_mail.fill(&mavlink_out_attitude_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_ATTITUDE);
-    mav_logger.post(&attitude_mail);
+    mav_logger.write(&attitude_mail);
   }
 
   if (attitude_quaternion_mail.free()) {
     attitude_quaternion_mail.fill(&mavlink_out_attitude_quaternion_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_ATTITUDE_QUATERNION);
-    mav_logger.post(&attitude_quaternion_mail);
+    mav_logger.write(&attitude_quaternion_mail);
   }
 }
 

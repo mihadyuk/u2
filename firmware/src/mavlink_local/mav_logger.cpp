@@ -293,9 +293,9 @@ EXIT:
  */
 
 /**
- * @note    just drop message if logger not ready
+ * @note    just drop message if logger is not ready
  */
-msg_t MavLogger::post(mavMail* mail) {
+msg_t MavLogger::write(mavMail* mail) {
   msg_t ret = MSG_RESET;
 
   if (true == ready) {

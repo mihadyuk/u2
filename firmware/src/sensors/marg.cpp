@@ -126,12 +126,12 @@ static void log_append(void) {
 
   if (raw_imu_mail.free()) {
     raw_imu_mail.fill(&mavlink_out_raw_imu_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_RAW_IMU);
-    mav_logger.post(&raw_imu_mail);
+    mav_logger.write(&raw_imu_mail);
   }
 
   if (highres_imu_mail.free()) {
     highres_imu_mail.fill(&mavlink_out_highres_imu_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_HIGHRES_IMU);
-    mav_logger.post(&highres_imu_mail);
+    mav_logger.write(&highres_imu_mail);
   }
 }
 

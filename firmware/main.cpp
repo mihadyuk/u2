@@ -150,7 +150,6 @@ static ahrs_data_t ahrs_data __attribute__((section(".ccm")));
 
 static PPS pps;
 
-
 int main(void) {
 
   halInit();
@@ -191,7 +190,6 @@ int main(void) {
   mission_receiver.start(CONTROLLERPRIO);
 //  ControllerInit();
   link_mgr.start();      /* launch after controller to reduce memory fragmentation on thread creation */
-//  PwrMgmtInit();
   tlm_sender.start();
 
 //  /**/
@@ -199,8 +197,6 @@ int main(void) {
 //  clear_reset_flags();
 //
 //  /* main cycle */
-//  attitude_unit.start();
-//  acs.start();
 //  sins.start(&state_vector);
   bmp_085.start();
   GPSInit();

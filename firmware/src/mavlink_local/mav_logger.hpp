@@ -10,7 +10,7 @@
  */
 class MavLogger : public chibios_rt::BaseStaticThread<2048> {
 public:
-  msg_t post(mavMail* msg);
+  msg_t write(mavMail* msg);
   void stop(void);
 
 private:
