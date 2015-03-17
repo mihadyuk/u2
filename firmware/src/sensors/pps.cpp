@@ -16,7 +16,6 @@ using namespace chibios_rt;
  * EXTERNS
  ******************************************************************************
  */
-extern mavlink_debug_vect_t  mavlink_out_debug_vect_struct;
 
 /*
  ******************************************************************************
@@ -37,8 +36,7 @@ static void pps_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_
 
   int32_t result = p;
   result -= eicup->clock;
-
-  mavlink_out_debug_vect_struct.x = result;
+  (void)result;
 }
 
 static const EICUChannelConfig ppscfg = {

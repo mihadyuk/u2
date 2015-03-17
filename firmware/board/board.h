@@ -27,7 +27,7 @@
 #define GPSSD                   SD1
 
 #define XBEE_BAUDRATE           115200
-#define XBEE_USE_CTS_RTS        TRUE
+#define XBEE_USE_CTS_RTS        FALSE
 
 /*
  * Board identifier.

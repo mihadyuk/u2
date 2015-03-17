@@ -139,6 +139,7 @@ BMP085 bmp_085(&I2CD_SLOW, bmp085addr);
 #include "pps.hpp"
 #include "speedometer.hpp"
 #include "gps_eb500.hpp"
+#include "mpxv.hpp"
 static MaxSonar maxsonar;
 
 static Speedometer speedometer;
@@ -149,6 +150,7 @@ static gps::gps_data_t gps_data __attribute__((section(".ccm")));
 static ahrs_data_t ahrs_data __attribute__((section(".ccm")));
 
 static PPS pps;
+static MPXV mpxv;
 
 int main(void) {
 
@@ -213,6 +215,7 @@ int main(void) {
     GPSGetData(gps_data);
     speedometer.update(speed, path, ahrs_data.dt);
     acs.update(ahrs_data.dt);
+    mpxv.get();
 
     PwrMgrUpdate();
 

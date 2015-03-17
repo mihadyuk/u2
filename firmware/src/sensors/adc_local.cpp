@@ -2,6 +2,7 @@
 
 #include "main.h"
 #include "global_flags.h"
+#include "alpha_beta.hpp"
 
 /*
  ******************************************************************************
@@ -53,28 +54,28 @@ static adcsample_t samples[ADC_NUM_CHANNELS * ADC_BUF_DEPTH];
 static const ADCConversionGroup adccg = {
   TRUE,
   ADC_NUM_CHANNELS,
-  NULL,//adc_cb,
+  adc_cb,
   adc_eeror_cb,
   0,                        /* CR1 */
   ADC_CR2_SWSTART,          /* CR2 */
-  ADC_SMPR1_SMP_AN10(ADC_SAMPLE_480) |
-    ADC_SMPR1_SMP_AN11(ADC_SAMPLE_480) |
-    ADC_SMPR1_SMP_AN12(ADC_SAMPLE_480) |
-    ADC_SMPR1_SMP_AN13(ADC_SAMPLE_480) |
-    ADC_SMPR1_SMP_AN14(ADC_SAMPLE_480) |
+  ADC_SMPR1_SMP_AN10(ADC_SAMPLE_480)    |
+    ADC_SMPR1_SMP_AN11(ADC_SAMPLE_480)  |
+    ADC_SMPR1_SMP_AN12(ADC_SAMPLE_480)  |
+    ADC_SMPR1_SMP_AN13(ADC_SAMPLE_480)  |
+    ADC_SMPR1_SMP_AN14(ADC_SAMPLE_480)  |
     ADC_SMPR1_SMP_AN15(ADC_SAMPLE_480),
   0,                        /* SMPR2 */
   ADC_SQR1_NUM_CH(ADC_NUM_CHANNELS),
   0,
-  ADC_SQR3_SQ6_N(ADC_RESERVED_CH)          |
-    ADC_SQR3_SQ5_N(ADC_6V_SUPPLY_CH)        |
-    ADC_SQR3_SQ4_N(ADC_MAIN_SUPPLY_CH)        |
-    ADC_SQR3_SQ3_N(ADC_CURRENT_SENS_CH)     |
-    ADC_SQR3_SQ2_N(ADC_MPXV_TEMP_CH)   |
+  ADC_SQR3_SQ6_N(ADC_RESERVED_CH)       |
+    ADC_SQR3_SQ5_N(ADC_6V_SUPPLY_CH)    |
+    ADC_SQR3_SQ4_N(ADC_MAIN_SUPPLY_CH)  |
+    ADC_SQR3_SQ3_N(ADC_CURRENT_SENS_CH) |
+    ADC_SQR3_SQ2_N(ADC_MPXV_TEMP_CH)    |
     ADC_SQR3_SQ1_N(ADC_PRESS_DIFF_CH)
 };
 
-static time_measurement_t tmu;
+static filters::AlphaBetaFixedLen<int32_t, 128> temp_filter;
 
 /*
  *******************************************************************************
@@ -91,12 +92,7 @@ static void adc_cb(ADCDriver *adcp, adcsample_t *samples, size_t n) {
   (void)samples;
   (void)n;
 
-  chTMStopMeasurementX(&tmu);
-  chTMStartMeasurementX(&tmu);
-
-  for (size_t i=0; i<ADC_NUM_CHANNELS; i++) {
-    ;
-  }
+  temp_filter(samples[ADC_MPXV_TEMP_CH - CHANNEL_OFFSET]);
 }
 
 /*
@@ -117,14 +113,10 @@ static void adc_eeror_cb(ADCDriver *adcp, adcerror_t err) {
 /**
  *
  */
-void ADCInitLocal(void){
+void ADCInitLocal(void) {
 
-  chTMObjectInit(&tmu);
-
-  (void)adc_cb;
   adcStart(&ADCD1, &adccfg);
   adcStartConversion(&ADCD1, &adccg, samples, ADC_BUF_DEPTH);
-  chTMStartMeasurementX(&tmu);
 }
 
 /**
@@ -145,5 +137,8 @@ adcsample_t ADCgetCurrent(void) {
  *
  */
 adcsample_t ADCgetMPXVtemp(void) {
-  return samples[ADC_MPXV_TEMP_CH - CHANNEL_OFFSET];
+  return temp_filter.get();
 }
+
+
+

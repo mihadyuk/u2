@@ -250,8 +250,7 @@ INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
 #
 
 MCU  = cortex-m4
- 
-#TRGT = arm-elf-
+
 TRGT = arm-none-eabi-
 ifeq ($(OS),Windows_NT) # workaround for crappy OS
 	CC   = $(TRGT)gcc

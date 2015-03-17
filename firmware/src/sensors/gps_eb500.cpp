@@ -154,7 +154,7 @@ static void gps_configure(void) {
 /**
  *
  */
-static THD_WORKING_AREA(gpsRxThreadWA, 256) __attribute__((section(".ccm")));
+static THD_WORKING_AREA(gpsRxThreadWA, 320) __attribute__((section(".ccm")));
 static msg_t gpsRxThread(void *arg) {
   chRegSetThreadName("gpsRx");
   (void)arg;

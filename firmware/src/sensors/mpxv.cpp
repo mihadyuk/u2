@@ -1,5 +1,5 @@
 #include "main.h"
-
+#include "mavlink_local.hpp"
 #include "adc_local.hpp"
 #include "alpha_beta.hpp"
 #include "mpxv.hpp"
@@ -17,6 +17,7 @@ using namespace chibios_rt;
  * EXTERNS
  ******************************************************************************
  */
+extern mavlink_debug_vect_t  mavlink_out_debug_vect_struct;
 
 /*
  ******************************************************************************
@@ -43,7 +44,8 @@ volatile size_t spi_delay;
 static float mpxv_temp(uint16_t raw) {
   int32_t uV = raw * 803;
   const int32_t zero_uV = 1375000;
-  return temp_filter((uV - zero_uV) / 22.500);
+  //return temp_filter((uV - zero_uV) / 22500.0);
+  return (uV - zero_uV) / 22500.0;
 }
 
 static inline void cs_low(void)     {palClearPad(GPIOD, GPIOD_AD_CS);}
@@ -97,6 +99,8 @@ void softspi_write(uint8_t data) {
  *
  */
 float MPXV::get(void) {
+  mavlink_out_debug_vect_struct.x = mpxv_temp(ADCgetMPXVtemp());
+//  mavlink_out_debug_vect_struct.x = ADCgetMPXVtemp();
   return mpxv_temp(ADCgetMPXVtemp());
 }
 
