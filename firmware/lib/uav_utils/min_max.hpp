@@ -5,7 +5,6 @@
  *
  */
 template<typename T>
-__attribute__ ((deprecated)) /* use std::min from <algorithm> instead */
 T min(T v1, T v2) {
 
   if (v1 < v2)
@@ -18,7 +17,6 @@ T min(T v1, T v2) {
  *
  */
 template<typename T>
-__attribute__ ((deprecated)) /* use std::min from <algorithm> instead */
 T max(T v1, T v2) {
 
   if (v1 > v2)
