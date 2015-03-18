@@ -28,7 +28,7 @@ private:
   uint32_t new_sample_seq;
   static uint32_t total_path;
   static uint16_t period_cache;
-  filters::AlphaBetaFixedLen<float, 8> filter_alphabeta;
+  filters::AlphaBeta<float, 8> filter_alphabeta;
   filters::Median<float, 3> filter_median;
   const float *pulse2m = nullptr;
   SampleCosher sample_state;

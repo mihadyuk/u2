@@ -23,7 +23,7 @@ using namespace chibios_rt;
  * EXTERNS
  ******************************************************************************
  */
-extern mavlink_debug_vect_t  mavlink_out_debug_vect_struct;
+//extern mavlink_debug_vect_t  mavlink_out_debug_vect_struct;
 
 /*
  ******************************************************************************
@@ -77,7 +77,7 @@ void speedometer_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32
 
   Speedometer::total_path++;
   Speedometer::period_cache = p;
-  mavlink_out_debug_vect_struct.y = p;
+//  mavlink_out_debug_vect_struct.y = p;
 }
 
 /**
@@ -196,6 +196,6 @@ void Speedometer::update(float &speed, uint32_t &path, float dT) {
   /* now calculate speed */
   pps = filter_alphabeta(pps);
   speed = *pulse2m * pps;
-  mavlink_out_debug_vect_struct.z = speed * 3.6;
+  //mavlink_out_debug_vect_struct.z = speed * 3.6;
 }
 

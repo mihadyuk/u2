@@ -16,7 +16,7 @@ using namespace chibios_rt;
  * EXTERNS
  ******************************************************************************
  */
-extern mavlink_debug_vect_t  mavlink_out_debug_vect_struct;
+//extern mavlink_debug_vect_t  mavlink_out_debug_vect_struct;
 
 /*
  ******************************************************************************

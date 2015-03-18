@@ -16,7 +16,8 @@
  ******************************************************************************
  */
 #define ADC_NUM_CHANNELS          6
-#define ADC_BUF_DEPTH             1
+#define ADC_BUF_DEPTH             64
+
 
 /* human readable names */
 #define ADC_PRESS_DIFF_CH         ADC_CHANNEL_IN10
@@ -75,7 +76,8 @@ static const ADCConversionGroup adccg = {
     ADC_SQR3_SQ1_N(ADC_PRESS_DIFF_CH)
 };
 
-static filters::AlphaBetaFixedLen<int32_t, 128> temp_filter;
+static filters::AlphaBeta<int32_t, 128> temp_filter;
+static filters::AlphaBeta<int32_t, 128> mpxv_filter;
 
 /*
  *******************************************************************************
@@ -92,7 +94,7 @@ static void adc_cb(ADCDriver *adcp, adcsample_t *samples, size_t n) {
   (void)samples;
   (void)n;
 
-  temp_filter(samples[ADC_MPXV_TEMP_CH - CHANNEL_OFFSET]);
+  //temp_filter(samples[ADC_MPXV_TEMP_CH - CHANNEL_OFFSET]);
 }
 
 /*
@@ -103,6 +105,20 @@ static void adc_eeror_cb(ADCDriver *adcp, adcerror_t err) {
   (void)err;
 
   errors++;
+}
+
+/**
+ *
+ */
+static adcsample_t do_filter(size_t offset, filters::AlphaBeta<int32_t, 128> &filter) {
+  size_t idx;
+
+  for (size_t i=0; i<ADC_BUF_DEPTH; i++) {
+    idx = i * ADC_NUM_CHANNELS + offset;
+    filter(samples[idx]);
+  }
+
+  return filter.get();
 }
 
 /*
@@ -137,8 +153,13 @@ adcsample_t ADCgetCurrent(void) {
  *
  */
 adcsample_t ADCgetMPXVtemp(void) {
-  return temp_filter.get();
+  return do_filter(ADC_MPXV_TEMP_CH - CHANNEL_OFFSET, temp_filter);
 }
 
-
+/**
+ *
+ */
+adcsample_t ADCgetMPXV(void) {
+  return do_filter(ADC_PRESS_DIFF_CH - CHANNEL_OFFSET, mpxv_filter);
+}
 

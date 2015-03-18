@@ -4,47 +4,56 @@
 namespace filters {
 
 /**
- * Template of alpha-beta filter class with length changed on the fly
+ * Template of alpha-beta filter class with fixed length
  */
-template<typename T>
+template<typename T, unsigned int L>
 class AlphaBeta {
 public:
   /**
-   * default constructor
+   * Constructor resetting current value to specified one
    */
   AlphaBeta(void) {
-    S = 0;
+    static_assert(L != 0, "Zero length forbidden");
+    reset(0);
   };
 
   /**
    * Constructor resetting current value to specified one
    */
-  AlphaBeta(T val, int len) {
-    reset(val, len);
+  AlphaBeta(T val) {
+    static_assert(L != 0, "Zero length forbidden");
+    reset(val);
   };
 
   /**
    * Perform addition of new sample to filter and return current filtered
    * result
    */
-  T operator() (T val, int len) {
-    T tmp = S / len;
+  T operator() (T val) {
+    T tmp = S / static_cast<T>(L);
     S = S - tmp + val;
     return tmp;
-  };
+  }
 
   /**
    * Return current result without updating
    */
-  T get(int len) {
-    return S / len;
+  T get(void) {
+    return S / static_cast<T>(L);
+  };
+
+  /**
+   * Return length of filter
+   */
+  typeof(L) getLen(void) {
+    return L;
   };
 
   /**
    * Reset filter state
    */
-  void reset(T val, int len) {
-    S = val * len;
+  void reset(T val) {
+    S = val * static_cast<T>(L);
   }
 
 private:
@@ -55,56 +64,47 @@ private:
 };
 
 /**
- * Template of alpha-beta filter class with fixed length
+ * Template of alpha-beta filter class with length changed on the fly
  */
-template<typename T, int L>
-class AlphaBetaFixedLen {
+template<typename T>
+class AlphaBetaVariableLen {
 public:
   /**
-   * Constructor resetting current value to specified one
+   * default constructor
    */
-  AlphaBetaFixedLen(void) {
-    static_assert(L != 0, "Zero length forbidden");
-    reset(0);
+  AlphaBetaVariableLen(void) {
+    S = 0;
   };
 
   /**
    * Constructor resetting current value to specified one
    */
-  AlphaBetaFixedLen(T val) {
-    static_assert(L != 0, "Zero length forbidden");
-    reset(val);
+  AlphaBetaVariableLen(T val, unsigned L) {
+    reset(val, L);
   };
 
   /**
    * Perform addition of new sample to filter and return current filtered
    * result
    */
-  T operator() (T val) {
-    T tmp = S / L;
+  T operator() (T val, unsigned L) {
+    T tmp = S / static_cast<T>(L);
     S = S - tmp + val;
     return tmp;
-  }
+  };
 
   /**
    * Return current result without updating
    */
-  T get(void) {
-    return S / L;
-  };
-
-  /**
-   * Return length of filter
-   */
-  int getLen(void) {
-    return L;
+  T get(unsigned L) {
+    return S / static_cast<T>(L);
   };
 
   /**
    * Reset filter state
    */
-  void reset(T val) {
-    S = val * L;
+  void reset(T val, unsigned L) {
+    S = val * static_cast<T>(L);
   }
 
 private:

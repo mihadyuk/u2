@@ -126,7 +126,7 @@ void PwrMgrInit(void){
 bool PwrMgr6vGood(void) {
   const int32_t len = 16;
   int32_t tmp;
-  filters::AlphaBetaFixedLen<int32_t, len> voltage_filter(ADCget6v());
+  filters::AlphaBeta<int32_t, len> voltage_filter(ADCget6v());
 
   for (size_t i=0; i<len*2; i++) {
     tmp = voltage_filter(ADCget6v());

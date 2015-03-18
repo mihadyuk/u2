@@ -1,8 +1,8 @@
 #ifndef BMP085_H_
 #define BMP085_H_
 
-#include "i2c_sensor.hpp"
 #include "alpha_beta.hpp"
+#include "i2c_sensor.hpp"
 
 #define bmp085addr          0b1110111
 
@@ -55,8 +55,8 @@ private:
   void calc_pressure(void);
   uint8_t rxbuf[BMP085_RX_DEPTH];
   uint8_t txbuf[BMP085_TX_DEPTH];
-  filters::AlphaBeta<float> altitude_filter;
-  filters::AlphaBeta<float> climb_filter;
+  filters::AlphaBetaVariableLen<float> altitude_filter;
+  filters::AlphaBetaVariableLen<float> climb_filter;
   int32_t const *flen_pres_stat, *flen_climb;
   int32_t const *above_msl;
   measurement_t measure_type;

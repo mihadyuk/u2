@@ -136,6 +136,7 @@ param = [
 ("ADC_MV_gain",     0,          0,          122400,     "u", "default",     "NULL"),
 ("ADC_plane_I_k",   -1000000,   0,          1000000,    "i", "default",     "k coefficient for calculation from ADC values to uA using formulae y=kx+b\\nfor fixed wing"),
 ("ADC_plane_I_b",   -1000000,   0,          1000000,    "i", "default",     "b coefficient for calculation from ADC values to uA using formulae y=kx+b\\nfor fixed wing"),
+("ADC_mpxv_shift",  0,          128,        255,        "u", "default",     "Offset cancelation. Uses AD5200."),
 
 #/**** Bttery parameters ****/
 ("BAT_cap",         0,          3000,       11000,      "u", "default",     "Battery capacitance (mAh)"),

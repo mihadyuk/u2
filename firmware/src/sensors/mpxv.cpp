@@ -1,8 +1,9 @@
 #include "main.h"
 #include "mavlink_local.hpp"
 #include "adc_local.hpp"
-#include "alpha_beta.hpp"
 #include "mpxv.hpp"
+#include "param_registry.hpp"
+#include "alpha_beta.hpp"
 
 using namespace chibios_rt;
 
@@ -30,7 +31,7 @@ extern mavlink_debug_vect_t  mavlink_out_debug_vect_struct;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-static filters::AlphaBetaFixedLen<float, 64> temp_filter;
+static filters::AlphaBeta<float, 64> temp_filter;
 volatile size_t spi_delay;
 
 /*
@@ -42,7 +43,7 @@ volatile size_t spi_delay;
  */
 
 static float mpxv_temp(uint16_t raw) {
-  int32_t uV = raw * 803;
+  int32_t uV = raw * 807;
   const int32_t zero_uV = 1375000;
   //return temp_filter((uV - zero_uV) / 22500.0);
   return (uV - zero_uV) / 22500.0;
@@ -90,17 +91,77 @@ void softspi_write(uint8_t data) {
   clk_delay(4);
 }
 
+
+#if 0
+/** термокомпенсация нуля
+ * Принимает сырое значение с датчика и температуру в градусах цельсия*/
+static uint16_t zerocomp(uint16_t raw, int16_t t){
+
+  putinrange(t, MIN_TEMP, MAX_TEMP);
+
+  uint16_t zero = zerocomp_table[t - MIN_TEMP];
+
+  if (zero >= raw)
+    return 0;
+  else
+    return raw - zero;
+}
+
+/* принимает сырое значение с датчика
+ * возвращает воздушную скорость в м/с
+ *
+ * при комнатной температуре смещение нуля 0.201 V, вычитаемое значение 0.183 V,
+ * на выходе усилителя 0.167 V
+ * КУ получается - 9.277777
+ */
+#define KU    928     //КУ*100
+#define Radc  122070  //uV*100 (чувствительность АЦП 5.0/4096 вольт на деление)
+#define Smpx  450     //(Чувствительность датчика 450uV/Pa)
+
+float air_speed(uint16_t press_diff_raw){
+  uint16_t p;
+  p = zerocomp(press_diff_raw, comp_data.temp_onboard / 10);
+  p = ((p * Radc) / Smpx) / KU; /* давление в паскалях */
+  return sqrtf((float)(2*p) / 1.2f);
+}
+#endif
+
+
+
+static const uint32_t KU   = 1000;    // КУ*100
+static const uint32_t Radc = 80566;   // uV*100 (чувствительность АЦП 3.3/4096 вольт на деление)
+static const uint32_t S    = 450;     // Чувствительность датчика (450uV/Pa)
+
+static float air_speed(uint16_t raw) {
+  uint32_t p;
+
+  p = ((raw * Radc) / S) / KU; /* давление в паскалях */
+  return sqrtf((float)(2*p) / 1.2f);
+}
+
 /*
  ******************************************************************************
  * EXPORTED FUNCTIONS
  ******************************************************************************
  */
+/**
+ *
+ */
+void MPXV::start(void) {
+  param_registry.valueSearch("ADC_mpxv_shift", &mpxv_shift);
+  ready = true;
+}
+
 /*
  *
  */
 float MPXV::get(void) {
-  mavlink_out_debug_vect_struct.x = mpxv_temp(ADCgetMPXVtemp());
-//  mavlink_out_debug_vect_struct.x = ADCgetMPXVtemp();
+  softspi_write(*mpxv_shift & 0xFF);
+
+//  mavlink_out_debug_vect_struct.x = mpxv_temp(ADCgetMPXVtemp());
+  mavlink_out_debug_vect_struct.x = air_speed(ADCgetMPXV());
+  mavlink_out_debug_vect_struct.y = ADCgetMPXV();
+  mavlink_out_debug_vect_struct.z = ADCgetMPXVtemp();
   return mpxv_temp(ADCgetMPXVtemp());
 }
 

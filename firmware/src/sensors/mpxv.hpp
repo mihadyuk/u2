@@ -3,10 +3,13 @@
 
 class MPXV {
 public:
+  void start(void);
   float get(void);
   static void soft_spi_test(void);
 private:
   float cache;
+  bool ready = false;
+  const uint32_t *mpxv_shift = nullptr;
 };
 
 #endif /* MPXV_HPP_ */

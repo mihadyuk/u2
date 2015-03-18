@@ -209,6 +209,7 @@ int main(void) {
   speedometer.start();
   acs.start();
   pps.start();
+  mpxv.start();
 
   while (TRUE) {
     ahrs.get(ahrs_data, MS2ST(200));
