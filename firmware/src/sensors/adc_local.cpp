@@ -55,7 +55,7 @@ static adcsample_t samples[ADC_NUM_CHANNELS * ADC_BUF_DEPTH];
 static const ADCConversionGroup adccg = {
   TRUE,
   ADC_NUM_CHANNELS,
-  adc_cb,
+  NULL,//adc_cb,
   adc_eeror_cb,
   0,                        /* CR1 */
   ADC_CR2_SWSTART,          /* CR2 */

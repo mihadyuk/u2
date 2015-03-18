@@ -134,9 +134,9 @@ static const uint32_t S    = 450;     // Чувствительность дат
 
 static float air_speed(uint16_t raw) {
   uint32_t p;
-
   p = ((raw * Radc) / S) / KU; /* давление в паскалях */
-  return sqrtf((float)(2*p) / 1.2f);
+
+  return sqrtf((float)(2*p) / 1.225f);
 }
 
 /*
