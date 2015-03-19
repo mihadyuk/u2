@@ -4,6 +4,8 @@
 #include "mpxv.hpp"
 #include "param_registry.hpp"
 #include "alpha_beta.hpp"
+#include "time_keeper.hpp"
+#include "mav_logger.hpp"
 
 using namespace chibios_rt;
 
@@ -19,6 +21,7 @@ using namespace chibios_rt;
  ******************************************************************************
  */
 extern mavlink_debug_vect_t  mavlink_out_debug_vect_struct;
+extern MavLogger mav_logger;
 
 /*
  ******************************************************************************
@@ -33,6 +36,7 @@ extern mavlink_debug_vect_t  mavlink_out_debug_vect_struct;
  */
 static filters::AlphaBeta<float, 64> temp_filter;
 volatile size_t spi_delay;
+static mavMail dbg_mail;
 
 /*
  ******************************************************************************
@@ -156,12 +160,23 @@ void MPXV::start(void) {
  *
  */
 float MPXV::get(void) {
+
+  (void)air_speed;
+  (void)mpxv_temp;
+
   softspi_write(*mpxv_shift & 0xFF);
 
-//  mavlink_out_debug_vect_struct.x = mpxv_temp(ADCgetMPXVtemp());
-  mavlink_out_debug_vect_struct.x = air_speed(ADCgetMPXV());
+  mavlink_out_debug_vect_struct.x = mpxv_temp(ADCgetMPXVtemp());
+//  mavlink_out_debug_vect_struct.x = air_speed(ADCgetMPXV());
   mavlink_out_debug_vect_struct.y = ADCgetMPXV();
   mavlink_out_debug_vect_struct.z = ADCgetMPXVtemp();
+  mavlink_out_debug_vect_struct.time_usec = TimeKeeper::utc();
+
+  if (dbg_mail.free()) {
+    dbg_mail.fill(&mavlink_out_debug_vect_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_DEBUG_VECT);
+    mav_logger.write(&dbg_mail);
+  }
+
   return mpxv_temp(ADCgetMPXVtemp());
 }
 

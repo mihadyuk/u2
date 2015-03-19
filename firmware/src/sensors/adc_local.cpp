@@ -130,6 +130,7 @@ static adcsample_t do_filter(size_t offset, filters::AlphaBeta<int32_t, 128> &fi
  *
  */
 void ADCInitLocal(void) {
+  (void)adc_cb;
 
   adcStart(&ADCD1, &adccfg);
   adcStartConversion(&ADCD1, &adccg, samples, ADC_BUF_DEPTH);

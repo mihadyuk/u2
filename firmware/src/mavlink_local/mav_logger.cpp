@@ -15,7 +15,7 @@ using namespace chibios_rt;
  * DEFINES
  ******************************************************************************
  */
-#define SDC_POLLING_INTERVAL            100
+#define SDC_POLLING_INTERVAL            MS2ST(200)
 #define SDC_POLLING_DELAY               5
 #define SDC_POWER_TIMEOUT               MS2ST(400)
 #define SYNC_PERIOD                     MS2ST(5000)
@@ -228,9 +228,9 @@ NOT_READY:
   while (!sdcIsCardInserted(&SDCD1)) {
     if (this->shouldTerminate())
       goto EXIT;
-    osalThreadSleepMilliseconds(SDC_POLLING_INTERVAL);
+    osalThreadSleep(SDC_POLLING_INTERVAL);
   }
-  osalThreadSleepMilliseconds(SDC_POLLING_INTERVAL);
+  osalThreadSleep(SDC_POLLING_INTERVAL);
   if (!sdcIsCardInserted(&SDCD1))
     goto NOT_READY;
   else
@@ -238,7 +238,7 @@ NOT_READY:
 
   /* fs mounted? */
   if (!fs_ready)
-    return MSG_RESET;
+    goto NOT_READY;
 
   /* are we have at least 16MB of free space? */
   err = f_getfree("/", &clusters, &fsp);
