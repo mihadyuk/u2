@@ -56,11 +56,11 @@
  * structure for PPS jitter statistic
  */
 struct time_staticstic_t {
-  int32_t               max;            /**< @brief Minimal measurement.    */
-  int32_t               min;            /**< @brief Maximum measurement.    */
-  int32_t               last;           /**< @brief Last measurement.       */
-  size_t                n;              /**< @brief Number of measurements. */
-  int32_t               cumulative;     /**< @brief Cumulative measurement. */
+  int32_t   max = 0;            /**< @brief Minimal measurement.    */
+  int32_t   min = 0;            /**< @brief Maximum measurement.    */
+  int32_t   last = 0;           /**< @brief Last measurement.       */
+  size_t    n = 0;              /**< @brief Number of measurements. */
+  int32_t   cumulative = 0;     /**< @brief Cumulative measurement. */
 };
 
 /*
