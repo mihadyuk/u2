@@ -63,17 +63,17 @@ msg_t Alcoi::update(FutabaOutput &result, float dT) {
 
   osalDbgCheck(ready);
 
-  result.ail = 0;
-  result.ele = 0;
-  result.rud = 0;
-  result.thr = 0;
+  result.ch[PID_CHAIN_AIL] = 0;
+  result.ch[PID_CHAIN_ELE] = 0;
+  result.ch[PID_CHAIN_RUD] = 0;
+  result.ch[PID_CHAIN_THR] = 0;
 
   result.man = ManualSwitch::semiauto;
 
-  result.ol_ail = OverrideLevel::medium;
-  result.ol_ele = OverrideLevel::medium;
-  result.ol_rud = OverrideLevel::medium;
-  result.ol_thr = OverrideLevel::medium;
+  result.ol[PID_CHAIN_AIL] = OverrideLevel::medium;
+  result.ol[PID_CHAIN_ELE] = OverrideLevel::medium;
+  result.ol[PID_CHAIN_RUD] = OverrideLevel::medium;
+  result.ol[PID_CHAIN_THR] = OverrideLevel::medium;
 
   return MSG_OK;
 }

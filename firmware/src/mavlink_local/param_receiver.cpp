@@ -23,7 +23,6 @@ using namespace chibios_rt;
  ******************************************************************************
  */
 
-extern const mavlink_system_t mavlink_system_struct;
 extern EvtSource event_parameters_updated;
 
 /*
@@ -48,20 +47,6 @@ static unsigned int                   param_send_drop = 0;
  ******************************************************************************
  ******************************************************************************
  */
-/**
- * Decide if this packed addressed to us.
- */
-template <typename T>
-static bool for_me(T *message){
-  if (message->target_system != mavlink_system_struct.sysid)
-    return false;
-  if (mavlink_system_struct.compid == message->target_component)
-    return true;
-  else if (MAV_COMP_ID_ALL == message->target_component)
-    return true;
-  else
-    return false;
-}
 
 /**
  *
@@ -138,7 +123,7 @@ static void send_all_values(const mavMail *recv_mail){
   const mavlink_param_request_list_t *prlp
   = static_cast<const mavlink_param_request_list_t *>(recv_mail->mavmsg);
 
-  if (!for_me(prlp))
+  if (!mavlink_msg_for_me(prlp))
     return;
 
   int i = 0;
@@ -160,7 +145,7 @@ static void param_set_handler(const mavMail *recv_mail) {
   const mavlink_param_set_t *psp
   = static_cast<const mavlink_param_set_t *>(recv_mail->mavmsg);
 
-  if (!for_me(psp))
+  if (!mavlink_msg_for_me(psp))
     return;
 
   valuep = (param_union_t *)&(psp->param_value);
@@ -205,7 +190,7 @@ static void param_request_read_handler(const mavMail *recv_mail) {
   const mavlink_param_request_read_t *prrp
   = static_cast<const mavlink_param_request_read_t *>(recv_mail->mavmsg);
 
-  if (!for_me(prrp))
+  if (!mavlink_msg_for_me(prrp))
     return;
 
   if (prrp->param_index >= 0)
@@ -217,14 +202,14 @@ static void param_request_read_handler(const mavMail *recv_mail) {
 /**
  * @brief   This function handles only MAV_CMD_PREFLIGHT_STORAGE
  */
-static void command_long_handler(const mavMail *recv_mail){
+static void command_long_handler(const mavMail *recv_mail) {
 
   enum MAV_RESULT result = MAV_RESULT_FAILED;
   bool status = OSAL_FAILED;
   const mavlink_command_long_t *clp
   = static_cast<const mavlink_command_long_t *>(recv_mail->mavmsg);
 
-  if (!for_me(clp))
+  if (!mavlink_msg_for_me(clp))
     return;
 
   if (MAV_CMD_PREFLIGHT_STORAGE != clp->command)

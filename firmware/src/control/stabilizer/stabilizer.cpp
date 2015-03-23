@@ -158,10 +158,8 @@ void Stabilizer::update(const StabInput &in, float dT) {
 
   osalDbgCheck(ready);
 
-  out.ail = ail_chain.update(in.ail, dT, in.ol_ail);
-  out.ele = ele_chain.update(in.ele, dT, in.ol_ele);
-  out.rud = rud_chain.update(in.rud, dT, in.ol_rud);
-  out.thr = thr_chain.update(in.thr, dT, in.ol_thr);
+  for (size_t i=0; i<PID_CHAIN_ENUM_END; i++)
+    out.ch[i] = ail_chain.update(in.ch[i], dT, in.ol[i]);
 
   drivetrain.update(out);
 }

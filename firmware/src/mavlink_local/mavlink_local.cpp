@@ -90,6 +90,3 @@ void MavlinkInit(void){
   mavlink_system_struct.type   = *type;
 }
 
-
-
-

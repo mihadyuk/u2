@@ -1,6 +1,8 @@
 #ifndef CONTROL_DRIVETRAIN_IMPACT_HPP_
 #define CONTROL_DRIVETRAIN_IMPACT_HPP_
 
+#include "pid_chain_enum.hpp"
+
 namespace control {
 
 /**
@@ -8,10 +10,7 @@ namespace control {
  * @details   Normalized values -1..1.
  */
 struct DrivetrainImpact {
-  float ail = 0;
-  float ele = 0;
-  float rud = 0;
-  float thr = 0;
+  float ch[PID_CHAIN_ENUM_END];
 };
 
 } /* namespace */

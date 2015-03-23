@@ -2,7 +2,7 @@
 #define PID_CHAIN_HPP_
 
 #include "pid_link.hpp"
-#include "override_level.hpp"
+#include "override_level_enum.hpp"
 
 namespace control {
 

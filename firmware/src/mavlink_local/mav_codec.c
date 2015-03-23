@@ -1,5 +1,10 @@
 #include "main.h"
-#include "mavlink_local.hpp"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdouble-promotion"
+#include "mavlink.h"
+#pragma GCC diagnostic pop
+
 #include "encode_table.h"
 #include "decode_table.h"
 

@@ -3,8 +3,8 @@
 
 #include "putinrange.hpp"
 #include "tumbler.hpp"
-#include "manual_switch.hpp"
-
+#include "manual_switch_enum.hpp"
+#include "pid_chain_enum.hpp"
 
 #define RECEIVER_STATUS_NO_ERRORS         0
 #define RECEIVER_STATUS_AIL_CH_ERROR      ((uint32_t)1 << 0)
@@ -29,10 +29,7 @@ struct RecevierOutput {
   /**
    * @brief   Channel values normalized -1..1
    */
-  float ail = 0;
-  float ele = 0;
-  float rud = 0;
-  float thr = 0;
+  float ch[PID_CHAIN_ENUM_END];
   ManualSwitch man = ManualSwitch::manual;
 };
 

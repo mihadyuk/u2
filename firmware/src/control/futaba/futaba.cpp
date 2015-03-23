@@ -4,7 +4,7 @@
 #include "geometry.hpp"
 #include "param_registry.hpp"
 #include "mavlink_local.hpp"
-#include "override_level.hpp"
+#include "override_level_enum.hpp"
 #include "futaba.hpp"
 
 using namespace control;
@@ -55,17 +55,11 @@ typedef enum {
  */
 static msg_t futaba2high(RecevierOutput const &recv, FutabaOutput &result) {
 
-  result.ail = recv.ail;
-  result.ele = recv.ele;
-  result.rud = recv.rud;
-  result.thr = recv.thr;
+  memcpy(result.ch, recv.ch, sizeof(recv.ch));
 
   result.man = ManualSwitch::semiauto;
-
-  result.ol_ail = OverrideLevel::high;
-  result.ol_ele = OverrideLevel::high;
-  result.ol_rud = OverrideLevel::high;
-  result.ol_thr = OverrideLevel::high;
+  for (size_t i=0; i<PID_CHAIN_ENUM_END; i++)
+    result.ol[i] = OverrideLevel::high;
 
   return MSG_OK;
 }
@@ -75,17 +69,11 @@ static msg_t futaba2high(RecevierOutput const &recv, FutabaOutput &result) {
  */
 static msg_t futaba2medium(RecevierOutput const &recv, FutabaOutput &result) {
 
-  result.ail = recv.ail;
-  result.ele = recv.ele;
-  result.rud = recv.rud;
-  result.thr = recv.thr;
+  memcpy(result.ch, recv.ch, sizeof(recv.ch));
 
   result.man = ManualSwitch::semiauto;
-
-  result.ol_ail = OverrideLevel::medium;
-  result.ol_ele = OverrideLevel::medium;
-  result.ol_rud = OverrideLevel::medium;
-  result.ol_thr = OverrideLevel::medium;
+  for (size_t i=0; i<PID_CHAIN_ENUM_END; i++)
+    result.ol[i] = OverrideLevel::medium;
 
   return MSG_OK;
 }
@@ -95,17 +83,11 @@ static msg_t futaba2medium(RecevierOutput const &recv, FutabaOutput &result) {
  */
 static msg_t futaba2low(RecevierOutput const &recv, FutabaOutput &result) {
 
-  result.ail = recv.ail;
-  result.ele = recv.ele;
-  result.rud = recv.rud;
-  result.thr = recv.thr;
+  memcpy(result.ch, recv.ch, sizeof(recv.ch));
 
   result.man = ManualSwitch::semiauto;
-
-  result.ol_ail = OverrideLevel::low;
-  result.ol_ele = OverrideLevel::low;
-  result.ol_rud = OverrideLevel::low;
-  result.ol_thr = OverrideLevel::low;
+  for (size_t i=0; i<PID_CHAIN_ENUM_END; i++)
+    result.ol[i] = OverrideLevel::low;
 
   return MSG_OK;
 }
@@ -144,24 +126,17 @@ msg_t Futaba::man_switch_interpret(RecevierOutput const &recv,
 
   switch(recv.man) {
   case ManualSwitch::manual:
-    result.ail = recv.ail;
-    result.ele = recv.ele;
-    result.rud = recv.rud;
-    result.thr = recv.thr;
+    memcpy(result.ch, recv.ch, sizeof(recv.ch));
     result.man = ManualSwitch::manual;
-    result.ol_ail = OverrideLevel::bypass;
-    result.ol_ele = OverrideLevel::bypass;
-    result.ol_rud = OverrideLevel::bypass;
-    result.ol_thr = OverrideLevel::bypass;
+    for (size_t i=0; i<PID_CHAIN_ENUM_END; i++)
+      result.ol[i] = OverrideLevel::bypass;
     ret = MSG_OK;
     break;
 
   case ManualSwitch::fullauto:
     result.man = ManualSwitch::fullauto;
-    result.ol_ail = OverrideLevel::high;
-    result.ol_ele = OverrideLevel::high;
-    result.ol_rud = OverrideLevel::high;
-    result.ol_thr = OverrideLevel::high;
+    for (size_t i=0; i<PID_CHAIN_ENUM_END; i++)
+      result.ol[i] = OverrideLevel::high;
     ret = MSG_OK;
     break;
 

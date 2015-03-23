@@ -3,8 +3,9 @@
 
 #include "pid_chain.hpp"
 #include "state_vector.hpp"
-#include "override_level.hpp"
+#include "override_level_enum.hpp"
 #include "drivetrain/drivetrain.hpp"
+#include "pid_chain_enum.hpp"
 
 namespace control {
 
@@ -12,24 +13,15 @@ namespace control {
  *
  */
 struct StabInput {
-  OverrideLevel ol_ail;
-  OverrideLevel ol_ele;
-  OverrideLevel ol_rud;
-  OverrideLevel ol_thr;
-  float ail;
-  float ele;
-  float rud;
-  float thr;
+  OverrideLevel ol[PID_CHAIN_ENUM_END];
+  float ch[PID_CHAIN_ENUM_END];
 };
 
 /**
  *
  */
 struct pid_out {
-  float ail;
-  float ele;
-  float rud;
-  float thr;
+  float ch[PID_CHAIN_ENUM_END];
 };
 
 /**

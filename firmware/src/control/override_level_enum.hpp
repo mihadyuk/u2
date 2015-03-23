@@ -1,5 +1,5 @@
-#ifndef OVERRIDE_LEVEL_HPP_
-#define OVERRIDE_LEVEL_HPP_
+#ifndef OVERRIDE_LEVEL_ENUM_HPP_
+#define OVERRIDE_LEVEL_ENUM_HPP_
 
 namespace control {
 
@@ -13,4 +13,4 @@ enum class OverrideLevel {
 
 } // namespace
 
-#endif /* OVERRIDE_LEVEL_HPP_ */
+#endif /* OVERRIDE_LEVEL_ENUM_HPP_ */

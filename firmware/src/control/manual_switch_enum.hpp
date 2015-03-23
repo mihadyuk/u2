@@ -1,5 +1,5 @@
-#ifndef MANUAL_SWITCH_HPP_
-#define MANUAL_SWITCH_HPP_
+#ifndef MANUAL_SWITCH_ENUM_HPP_
+#define MANUAL_SWITCH_ENUM_HPP_
 
 namespace control {
 
@@ -11,4 +11,4 @@ enum class ManualSwitch {
 
 } // namespace
 
-#endif /* MANUAL_SWITCH_HPP_ */
+#endif /* MANUAL_SWITCH_ENUM_HPP_ */

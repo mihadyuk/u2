@@ -78,7 +78,7 @@ void Engine::update(const DrivetrainImpact &impact) {
 
   osalDbgCheck(ready);
 
-  tmp = float2pwm(impact.thr, *thr_min, *thr_mid, *thr_max);
+  tmp = float2pwm(impact.ch[PID_CHAIN_THR], *thr_min, *thr_mid, *thr_max);
   pwm.update(tmp, PWM_CH_THR);
 }
 

@@ -1,8 +1,9 @@
 #ifndef FUTABA_OUTPUT_HPP_
 #define FUTABA_OUTPUT_HPP_
 
-#include "override_level.hpp"
-#include "manual_switch.hpp"
+#include "override_level_enum.hpp"
+#include "manual_switch_enum.hpp"
+#include "pid_chain_enum.hpp"
 
 namespace control {
 
@@ -10,14 +11,8 @@ namespace control {
  * @brief   Output data from Futaba
  */
 struct FutabaOutput {
-  OverrideLevel ol_ail;
-  OverrideLevel ol_ele;
-  OverrideLevel ol_rud;
-  OverrideLevel ol_thr;
-  float ail = 0;
-  float ele = 0;
-  float rud = 0;
-  float thr = 0;
+  OverrideLevel ol[PID_CHAIN_ENUM_END];
+  float ch[PID_CHAIN_ENUM_END];
   ManualSwitch man;
 };
 

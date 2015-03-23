@@ -87,13 +87,13 @@ void ServoTree::update(const DrivetrainImpact &impact) {
 
   osalDbgCheck(ready);
 
-  tmp = float2pwm(impact.ail, *ail_min, *ail_mid, *ail_max);
+  tmp = float2pwm(impact.ch[PID_CHAIN_AIL], *ail_min, *ail_mid, *ail_max);
   pwm.update(tmp, PWM_CH_AIL);
 
-  tmp = float2pwm(impact.ele, *ele_min, *ele_mid, *ele_max);
+  tmp = float2pwm(impact.ch[PID_CHAIN_ELE], *ele_min, *ele_mid, *ele_max);
   pwm.update(tmp, PWM_CH_ELE);
 
-  tmp = float2pwm(impact.rud, *rud_min, *rud_mid, *rud_max);
+  tmp = float2pwm(impact.ch[PID_CHAIN_RUD], *rud_min, *rud_mid, *rud_max);
   pwm.update(tmp, PWM_CH_RUD);
 }
 

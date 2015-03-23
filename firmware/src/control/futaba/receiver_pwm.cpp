@@ -222,10 +222,10 @@ void ReceiverPWM::update(RecevierOutput &result) {
 
   receiver2mavlink(cache);
 
-  get_ch(*map_ail, &result.ail, &result.status, RECEIVER_STATUS_AIL_CH_ERROR);
-  get_ch(*map_ele, &result.ele, &result.status, RECEIVER_STATUS_ELE_CH_ERROR);
-  get_ch(*map_rud, &result.rud, &result.status, RECEIVER_STATUS_RUD_CH_ERROR);
-  get_ch(*map_thr, &result.thr, &result.status, RECEIVER_STATUS_THR_CH_ERROR);
+  get_ch(*map_ail, &result.ch[PID_CHAIN_AIL], &result.status, RECEIVER_STATUS_AIL_CH_ERROR);
+  get_ch(*map_ele, &result.ch[PID_CHAIN_ELE], &result.status, RECEIVER_STATUS_ELE_CH_ERROR);
+  get_ch(*map_rud, &result.ch[PID_CHAIN_RUD], &result.status, RECEIVER_STATUS_RUD_CH_ERROR);
+  get_ch(*map_thr, &result.ch[PID_CHAIN_THR], &result.status, RECEIVER_STATUS_THR_CH_ERROR);
 
   get_tumbler(*map_man, &result.man, &result.status, RECEIVER_STATUS_MAN_CH_ERROR);
 }

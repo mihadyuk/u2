@@ -12,7 +12,7 @@
  * EXTERNS
  ******************************************************************************
  */
-extern const mavlink_system_t mavlink_system_struct;
+
 extern mavlink_sys_status_t mavlink_out_sys_status_struct;
 
 /*
