@@ -15,13 +15,6 @@ public:
   /**
    *
    */
-  MultiBuffer(int pattern) {
-    constructor_impl(pattern);
-  }
-
-  /**
-   *
-   */
   T *next(void) {
     head++;
     if (head == Count)
@@ -90,10 +83,10 @@ public:
     }
     else if (free < len) {
       const size_t remainder = len - free;
-      memcpy(tip, data, free);
+      memcpy(tip, data, free);// first portion to the end of current buffer
       ret = multi_buffer.current();
       tip = multi_buffer.next();
-      memcpy(tip, data, remainder);
+      memcpy(tip, data+free, remainder);// second to the beginign of the next buffer
       tip += remainder;
     }
     else { /* free == len */

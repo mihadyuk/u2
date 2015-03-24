@@ -163,8 +163,8 @@ static FRESULT fs_sync(FIL *Log) {
 
   if (sync_tmo && fresh_data) {
     err = f_sync(Log);
-    sync_tmo = FALSE;
-    fresh_data = FALSE;
+    sync_tmo = false;
+    fresh_data = false;
   }
   return err;
 }
@@ -180,21 +180,21 @@ FRESULT MavLogger::append_log(mavMail *mail, bool *fresh_data) {
   uint8_t *fs_buf;
   FRESULT err = FR_OK;
   size_t len;
-  mavlink_message_t mavlink_msgbuf_log;
+  mavlink_message_t log_msg;
   uint8_t recordbuf[MAVLINK_SENDBUF_SIZE + sizeof(uint64_t)];
 
   /**/
-  mavlink_encode(mail->msgid, &mavlink_msgbuf_log, mail->mavmsg);
+  mavlink_encode(mail->msgid, &log_msg, mail->mavmsg);
   mail->release();
 
   memset(recordbuf, 0, sizeof(recordbuf));
 #if MAVLINK_LOG_FORMAT
   uint64_t timestamp = 0;
-  len = mavlink_msg_to_send_buffer(recordbuf + sizeof(timestamp), &mavlink_msgbuf_log);
+  len = mavlink_msg_to_send_buffer(recordbuf + sizeof(timestamp), &log_msg);
   memcpy(recordbuf, &timestamp, sizeof(timestamp));
   fs_buf = double_buf.append(recordbuf, len + sizeof(timestamp));
 #else /* MAVLINK_LOG_FORMAT */
-  len = mavlink_msg_to_send_buffer(recordbuf, &mavlink_msgbuf_log);
+  len = mavlink_msg_to_send_buffer(recordbuf, &log_msg);
   fs_buf = double_buf.append(recordbuf, len);
 #endif /* MAVLINK_LOG_FORMAT */
 
