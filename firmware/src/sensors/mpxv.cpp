@@ -153,6 +153,10 @@ static float air_speed(uint16_t raw) {
  */
 void MPXV::start(void) {
   param_registry.valueSearch("ADC_mpxv_shift", &mpxv_shift);
+  memset(mavlink_out_debug_vect_struct.name, 0,
+          sizeof(mavlink_out_debug_vect_struct.name));
+  strncpy(mavlink_out_debug_vect_struct.name, "MPXV5010",
+          sizeof(mavlink_out_debug_vect_struct.name));
   ready = true;
 }
 
@@ -181,7 +185,7 @@ float MPXV::get(void) {
 }
 
 
-void MPXV::soft_spi_test(void) {
+void MPXV::__soft_spi_test(void) {
   uint8_t word = 0;
 
   while(true) {

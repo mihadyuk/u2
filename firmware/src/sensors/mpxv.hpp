@@ -5,7 +5,7 @@ class MPXV {
 public:
   void start(void);
   float get(void);
-  static void soft_spi_test(void);
+  static void __soft_spi_test(void);
 private:
   float cache;
   bool ready = false;
