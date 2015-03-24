@@ -18,7 +18,7 @@ parser.add_argument('-f', '--infile', type=str, required=True,
                    help='Input file')
 args = parser.parse_args()
 
-f = mavutil.mavlogfile(args.infile, robust_parsing=True, notimestamps=True)
+f = mavutil.mavlogfile(args.infile, robust_parsing=True, notimestamps=True, use_native=False)
 total_bytes = 0
 
 # while True:
@@ -43,7 +43,7 @@ while (True):
         m2 = f.recv_msg()
         if (None != m2):
             msgcnt += 1
-            bytescnt += len(m2.get_msgbuf())
+            bytescnt += len(m2._msgbuf)
             csvpool.post(m2)
             if (m2.get_type() == 'BAD_DATA'):
                 maverrorcnt += 1
