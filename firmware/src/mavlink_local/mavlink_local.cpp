@@ -19,6 +19,7 @@ using namespace chibios_rt;
 
 /* variable for storing system state */
 mavlink_system_t                mavlink_system_struct __attribute__((section(".ccm")));
+mavlink_system_info_t           mavlink_system_info_struct __attribute__((section(".ccm")));
 
 /* mavlink messages containing telemetry data */
 mavlink_raw_imu_t               mavlink_out_raw_imu_struct;
@@ -85,8 +86,9 @@ void MavlinkInit(void){
   /* mavlink initial values */
   mavlink_system_struct.sysid  = 20;
   mavlink_system_struct.compid = MAV_COMP_ID_ALL;
-  mavlink_system_struct.state  = MAV_STATE_BOOT;
-  mavlink_system_struct.mode   = MAV_MODE_PREFLIGHT;
-  mavlink_system_struct.type   = *type;
+
+  mavlink_system_info_struct.state  = MAV_STATE_BOOT;
+  mavlink_system_info_struct.mode   = MAV_MODE_PREFLIGHT;
+  mavlink_system_info_struct.type   = *type;
 }
 

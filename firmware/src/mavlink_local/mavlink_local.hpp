@@ -17,7 +17,14 @@
 /* this realization uses one global component ID for all */
 #define GLOBAL_COMPONENT_ID         MAV_COMP_ID_SYSTEM_CONTROL
 
-extern mavlink_system_t mavlink_system_struct;
+typedef struct __mavlink_system_info {
+    uint8_t type;    ///< Unused, can be used by user to store the system's type
+    uint8_t state;   ///< Unused, can be used by user to store the system's state
+    uint8_t mode;    ///< Unused, can be used by user to store the system's mode
+    uint32_t nav_mode;    ///< Unused, can be used by user to store the system's navigation mode
+} mavlink_system_info_t;
+
+extern mavlink_system_t       mavlink_system_struct;
 
 /**
  * Decide if this packed addressed to us.

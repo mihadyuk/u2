@@ -13,7 +13,8 @@
  ******************************************************************************
  */
 
-extern mavlink_sys_status_t mavlink_out_sys_status_struct;
+extern mavlink_sys_status_t   mavlink_out_sys_status_struct;
+extern mavlink_system_info_t  mavlink_system_info_struct;
 
 /*
  ******************************************************************************
@@ -107,7 +108,7 @@ void PwrMgrInit(void){
   param_registry.valueSearch("BAT_cap", &bat_cap);
   param_registry.valueSearch("BAT_fill", &bat_fill);
 
-  if (mavlink_system_struct.type == MAV_TYPE_GROUND_ROVER){
+  if (mavlink_system_info_struct.type == MAV_TYPE_GROUND_ROVER){
     param_registry.valueSearch("ADC_car_I_k", &adc_I_k);
     param_registry.valueSearch("ADC_car_I_b", &adc_I_b);
   }

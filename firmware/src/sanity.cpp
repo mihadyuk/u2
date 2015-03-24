@@ -16,7 +16,7 @@
  ******************************************************************************
  */
 
-extern mavlink_system_t       mavlink_system_struct;
+extern mavlink_system_info_t  mavlink_system_info_struct;
 extern mavlink_heartbeat_t    mavlink_out_heartbeat_struct;
 extern mavlink_sys_status_t   mavlink_out_sys_status_struct;
 
@@ -56,7 +56,7 @@ static void heartbeat_blinker(void){
     blinker.normal_post(&panic_seq[0]);
   }
   else{
-    if (MAV_STATE_CALIBRATING == mavlink_system_struct.state)
+    if (MAV_STATE_CALIBRATING == mavlink_system_info_struct.state)
       blinker.normal_post(calibrating_seq);
     else
       blinker.normal_post(normal_seq);
@@ -80,9 +80,9 @@ static THD_FUNCTION(SanityControlThread, arg) {
     t += HEART_BEAT_PERIOD;
 
     /* fill data fields */
-    mavlink_out_heartbeat_struct.type           = mavlink_system_struct.type;
-    mavlink_out_heartbeat_struct.base_mode      = mavlink_system_struct.mode;
-    mavlink_out_heartbeat_struct.system_status  = mavlink_system_struct.state;
+    mavlink_out_heartbeat_struct.type           = mavlink_system_info_struct.type;
+    mavlink_out_heartbeat_struct.base_mode      = mavlink_system_info_struct.mode;
+    mavlink_out_heartbeat_struct.system_status  = mavlink_system_info_struct.state;
 
     /* schedule sending over telemetry channel */
     hearbeat_mail.fill(&mavlink_out_heartbeat_struct, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_HEARTBEAT);
