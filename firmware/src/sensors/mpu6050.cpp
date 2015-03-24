@@ -9,6 +9,7 @@
 #include "mpu6050_fir_taps.h"
 #include "array_len.hpp"
 #include "putinrange.hpp"
+#include "mav_logger.hpp"
 
 using namespace filters;
 
@@ -81,6 +82,8 @@ typedef enum {
  * EXTERNS
  ******************************************************************************
  */
+extern mavlink_debug_t  mavlink_out_debug_struct;
+extern MavLogger mav_logger;
 
 /*
  ******************************************************************************
@@ -110,6 +113,8 @@ uint8_t MPU6050::isr_dlpf = 0;
 uint8_t MPU6050::isr_smplrtdiv = 0;
 chibios_rt::BinarySemaphore MPU6050::isr_sem(true);
 
+static mavMail dbg_mail;
+
 /*
  *******************************************************************************
  *******************************************************************************
@@ -117,24 +122,35 @@ chibios_rt::BinarySemaphore MPU6050::isr_sem(true);
  *******************************************************************************
  *******************************************************************************
  */
+
+static void temp2dbg(float temp) {
+  mavlink_out_debug_struct.value = temp;
+  mavlink_out_debug_struct.time_boot_ms = TIME_BOOT_MS;
+
+  if (dbg_mail.free()) {
+    dbg_mail.fill(&mavlink_out_debug_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_DEBUG);
+    mav_logger.write(&dbg_mail);
+  }
+}
+
 /**
  *
  */
-float MPU6050::gyr_sens(void){
+float MPU6050::gyr_sens(void) {
   return gyro_sens_array[gyr_fs_current];
 }
 
 /**
  *
  */
-float MPU6050::acc_sens(void){
+float MPU6050::acc_sens(void) {
   return acc_sens_array[acc_fs_current];
 }
 
 /**
  *
  */
-void MPU6050::pickle_temp(float *result){
+void MPU6050::pickle_temp(float *result) {
   uint8_t *b = &rxbuf[MPU_TEMP_OFFSET];
   result[0] = static_cast<int16_t>(pack8to16be(b));
   result[0] /= 340;
@@ -144,21 +160,21 @@ void MPU6050::pickle_temp(float *result){
 /**
  *
  */
-void MPU6050::gyro_thermo_comp(float *result){
+void MPU6050::gyro_thermo_comp(float *result) {
   (void)result;
 }
 
 /**
  *
  */
-void MPU6050::acc_egg_comp(float *result){
+void MPU6050::acc_egg_comp(float *result) {
   (void)result;
 }
 
 /**
  *
  */
-static void toggle_endiannes16(uint8_t *data, const size_t len){
+static void toggle_endiannes16(uint8_t *data, const size_t len) {
 
   osalDbgCheck(0 == (len % 2));
   uint8_t tmp;
@@ -193,7 +209,7 @@ void MPU6050::pickle_gyr(float *result) {
 /**
  *
  */
-void MPU6050::pickle_acc(float *result){
+void MPU6050::pickle_acc(float *result) {
 
   int16_t raw[3];
   uint8_t *b = &rxbuf[MPU_ACCEL_OFFSET];
@@ -686,6 +702,7 @@ sensor_state_t MPU6050::get(marg_data_t &result) {
     release_lock();
   }
 
+  temp2dbg(this->temperature);
   return this->state;
 }
 
