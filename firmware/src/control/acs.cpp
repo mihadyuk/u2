@@ -59,8 +59,10 @@ static void navigator(StabInput &result) {
  */
 static void futaba2stab_input(const FutabaOutput &fut, StabInput &result) {
 
-  (void)fut;
-  (void)result;
+  for (size_t i=0; i<PID_CHAIN_ENUM_END; i++) {
+    result.ch[i].override_target = fut.ch[i];
+    result.ch[i].override_level  = fut.ol[i];
+  }
 }
 
 /**
@@ -125,7 +127,7 @@ void ACS::start(void) {
 
   stabilizer.start();
   futaba.start();
-
+  alcoi.start();
   mav_postman.subscribe(MAVLINK_MSG_ID_COMMAND_LONG, &command_long_link);
 
   ready = true;
@@ -158,10 +160,8 @@ void ACS::fullauto(float dT, const FutabaOutput &fut_data) {
     }
   }
 
-
-
-
   navigator(stab_input);
+  alcoi.update(stab_input, dT);
   stabilizer.update(stab_input, dT);
 }
 

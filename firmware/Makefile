@@ -124,7 +124,6 @@ CONTROLSRC =\
 		src/control/drivetrain/servo_tree.cpp \
 		src/control/drivetrain/drivetrain.cpp \
 		src/control/drivetrain/engine.cpp \
-		src/control/futaba/alcoi.cpp \
 		src/control/futaba/futaba.cpp \
 		src/control/futaba/receiver.cpp \
 		src/control/futaba/receiver_ppm.cpp \
@@ -134,7 +133,8 @@ CONTROLSRC =\
 		src/control/stabilizer/pid_link.cpp \
 		src/control/stabilizer/pid_chain.cpp \
 		src/control/stabilizer/stabilizer.cpp \
-		src/control/acs.cpp
+		src/control/acs.cpp \
+		src/control/alcoi.cpp
 
 NVRAMSRC = src/nvram_local.cpp \
 		lib/24aa/src/mtd.cpp \
