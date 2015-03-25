@@ -59,41 +59,42 @@ link_h(position_h, pid_h), link_m(position_m, pid_m), link_l(position_l, pid_l)
 /**
  *
  */
-void PIDChain::start(float const *pGain_h, float const *iGain_h, float const *dGain_h,
-                     float const *pGain_m, float const *iGain_m, float const *dGain_m,
-                     float const *pGain_l, float const *iGain_l, float const *dGain_l) {
+void PIDChain::start(float const *pGain_h, float const *iGain_h, float const *dGain_h, uint32_t const *bypass_h,
+                     float const *pGain_m, float const *iGain_m, float const *dGain_m, uint32_t const *bypass_m,
+                     float const *pGain_l, float const *iGain_l, float const *dGain_l, uint32_t const *bypass_l) {
 
-  link_h.start(pGain_h, iGain_h, dGain_h);
-  link_m.start(pGain_m, iGain_m, dGain_m);
-  link_l.start(pGain_l, iGain_l, dGain_l);
+  link_h.start(pGain_h, iGain_h, dGain_h, bypass_h);
+  link_m.start(pGain_m, iGain_m, dGain_m, bypass_m);
+  link_l.start(pGain_l, iGain_l, dGain_l, bypass_l);
 }
 
 /**
- *
+ * returns value suitable for drivetrain
  */
-float PIDChain::update(float target, float dT, OverrideLevel ol) {
+float PIDChain::update(const ChainInput &in, float dT) {
   float ret;
 
-  switch (ol) {
+  switch (in.override_level) {
+  case OverrideLevel::none:
+    ret = link_h.update(in.target, dT);
+    ret = link_m.update(ret, dT);
+    ret = link_l.update(ret, dT);
+    break;
   case OverrideLevel::high:
-    ret = link_h.update(target, dT);
-    ret = link_m.update(ret,    dT);
-    ret = link_l.update(ret,    dT);
+    ret = link_h.update(in.override_target, dT);
+    ret = link_m.update(ret, dT);
+    ret = link_l.update(ret, dT);
     break;
-
   case OverrideLevel::medium:
-    ret = link_m.update(target, dT);
-    ret = link_l.update(ret,    dT);
+    ret = link_m.update(in.override_target, dT);
+    ret = link_l.update(ret, dT);
     break;
-
   case OverrideLevel::low:
-    ret = link_l.update(target, dT);
+    ret = link_l.update(in.override_target, dT);
     break;
-
   case OverrideLevel::bypass:
-    ret = target;
+    ret = in.override_target;
     break;
-
   default:
     ret = 0;
     osalSysHalt("Unhnadled case");

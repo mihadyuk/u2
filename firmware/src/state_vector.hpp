@@ -30,6 +30,10 @@ typedef struct {
   float     vy;
   float     vz;
 
+  float     air_speed;    // m/s
+  float     ground_speed; // m/s
+  float     speed;        // скорость для кормления САУ (m/s)
+
   // free accelerations (NED)
   float     free_ax;
   float     free_ay;
@@ -48,6 +52,11 @@ typedef struct {
   float     vgps;     // speed from GPS (m/s)
   float     vodo;     // speed from odometer (m/s)
   float     vair;     // air speed (m/s)
+
+  float     dZ;
+  float     dYaw;
+
+  float     empty;    // special field for passing to unused PIDs
 
   uint8_t   gpsfix;   // fix type (0-1: no fix, 2: 2D fix, 3: 3D fix)
 

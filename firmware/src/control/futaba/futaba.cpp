@@ -18,6 +18,7 @@ using namespace control;
  *
  */
 typedef enum {
+  RC_OVERRIDE_NONE,
   RC_OVERRIDE_HIGH,
   RC_OVERRIDE_MEDIUM,
   RC_OVERRIDE_LOW,

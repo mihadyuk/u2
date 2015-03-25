@@ -13,8 +13,7 @@ namespace control {
  *
  */
 struct StabInput {
-  OverrideLevel ol[PID_CHAIN_ENUM_END];
-  float ch[PID_CHAIN_ENUM_END];
+  ChainInput ch[PID_CHAIN_ENUM_END];
 };
 
 /**
@@ -37,6 +36,7 @@ private:
   Drivetrain &drivetrain;
   bool ready = false;
   PIDChain ail_chain, ele_chain, rud_chain, thr_chain;
+  PIDChain *chain[PID_CHAIN_ENUM_END];
 };
 
 } // namespace

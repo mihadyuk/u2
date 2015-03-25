@@ -48,8 +48,9 @@ void ACS::failsafe(void) {
 static void navigator(StabInput &result) {
 
   for (size_t i=0; i<PID_CHAIN_ENUM_END; i++) {
-    result.ch[i] = 0;
-    result.ol[i] = OverrideLevel::high;
+    result.ch[i].target = 0;
+    result.ch[i].override_target = 0;
+    result.ch[i].override_level = OverrideLevel::high;
   }
 }
 
@@ -58,8 +59,8 @@ static void navigator(StabInput &result) {
  */
 static void futaba2stab_input(const FutabaOutput &fut, StabInput &result) {
 
-  memcpy(result.ch, fut.ch, sizeof(fut.ch));
-  memcpy(result.ol, fut.ol, sizeof(fut.ol));
+  (void)fut;
+  (void)result;
 }
 
 /**
