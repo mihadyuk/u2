@@ -5,6 +5,10 @@
 #include "float.h" /* for FLT_EPSILON macro */
 #include "iir.hpp"
 
+#define PID_CLAMP_NEG       -1
+#define PID_CLAMP_NONE      0
+#define PID_CLAMP_POS       1
+
 /**
  * This Base PID control class.
  */
@@ -54,15 +58,20 @@ public:
   }
 
 protected:
-  /* Pointer to postprocessing function. Set to nullptr if unneeded. */
+  /**
+   * @brief   Pointer to postprocessing function for error. Generally is wrap_pi() for delta Yaw.
+   *          Set to nullptr if unneeded.
+   */
   T (*postproc)(T);
   T iState;           /* Integrator state */
   T errorPrev;        /* Previous error value for trapezoidal integration */
   T const *pGain;     /* proportional gain */
   T const *iGain;     /* integral gain */
   T const *dGain;     /* derivative gain */
+  uint32_t const *bypass;
   const T iMax = 1;
   const T iMin = -1;
+  int clamping = PID_CLAMP_NONE;
 
   /**
    * @brief   Combines all terms and gains. Apply post processing
@@ -70,40 +79,26 @@ protected:
    */
   T do_pid(T error, T dTerm) {
 
+    if (nullptr != postproc)
+      error = postproc(error);
+
     T ret = *this->pGain * error +
             *this->iGain * this->iState +
             *this->dGain * dTerm;
 
-    if (nullptr == postproc)
+    /* clamp returning value and store clamping position for next iteration */
+    if (ret > this->iMax) {
+      clamping = PID_CLAMP_POS;
+      return this->iMax;
+    }
+    else if (ret < this->iMin) {
+      clamping = PID_CLAMP_NEG;
+      return this->iMin;
+    }
+    else {
+      clamping = PID_CLAMP_NONE;
       return ret;
-    else
-      return postproc(ret);
-  }
-};
-
-/**
- * This PID discourages derivative input calculation from subsequent
- * input error values.
- */
-template <typename T>
-class PIDControl : public PidControlBase <T> {
-public:
-  /**
-   * @brief   Update PID.
-   * @param[in] error   Current value error
-   * @param[in] dTerm   Differental part _measured_ some way, NOT calculated
-   * @param[in] dT      Time delta between measurement
-   */
-
-  T operator()(T error, T dTerm, T dT) {
-    T ret;
-
-    /* calculate the integral state with appropriate limiting */
-    this->iState += (error + this->errorPrev) * dT / 2;
-    this->iState  = putinrange(this->iState, this->iMin, this->iMax);
-    this->errorPrev = error;
-
-    return this->do_pid(error, dTerm);
+    }
   }
 };
 
@@ -123,13 +118,14 @@ public:
   /**
    *
    */
-  void start(T const *pGain, T const *iGain, T const *dGain,
+  void start(T const *pGain, T const *iGain, T const *dGain, uint32_t const *bypass,
              const T *iir_a, const T *iir_b) {
     osalDbgCheck((nullptr != pGain) && (nullptr != iGain) && (nullptr != dGain));
 
     this->pGain = pGain;
     this->iGain = iGain;
     this->dGain = dGain;
+    this->bypass = bypass;
 
     osalDbgCheck(((nullptr == iir_a) && (nullptr == iir_b)) ||
                  ((nullptr != iir_a) && (nullptr != iir_b)));
@@ -149,11 +145,16 @@ public:
    */
   T operator()(T position, T target, T dT) {
 
+    if (*this->bypass > 0)
+      return target;
+
     T error = position - target;
 
     /* calculate the integral state with appropriate limiting */
-    this->iState += (error + this->errorPrev) * dT / 2;
-    this->iState  = putinrange(this->iState, this->iMin, this->iMax);
+    T iPiece = (error + this->errorPrev) * dT / 2;
+    if ((iPiece * this->clamping) <= 0)
+      this->iState += iPiece;
+
     this->errorPrev = error;
 
     /* calculate the derivative term */
