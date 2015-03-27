@@ -5,8 +5,24 @@
 
 namespace filters {
 
+/**
+ *
+ */
+template <typename T, typename dataT>
+class IIRBase {
+public:
+  T operator() (T sample) {
+    return update(sample);
+  }
+private:
+  virtual T update(T sample) = 0;
+};
+
+/**
+ *
+ */
 template <typename T, typename dataT, unsigned int L>
-class IIR {
+class IIR : public IIRBase<T, dataT> {
 public:
   /**
    * @brief   Default constructor.
@@ -34,10 +50,11 @@ public:
     b = b_taps;
   }
 
+private:
   /**
    *
    */
-  T update_(T sample) {
+  T update(T sample) {
 
     unsigned int i;
     T s;
@@ -58,14 +75,7 @@ public:
     return s;
   }
 
-  /**
-   *
-   */
-  T operator() (T sample) {
-    return update_(sample);
-  }
-
-protected:
+private:
   const T *a;
   const T *b;
   dataT a_state[L];

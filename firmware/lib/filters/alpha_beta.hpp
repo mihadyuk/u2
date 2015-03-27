@@ -4,10 +4,25 @@
 namespace filters {
 
 /**
+ * Base class to avoid length parameter passing into template arguments
+ */
+template<typename T>
+class AlphaBetaBase {
+public:
+  T operator() (T val) {
+    return this->update(val);
+  }
+  virtual T get(void) = 0;
+  virtual void reset(T val) = 0;
+private:
+  virtual T update(T val) = 0;
+};
+
+/**
  * Template of alpha-beta filter class with fixed length
  */
 template<typename T, unsigned int L>
-class AlphaBeta {
+class AlphaBeta : public AlphaBetaBase<T> {
 public:
   /**
    * Constructor resetting current value to specified one
@@ -24,16 +39,6 @@ public:
     static_assert(L != 0, "Zero length forbidden");
     reset(val);
   };
-
-  /**
-   * Perform addition of new sample to filter and return current filtered
-   * result
-   */
-  T operator() (T val) {
-    T tmp = S / static_cast<T>(L);
-    S = S - tmp + val;
-    return tmp;
-  }
 
   /**
    * Return current result without updating
@@ -57,6 +62,16 @@ public:
   }
 
 private:
+  /**
+   * Perform addition of new sample to filter and return current filtered
+   * result
+   */
+  T update (T val) {
+    T tmp = S / static_cast<T>(L);
+    S = S - tmp + val;
+    return tmp;
+  }
+
   /**
    * Accumulator
    */

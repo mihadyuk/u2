@@ -113,7 +113,7 @@ bool Speedometer::check_sample(uint32_t &path_ret,
   /**/
   switch (sample_state) {
   case SampleCosher::bad:
-    if (capture_time < timeout && new_sample_seq >= FIRST_SAMPLES_DROP) {
+    if ((capture_time < timeout) && (new_sample_seq >= FIRST_SAMPLES_DROP)) {
       sample_state = SampleCosher::good;
       ret = OSAL_SUCCESS;
     }

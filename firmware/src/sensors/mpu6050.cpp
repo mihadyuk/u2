@@ -604,13 +604,10 @@ gyr_fir(gyr_fir_array)
 sensor_state_t MPU6050::start(void) {
 
   if (SENSOR_STATE_STOP == this->state) {
-    acc_fir[0].setKernel(taps, ArrayLen(taps));
-    acc_fir[1].setKernel(taps, ArrayLen(taps));
-    acc_fir[2].setKernel(taps, ArrayLen(taps));
-
-    gyr_fir[0].setKernel(taps, ArrayLen(taps));
-    gyr_fir[1].setKernel(taps, ArrayLen(taps));
-    gyr_fir[2].setKernel(taps, ArrayLen(taps));
+    for (size_t i=0; i<3; i++) {
+      acc_fir[i].setKernel(taps, ArrayLen(taps));
+      gyr_fir[i].setKernel(taps, ArrayLen(taps));
+    }
 
     param_registry.valueSearch("MPU_gyr_fs",    &gyr_fs);
     param_registry.valueSearch("MPU_acc_fs",    &acc_fs);

@@ -6,11 +6,24 @@
 namespace filters {
 
 /**
+ *
+ */
+template<typename T, typename dataT>
+class FIRBase {
+public:
+  T operator() (dataT sample) {
+    return update(sample);
+  }
+private:
+  virtual T update(dataT sample) = 0;
+};
+
+/**
  * @brief   FIR filter.
  * @note    set "T" and "dataT" to the same type for fastest possible code
  */
 template<typename T, typename dataT, int L>
-class FIR {
+class FIR : public FIRBase<T, dataT> {
 public:
   /**
    * @brief   Default constructor
@@ -130,31 +143,6 @@ public:
     return s;
   }
 
-  /**
-   * @brief   Fastest variant for cortex-m4.
-   */
-  T update_(dataT sample) {
-    T s;
-
-    tip--;
-    X[tip] = sample;
-
-    s = convolution_engine(kernel, &X[tip], L - tip)
-      + convolution_engine(&kernel[L - tip], X, tip);
-
-    if(0 == tip)
-      tip = L;
-
-    return s;
-  }
-
-  /**
-   *
-   */
-  T operator() (dataT sample) {
-    return update_(sample);
-  }
-
 private:
   /**
    * @brief     Constructor implementation.
@@ -172,6 +160,24 @@ private:
 
     for (size_t i=0; i<L; i++)
       X[i] = initial_value;
+  }
+
+  /**
+   * @brief   Fastest variant for cortex-m4.
+   */
+  T update(dataT sample) {
+    T s;
+
+    tip--;
+    X[tip] = sample;
+
+    s = convolution_engine(kernel, &X[tip], L - tip)
+      + convolution_engine(&kernel[L - tip], X, tip);
+
+    if(0 == tip)
+      tip = L;
+
+    return s;
   }
 
   /**
@@ -213,7 +219,7 @@ private:
   }
 
   /**
-   * Pointer to filter core
+   * Pointer to filter kernel
    */
   const T *kernel;
 
