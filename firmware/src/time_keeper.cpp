@@ -13,7 +13,7 @@
  * Время работает следующим образом:
  * - при старте читается значение из RTC
  * - это значение является отправной точкой для рассчета текущего времени
- *   на основе значения системного таймера
+ *   на основе значения таймера
  * - вычитанное значение никогда не корректируется во избежание геморроя
  *   с логами
  * - время в ячейке RTC корректируется при наличии спутникового времени,
@@ -164,12 +164,12 @@ static void rtc_set_time_unix(time_t t) {
 /**
  *
  */
-static time_t rtc_get_time_unix(void) {
+static time_t rtc_get_time_unix(uint32_t *tv_msec) {
   RTCDateTime timespec;
   struct tm tim;
 
   rtcGetTime(&RTCD1, &timespec);
-  rtcConvertDateTimeToStructTm(&timespec, &tim);
+  rtcConvertDateTimeToStructTm(&timespec, &tim, tv_msec);
 
   return mktime(&tim);
 }
@@ -178,8 +178,12 @@ static time_t rtc_get_time_unix(void) {
  *
  */
 static int64_t rtc_get_time_unix_usec(void) {
+  uint32_t tv_msec;
+  int64_t ret;
 
-  return (int64_t)rtc_get_time_unix() * 1000000;
+  ret = (int64_t)rtc_get_time_unix(&tv_msec) * (int64_t)1000000;
+  ret += tv_msec * 1000;
+  return ret;
 }
 
 /**
@@ -215,7 +219,7 @@ THD_FUNCTION(TimekeeperThread, arg) {
 
             /* now correct time in internal RTC (if needed) */
             int32_t t1 = time_gps_us / 1000000;
-            int32_t t2 = rtc_get_time_unix();
+            int32_t t2 = rtc_get_time_unix(nullptr);
             int32_t dt = t1 - t2;
 
             if (abs(dt) > TIME_CORRECTION_THRESHOLD)

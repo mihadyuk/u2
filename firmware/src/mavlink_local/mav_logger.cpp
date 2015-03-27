@@ -134,7 +134,7 @@ static size_t name_from_time(char *buf) {
   RTCDateTime timespec;
 
   rtcGetTime(&RTCD1, &timespec);
-  rtcConvertDateTimeToStructTm(&timespec, &tim);
+  rtcConvertDateTimeToStructTm(&timespec, &tim, nullptr);
 
 #if MAVLINK_LOG_FORMAT
   return strftime(buf, MAX_FILENAME_SIZE, "%F_%H.%M.%S.mavlink", &tim);
