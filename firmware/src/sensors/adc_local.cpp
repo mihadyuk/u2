@@ -155,6 +155,7 @@ adcsample_t ADCgetCurrent(void) {
  */
 adcsample_t ADCgetMPXVtemp(void) {
   return do_filter(ADC_MPXV_TEMP_CH - CHANNEL_OFFSET, temp_filter);
+  //return samples[ADC_MPXV_TEMP_CH - CHANNEL_OFFSET];
 }
 
 /**
