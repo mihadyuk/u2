@@ -110,7 +110,7 @@ static void adc_eeror_cb(ADCDriver *adcp, adcerror_t err) {
 /**
  *
  */
-static adcsample_t do_filter(size_t offset, filters::AlphaBeta<int32_t, 128> &filter) {
+static adcsample_t do_filter(size_t offset, filters::AlphaBetaBase<int32_t> &filter) {
   size_t idx;
 
   for (size_t i=0; i<ADC_BUF_DEPTH; i++) {
