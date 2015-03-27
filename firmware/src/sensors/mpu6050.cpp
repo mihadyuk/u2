@@ -447,7 +447,7 @@ msg_t MPU6050::acquire_simple(float *acc, float *gyr) {
 /**
  *
  */
-static time_measurement_t fir_tmu;
+time_measurement_t fir_tmu;
 
 void MPU6050::pickle_fifo(float *acc, float *gyr, const size_t sample_cnt) {
 
