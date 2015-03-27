@@ -7,7 +7,7 @@ namespace filters {
  * Template of median filter
  */
 template<typename T, unsigned int N>
-class Median{
+class Median {
 public:
   /**
    * default constructor
