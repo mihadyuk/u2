@@ -23,7 +23,7 @@ public:
   void update(StabInput &stab, float dT);
 private:
   bool ready = false;
-  bool pulse_running = false;
+  bool pulse_active = false;
   float time_elapsed = 0;
   AlcoiPulse pulse;
 };
