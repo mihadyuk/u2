@@ -82,24 +82,24 @@ static uint32_t mailbox_overflow = 0;
 static uint32_t mail_undelivered = 0;
 static bool pause_flag = false;
 
-static mavMail attitude_mail;
-static mavMail debug_mail;
-static mavMail debug_vect_mail;
-static mavMail global_position_int_mail;
-static mavMail gps_raw_int_mail;
-static mavMail highres_imu_mail;
-static mavMail nav_controller_output_mail;
-static mavMail local_position_ned_mail;
-static mavMail raw_imu_mail;
-static mavMail raw_pressure_mail;
-static mavMail rc_channels_mail;
-static mavMail rc_channels_scaled_mail;
-static mavMail scaled_pressure_mail;
-static mavMail sys_status_mail;
-static mavMail vfr_hud_mail;
+static mavMail attitude_mail __CCM__;
+static mavMail debug_mail __CCM__;
+static mavMail debug_vect_mail __CCM__;
+static mavMail global_position_int_mail __CCM__;
+static mavMail gps_raw_int_mail __CCM__;
+static mavMail highres_imu_mail __CCM__;
+static mavMail nav_controller_output_mail __CCM__;
+static mavMail local_position_ned_mail __CCM__;
+static mavMail raw_imu_mail __CCM__;
+static mavMail raw_pressure_mail __CCM__;
+static mavMail rc_channels_mail __CCM__;
+static mavMail rc_channels_scaled_mail __CCM__;
+static mavMail scaled_pressure_mail __CCM__;
+static mavMail sys_status_mail __CCM__;
+static mavMail vfr_hud_mail __CCM__;
 
 /* autoinitialized array */
-static tlm_registry_t Registry[] = {
+__CCM__ static tlm_registry_t Registry[] = {
     {11, NULL, send_attitude},
     {12, NULL, send_debug},
     {13, NULL, send_debug_vect},
@@ -375,7 +375,7 @@ void refresh_deadlines(tlm_registry_t *R, size_t len, systime_t t){
 /**
  * Listen events with new parameters
  */
-static THD_WORKING_AREA(TlmSenderThreadWA, 200);
+static THD_WORKING_AREA(TlmSenderThreadWA, 200) __CCM__;
 static THD_FUNCTION(TlmSenderThread, arg) {
   chRegSetThreadName("TLM_Scheduler");
   (void)arg;

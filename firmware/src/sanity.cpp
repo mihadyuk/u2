@@ -66,7 +66,7 @@ static void heartbeat_blinker(void){
 /**
  *
  */
-static THD_WORKING_AREA(SanityControlThreadWA, 144)  __attribute__((section(".ccm")));
+static THD_WORKING_AREA(SanityControlThreadWA, 144) __CCM__;
 static THD_FUNCTION(SanityControlThread, arg) {
   chRegSetThreadName("Sanity");
   (void)arg;

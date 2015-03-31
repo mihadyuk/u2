@@ -4,8 +4,8 @@
 #include "mav_mail.hpp"
 #include "mav_postman.hpp"
 
-static mavlink_statustext_t mavlink_out_statustext_struct __attribute__((section(".ccm")));
-static mavMail statustext_mail __attribute__((section(".ccm")));
+static mavlink_statustext_t mavlink_out_statustext_struct __CCM__;
+static mavMail statustext_mail __CCM__;
 
 /**
  * Send debug message.

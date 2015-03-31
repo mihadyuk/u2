@@ -6,7 +6,7 @@
 /*
  * volatile array of parameters in RAM
  */
-static param_union_t gp_val[ONBOARD_PARAM_CNT] __attribute__((section(".ccm")));
+static param_union_t gp_val[ONBOARD_PARAM_CNT] __CCM__;
 
 /**
  *

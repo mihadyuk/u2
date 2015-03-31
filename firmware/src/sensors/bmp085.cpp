@@ -184,7 +184,7 @@ void BMP085::picle(abs_pressure_data_t &result) {
 /**
  *
  */
-static THD_WORKING_AREA(bmp085ThreadWA, 256) __attribute__((section(".ccm")));
+static THD_WORKING_AREA(bmp085ThreadWA, 256) __CCM__;
 msg_t bmp085Thread(void *arg) {
   chRegSetThreadName("bmp085");
   BMP085 *sensor = (BMP085 *)arg;

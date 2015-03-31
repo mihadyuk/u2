@@ -58,11 +58,11 @@ static const uint8_t fix_period_2hz[] = "$PMTK300,500,0,0,0,0*28\r\n";
 /* set serial port baudrate */
 static const uint8_t gps_high_baudrate[] = "$PMTK251,57600*2C\r\n";
 
-static NmeaParser nmea_parser __attribute__((section(".ccm")));
+static NmeaParser nmea_parser __CCM__;
 
-static nmea_gga_t gga   __attribute__((section(".ccm")));
-static nmea_rmc_t rmc   __attribute__((section(".ccm")));
-static gps_data_t cache __attribute__((section(".ccm")));
+static nmea_gga_t gga   __CCM__;
+static nmea_rmc_t rmc   __CCM__;
+static gps_data_t cache __CCM__;
 
 static chibios_rt::BinarySemaphore pps_sem(true);
 static chibios_rt::BinarySemaphore protect_sem(false);
@@ -154,7 +154,7 @@ static void gps_configure(void) {
 /**
  *
  */
-static THD_WORKING_AREA(gpsRxThreadWA, 320) __attribute__((section(".ccm")));
+static THD_WORKING_AREA(gpsRxThreadWA, 320) __CCM__;
 static msg_t gpsRxThread(void *arg) {
   chRegSetThreadName("gpsRx");
   (void)arg;

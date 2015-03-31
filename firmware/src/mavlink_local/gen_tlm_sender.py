@@ -192,7 +192,7 @@ thread_loop = """
 /**
  * Listen events with new parameters
  */
-static THD_WORKING_AREA(TlmSenderThreadWA, 200);
+static THD_WORKING_AREA(TlmSenderThreadWA, 200) __CCM__;
 static THD_FUNCTION(TlmSenderThread, arg) {
   chRegSetThreadName("TLM_Scheduler");
   (void)arg;
@@ -235,12 +235,12 @@ def gen(names):
     # global_vars
     f.write(global_vars_sep)
     for n in names:
-        f.write("static mavMail " + n[1] + "_mail;\n")
+        f.write("static mavMail " + n[1] + "_mail __CCM__;\n")
     f.write("\n")
 
     # parameter registry
     f.write("/* autoinitialized array */\n")
-    f.write("static tlm_registry_t Registry[] = {\n")
+    f.write("__CCM__ static tlm_registry_t Registry[] = {\n")
     n = 10
     for i in names:
         n += 1

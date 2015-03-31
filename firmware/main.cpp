@@ -91,7 +91,7 @@ static uint8_t link_thd_buf[THREAD_HEAP_SIZE + sizeof(stkalign_t)];
 //uint32_t LastResetFlags;
 
 /* State vector of system. Calculated mostly in IMU, used mostly in ACS */
-StateVector state_vector __attribute__((section(".ccm")));
+StateVector state_vector __CCM__;
 
 control::Drivetrain drivetrain;
 
@@ -146,8 +146,8 @@ static Speedometer speedometer;
 float speed;
 uint32_t path;
 
-static gps::gps_data_t gps_data __attribute__((section(".ccm")));
-static ahrs_data_t ahrs_data __attribute__((section(".ccm")));
+static gps::gps_data_t gps_data   __CCM__;
+static ahrs_data_t ahrs_data      __CCM__;
 
 static PPS pps;
 static MPXV mpxv;

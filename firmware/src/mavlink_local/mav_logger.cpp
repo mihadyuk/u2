@@ -67,9 +67,9 @@ static bool fresh_data = false;
 /* по этому таймеру будет синхронизироваться файл лога */
 static virtual_timer_t sync_vt;
 
-static unpacked_sdc_cid_t cidsdc  __attribute__((section(".ccm")));
-static unpacked_sdc_csd_20_t csd20 __attribute__((section(".ccm")));
-static unpacked_sdc_csd_10_t csd10 __attribute__((section(".ccm")));
+static unpacked_sdc_cid_t cidsdc    __CCM__;
+static unpacked_sdc_csd_20_t csd20  __CCM__;
+static unpacked_sdc_csd_10_t csd10  __CCM__;
 
 /*
  ******************************************************************************

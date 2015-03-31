@@ -45,14 +45,14 @@ extern EvtSource event_mission_updated;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-static mavMail                        mission_count_mail    __attribute__((section(".ccm")));
-static mavMail                        mission_request_mail  __attribute__((section(".ccm")));
-static mavMail                        mission_ack_mail      __attribute__((section(".ccm")));
-static mavMail                        mission_item_mail     __attribute__((section(".ccm")));
+static mavMail                        mission_count_mail    __CCM__;
+static mavMail                        mission_request_mail  __CCM__;
+static mavMail                        mission_ack_mail      __CCM__;
+static mavMail                        mission_item_mail     __CCM__;
 
-static mavlink_mission_count_t        mavlink_out_mission_count_struct    __attribute__((section(".ccm")));
-static mavlink_mission_request_t      mavlink_out_mission_request_struct  __attribute__((section(".ccm")));
-static mavlink_mission_ack_t          mavlink_out_mission_ack_struct      __attribute__((section(".ccm")));
+static mavlink_mission_count_t        mavlink_out_mission_count_struct    __CCM__;
+static mavlink_mission_request_t      mavlink_out_mission_request_struct  __CCM__;
+static mavlink_mission_ack_t          mavlink_out_mission_ack_struct      __CCM__;
 static mavlink_mission_item_t         mavlink_out_mission_item_struct;
 
 static mavlink_mission_item_t         mavlink_in_mission_item_struct;  /* temporal working copy */
@@ -65,7 +65,7 @@ static size_t drop_mission_item = 0;
  */
 static MAV_COMPONENT destCompID = MAV_COMP_ID_ALL;
 
-char dbg_str[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN] __attribute__((section(".ccm")));
+char dbg_str[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN] __CCM__;
 
 /*
  ******************************************************************************

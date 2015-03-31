@@ -67,7 +67,7 @@ typedef LinkRegistry <
     MAVLINK_MSG_ID_SET_MODE
 > link_registry;
 
-static uint8_t tlsf_array[8192] __attribute__((section(".ccm")));
+static uint8_t tlsf_array[8192] __CCM__;
 static size_t malloc_cnt = 0, free_cnt = 0;
 
 static chibios_rt::BinarySemaphore malloc_sem(false);

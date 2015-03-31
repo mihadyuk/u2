@@ -36,8 +36,8 @@ extern EvtSource event_parameters_updated;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-static mavMail                        param_mail __attribute__((section(".ccm")));
-static mavlink_param_value_t          mavlink_out_param_value_struct __attribute__((section(".ccm")));
+static mavMail                        param_mail __CCM__;
+static mavlink_param_value_t          mavlink_out_param_value_struct __CCM__;
 static unsigned int                   param_send_drop = 0;
 
 /*

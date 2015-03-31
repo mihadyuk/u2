@@ -105,8 +105,8 @@ static const float acc_sens_array[4] = {
     (16 * 9.81) / 32768.0
 };
 
-FIR<float, float, MPU6050_FIR_LEN> acc_fir_array[3] __attribute__((section(".ccm")));
-FIR<float, float, MPU6050_FIR_LEN> gyr_fir_array[3] __attribute__((section(".ccm")));
+FIR<float, float, MPU6050_FIR_LEN> acc_fir_array[3] __CCM__;
+FIR<float, float, MPU6050_FIR_LEN> gyr_fir_array[3] __CCM__;
 
 size_t MPU6050::isr_count = 0;
 uint8_t MPU6050::isr_dlpf = 0;

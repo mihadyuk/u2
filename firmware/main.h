@@ -10,6 +10,8 @@
 
 #include "hal.h"
 
+#define __CCM__ __attribute__((section(".ram4")))
+
 /* Heap size for dynamic thread creation */
 #define THREAD_HEAP_SIZE    (1024 * 4)
 

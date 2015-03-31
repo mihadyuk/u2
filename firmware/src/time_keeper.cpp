@@ -102,9 +102,9 @@ static const GPTConfig gptcfg = {
 
 static chibios_rt::BinarySemaphore ppstimesync_sem(true);
 
-static gps::gps_data_t gps_data __attribute__((section(".ccm")));
+static gps::gps_data_t gps_data __CCM__;
 
-static time_staticstic_t time_stat __attribute__((section(".ccm")));
+static time_staticstic_t time_stat __CCM__;
 
 /*
  *******************************************************************************
@@ -189,7 +189,7 @@ static int64_t rtc_get_time_unix_usec(void) {
 /**
  *
  */
-static THD_WORKING_AREA(TimekeeperThreadWA, 512) __attribute__((section(".ccm")));
+static THD_WORKING_AREA(TimekeeperThreadWA, 512) __CCM__;
 THD_FUNCTION(TimekeeperThread, arg) {
   chRegSetThreadName("Timekeeper");
   TimeKeeper *self = (TimeKeeper *)arg;

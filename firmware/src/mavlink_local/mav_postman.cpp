@@ -35,9 +35,9 @@ MavPostman mav_postman;
 static chibios_rt::Mailbox<mavMail*, 12> txmb;
 MavSpamList MavPostman::spam_list;
 
-static mavlink_message_t rx_msg __attribute__((section(".ccm")));
-static mavlink_status_t rx_status __attribute__((section(".ccm")));
-static mavlink_message_t tx_msg __attribute__((section(".ccm")));
+static mavlink_message_t rx_msg   __CCM__;
+static mavlink_status_t rx_status __CCM__;
+static mavlink_message_t tx_msg   __CCM__;
 static uint8_t sendbuf[MAVLINK_SENDBUF_SIZE]; /* do not set ccm here. This buffer may be used to send data via DMA */
 
 /*
