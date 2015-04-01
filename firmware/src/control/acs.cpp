@@ -12,7 +12,7 @@ using namespace control;
  * DEFINES
  ******************************************************************************
  */
-/* convenience difines */
+/* convenience defines */
 #define PARAM_PULSE_LEVEL         param4
 #define PARAM_PULSE_CHANNEL       param5
 #define PARAM_PULSE_WIDTH         param6
