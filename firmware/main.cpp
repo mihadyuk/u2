@@ -121,19 +121,7 @@ MavLogger mav_logger;
 Ahrs ahrs;
 BMP085 bmp_085(&I2CD_SLOW, bmp085addr);
 
-/*
- ******************************************************************************
- * GLOBAL VARIABLES
- ******************************************************************************
- */
 
-/*
- *******************************************************************************
- *******************************************************************************
- * LOCAL FUNCTIONS
- *******************************************************************************
- *******************************************************************************
- */
 
 #include "maxsonar.hpp"
 #include "pps.hpp"
@@ -151,6 +139,22 @@ static ahrs_data_t ahrs_data      __CCM__;
 
 static PPS pps;
 static MPXV mpxv;
+
+
+
+/*
+ ******************************************************************************
+ * GLOBAL VARIABLES
+ ******************************************************************************
+ */
+
+/*
+ *******************************************************************************
+ *******************************************************************************
+ * LOCAL FUNCTIONS
+ *******************************************************************************
+ *******************************************************************************
+ */
 
 int main(void) {
 
@@ -190,16 +194,9 @@ int main(void) {
 
   MavlinkInit();      /* mavlink constants initialization must be called after parameters init */
   mission_receiver.start(CONTROLLERPRIO);
-//  ControllerInit();
   link_mgr.start();      /* launch after controller to reduce memory fragmentation on thread creation */
   tlm_sender.start();
 
-//  /**/
-//  LastResetFlags = RCC->CSR;
-//  clear_reset_flags();
-//
-//  /* main cycle */
-//  sins.start(&state_vector);
   bmp_085.start();
   GPSInit();
   mav_logger.start(NORMALPRIO);
