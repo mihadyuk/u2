@@ -10,12 +10,12 @@ endif
 
 # C specific options here (added to USE_OPT).
 ifeq ($(USE_COPT),)
-  USE_COPT = -std=gnu11
+  USE_COPT = -std=c11
 endif
 
 # C++ specific options here (added to USE_OPT).
 ifeq ($(USE_CPPOPT),)
-  USE_CPPOPT = -fno-rtti -fno-exceptions -std=gnu++11
+  USE_CPPOPT = -fno-rtti -fno-exceptions -std=c++11
 endif
 
 # Enable this if you want the linker to remove unused code and data
