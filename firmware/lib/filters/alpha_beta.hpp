@@ -21,7 +21,7 @@ private:
 /**
  * Template of alpha-beta filter class with fixed length
  */
-template<typename T, unsigned int L>
+template<typename T, size_t L>
 class AlphaBeta : public AlphaBetaBase<T> {
 public:
   /**
@@ -50,7 +50,7 @@ public:
   /**
    * Return length of filter
    */
-  typeof(L) getLen(void) {
+  size_t getLen(void) {
     return L;
   };
 
