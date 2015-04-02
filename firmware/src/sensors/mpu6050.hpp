@@ -12,6 +12,23 @@
 
 #define MPU6050_FIR_LEN     129
 
+
+
+template <typename T, typename dataT, int L>
+struct MPU6050_fir_block {
+  MPU6050_fir_block(const T *taps, int taps_len) {
+    for (size_t i=0; i<3; i++) {
+      acc[i].setKernel(taps, taps_len);
+      gyr[i].setKernel(taps, taps_len);
+    }
+  }
+  MPU6050_fir_block(void) = delete;
+
+  filters::FIR<T, dataT, L> acc[3];
+  filters::FIR<T, dataT, L> gyr[3];
+};
+
+
 class MPU6050: protected I2CSensor {
 public:
   MPU6050(I2CDriver *i2cdp, i2caddr_t addr);
@@ -66,8 +83,7 @@ private:
   uint8_t acc_fs_current;
   uint8_t dlpf_current;
   uint8_t smplrtdiv_current;
-  filters::FIR<float, float, MPU6050_FIR_LEN> *acc_fir;
-  filters::FIR<float, float, MPU6050_FIR_LEN> *gyr_fir;
+  MPU6050_fir_block<float, float, MPU6050_FIR_LEN> &fir;
 
   uint16_t fifo_remainder = 0;
   int16_t rxbuf_fifo[960 / 2];

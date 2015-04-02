@@ -105,8 +105,7 @@ static const float acc_sens_array[4] = {
     (16 * 9.81) / 32768.0
 };
 
-FIR<float, float, MPU6050_FIR_LEN> acc_fir_array[3] __CCM__;
-FIR<float, float, MPU6050_FIR_LEN> gyr_fir_array[3] __CCM__;
+__CCM__ static MPU6050_fir_block<float, float, MPU6050_FIR_LEN> fir_block(taps, ArrayLen(taps));
 
 size_t MPU6050::isr_count = 0;
 uint8_t MPU6050::isr_dlpf = 0;
@@ -465,8 +464,8 @@ void MPU6050::pickle_fifo(float *acc, float *gyr, const size_t sample_cnt) {
   for (size_t n=0; n<sample_cnt; n++) {
     for (size_t i=0; i<3; i++){
       size_t shift = n * BYTES_IN_SAMPLE / 2 + i;
-      acc[i] = acc_fir[i](rxbuf_fifo[shift + acc_fifo_offset]);
-      gyr[i] = gyr_fir[i](rxbuf_fifo[shift + gyr_fifo_offset]);
+      acc[i] = fir.acc[i](rxbuf_fifo[shift + acc_fifo_offset]);
+      gyr[i] = fir.gyr[i](rxbuf_fifo[shift + gyr_fifo_offset]);
     }
   }
   if (sample_cnt == 10)
@@ -558,7 +557,7 @@ void MPU6050::release_lock(void) {
 /**
  *
  */
-static THD_WORKING_AREA(Mpu6050ThreadWA, 256);
+static THD_WORKING_AREA(Mpu6050ThreadWA, 320);
 THD_FUNCTION(Mpu6050Thread, arg) {
   chRegSetThreadName("Mpu6050");
   MPU6050 *self = static_cast<MPU6050 *>(arg);
@@ -591,8 +590,7 @@ MPU6050::MPU6050(I2CDriver *i2cdp, i2caddr_t addr) :
 I2CSensor(i2cdp, addr),
 protect_sem(false),
 data_ready_sem(true),
-acc_fir(acc_fir_array),
-gyr_fir(gyr_fir_array)
+fir(fir_block)
 {
   state = SENSOR_STATE_STOP;
   chTMObjectInit(&fir_tmu);
@@ -604,10 +602,6 @@ gyr_fir(gyr_fir_array)
 sensor_state_t MPU6050::start(void) {
 
   if (SENSOR_STATE_STOP == this->state) {
-    for (size_t i=0; i<3; i++) {
-      acc_fir[i].setKernel(taps, ArrayLen(taps));
-      gyr_fir[i].setKernel(taps, ArrayLen(taps));
-    }
 
     param_registry.valueSearch("MPU_gyr_fs",    &gyr_fs);
     param_registry.valueSearch("MPU_acc_fs",    &acc_fs);
