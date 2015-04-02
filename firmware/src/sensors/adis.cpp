@@ -326,7 +326,7 @@ float Adis::dt(void) {
 /**
  *
  */
-static THD_WORKING_AREA(AdisThreadWA, 256);
+static THD_WORKING_AREA(AdisThreadWA, 256) __CCM__;
 THD_FUNCTION(AdisThread, arg) {
   chRegSetThreadName("Adis");
   Adis *self = static_cast<Adis *>(arg);

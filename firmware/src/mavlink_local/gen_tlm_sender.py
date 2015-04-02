@@ -116,14 +116,17 @@ prototypes_sep = """
 /* sending function */
 typedef void (*send_t)(void);
 
-typedef struct tlm_registry_t {
+struct tlm_registry_t {
+  tlm_registry_t(systime_t nd, uint32_t const *sp, const send_t s) :
+    next_dealine(nd), sleepperiod(sp), sender(s){};
+  tlm_registry_t(void) = delete;
   /* how much to sleep */
   systime_t next_dealine;
   /* pointer to period value in global parameters structure */
   uint32_t const *sleepperiod;
   /* sending function */
   const send_t sender;
-}tlm_registry_t;
+};
 
 """
 

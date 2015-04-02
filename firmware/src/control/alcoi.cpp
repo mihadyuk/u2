@@ -10,7 +10,8 @@ using namespace control;
  ******************************************************************************
  */
 
-#define MAX_PULSE_WIDTH_ACCEPTED    2 // seconds
+#define ALCOI_MAX_PULSE_WIDTH     2 // seconds
+#define ALCOI_RELAX_TIME          4 // seconds
 
 /*
  ******************************************************************************
@@ -44,7 +45,7 @@ static bool validate_pulse(const AlcoiPulse &pulse) {
     return OSAL_FAILED;
 
   /* pulse longer than 1s looks dangerous */
-  if (pulse.width > MAX_PULSE_WIDTH_ACCEPTED)
+  if (pulse.width > ALCOI_MAX_PULSE_WIDTH)
     return OSAL_FAILED;
 
   if (pulse.lvl > OverrideLevel::bypass)
@@ -71,14 +72,14 @@ void Alcoi::start(void) {
   pulse.width     = 0;
   pulse.strength  = 0;
 
-  ready = true;
+  state = AlcoiState::idle;
 }
 
 /**
  *
  */
 void Alcoi::stop(void) {
-  ready = false;
+  state = AlcoiState::uninit;
 }
 
 /**
@@ -86,18 +87,24 @@ void Alcoi::stop(void) {
  */
 void Alcoi::update(StabInput &stab, float dT) {
 
-  osalDbgCheck(ready);
+  osalDbgCheck(AlcoiState::uninit != state);
 
-  if (pulse_active) {
-    if (this->time_elapsed < pulse.width) {
+  switch (state) {
+  case AlcoiState::pulse:
+    if (this->pulse_time_elapsed < pulse.width) {
       stab.ch[pulse.ch].override_target = pulse.strength;
       stab.ch[pulse.ch].override_level  = pulse.lvl;
-      time_elapsed += dT;
+      pulse_time_elapsed += dT;
     }
     else { /* pulse end */
-      pulse_active = false;
-      time_elapsed = 0;
+      state = AlcoiState::idle;
+      pulse_time_elapsed = 0;
     }
+    break;
+
+  /**/
+  default:
+    break;
   }
 }
 
@@ -108,11 +115,11 @@ bool Alcoi::loadPulse(const AlcoiPulse &pulse) {
 
   if (OSAL_SUCCESS == validate_pulse(pulse)) {
     this->pulse = pulse;
-    pulse_active = true;
+    state = AlcoiState::pulse;
     return OSAL_SUCCESS;
   }
   else {
-    pulse_active = false;
+    state = AlcoiState::idle;
     return OSAL_FAILED;
   }
 }

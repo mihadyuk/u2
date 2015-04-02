@@ -87,30 +87,11 @@ GlobalFlags_t GlobalFlags = {0,0,0,0,0,0,0,0,
 memory_heap_t ThdHeap;
 static uint8_t link_thd_buf[THREAD_HEAP_SIZE + sizeof(stkalign_t)];
 
-///* save here flags before clear them from MCU register */
-//uint32_t LastResetFlags;
-
 /* State vector of system. Calculated mostly in IMU, used mostly in ACS */
-StateVector state_vector __CCM__;
+__CCM__ static StateVector state_vector;
+__CCM__ static control::Drivetrain drivetrain;
+__CCM__ static control::ACS acs(drivetrain, state_vector);
 
-control::Drivetrain drivetrain;
-
-//MARGRover marg;
-//AttitudeUnitRover attitude_unit(0.01f, state_vector);
-
-/* automated control system */
-control::ACS acs(drivetrain, state_vector);
-
-///* automated control system */
-//SINS sins;
-//
-///**/
-//Drivetrain drivetrain(impact);
-//
-///**/
-//MavDispatcher mav_dispatcher(acs);
-//
-//CmdExecutor cmd_executor(acs, attitude_unit);
 
 MissionReceiver mission_receiver;
 sensor_state_registry_t SensorStateRegistry;
@@ -128,17 +109,17 @@ BMP085 bmp_085(&I2CD_SLOW, bmp085addr);
 #include "speedometer.hpp"
 #include "gps_eb500.hpp"
 #include "mpxv.hpp"
-static MaxSonar maxsonar;
+__CCM__ static MaxSonar maxsonar;
 
-static Speedometer speedometer;
-float speed;
-uint32_t path;
+__CCM__ static Speedometer speedometer;
+__CCM__ float speed;
+__CCM__ uint32_t path;
 
-static gps::gps_data_t gps_data   __CCM__;
-static ahrs_data_t ahrs_data      __CCM__;
+__CCM__ static gps::gps_data_t gps_data;
+__CCM__ static ahrs_data_t ahrs_data;
 
-static PPS pps;
-static MPXV mpxv;
+__CCM__ static PPS pps;
+__CCM__ static MPXV mpxv;
 
 
 
@@ -162,14 +143,14 @@ int main(void) {
   System::init();
 
   endianness_test();
-  chThdSleepMilliseconds(300);
+  osalThreadSleepMilliseconds(300);
 
   /* enable softreset on panic */
   setGlobalFlag(GlobalFlags.allow_softreset);
   if (was_softreset() || was_padreset())
-    chThdSleepMilliseconds(1);
+    osalThreadSleepMilliseconds(1);
   else
-    chThdSleepMilliseconds(200);
+    osalThreadSleepMilliseconds(200);
 
   /* give power to all needys */
   ADCInitLocal();
@@ -200,6 +181,7 @@ int main(void) {
   bmp_085.start();
   GPSInit();
   mav_logger.start(NORMALPRIO);
+  osalThreadSleepMilliseconds(1);
 
   ahrs.start();
   maxsonar.start();

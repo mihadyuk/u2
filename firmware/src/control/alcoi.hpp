@@ -5,11 +5,24 @@
 
 namespace control {
 
+/**
+ *
+ */
 struct AlcoiPulse {
   OverrideLevel lvl;
   pid_chain_t   ch;
   float         width; // seconds
   float         strength;
+};
+
+/**
+ *
+ */
+enum class AlcoiState {
+  uninit,
+  idle,
+  pulse,
+  relax
 };
 
 /**
@@ -22,9 +35,9 @@ public:
   bool loadPulse(const AlcoiPulse &pulse);
   void update(StabInput &stab, float dT);
 private:
-  bool ready = false;
-  bool pulse_active = false;
-  float time_elapsed = 0;
+  AlcoiState state = AlcoiState::uninit;
+  float pulse_time_elapsed = 0;
+  float relax_time_elapsed = 0;
   AlcoiPulse pulse;
 };
 
