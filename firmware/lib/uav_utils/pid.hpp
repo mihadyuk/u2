@@ -79,9 +79,6 @@ protected:
    */
   T do_pid(T error, T dTerm) {
 
-    if (nullptr != postproc)
-      error = postproc(error);
-
     T ret = *this->pGain * error +
             *this->iGain * this->iState +
             *this->dGain * dTerm;
@@ -148,7 +145,9 @@ public:
     if (*this->bypass > 0)
       return target;
 
-    T error = position - target;
+    T error = target - position;
+    if (nullptr != this->postproc)
+      error = this->postproc(error);
 
     /* calculate the integral state with appropriate limiting */
     T iPiece = (error + this->errorPrev) * dT / 2;
@@ -158,7 +157,7 @@ public:
     this->errorPrev = error;
 
     /* calculate the derivative term */
-    T dTerm = (position - this->positionPrev) * dT;
+    T dTerm = (position - this->positionPrev) / dT;
     this->positionPrev = position;
     if (need_filter)
       dTerm = filter(dTerm);
