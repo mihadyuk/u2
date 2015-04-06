@@ -21,64 +21,31 @@ class PIDSpinbox(Frame):
     def __init__(self, parent, guiname, internalname, callback):
         Frame.__init__(self, parent)
 
-
-        # valid percent substitutions (from the Tk entry man page)
-        # %d = Type of action (1=insert, 0=delete, -1 for others)
-        # %i = index of char string to be inserted/deleted, or -1
-        # %P = value of the entry if the edit is allowed
-        # %s = value of entry prior to editing
-        # %S = the text string being inserted or deleted, if any
-        # %v = the type of validation that is currently set
-        # %V = the type of validation that triggered the callback
-        #      (key, focusin, focusout, forced)
-        # %W = the tk name of the widget
-        vcmd = (parent.register(self.OnValidate),
-                '%s', '%P')
-
         self.callback = callback
-        self.from_ = 0.0
-        self.to = 5.0
+        self.FROM = 0.0
+        self.TO = 5.0
         self.var = DoubleVar()
         self.internalname = internalname
-        self.spinbox = Entry(self,
-                width=8,
-                textvariable=self.var,
-                validate="all", validatecommand=vcmd)
-        # self.spinbox = Spinbox(self,
-        #         increment=1.0/10000,
-        #         width=8,
-        #         from_=self.from_,
-        #         to=self.to,
-        #         command=self._cb,
-        #         validate="all", validatecommand=vcmd)
+        self.spinbox = Entry(self, width=8, textvariable=self.var)
         self.spinbox.pack(side = RIGHT)
         self.label = Label(self, text=guiname, width=2)
         self.label.pack(side = LEFT)
 
-    def OnValidate(self, old, new):
+    def validate(self):
         d = 0.0
-        i = 0
         try:
-            i = int(new)
-            if (i < self.from_) or (i > self.to):
+            d = float(self.var.get())
+            if (d < self.FROM) or (d > self.TO):
+                self.spinbox.configure(background="yellow")
+                print ("1:", d)
                 return False
         except:
-            print ("---- validation error:", new)
+            self.spinbox.configure(background="red")
+            print ("2:", d)
             return False
 
-        try:
-            d = float(new)
-            if (d < self.from_) or (d > self.to):
-                return False
-        except:
-            print ("---- validation error:", new)
-            return False
-
-
+        self.spinbox.configure(background="white")
         return True
-
-    def _cb(self):
-        self.callback(self.internalname, self.spinbox.get())
 
 
 class Bypassbutton(Checkbutton):
@@ -103,17 +70,21 @@ class PIDFrame(LabelFrame):
         LabelFrame.__init__(self, parent, text=guiname)
         self.controls = {}
 
-        self.controls["P"] = PIDSpinbox(self, "P", internalname + "P", callback)
-        self.controls["P"].pack()
+        self.name_list = ["P", "I", "D"]
 
-        self.controls["I"] = PIDSpinbox(self, "I", internalname + "I", callback)
-        self.controls["I"].pack()
-
-        self.controls["D"] = PIDSpinbox(self, "D", internalname + "D", callback)
-        self.controls["D"].pack()
+        for n in self.name_list:
+            self.controls[n] = PIDSpinbox(self, n, internalname + n, callback)
+            self.controls[n].pack()
 
         self.controls["B"] = Bypassbutton(self, "Bypass", internalname + "B", callback)
         self.controls["B"].pack()
+
+    def validate(self):
+        ret = True
+        for n in self.name_list:
+            if False == self.controls[n].validate():
+                ret = False
+        return ret
 
     def update(self, cmd):
         return
@@ -124,14 +95,18 @@ class ChannelFrame(LabelFrame):
     def __init__(self, parent, guiname, internalname, callback):
         LabelFrame.__init__(self, parent, text=guiname)
         self.pid = {} # dictionary for PIDs
+        self.name_list = ["h", "m", "l"]
 
-        self.pid["h"] = PIDFrame(self, "High", internalname + "h_", callback)
-        self.pid["m"] = PIDFrame(self, "Mid",  internalname + "m_", callback)
-        self.pid["l"] = PIDFrame(self, "Low",  internalname + "l_", callback)
+        for n in self.name_list:
+            self.pid[n] = PIDFrame(self, "High", internalname + n + "_", callback)
+            self.pid[n].pack(side = LEFT)
 
-        self.pid["h"].pack(side = LEFT)
-        self.pid["m"].pack(side = LEFT)
-        self.pid["l"].pack(side = LEFT)
+    def validate(self):
+        ret = True
+        for n in self.name_list:
+            if False == self.pid[n].validate():
+                ret = False
+        return ret
 
     def update(self, cmd):
         return
@@ -143,17 +118,21 @@ class Gui(object):
         self.paramq = paramq
         self.commandq = commandq
         self.ch = {} # channel dictionary
+        self.name_list = ["ail", "ele", "rud", "thr"]
 
-        self.ch["ail"] = ChannelFrame(parent, "Aileron",  "PID_ail_", self._cb)
-        self.ch["ele"] = ChannelFrame(parent, "Elevator", "PID_ele_", self._cb)
-        self.ch["rud"] = ChannelFrame(parent, "Rudder",   "PID_rud_", self._cb)
-        self.ch["thr"] = ChannelFrame(parent, "Thrust",   "PID_thr_", self._cb)
+        for n in self.name_list:
+            self.ch[n] = ChannelFrame(parent, "Aileron",  "PID_" + n + "_", self._cb)
+            self.ch[n].pack()
 
-        self.ch["ail"].pack()
-        self.ch["ele"].pack()
-        self.ch["rud"].pack()
-        self.ch["thr"].pack()
-        return
+        self.b = Button(parent, text="Send", command=self.validate)
+        self.b.pack()
+
+    def validate(self):
+        ret = True
+        for n in self.name_list:
+            if False == self.ch[n].validate():
+                ret = False
+        return ret
 
     def update(self, cmd):
         if type(cmd) is commworker.AcquiredParam:
