@@ -1,16 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-"""
-ZetCode Tkinter tutorial
+import commworker
 
-This script shows a simple window
-on the screen.
-
-author: Jan Bodnar
-last modified: January 2011
-website: www.zetcode.com
-"""
+from multiprocessing import Process, Queue, Event, freeze_support
+from queue import Empty, Full # for exception catching
 
 # from tkinter import ttk
 # from tkinter import *
@@ -18,150 +12,181 @@ website: www.zetcode.com
 
 from tkinter import *
 
-
-param_list = [
-    "PID_ail_h_P",
-    "PID_ail_h_I",
-    "PID_ail_h_D",
-    "PID_ail_h_B",
-    "PID_ail_m_P",
-    "PID_ail_m_I",
-    "PID_ail_m_D",
-    "PID_ail_m_B",
-    "PID_ail_l_P",
-    "PID_ail_l_I",
-    "PID_ail_l_D",
-    "PID_ail_l_B",
-    "PID_ele_h_P",
-    "PID_ele_h_I",
-    "PID_ele_h_D",
-    "PID_ele_h_B",
-    "PID_ele_m_P",
-    "PID_ele_m_I",
-    "PID_ele_m_D",
-    "PID_ele_m_B",
-    "PID_ele_l_P",
-    "PID_ele_l_I",
-    "PID_ele_l_D",
-    "PID_ele_l_B",
-    "PID_rud_h_P",
-    "PID_rud_h_I",
-    "PID_rud_h_D",
-    "PID_rud_h_B",
-    "PID_rud_m_P",
-    "PID_rud_m_I",
-    "PID_rud_m_D",
-    "PID_rud_m_B",
-    "PID_rud_l_P",
-    "PID_rud_l_I",
-    "PID_rud_l_D",
-    "PID_rud_l_B",
-    "PID_thr_h_P",
-    "PID_thr_h_I",
-    "PID_thr_h_D",
-    "PID_thr_h_B",
-    "PID_thr_m_P",
-    "PID_thr_m_I",
-    "PID_thr_m_D",
-    "PID_thr_m_B",
-    "PID_thr_l_P",
-    "PID_thr_l_I",
-    "PID_thr_l_D",
-    "PID_thr_l_B"
-]
-
 param_recvd = {}
 param_changed = {}
 
+
 class PIDSpinbox(Frame):
 
-    def __init__(self, parent, var, name):
+    def __init__(self, parent, guiname, internalname, callback):
         Frame.__init__(self, parent)
-        self.var = var
-        self.name = name
-        self.spinbox = Spinbox(self, textvariable=var, width=8, from_=0.0, to=10.0, command=self._callback)
+
+
+        # valid percent substitutions (from the Tk entry man page)
+        # %d = Type of action (1=insert, 0=delete, -1 for others)
+        # %i = index of char string to be inserted/deleted, or -1
+        # %P = value of the entry if the edit is allowed
+        # %s = value of entry prior to editing
+        # %S = the text string being inserted or deleted, if any
+        # %v = the type of validation that is currently set
+        # %V = the type of validation that triggered the callback
+        #      (key, focusin, focusout, forced)
+        # %W = the tk name of the widget
+        vcmd = (parent.register(self.OnValidate),
+                '%s', '%P')
+
+        self.callback = callback
+        self.from_ = 0.0
+        self.to = 5.0
+        self.var = DoubleVar()
+        self.internalname = internalname
+        self.spinbox = Entry(self,
+                width=8,
+                textvariable=self.var,
+                validate="all", validatecommand=vcmd)
+        # self.spinbox = Spinbox(self,
+        #         increment=1.0/10000,
+        #         width=8,
+        #         from_=self.from_,
+        #         to=self.to,
+        #         command=self._cb,
+        #         validate="all", validatecommand=vcmd)
         self.spinbox.pack(side = RIGHT)
-        self.label = Label(self, text=name, width=2)
+        self.label = Label(self, text=guiname, width=2)
         self.label.pack(side = LEFT)
 
-    def _callback(self):
-        print (self.name, self.var.get())
+    def OnValidate(self, old, new):
+        d = 0.0
+        i = 0
+        try:
+            i = int(new)
+            if (i < self.from_) or (i > self.to):
+                return False
+        except:
+            print ("---- validation error:", new)
+            return False
+
+        try:
+            d = float(new)
+            if (d < self.from_) or (d > self.to):
+                return False
+        except:
+            print ("---- validation error:", new)
+            return False
+
+
+        return True
+
+    def _cb(self):
+        self.callback(self.internalname, self.spinbox.get())
+
+
+class Bypassbutton(Checkbutton):
+
+    def __init__(self, parent, guiname, internalname, callback):
+        self.var = IntVar()
+        Checkbutton.__init__(self, parent, variable=self.var, text=guiname, command=self._cb)
+        self.callback = callback
+        self.internalname = internalname
+
+    def update(self, cmd):
+        return
+
+    def _cb(self):
+        self.callback(self.internalname, self.var.get())
+        return
+
 
 class PIDFrame(LabelFrame):
 
-    def __init__(self, parent, name, pid_dict):
-        LabelFrame.__init__(self, parent, text=name)
+    def __init__(self, parent, guiname, internalname, callback):
+        LabelFrame.__init__(self, parent, text=guiname)
+        self.controls = {}
 
-        self.pspin = PIDSpinbox(self, pid_dict["p"], "P")
-        self.pspin.pack()
+        self.controls["P"] = PIDSpinbox(self, "P", internalname + "P", callback)
+        self.controls["P"].pack()
 
-        self.ispin = PIDSpinbox(self, pid_dict["i"], "I")
-        self.ispin.pack()
+        self.controls["I"] = PIDSpinbox(self, "I", internalname + "I", callback)
+        self.controls["I"].pack()
 
-        self.dspin = PIDSpinbox(self, pid_dict["d"], "D")
-        self.dspin.pack()
+        self.controls["D"] = PIDSpinbox(self, "D", internalname + "D", callback)
+        self.controls["D"].pack()
 
-        self.c = Checkbutton(self, text="Bypass", variable=pid_dict["b"])
-        self.c.pack()
+        self.controls["B"] = Bypassbutton(self, "Bypass", internalname + "B", callback)
+        self.controls["B"].pack()
 
-
-class PIDDict():
-
-    def __init__(self):
-        self.d = {}
-        self.d["p"] = DoubleVar()
-        self.d["i"] = DoubleVar()
-        self.d["d"] = DoubleVar()
-        self.d["b"] = IntVar()
-
-
-class PIDChannelDict():
-
-    def __init__(self):
-        self.d = {}
-        self.d["h"] = PIDDict()
-        self.d["m"] = PIDDict()
-        self.d["l"] = PIDDict()
+    def update(self, cmd):
+        return
 
 
 class ChannelFrame(LabelFrame):
 
-    def __init__(self, parent, name, channel_dict):
-        LabelFrame.__init__(self, parent, text=name)
+    def __init__(self, parent, guiname, internalname, callback):
+        LabelFrame.__init__(self, parent, text=guiname)
+        self.pid = {} # dictionary for PIDs
 
-        h_pid = PIDFrame(self, "High", channel_dict.d["h"].d)
-        m_pid = PIDFrame(self, "Mid",  channel_dict.d["m"].d)
-        l_pid = PIDFrame(self, "Low",  channel_dict.d["l"].d)
+        self.pid["h"] = PIDFrame(self, "High", internalname + "h_", callback)
+        self.pid["m"] = PIDFrame(self, "Mid",  internalname + "m_", callback)
+        self.pid["l"] = PIDFrame(self, "Low",  internalname + "l_", callback)
 
-        h_pid.pack(side = LEFT)
-        m_pid.pack(side = LEFT)
-        l_pid.pack(side = LEFT)
+        self.pid["h"].pack(side = LEFT)
+        self.pid["m"].pack(side = LEFT)
+        self.pid["l"].pack(side = LEFT)
+
+    def update(self, cmd):
+        return
+
+
+class Gui(object):
+
+    def __init__(self, parent, paramq, commandq):
+        self.paramq = paramq
+        self.commandq = commandq
+        self.ch = {} # channel dictionary
+
+        self.ch["ail"] = ChannelFrame(parent, "Aileron",  "PID_ail_", self._cb)
+        self.ch["ele"] = ChannelFrame(parent, "Elevator", "PID_ele_", self._cb)
+        self.ch["rud"] = ChannelFrame(parent, "Rudder",   "PID_rud_", self._cb)
+        self.ch["thr"] = ChannelFrame(parent, "Thrust",   "PID_thr_", self._cb)
+
+        self.ch["ail"].pack()
+        self.ch["ele"].pack()
+        self.ch["rud"].pack()
+        self.ch["thr"].pack()
+        return
+
+    def update(self, cmd):
+        if type(cmd) is commworker.AcquiredParam:
+            print (">>> GUI handler:", cmd.name)
+
+    def _cb(self, name, value):
+        print (">>> GUI main callback", name, value)
+        param = commworker.AcquiredParam(name, value)
+        self.paramq.put_nowait(param)
+        return
 
 
 
-def main():
+root = Tk()
+# try to use native look from ttk
+try:
+    Style().theme_use('native')
+except:
+    pass
 
-    root = Tk()
-
-    # Style().theme_use('default')
-
-    ch_ail_dict = PIDChannelDict()
-    ch_ele_dict = PIDChannelDict()
-    ch_rud_dict = PIDChannelDict()
-    ch_thr_dict = PIDChannelDict()
-
-    ch_ail = ChannelFrame(root, "Aileron",  ch_ail_dict)
-    ch_ele = ChannelFrame(root, "Elevator", ch_ele_dict)
-    ch_rud = ChannelFrame(root, "Rudder",   ch_rud_dict)
-    ch_thr = ChannelFrame(root, "Thrust",   ch_thr_dict)
-
-    ch_ail.pack()
-    ch_ele.pack()
-    ch_rud.pack()
-    ch_thr.pack()
-
-    root.mainloop()
 
 
 if __name__ == '__main__':
-    main()
+    paramq = Queue(4)
+    commandq = Queue(4)
+    gui = Gui(root, paramq, commandq)
+
+    comm_worker = commworker.CommWorker(paramq, commandq, gui.update, "/dev/ttyS0")
+    comm_worker.start()
+
+    root.mainloop()
+
+    comm_worker.stop()
+    comm_worker.join()
+
+
