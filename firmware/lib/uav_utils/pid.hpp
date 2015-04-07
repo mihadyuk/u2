@@ -154,11 +154,9 @@ public:
     if ((iPiece * this->clamping) <= 0)
       this->iState += iPiece;
 
-    this->errorPrev = error;
-
     /* calculate the derivative term */
-    T dTerm = (position - this->positionPrev) / dT;
-    this->positionPrev = position;
+    T dTerm = (error - this->errorPrev) / dT;
+    this->errorPrev = error;
     if (need_filter)
       dTerm = filter(dTerm);
 
@@ -166,7 +164,6 @@ public:
   }
 
 private:
-  T positionPrev; /* Previous position value for derivative term calculation */
   filters::IIR<T, T, 1> filter;
   bool need_filter;
 };
