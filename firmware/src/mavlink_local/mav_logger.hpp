@@ -15,7 +15,7 @@ public:
 
 private:
   FRESULT append_log(mavMail *mail, bool *fresh_data);
-  msg_t main(void);
+  void main(void);
   size_t drop_cnt = 0;
   bool ready = false;
   chibios_rt::Mailbox<mavMail*, 12> logwriter_mb;

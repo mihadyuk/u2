@@ -78,8 +78,7 @@ static THD_FUNCTION(LoopCmdThread, arg) {
     chThdSleepMilliseconds(25);
   }
 
-  chThdExit(0);
-  return 0;
+  chThdExit(MSG_OK);
 }
 
 /**

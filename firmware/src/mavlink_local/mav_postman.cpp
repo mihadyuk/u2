@@ -67,7 +67,6 @@ static THD_FUNCTION(RxThread, arg) {
   }
 
   chThdExit(MSG_OK);
-  return MSG_OK;
 }
 
 /**
@@ -91,7 +90,6 @@ static THD_FUNCTION(TxThread, arg) {
   }
 
   chThdExit(MSG_OK);
-  return MSG_OK;
 }
 
 /*

@@ -125,7 +125,6 @@ static THD_FUNCTION(RedBlinkThread, arg) {
   }
 
   chThdExit(MSG_OK);
-  return MSG_OK;
 }
 
 /**
@@ -147,7 +146,6 @@ static THD_FUNCTION(BlueBlinkThread, arg) {
   }
 
   chThdExit(MSG_OK);
-  return MSG_OK;
 }
 
 /*

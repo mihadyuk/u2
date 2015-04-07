@@ -302,7 +302,6 @@ static THD_FUNCTION(ParametersThread, arg){
   param_mailbox.reset();
 
   chThdExit(MSG_OK);
-  return MSG_OK;
 }
 
 /*

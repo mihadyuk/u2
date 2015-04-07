@@ -10,6 +10,7 @@ import multiprocessing
 import time
 
 from multiprocessing import Process, Queue, Event, freeze_support
+from threading import Thread
 from queue import Empty, Full # for exception catching
 
 import pymavlink.dialects.v10.lapwing as mavlink
@@ -70,18 +71,18 @@ param_list = [
 
 
 class AcquiredParam(object):
-    def __init__(self, name, val):
+    def __init__(self, name, var):
         self.name = name
-        self.val = val
+        self.var = var
 
 
-class CommWorker(Process):
+class CommWorker(Thread):
 
-    def __init__(self, paramq, commandq, guihandler, device):
-        Process.__init__(self)
-        self.paramq = paramq
-        self.commandq = commandq
-        self.guihandler = guihandler
+    def __init__(self, to_pnc, from_pnc, gui, device):
+        Thread.__init__(self)
+        self.to_pnc = to_pnc
+        self.from_pnc = from_pnc
+        self.gui = gui
         self.device = device
         self.__stop = Event()
 
@@ -99,10 +100,11 @@ class CommWorker(Process):
         # wait heartbeat
         m = mav.recv_match(type="HEARTBEAT", blocking=True, timeout=5)
         if m is not None:
-            self.guihandler(m)
+            self.from_pnc.put_nowait(m)
+            self.gui.event_generate('<<NewParam>>', when='tail')
             mav.target_system = m.get_srcSystem()
         else:
-            self.guihandler("Connection time is out")
+            self.gui.update("Connection time is out")
             return
 
         # acquire PIDs settings
@@ -111,11 +113,7 @@ class CommWorker(Process):
         # main working loop
         while not (self.__stop.is_set()):
             try:
-                recv = self.commandq.get_nowait()
-            except Empty:
-                pass
-            try:
-                recv = self.paramq.get_nowait()
+                recv = self.to_pnc.get_nowait()
             except Empty:
                 pass
             time.sleep(0.02)
@@ -138,7 +136,9 @@ class CommWorker(Process):
                 if m.param_type == 9 or m.param_type == 10:
                     return float(m.param_value)
                 else:
-                    return int(m.param_value)
+                    b = struct.pack('<f', m.param_value)
+                    i = struct.unpack('<I', b)
+                    return i[0]
             else:
                 retry -= 1
                 print ("Time is out. Retrying:", retry)
@@ -151,7 +151,12 @@ class CommWorker(Process):
                 return
             pv = self._recv_param_value(name, 2, 5, mav)
             if (pv is not None):
-                self.guihandler(AcquiredParam(name, pv))
+                self.from_pnc.put_nowait(AcquiredParam(name, pv))
+                try:
+                    self.gui.event_generate('<<NewParam>>', when='tail')
+                except:
+                    self.__stop.set()
+                    return
 
 
     def _acqure(self):

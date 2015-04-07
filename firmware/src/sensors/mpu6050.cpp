@@ -574,7 +574,6 @@ THD_FUNCTION(Mpu6050Thread, arg) {
   }
 
   chThdExit(MSG_OK);
-  return MSG_OK;
 }
 
 /*

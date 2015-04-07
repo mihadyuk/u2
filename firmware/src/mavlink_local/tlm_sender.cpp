@@ -395,8 +395,7 @@ static THD_FUNCTION(TlmSenderThread, arg) {
     }
   }
 
-  chThdExit(0);
-  return 0;
+  chThdExit(MSG_OK);
 }
 
 /** 

@@ -241,8 +241,7 @@ static THD_FUNCTION(ShellThread, sdp) {
   }
 
   clearGlobalFlag(GlobalFlags.shell_ready);
-  chThdExit(0);
-  return 0;
+  chThdExit(MSG_OK);
 }
 
 /**
