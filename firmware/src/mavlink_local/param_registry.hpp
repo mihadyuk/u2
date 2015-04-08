@@ -7,8 +7,7 @@
 /* периодичность посылки данных телеметрии в милисекундах */
 #define TELEMETRY_SEND_OFF            0
 
-#define ONBOARD_PARAM_NAME_LENGTH     15
-#define PARAM_ID_SIZE                 16
+#define PARAM_REGISTRY_ID_SIZE        16
 
 /**
  *
@@ -83,10 +82,10 @@ public:
   ParamStatus set(const param_union_t *value, const GlobalParam_t *param);
 
 private:
-  ParamStatus default_val(const param_union_t *value, const GlobalParam_t *param);
-  ParamStatus uint_val(const param_union_t *value, const GlobalParam_t *param);
   ParamStatus int_val(const param_union_t *value, const GlobalParam_t *param);
+  ParamStatus uint_val(const param_union_t *value, const GlobalParam_t *param);
   ParamStatus float_val(const param_union_t *value, const GlobalParam_t *param);
+  ParamStatus default_val(const param_union_t *value, const GlobalParam_t *param);
   ParamStatus sendtmo_val(const param_union_t *value, const GlobalParam_t *param);
   ParamStatus sortmtrx_val(const param_union_t *value, const GlobalParam_t *param);
   ParamStatus polarity_val(const param_union_t *value, const GlobalParam_t *param);
@@ -132,18 +131,18 @@ private:
  * Return pointer to value. High level function.
  */
 template <typename T>
-int ParamRegistry::valueSearch(const char *key, T **vp){
+int ParamRegistry::valueSearch(const char *key, T **vp) {
 
   osalDbgCheck(true == this->ready);
 
   int i = -1;
 
   i = this->key_index_search(key);
-  if (i == -1){
+  if (i == -1) {
     osalSysHalt("key not found");
     vp = NULL;
   }
-  else{
+  else {
     store_value(i, vp);
   }
   return i;

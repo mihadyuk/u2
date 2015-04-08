@@ -48,6 +48,9 @@ __CCM__ static unsigned int           param_send_drop = 0;
  ******************************************************************************
  */
 
+/* overflow protect */
+static_assert(sizeof(mavlink_param_value_t::param_id) == PARAM_REGISTRY_ID_SIZE, "");
+
 /**
  *
  */
@@ -85,7 +88,7 @@ static bool send_value(const char *key, int n){
     mavlink_out_param_value_struct.param_type  = p->param_type;
     mavlink_out_param_value_struct.param_count = param_registry.paramCount();
     mavlink_out_param_value_struct.param_index = index;
-    strncpy(mavlink_out_param_value_struct.param_id, p->name, ONBOARD_PARAM_NAME_LENGTH);
+    strncpy(mavlink_out_param_value_struct.param_id, p->name, PARAM_REGISTRY_ID_SIZE);
 
     /* inform sending thread */
     param_value_send(mavlink_out_param_value_struct);
@@ -108,7 +111,7 @@ static void ignore_value(const mavlink_param_set_t *p){
   mavlink_out_param_value_struct.param_type  = p->param_type;
   mavlink_out_param_value_struct.param_count = param_registry.paramCount();
   mavlink_out_param_value_struct.param_index = param_registry.paramCount();
-  strncpy(mavlink_out_param_value_struct.param_id, p->param_id, ONBOARD_PARAM_NAME_LENGTH);
+  strncpy(mavlink_out_param_value_struct.param_id, p->param_id, PARAM_REGISTRY_ID_SIZE);
 
   /* inform sending thread */
   param_value_send(mavlink_out_param_value_struct);
