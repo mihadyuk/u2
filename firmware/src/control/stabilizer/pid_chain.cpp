@@ -59,13 +59,11 @@ link_h(position_h, pid_h), link_m(position_m, pid_m), link_l(position_l, pid_l)
 /**
  *
  */
-void PIDChain::start(float const *pGain_h, float const *iGain_h, float const *dGain_h, uint32_t const *bypass_h,
-                     float const *pGain_m, float const *iGain_m, float const *dGain_m, uint32_t const *bypass_m,
-                     float const *pGain_l, float const *iGain_l, float const *dGain_l, uint32_t const *bypass_l) {
+void PIDChain::start(const PIDInit<float> &h, const PIDInit<float> &m, const PIDInit<float> &l) {
 
-  link_h.start(pGain_h, iGain_h, dGain_h, bypass_h);
-  link_m.start(pGain_m, iGain_m, dGain_m, bypass_m);
-  link_l.start(pGain_l, iGain_l, dGain_l, bypass_l);
+  link_h.start(h);
+  link_m.start(m);
+  link_l.start(l);
 }
 
 /**
