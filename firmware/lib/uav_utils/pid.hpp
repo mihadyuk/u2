@@ -1,7 +1,6 @@
 #ifndef PID_HPP_
 #define PID_HPP_
 
-#include "putinrange.hpp"
 #include "float.h" /* for FLT_EPSILON macro */
 #include "iir.hpp"
 
@@ -14,12 +13,15 @@
  */
 template <typename T>
 struct PIDInit {
-  T const *P = nullptr;
-  T const *I = nullptr;
-  T const *D = nullptr;
-  T const *Min = nullptr;
-  T const *Max = nullptr;
-  uint32_t const *B = nullptr; // bypass
+  PIDInit(void) {
+    memset(this, 0, sizeof(*this));
+  }
+  T const *P;
+  T const *I;
+  T const *D;
+  T const *Min;
+  T const *Max;
+  uint32_t const *B; // bypass
 };
 
 /**
@@ -67,16 +69,6 @@ public:
     this->bypass = init.B;
     this->Min = init.Min;
     this->Max = init.Max;
-  }
-
-  /**
-   *
-   */
-  void dryRun(T i) {
-    if (fabs(*iGain) < FLT_EPSILON * 10) // zero division protect
-      iState = 0;
-    else
-      iState = i / *iGain;
   }
 
   /**
