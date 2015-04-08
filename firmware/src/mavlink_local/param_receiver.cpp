@@ -58,7 +58,7 @@ static void param_value_send(const mavlink_param_value_t &m) {
 
   size_t retry = PARAM_POST_TIMEOUT / SEND_PAUSE;
 
-  while(retry--) {
+  while (retry--) {
     if (param_mail.free()) {
       param_mail.fill(&m, GLOBAL_COMPONENT_ID, MAVLINK_MSG_ID_PARAM_VALUE);
       mav_postman.postAhead(param_mail);
