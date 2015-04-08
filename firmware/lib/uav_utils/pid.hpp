@@ -103,8 +103,7 @@ protected:
   int clamping = PID_CLAMP_NONE;
 
   /**
-   * @brief   Combines all terms and gains. Apply post processing
-   *          function when needed.
+   * @brief   Combines all terms and gains.
    */
   T do_pid(T error, T dTerm) {
 
