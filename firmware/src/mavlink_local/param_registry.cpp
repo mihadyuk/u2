@@ -417,7 +417,7 @@ void ParamRegistry::stop(void) {
 bool ParamRegistry::saveAll(void){
   bool ret;
 
-  osalDbgCheck(true == ready);
+  osalDbgCheck(ready);
 
   acquire();
   ret = this->save_all();
@@ -431,7 +431,7 @@ bool ParamRegistry::saveAll(void){
  */
 ParamStatus ParamRegistry::setParam(const param_union_t *value,
                                     const GlobalParam_t *param) {
-  osalDbgCheck(true == ready);
+  osalDbgCheck(ready);
   return validator.set(value, param);
 }
 
@@ -454,7 +454,7 @@ int ParamRegistry::paramCount(void){
  */
 const GlobalParam_t * ParamRegistry::getParam(const char *key, int n, int *i) {
   int index = -1;
-  osalDbgCheck(true == ready);
+  osalDbgCheck(ready);
 
   if (key != nullptr) {
     index = param_registry.key_index_search(key);
