@@ -26,7 +26,7 @@ using namespace chibios_rt;
 /*
  * Проверяет вёрнутый статус.
  */
-#define err_check()   {if(err != FR_OK){return MSG_RESET;}}
+#define err_check()   {if(err != FR_OK){exit(MSG_RESET);}}
 
 /*
  ******************************************************************************
@@ -212,7 +212,7 @@ FRESULT MavLogger::append_log(mavMail *mail, bool *fresh_data) {
  * Если произошла ошибка - поток логгера просто тушится,
  * потому что исправить всё равно ничего нельзя.
  */
-msg_t MavLogger::main(void) {
+void MavLogger::main(void) {
   setName("MicroSD");
 
   FRESULT err;
@@ -283,7 +283,6 @@ NOT_READY:
 EXIT:
   ready = false;
   exit(MSG_OK);
-  return MSG_OK;
 }
 
 /*

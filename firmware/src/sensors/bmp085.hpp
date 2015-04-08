@@ -69,7 +69,7 @@ private:
   abs_pressure_data_t cache;
   uint32_t pressure_compensated;
   thread_t *worker;
-  friend msg_t bmp085Thread(void *arg);
+  friend void bmp085Thread(void *arg);
 };
 
 bool TrigCalibrateBaro();

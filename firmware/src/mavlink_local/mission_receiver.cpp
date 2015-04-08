@@ -390,7 +390,7 @@ EXIT:
  * Planner thread.
  * process mission commands from ground
  */
-msg_t MissionReceiver::main(void){
+void MissionReceiver::main(void) {
 
   chRegSetThreadName("MissionRecv");
 
@@ -479,7 +479,6 @@ msg_t MissionReceiver::main(void){
   wpdb.disconnect();
 
   chThdExit(MSG_OK);
-  return MSG_OK;
 }
 
 /*

@@ -212,8 +212,7 @@ static THD_FUNCTION(TlmSenderThread, arg) {
     }
   }
 
-  chThdExit(0);
-  return 0;
+  chThdExit(MSG_OK);
 }
 
 """
@@ -247,7 +246,7 @@ def gen(names):
     n = 10
     for i in names:
         n += 1
-        f.write("    {"+str(n)+", NULL, send_"+i[0]+"},\n")
+        f.write("    {"+str(n)+", nullptr, send_"+i[0]+"},\n")
     f.write("};\n")
 
     # local functions

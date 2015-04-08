@@ -145,7 +145,6 @@ static THD_FUNCTION(LinkMgrThread, arg) {
   sdStop(&XBEESD);
 
   chThdExit(MSG_OK);
-  return MSG_OK;
 }
 
 /*

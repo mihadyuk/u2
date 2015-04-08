@@ -103,21 +103,21 @@ static mavMail vfr_hud_mail __CCM__;
 
 /* autoinitialized array */
 __CCM__ static tlm_registry_t Registry[] = {
-    {11, NULL, send_attitude},
-    {12, NULL, send_debug},
-    {13, NULL, send_debug_vect},
-    {14, NULL, send_global_pos},
-    {15, NULL, send_gps_raw_int},
-    {16, NULL, send_highres_imu},
-    {17, NULL, send_nav_output},
-    {18, NULL, send_position_ned},
-    {19, NULL, send_raw_imu},
-    {20, NULL, send_raw_press},
-    {21, NULL, send_rc},
-    {22, NULL, send_rc_scaled},
-    {23, NULL, send_scal_press},
-    {24, NULL, send_sys_status},
-    {25, NULL, send_vfr_hud},
+    {11, nullptr, send_attitude},
+    {12, nullptr, send_debug},
+    {13, nullptr, send_debug_vect},
+    {14, nullptr, send_global_pos},
+    {15, nullptr, send_gps_raw_int},
+    {16, nullptr, send_highres_imu},
+    {17, nullptr, send_nav_output},
+    {18, nullptr, send_position_ned},
+    {19, nullptr, send_raw_imu},
+    {20, nullptr, send_raw_press},
+    {21, nullptr, send_rc},
+    {22, nullptr, send_rc_scaled},
+    {23, nullptr, send_scal_press},
+    {24, nullptr, send_sys_status},
+    {25, nullptr, send_vfr_hud},
 };
 
 /*
@@ -395,8 +395,7 @@ static THD_FUNCTION(TlmSenderThread, arg) {
     }
   }
 
-  chThdExit(0);
-  return 0;
+  chThdExit(MSG_OK);
 }
 
 /** 

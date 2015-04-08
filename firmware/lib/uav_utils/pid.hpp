@@ -10,6 +10,19 @@
 #define PID_CLAMP_POS       1
 
 /**
+ *
+ */
+template <typename T>
+struct PIDInit {
+  T const *P = nullptr;
+  T const *I = nullptr;
+  T const *D = nullptr;
+  T const *Min = nullptr;
+  T const *Max = nullptr;
+  uint32_t const *B = nullptr; // bypass
+};
+
+/**
  * This Base PID control class.
  */
 template <typename T>
@@ -17,7 +30,14 @@ class PidControlBase {
 public:
   PidControlBase(T (*postproc)(T)) :
   postproc(postproc),
-  pGain(nullptr), iGain(nullptr), dGain(nullptr)
+  iState(0),
+  errorPrev(0),
+  pGain(nullptr),
+  iGain(nullptr),
+  dGain(nullptr),
+  Min(nullptr),
+  Max(nullptr),
+  bypass(nullptr)
   {
     iState = 0;
   }
@@ -32,22 +52,31 @@ public:
   /**
    *
    */
-  void dryRun(T i) {
-    if (fabs(*iGain) < FLT_EPSILON * 10) // zero division protect
-      iState = 0;
-    else
-      iState = i / *iGain;
+  void start(const PIDInit<T> &init) {
+
+    osalDbgCheck((nullptr != init.P)
+              && (nullptr != init.I)
+              && (nullptr != init.D)
+              && (nullptr != init.B)
+              && (nullptr != init.Min)
+              && (nullptr != init.Max));
+
+    this->pGain = init.P;
+    this->iGain = init.I;
+    this->dGain = init.D;
+    this->bypass = init.B;
+    this->Min = init.Min;
+    this->Max = init.Max;
   }
 
   /**
    *
    */
-  void start(T const *pGain, T const *iGain, T const *dGain) {
-    osalDbgCheck((nullptr != pGain) && (nullptr != iGain) && (nullptr != dGain));
-
-    this->pGain = pGain;
-    this->iGain = iGain;
-    this->dGain = dGain;
+  void dryRun(T i) {
+    if (fabs(*iGain) < FLT_EPSILON * 10) // zero division protect
+      iState = 0;
+    else
+      iState = i / *iGain;
   }
 
   /**
@@ -68,9 +97,9 @@ protected:
   T const *pGain;     /* proportional gain */
   T const *iGain;     /* integral gain */
   T const *dGain;     /* derivative gain */
+  T const *Min;
+  T const *Max;
   uint32_t const *bypass;
-  const T iMax = 1;
-  const T iMin = -1;
   int clamping = PID_CLAMP_NONE;
 
   /**
@@ -79,21 +108,18 @@ protected:
    */
   T do_pid(T error, T dTerm) {
 
-    if (nullptr != postproc)
-      error = postproc(error);
-
     T ret = *this->pGain * error +
             *this->iGain * this->iState +
             *this->dGain * dTerm;
 
     /* clamp returning value and store clamping position for next iteration */
-    if (ret > this->iMax) {
+    if (ret > *this->Max) {
       clamping = PID_CLAMP_POS;
-      return this->iMax;
+      return *this->Max;
     }
-    else if (ret < this->iMin) {
+    else if (ret < *this->Min) {
       clamping = PID_CLAMP_NEG;
-      return this->iMin;
+      return *this->Min;
     }
     else {
       clamping = PID_CLAMP_NONE;
@@ -118,14 +144,21 @@ public:
   /**
    *
    */
-  void start(T const *pGain, T const *iGain, T const *dGain, uint32_t const *bypass,
-             const T *iir_a, const T *iir_b) {
-    osalDbgCheck((nullptr != pGain) && (nullptr != iGain) && (nullptr != dGain));
+  void start(const PIDInit<T> &init, const T *iir_a, const T *iir_b) {
 
-    this->pGain = pGain;
-    this->iGain = iGain;
-    this->dGain = dGain;
-    this->bypass = bypass;
+    osalDbgCheck((nullptr != init.P)
+              && (nullptr != init.I)
+              && (nullptr != init.D)
+              && (nullptr != init.B)
+              && (nullptr != init.Min)
+              && (nullptr != init.Max));
+
+    this->pGain = init.P;
+    this->iGain = init.I;
+    this->dGain = init.D;
+    this->Min = init.Min;
+    this->Max = init.Max;
+    this->bypass = init.B;
 
     osalDbgCheck(((nullptr == iir_a) && (nullptr == iir_b)) ||
                  ((nullptr != iir_a) && (nullptr != iir_b)));
@@ -148,18 +181,18 @@ public:
     if (*this->bypass > 0)
       return target;
 
-    T error = position - target;
+    T error = target - position;
+    if (nullptr != this->postproc)
+      error = this->postproc(error);
 
     /* calculate the integral state with appropriate limiting */
     T iPiece = (error + this->errorPrev) * dT / 2;
     if ((iPiece * this->clamping) <= 0)
       this->iState += iPiece;
 
-    this->errorPrev = error;
-
     /* calculate the derivative term */
-    T dTerm = (position - this->positionPrev) * dT;
-    this->positionPrev = position;
+    T dTerm = (error - this->errorPrev) / dT;
+    this->errorPrev = error;
     if (need_filter)
       dTerm = filter(dTerm);
 
@@ -167,7 +200,6 @@ public:
   }
 
 private:
-  T positionPrev; /* Previous position value for derivative term calculation */
   filters::IIR<T, T, 1> filter;
   bool need_filter;
 };

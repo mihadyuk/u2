@@ -54,8 +54,8 @@ ready(false)
 /**
  *
  */
-void PIDLink::start(float const *pGain, float const *iGain, float const *dGain, uint32_t const *bypass) {
-  pid.start(pGain, iGain, dGain, bypass, nullptr, nullptr);
+void PIDLink::start(const PIDInit<float> &init) {
+  pid.start(init, nullptr, nullptr);
   ready = true;
 }
 

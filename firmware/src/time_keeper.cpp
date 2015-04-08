@@ -234,7 +234,6 @@ THD_FUNCTION(TimekeeperThread, arg) {
 
   event_gps.unregister(&el);
   chThdExit(MSG_OK);
-  return MSG_OK;
 }
 
 

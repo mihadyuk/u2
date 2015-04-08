@@ -52,6 +52,44 @@ static PidControlSelfDerivative<float> pid_thr_l(nullptr);
  ******************************************************************************
  */
 
+static void prepare_key(const char *name, const char *suffix, char *buf, size_t N) {
+
+  osalDbgCheck(strlen(suffix) <= 4);
+
+  memset(buf, 0, N);
+  strcpy(buf, name);
+  strcat(buf, suffix);
+}
+
+static PIDInit<float> get_pid_init(const char *name) {
+  const size_t N = 16;
+  char key[N];
+  PIDInit<float> ret;
+
+  osalDbgCheck(strlen(name) <= 10);
+
+  prepare_key(name, "_P", key, N);
+  param_registry.valueSearch(key, &ret.P);
+
+  prepare_key(name, "_I", key, N);
+  param_registry.valueSearch(key, &ret.I);
+
+  prepare_key(name, "_D", key, N);
+  param_registry.valueSearch(key, &ret.D);
+
+  prepare_key(name, "_B", key, N);
+  param_registry.valueSearch(key, &ret.B);
+
+  prepare_key(name, "_Min", key, N);
+  param_registry.valueSearch(key, &ret.Min);
+
+  prepare_key(name, "_Max", key, N);
+  param_registry.valueSearch(key, &ret.Max);
+
+  return ret;
+}
+
+
 /*
  ******************************************************************************
  * EXPORTED FUNCTIONS
@@ -74,91 +112,31 @@ thr_chain(s.empty,  s.empty,  s.speed,        pid_thr_h, pid_thr_m, pid_thr_l)
  *
  */
 void Stabilizer::start(void) {
-  float    *ph, *ih, *dh;
-  float    *pm, *im, *dm;
-  float    *pl, *il, *dl;
-  uint32_t *bh;
-  uint32_t *bm;
-  uint32_t *bl;
 
-  param_registry.valueSearch("PID_ail_h_P", &ph),
-  param_registry.valueSearch("PID_ail_h_I", &ih),
-  param_registry.valueSearch("PID_ail_h_D", &dh);
-  param_registry.valueSearch("PID_ail_h_B", &bh);
+  PIDInit<float> h, m, l;
 
-  param_registry.valueSearch("PID_ail_m_P", &pm),
-  param_registry.valueSearch("PID_ail_m_I", &im),
-  param_registry.valueSearch("PID_ail_m_D", &dm);
-  param_registry.valueSearch("PID_ail_m_B", &bm);
-
-  param_registry.valueSearch("PID_ail_l_P", &pl),
-  param_registry.valueSearch("PID_ail_l_I", &il),
-  param_registry.valueSearch("PID_ail_l_D", &dl);
-  param_registry.valueSearch("PID_ail_l_B", &bl);
-
-  ail_chain.start(ph, ih, dh, bh,
-                  pm, im, dm, bm,
-                  pl, il, dl, bl);
+  h = get_pid_init("PID_ail_h");
+  m = get_pid_init("PID_ail_m");
+  l = get_pid_init("PID_ail_l");
+  ail_chain.start(h, m, l);
 
   /**/
-  param_registry.valueSearch("PID_ele_h_P", &ph),
-  param_registry.valueSearch("PID_ele_h_I", &ih),
-  param_registry.valueSearch("PID_ele_h_D", &dh);
-  param_registry.valueSearch("PID_ele_h_B", &bh);
-
-  param_registry.valueSearch("PID_ele_m_P", &pm),
-  param_registry.valueSearch("PID_ele_m_I", &im),
-  param_registry.valueSearch("PID_ele_m_D", &dm);
-  param_registry.valueSearch("PID_ele_m_B", &bm);
-
-  param_registry.valueSearch("PID_ele_l_P", &pl),
-  param_registry.valueSearch("PID_ele_l_I", &il),
-  param_registry.valueSearch("PID_ele_l_D", &dl);
-  param_registry.valueSearch("PID_ele_l_B", &bl);
-
-  ele_chain.start(ph, ih, dh, bh,
-                  pm, im, dm, bm,
-                  pl, il, dl, bl);
+  h = get_pid_init("PID_ele_h");
+  m = get_pid_init("PID_ele_m");
+  l = get_pid_init("PID_ele_l");
+  ele_chain.start(h, m, l);
 
   /**/
-  param_registry.valueSearch("PID_rud_h_P", &ph),
-  param_registry.valueSearch("PID_rud_h_I", &ih),
-  param_registry.valueSearch("PID_rud_h_D", &dh);
-  param_registry.valueSearch("PID_rud_h_B", &bh);
-
-  param_registry.valueSearch("PID_rud_m_P", &pm),
-  param_registry.valueSearch("PID_rud_m_I", &im),
-  param_registry.valueSearch("PID_rud_m_D", &dm);
-  param_registry.valueSearch("PID_rud_m_B", &bm);
-
-  param_registry.valueSearch("PID_rud_l_P", &pl),
-  param_registry.valueSearch("PID_rud_l_I", &il),
-  param_registry.valueSearch("PID_rud_l_D", &dl);
-  param_registry.valueSearch("PID_rud_l_B", &bl);
-
-  rud_chain.start(ph, ih, dh, bh,
-                  pm, im, dm, bm,
-                  pl, il, dl, bl);
+  h = get_pid_init("PID_rud_h");
+  m = get_pid_init("PID_rud_m");
+  l = get_pid_init("PID_rud_l");
+  rud_chain.start(h, m, l);
 
   /**/
-  param_registry.valueSearch("PID_thr_h_P", &ph),
-  param_registry.valueSearch("PID_thr_h_I", &ih),
-  param_registry.valueSearch("PID_thr_h_D", &dh);
-  param_registry.valueSearch("PID_thr_h_B", &bh);
-
-  param_registry.valueSearch("PID_thr_m_P", &pm),
-  param_registry.valueSearch("PID_thr_m_I", &im),
-  param_registry.valueSearch("PID_thr_m_D", &dm);
-  param_registry.valueSearch("PID_thr_m_B", &bm);
-
-  param_registry.valueSearch("PID_thr_l_P", &pl),
-  param_registry.valueSearch("PID_thr_l_I", &il),
-  param_registry.valueSearch("PID_thr_l_D", &dl);
-  param_registry.valueSearch("PID_thr_l_B", &bl);
-
-  thr_chain.start(ph, ih, dh, bh,
-                  pm, im, dm, bm,
-                  pl, il, dl, bl);
+  h = get_pid_init("PID_thr_h");
+  m = get_pid_init("PID_thr_m");
+  l = get_pid_init("PID_thr_l");
+  thr_chain.start(h, m, l);
 
   this->chain[PID_CHAIN_AIL] = &ail_chain;
   this->chain[PID_CHAIN_ELE] = &ele_chain;

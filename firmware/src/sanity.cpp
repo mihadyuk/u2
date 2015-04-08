@@ -99,7 +99,6 @@ static THD_FUNCTION(SanityControlThread, arg) {
   }
 
   chThdExit(MSG_OK);
-  return MSG_OK;
 }
 
 /*

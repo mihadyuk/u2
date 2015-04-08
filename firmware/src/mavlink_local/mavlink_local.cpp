@@ -22,27 +22,27 @@ mavlink_system_t                mavlink_system_struct       __CCM__;
 mavlink_system_info_t           mavlink_system_info_struct  __CCM__;
 
 /* mavlink messages containing telemetry data */
+mavlink_attitude_t              mavlink_out_attitude_struct;
+mavlink_attitude_quaternion_t   mavlink_out_attitude_quaternion_struct;
+mavlink_command_ack_t           mavlink_out_command_ack_struct;
+mavlink_debug_t                 mavlink_out_debug_struct;
+mavlink_debug_vect_t            mavlink_out_debug_vect_struct;
+mavlink_global_position_int_t   mavlink_out_global_position_int_struct;
+mavlink_gps_raw_int_t           mavlink_out_gps_raw_int_struct;
+mavlink_heartbeat_t             mavlink_out_heartbeat_struct;
+mavlink_highres_imu_t           mavlink_out_highres_imu_struct;
+mavlink_hil_state_t             mavlink_out_hil_state_struct;
+mavlink_local_position_ned_t    mavlink_out_local_position_ned_struct;
+mavlink_nav_controller_output_t mavlink_out_nav_controller_output_struct;
 mavlink_raw_imu_t               mavlink_out_raw_imu_struct;
-mavlink_scaled_imu_t            mavlink_out_scaled_imu_struct;
 mavlink_raw_pressure_t          mavlink_out_raw_pressure_struct;
+mavlink_rc_channels_scaled_t    mavlink_out_rc_channels_scaled_struct;
+mavlink_rc_channels_t           mavlink_out_rc_channels_struct;
+mavlink_scaled_imu_t            mavlink_out_scaled_imu_struct;
 mavlink_scaled_pressure_t       mavlink_out_scaled_pressure_struct;
 mavlink_sys_status_t            mavlink_out_sys_status_struct;
 mavlink_system_time_t           mavlink_out_system_time_struct;
 mavlink_vfr_hud_t               mavlink_out_vfr_hud_struct;
-mavlink_global_position_int_t   mavlink_out_global_position_int_struct;
-mavlink_attitude_t              mavlink_out_attitude_struct;
-mavlink_attitude_quaternion_t   mavlink_out_attitude_quaternion_struct;
-mavlink_heartbeat_t             mavlink_out_heartbeat_struct;
-mavlink_gps_raw_int_t           mavlink_out_gps_raw_int_struct;
-mavlink_nav_controller_output_t mavlink_out_nav_controller_output_struct;
-mavlink_command_ack_t           mavlink_out_command_ack_struct;
-mavlink_highres_imu_t           mavlink_out_highres_imu_struct;
-mavlink_rc_channels_t           mavlink_out_rc_channels_struct;
-mavlink_rc_channels_scaled_t    mavlink_out_rc_channels_scaled_struct;
-mavlink_hil_state_t             mavlink_out_hil_state_struct;
-mavlink_local_position_ned_t    mavlink_out_local_position_ned_struct;
-mavlink_debug_vect_t            mavlink_out_debug_vect_struct;
-mavlink_debug_t                 mavlink_out_debug_struct;
 
 /**
  * @brief   Event sources.

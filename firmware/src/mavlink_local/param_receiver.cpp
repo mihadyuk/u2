@@ -36,9 +36,9 @@ extern EvtSource event_parameters_updated;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-static mavMail                        param_mail __CCM__;
-static mavlink_param_value_t          mavlink_out_param_value_struct __CCM__;
-static unsigned int                   param_send_drop = 0;
+__CCM__ static mavMail                param_mail;
+__CCM__ static mavlink_param_value_t  mavlink_out_param_value_struct;
+__CCM__ static unsigned int           param_send_drop = 0;
 
 /*
  ******************************************************************************
@@ -85,7 +85,7 @@ static bool send_value(const char *key, int n){
     mavlink_out_param_value_struct.param_type  = p->param_type;
     mavlink_out_param_value_struct.param_count = param_registry.paramCount();
     mavlink_out_param_value_struct.param_index = index;
-    memcpy(mavlink_out_param_value_struct.param_id, p->name, ONBOARD_PARAM_NAME_LENGTH);
+    strncpy(mavlink_out_param_value_struct.param_id, p->name, ONBOARD_PARAM_NAME_LENGTH);
 
     /* inform sending thread */
     param_value_send(mavlink_out_param_value_struct);
@@ -108,7 +108,7 @@ static void ignore_value(const mavlink_param_set_t *p){
   mavlink_out_param_value_struct.param_type  = p->param_type;
   mavlink_out_param_value_struct.param_count = param_registry.paramCount();
   mavlink_out_param_value_struct.param_index = param_registry.paramCount();
-  memcpy(mavlink_out_param_value_struct.param_id, p->param_id, ONBOARD_PARAM_NAME_LENGTH);
+  strncpy(mavlink_out_param_value_struct.param_id, p->param_id, ONBOARD_PARAM_NAME_LENGTH);
 
   /* inform sending thread */
   param_value_send(mavlink_out_param_value_struct);
@@ -302,7 +302,6 @@ static THD_FUNCTION(ParametersThread, arg){
   param_mailbox.reset();
 
   chThdExit(MSG_OK);
-  return MSG_OK;
 }
 
 /*

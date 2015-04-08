@@ -216,7 +216,7 @@ bool ParamRegistry::save_all(void) {
     memset(&eeprombuf, 0, sizeof(eeprombuf));
 
     /* first copy parameter name into buffer */
-    strcpy(eeprombuf.name, param_db[i].name);
+    strncpy(eeprombuf.name, param_db[i].name, sizeof(eeprombuf.name));
 
     /* now write data */
     eeprombuf.v = *param_db[i].valuep;

@@ -342,7 +342,6 @@ THD_FUNCTION(AdisThread, arg) {
   }
 
   chThdExit(MSG_OK);
-  return MSG_OK;
 }
 
 /*

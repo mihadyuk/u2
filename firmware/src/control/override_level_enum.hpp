@@ -4,11 +4,11 @@
 namespace control {
 
 enum class OverrideLevel {
-  none,
-  high,
-  medium,
-  low,
-  bypass,
+  none    = 0,
+  high    = 1,
+  medium  = 2,
+  low     = 3,
+  bypass  = 4,
   enum_end
 };
 

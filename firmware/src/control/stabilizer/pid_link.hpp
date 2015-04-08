@@ -8,11 +8,11 @@ namespace control {
 class PIDLink {
 public:
   PIDLink(float const &position, PidControlSelfDerivative<float> &pid);
-  void start(float const *pGain, float const *iGain, float const *dGain, uint32_t const *bypass);
+  void start(const PIDInit<float> &init);
   void stop(void);
   float update(float target, float dT);
 private:
-  float const &position; /* current position for error calculation */
+  float const &position; /* current position updating from somewhere else */
   PidControlSelfDerivative<float> &pid;
   bool ready;
 };

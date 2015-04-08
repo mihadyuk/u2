@@ -155,7 +155,7 @@ static void gps_configure(void) {
  *
  */
 static THD_WORKING_AREA(gpsRxThreadWA, 320) __CCM__;
-static msg_t gpsRxThread(void *arg) {
+THD_FUNCTION(gpsRxThread, arg) {
   chRegSetThreadName("gpsRx");
   (void)arg;
   msg_t byte;
@@ -211,7 +211,6 @@ static msg_t gpsRxThread(void *arg) {
   }
 
   chThdExit(MSG_OK);
-  return MSG_OK;
 }
 
 /*

@@ -12,6 +12,9 @@
 
 #define MPU6050_FIR_LEN     129
 
+/**
+ *
+ */
 template <typename T, typename dataT, int L>
 struct MPU6050_fir_block {
   MPU6050_fir_block(const T *taps, int taps_len) {
@@ -26,6 +29,9 @@ struct MPU6050_fir_block {
   filters::FIR<T, dataT, L> gyr[3];
 };
 
+/**
+ *
+ */
 class MPU6050: protected I2CSensor {
 public:
   MPU6050(I2CDriver *i2cdp, i2caddr_t addr);

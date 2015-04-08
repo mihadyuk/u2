@@ -185,7 +185,7 @@ void BMP085::picle(abs_pressure_data_t &result) {
  *
  */
 static THD_WORKING_AREA(bmp085ThreadWA, 256) __CCM__;
-msg_t bmp085Thread(void *arg) {
+THD_FUNCTION(bmp085Thread, arg) {
   chRegSetThreadName("bmp085");
   BMP085 *sensor = (BMP085 *)arg;
   abs_pressure_data_t result;
@@ -215,7 +215,6 @@ msg_t bmp085Thread(void *arg) {
   }
 
   chThdExit(MSG_OK);
-  return MSG_OK;
 }
 
 /**
