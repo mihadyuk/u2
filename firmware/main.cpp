@@ -90,7 +90,7 @@ static uint8_t link_thd_buf[THREAD_HEAP_SIZE + sizeof(stkalign_t)];
 /* State vector of system. Calculated mostly in IMU, used mostly in ACS */
 __CCM__ static StateVector state_vector;
 __CCM__ static control::Drivetrain drivetrain;
-__CCM__ static control::ACS acs(drivetrain, state_vector);
+static control::ACS acs(drivetrain, state_vector);
 
 
 MissionReceiver mission_receiver;
@@ -168,6 +168,7 @@ int main(void) {
   I2CInitLocal();
   NvramInit();
   ParametersInit();   /* read parameters from EEPROM via I2C */
+  wpdb.start();
 
   PwrMgrInit();
   if (PwrMgr6vGood())

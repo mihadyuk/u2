@@ -140,6 +140,7 @@ CONTROLSRC =\
 		src/control/stabilizer/pid_chain.cpp \
 		src/control/stabilizer/stabilizer.cpp \
 		src/control/acs.cpp \
+		src/control/mission_executor.cpp \
 		src/control/alcoi.cpp
 
 NVRAMSRC = src/nvram_local.cpp \

@@ -25,8 +25,8 @@
 class WpDB{
 public:
   WpDB(void);
-  uint16_t connect(void);
-  void disconnect(void);
+  uint16_t start(void);
+  void stop(void);
   bool write(const mavlink_mission_item_t *wpp, uint16_t seq);
   bool read(mavlink_mission_item_t *wpp, uint16_t seq);
   bool reset(void);

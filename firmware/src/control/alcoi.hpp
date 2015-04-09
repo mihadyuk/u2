@@ -1,6 +1,7 @@
 #ifndef ALCOI_HPP_
 #define ALCOI_HPP_
 
+#include "mavlink_local.hpp"
 #include "stabilizer/stabilizer.hpp"
 
 namespace control {
@@ -32,9 +33,10 @@ class Alcoi {
 public:
   void start(void);
   void stop(void);
-  bool loadPulse(const AlcoiPulse &pulse);
+  enum MAV_RESULT commandHandler(const mavlink_command_long_t *clp);
   void update(StabInput &stab, float dT);
 private:
+  bool load_pulse(const AlcoiPulse &pulse);
   AlcoiState state = AlcoiState::uninit;
   float pulse_time_elapsed = 0;
   float relax_time_elapsed = 0;

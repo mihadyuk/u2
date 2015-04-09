@@ -1,5 +1,6 @@
 #include "main.h"
 #include "alcoi.hpp"
+#include "mav_dbg.hpp"
 
 using namespace chibios_rt;
 using namespace control;
@@ -12,6 +13,12 @@ using namespace control;
 
 #define ALCOI_MAX_PULSE_WIDTH     2 // seconds
 #define ALCOI_RELAX_TIME          4 // seconds
+
+/* convenience defines */
+#define PARAM_PULSE_LEVEL         param4
+#define PARAM_PULSE_CHANNEL       param5
+#define PARAM_PULSE_WIDTH         param6
+#define PARAM_PULSE_STRENGTH      param7
 
 /*
  ******************************************************************************
@@ -56,6 +63,22 @@ static bool validate_pulse(const AlcoiPulse &pulse) {
     return OSAL_FAILED;
 
   return OSAL_SUCCESS;
+}
+
+/**
+ *
+ */
+bool Alcoi::load_pulse(const AlcoiPulse &pulse) {
+
+  if (OSAL_SUCCESS == validate_pulse(pulse)) {
+    this->pulse = pulse;
+    state = AlcoiState::pulse;
+    return OSAL_SUCCESS;
+  }
+  else {
+    state = AlcoiState::idle;
+    return OSAL_FAILED;
+  }
 }
 
 /*
@@ -111,18 +134,23 @@ void Alcoi::update(StabInput &stab, float dT) {
 /**
  *
  */
-bool Alcoi::loadPulse(const AlcoiPulse &pulse) {
+enum MAV_RESULT Alcoi::commandHandler(const mavlink_command_long_t *clp) {
+  bool status = OSAL_FAILED;
+  AlcoiPulse pulse;
 
-  if (OSAL_SUCCESS == validate_pulse(pulse)) {
-    this->pulse = pulse;
-    state = AlcoiState::pulse;
-    return OSAL_SUCCESS;
+  pulse.lvl     = static_cast<OverrideLevel>(roundf(clp->PARAM_PULSE_LEVEL));
+  pulse.ch      = static_cast<pid_chain_t>(roundf(clp->PARAM_PULSE_CHANNEL));
+  pulse.width   = clp->PARAM_PULSE_WIDTH;
+  pulse.strength= clp->PARAM_PULSE_STRENGTH;
+
+  status = load_pulse(pulse);
+  if (OSAL_SUCCESS == status) {
+    mavlink_dbg_print(MAV_SEVERITY_INFO, "OK: Alcoi pulse accepted", GLOBAL_COMPONENT_ID);
+    return MAV_RESULT_ACCEPTED;
   }
   else {
-    state = AlcoiState::idle;
-    return OSAL_FAILED;
+    return MAV_RESULT_FAILED;
   }
 }
-
 
 
