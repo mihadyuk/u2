@@ -8,6 +8,7 @@
 #include "subscribe_link.hpp"
 #include "alcoi.hpp"
 #include "mission_executor.hpp"
+#include "stab_vm.hpp"
 
 namespace control {
 
@@ -30,6 +31,7 @@ private:
   Stabilizer stabilizer;
   Alcoi alcoi;
   MissionExecutor mission;
+  StabVM vm;
   chibios_rt::Mailbox<mavMail*, 1> command_mailbox;
   SubscribeLink command_long_link;
   bool ready = false;

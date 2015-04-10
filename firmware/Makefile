@@ -141,6 +141,7 @@ CONTROLSRC =\
 		src/control/stabilizer/stabilizer.cpp \
 		src/control/acs.cpp \
 		src/control/mission_executor.cpp \
+		src/control/stab_vm.cpp \
 		src/control/alcoi.cpp
 
 NVRAMSRC = src/nvram_local.cpp \

@@ -107,6 +107,7 @@ void ACS::fullauto(float dT, const FutabaOutput &fut_data) {
     }
   }
 
+  vm.update(dT);
   navigator(stab_input);
   alcoi.update(stab_input, dT);
   stabilizer.update(stab_input, dT);
@@ -156,6 +157,7 @@ void ACS::start(void) {
   stabilizer.start();
   futaba.start();
   alcoi.start();
+  vm.start();
   mav_postman.subscribe(MAVLINK_MSG_ID_COMMAND_LONG, &command_long_link);
 
   ready = true;
@@ -170,6 +172,7 @@ void ACS::stop(void) {
   mav_postman.unsubscribe(MAVLINK_MSG_ID_COMMAND_LONG, &command_long_link);
   command_mailbox.reset();
 
+  vm.stop();
   futaba.stop();
   stabilizer.stop();
 }
