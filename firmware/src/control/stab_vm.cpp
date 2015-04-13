@@ -16,9 +16,9 @@ using namespace control;
  ******************************************************************************
  */
 
-float VM_dT = 0.01;
+static float VM_dT = 0.01;
 
-float StateVector2[STATE_VECTOR_ENUM_END];
+static float StateVector2[STATE_VECTOR_ENUM_END];
 
 typedef enum {
   IMPACT_VECTOR_ail,
@@ -28,7 +28,7 @@ typedef enum {
   IMPACT_VECTOR_ENUM_END,
 } impact_vector_enum;
 
-float ImpactVector2[IMPACT_VECTOR_ENUM_END];
+static float ImpactVector2[IMPACT_VECTOR_ENUM_END];
 
 
 typedef enum {
@@ -39,7 +39,7 @@ typedef enum {
   SCALE_VECTOR_ENUM_END,
 } scale_vector_enum;
 
-float ScaleVector[SCALE_VECTOR_ENUM_END];
+//static float ScaleVector[SCALE_VECTOR_ENUM_END];
 
 
 #if defined(END) ||\

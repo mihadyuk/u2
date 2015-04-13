@@ -163,16 +163,16 @@ public:
 
   /**
    * @brief   Update PID.
-   * @param[in] position  Current position for derivative term self calculation
+   * @param[in] current   Current position for derivative term self calculation
    * @param[in] target    Target value
 
    */
-  T operator()(T position, T target, T dT) {
+  T operator()(T current, T target, T dT) {
 
     if (*this->bypass > 0)
       return target;
 
-    T error = target - position;
+    T error = target - current;
     if (nullptr != this->postproc)
       error = this->postproc(error);
 

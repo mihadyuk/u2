@@ -142,7 +142,8 @@ CONTROLSRC =\
 		src/control/acs.cpp \
 		src/control/mission_executor.cpp \
 		src/control/stab_vm.cpp \
-		src/control/alcoi.cpp
+		src/control/alcoi.cpp \
+		src/control/vm2.cpp
 
 NVRAMSRC = src/nvram_local.cpp \
 		lib/24aa/src/mtd.cpp \
