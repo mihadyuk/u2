@@ -1,5 +1,6 @@
 #include "main.h"
 
+#include "param_registry.hpp"
 #include "vm2.hpp"
 #include "pid.hpp"
 
@@ -11,6 +12,10 @@ using namespace control;
  * DEFINES
  ******************************************************************************
  */
+
+#define TOTAL_PID_CNT         16
+#define TOTAL_CHAIN_CNT       4
+
 
 #define vmDbgCheck(c) osalDbgCheck(c)
 
@@ -85,17 +90,20 @@ private:
  */
 class LinkPID : public Link {
 public:
-  LinkPID(void) : pid(nullptr) {;}
-
   void update(float target) {
     vmDbgCheck((nullptr != next) && (nullptr != position));
     this->next->update(this->pid(*position, target, VM_dT));
   }
 
-  void start (const float *_position) {
+  void start(const float *_position) {
     vmDbgCheck(nullptr != _position);
     this->position = _position;
   }
+
+  void start_pid(const PIDInit<float> &init) {
+    pid.start(init, nullptr, nullptr);
+  }
+
 private:
   const float *position = nullptr;
   PidControlSelfDerivative<float> pid;
@@ -142,6 +150,19 @@ private:
   float *impact = nullptr;
 };
 
+/**
+ * Command set
+ */
+typedef enum {
+  END,
+  CHAIN_END,
+  INPUT,
+  PID,
+  SUM,
+  SCALE,
+  OUTPUT,
+} vm_opcode_enum;
+
 /*
  ******************************************************************************
  * EXTERNS
@@ -160,9 +181,13 @@ private:
  ******************************************************************************
  */
 static LinkInput input;
-static LinkPID pid_test;
+static LinkPID pid_pool[TOTAL_PID_CNT];
 static LinkScale scale_pool[4];
 static LinkStub stub;
+
+static LinkInput input_pool[TOTAL_CHAIN_CNT];
+
+static float StateVector2[STATE_VECTOR_ENUM_END];
 
 /*
  ******************************************************************************
@@ -172,27 +197,147 @@ static LinkStub stub;
  ******************************************************************************
  */
 
+/**
+ *
+ */
+static void construct_key(char *buf, size_t buflen, uint8_t pidnum, const char *suffix) {
+  char numstr[4];
+
+  osalDbgCheck(pidnum < TOTAL_PID_CNT);
+
+  memset(numstr, 0, sizeof(numstr));
+  numstr[0] = '_';
+  numstr[1] = (pidnum / 10) + '0';
+  numstr[2] = (pidnum % 10) + '0';
+
+  memset(buf, 0, buflen);
+  strncpy(buf, "PID_", buflen);
+  strncat(buf, numstr, buflen);
+  strncat(buf, suffix, buflen);
+}
+
+/**
+ *
+ */
+static PIDInit<float> get_pid_init(uint8_t pidnum) {
+  const size_t N = 16;
+  char key[N];
+  PIDInit<float> ret;
+
+  construct_key(key, N, pidnum, "_P");
+  param_registry.valueSearch(key, &ret.P);
+
+  construct_key(key, N, pidnum, "_I");
+  param_registry.valueSearch(key, &ret.I);
+
+  construct_key(key, N, pidnum, "_D");
+  param_registry.valueSearch(key, &ret.D);
+
+  construct_key(key, N, pidnum, "_Min");
+  param_registry.valueSearch(key, &ret.Min);
+
+  construct_key(key, N, pidnum, "_Max");
+  param_registry.valueSearch(key, &ret.Max);
+
+  return ret;
+}
+
+/**
+ *
+ */
+void VM2::pid_pool_start(void) {
+
+  size_t i = 0;
+  PIDInit<float> tmp;
+
+  for (i=0; i<TOTAL_PID_CNT; i++) {
+    tmp = get_pid_init(i);
+    pid_pool[i].start_pid(tmp);
+  }
+}
+
+static uint8_t takeoff[] = {
+    END
+};
+
+static uint8_t fly[] = {
+    END
+};
+
+void VM2::compile(const uint8_t *bytecode) {
+  size_t pc = 0; /* program counter */
+  uint8_t cmd;
+  uint8_t arg, arg2;
+  size_t chain = 0; /* currently compiling chain */
+
+  while(true) {
+    cmd = bytecode[pc];
+    switch (cmd){
+    case END:
+      return;
+      break;
+
+    case INPUT:
+      arg = bytecode[pc+1];
+      osalDbgCheck(arg < STATE_VECTOR_ENUM_END);
+      input_pool[chain].start(&StateVector2[arg]);
+      pc += 2;
+      break;
+
+    case PID:
+      arg  = bytecode[pc+1];
+      arg2 = bytecode[pc+2];
+      pid_pool[arg].start(&StateVector2[arg2]);
+      //input_pool[]
+      pc += 3;
+      break;
+
+    case CHAIN_END:
+      pc += 1;
+      chain += 1;
+      break;
+    }
+  }
+}
+
 /*
  ******************************************************************************
  * EXPORTED FUNCTIONS
  ******************************************************************************
  */
-
+/**
+ *
+ */
 void VM2::start(void) {
+
+  pid_pool_start();
 
   scale_pool[0].add(&scale_pool[1]);
   scale_pool[0].add(&scale_pool[2]);
   scale_pool[0].add(&scale_pool[3]);
   scale_pool[0].add(&stub);
-  pid_test.add(&scale_pool[0]);
-  input.add(&pid_test);
+  pid_pool[0].add(&scale_pool[0]);
+  input.add(&pid_pool[0]);
+
+  ready = true;
 };
 
+/**
+ *
+ */
 void VM2::stop(void) {
-  return;
+  ready = false;
 };
 
+/**
+ *
+ */
 void VM2::update(float dT) {
+
+  osalDbgCheck(ready);
   VM_dT = dT;
   input.update(42);
 };
+
+
+

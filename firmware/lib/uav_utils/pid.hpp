@@ -21,7 +21,7 @@ struct PIDInit {
   T const *D;
   T const *Min;
   T const *Max;
-  uint32_t const *B; // bypass
+  T (*postproc)(T);
 };
 
 /**
@@ -30,16 +30,15 @@ struct PIDInit {
 template <typename T>
 class PidControlBase {
 public:
-  PidControlBase(T (*postproc)(T)) :
-  postproc(postproc),
+  PidControlBase(void) :
+  postproc(nullptr),
   iState(0),
   errorPrev(0),
   pGain(nullptr),
   iGain(nullptr),
   dGain(nullptr),
   Min(nullptr),
-  Max(nullptr),
-  bypass(nullptr)
+  Max(nullptr)
   {
     iState = 0;
   }
@@ -56,19 +55,18 @@ public:
    */
   void start(const PIDInit<T> &init) {
 
-    osalDbgCheck((nullptr != init.P)
-              && (nullptr != init.I)
-              && (nullptr != init.D)
-              && (nullptr != init.B)
-              && (nullptr != init.Min)
-              && (nullptr != init.Max));
+    osalDbgCheck((nullptr != init.P) &&
+                 (nullptr != init.I) &&
+                 (nullptr != init.D) &&
+                 (nullptr != init.Min) &&
+                 (nullptr != init.Max));
 
-    this->pGain = init.P;
-    this->iGain = init.I;
-    this->dGain = init.D;
-    this->bypass = init.B;
-    this->Min = init.Min;
-    this->Max = init.Max;
+    this->pGain     = init.P;
+    this->iGain     = init.I;
+    this->dGain     = init.D;
+    this->Min       = init.Min;
+    this->Max       = init.Max;
+    this->postproc  = init.postproc;
   }
 
   /**
@@ -91,7 +89,6 @@ protected:
   T const *dGain;     /* derivative gain */
   T const *Min;
   T const *Max;
-  uint32_t const *bypass;
   int clamping = PID_CLAMP_NONE;
 
   /**
@@ -128,8 +125,7 @@ public:
   /**
    *
    */
-  PidControlSelfDerivative(T (*postproc)(T)):
-  PidControlBase<T>(postproc),
+  PidControlSelfDerivative(void):
   need_filter(false){;}
 
   /**
@@ -137,19 +133,17 @@ public:
    */
   void start(const PIDInit<T> &init, const T *iir_a, const T *iir_b) {
 
-    osalDbgCheck((nullptr != init.P)
-              && (nullptr != init.I)
-              && (nullptr != init.D)
-              && (nullptr != init.B)
-              && (nullptr != init.Min)
-              && (nullptr != init.Max));
+    osalDbgCheck((nullptr != init.P) &&
+                 (nullptr != init.I) &&
+                 (nullptr != init.D) &&
+                 (nullptr != init.Min) &&
+                 (nullptr != init.Max));
 
     this->pGain = init.P;
     this->iGain = init.I;
     this->dGain = init.D;
     this->Min = init.Min;
     this->Max = init.Max;
-    this->bypass = init.B;
 
     osalDbgCheck(((nullptr == iir_a) && (nullptr == iir_b)) ||
                  ((nullptr != iir_a) && (nullptr != iir_b)));
@@ -168,9 +162,6 @@ public:
 
    */
   T operator()(T current, T target, T dT) {
-
-    if (*this->bypass > 0)
-      return target;
 
     T error = target - current;
     if (nullptr != this->postproc)

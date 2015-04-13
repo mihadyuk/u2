@@ -28,21 +28,21 @@ using namespace control;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-static PidControlSelfDerivative<float> pid_ail_h(nullptr);
-static PidControlSelfDerivative<float> pid_ail_m(wrap_pi);
-static PidControlSelfDerivative<float> pid_ail_l(nullptr);
+static PidControlSelfDerivative<float> pid_ail_h;
+static PidControlSelfDerivative<float> pid_ail_m;
+static PidControlSelfDerivative<float> pid_ail_l;
 
-static PidControlSelfDerivative<float> pid_ele_h(nullptr);
-static PidControlSelfDerivative<float> pid_ele_m(nullptr);
-static PidControlSelfDerivative<float> pid_ele_l(nullptr);
+static PidControlSelfDerivative<float> pid_ele_h;
+static PidControlSelfDerivative<float> pid_ele_m;
+static PidControlSelfDerivative<float> pid_ele_l;
 
-static PidControlSelfDerivative<float> pid_rud_h(nullptr);
-static PidControlSelfDerivative<float> pid_rud_m(nullptr);
-static PidControlSelfDerivative<float> pid_rud_l(nullptr);
+static PidControlSelfDerivative<float> pid_rud_h;
+static PidControlSelfDerivative<float> pid_rud_m;
+static PidControlSelfDerivative<float> pid_rud_l;
 
-static PidControlSelfDerivative<float> pid_thr_h(nullptr);
-static PidControlSelfDerivative<float> pid_thr_m(nullptr);
-static PidControlSelfDerivative<float> pid_thr_l(nullptr);
+static PidControlSelfDerivative<float> pid_thr_h;
+static PidControlSelfDerivative<float> pid_thr_m;
+static PidControlSelfDerivative<float> pid_thr_l;
 
 /*
  ******************************************************************************
@@ -76,9 +76,6 @@ static PIDInit<float> get_pid_init(const char *name) {
 
   prepare_key(name, "_D", key, N);
   param_registry.valueSearch(key, &ret.D);
-
-  prepare_key(name, "_B", key, N);
-  param_registry.valueSearch(key, &ret.B);
 
   prepare_key(name, "_Min", key, N);
   param_registry.valueSearch(key, &ret.Min);

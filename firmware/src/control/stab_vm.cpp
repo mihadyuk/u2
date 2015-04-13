@@ -166,16 +166,7 @@ static uint8_t bytecode_fly[] = {
  ******************************************************************************
  */
 
-static PidControlSelfDerivative<float> pid_pool[8] = {
-    {nullptr},
-    {nullptr},
-    {nullptr},
-    {nullptr},
-    {nullptr},
-    {nullptr},
-    {nullptr},
-    {nullptr}
-};
+static PidControlSelfDerivative<float> pid_pool[8];
 
 /*
  ******************************************************************************
