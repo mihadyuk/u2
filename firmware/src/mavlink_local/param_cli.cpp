@@ -105,13 +105,13 @@ static void print(uint32_t i, bool need_help){
 /**
  *
  */
-static void dump(uint32_t i){
+static void dump(uint32_t i) {
 
   int n = 80;
   int nres = 0;
   char str[n];
-  const GlobalParam_t *param_p = param_registry.getParam(NULL, i, NULL);
-  if (NULL == param_p){
+  const GlobalParam_t *param_p = param_registry.getParam(nullptr, i, nullptr);
+  if (nullptr == param_p){
     cli_println("Something goes too bad with param registry");
     chThdSleepMilliseconds(50);
     return;
