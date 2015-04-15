@@ -16,7 +16,6 @@ let RAM_USED=$STACKS+$BSS+$DATA
 CCM_ALIAS=ram4
 CCM_SIZE=`cat build/ch.map | grep "__${CCM_ALIAS}_size__ =" | awk '{print$1}'`
 CCM_USED=`arm-none-eabi-size -A build/ch.elf | grep "."${CCM_ALIAS} | awk '{print $2}'`
-let "CCM_SIZE       = CCM_SIZE" # to convert from hex to dec
 
 echo "---------------------------------------------------------------------------------------"
 
@@ -28,7 +27,8 @@ let "FLASH_SIZE		= FLASH_SIZE" # to convert from hex to dec
 let "FLASH_PERCENT	= (100 * FLASH_USED) / FLASH_SIZE"
 echo "FLASH: $FLASH_USED / $FLASH_SIZE ($FLASH_PERCENT%)"
 
-if [ $CCM_SIZE != 0 ] ; then
+if (( $CCM_SIZE > 0 )) ; then
+	let "CCM_SIZE       = CCM_SIZE" # to convert from hex to dec
 	let "CCM_PERCENT    = (100 * CCM_USED) / CCM_SIZE"
 	echo "CCM:   $CCM_USED / $CCM_SIZE ($CCM_PERCENT%)"
 fi

@@ -14,6 +14,7 @@
  * DEFINES
  ******************************************************************************
  */
+
 #define ADDITIONAL_WRITE_TMO    MS2ST(5)
 
 #define PARAM_FILE_NAME         ("param")
@@ -21,7 +22,7 @@
 typedef uint8_t checksum_t;
 
 typedef struct {
-  char name[PARAM_ID_SIZE];
+  char name[PARAM_REGISTRY_ID_SIZE];
   param_union_t v;
   checksum_t crc;
 } __attribute__((packed)) param_record_t;
@@ -100,8 +101,8 @@ void ParamRegistry::release(void) {
 int ParamRegistry::key_index_search(const char* key) {
   int i = 0;
 
-  for (i = 0; i < ONBOARD_PARAM_CNT; i++){
-    if (strcmp(key, param_db[i].name) == 0)
+  for (i = 0; i < ONBOARD_PARAM_CNT; i++) {
+    if (0 == strncmp(key, param_db[i].name, PARAM_REGISTRY_ID_SIZE))
       return i;
   }
   return -1;
@@ -181,7 +182,7 @@ bool ParamRegistry::load_extensive(void) {
           set_bit(bitmap, n);
           continue;
         }
-        if (0 == strcmp(eeprombuf.name, param_db[i].name)){
+        if (0 == strncmp(eeprombuf.name, param_db[i].name, PARAM_REGISTRY_ID_SIZE)) {
           set_bit(bitmap, n);
           found = true;
           break;
@@ -258,31 +259,32 @@ void ParamRegistry::open_file(void) {
  *
  */
 ParamRegistry::ParamRegistry(void) :
-    mutual_sem(false), ready(false) {
+    mutual_sem(false),
+    ready(false)
+{
+  int i = 0, j = 0;
+  const int N = paramCount();
 
-  int i = 0, n = 0;
-  const int len = paramCount();
-
-  osalDbgAssert((sizeof(gp_val) / sizeof(gp_val[0])) == len,
+  osalDbgAssert((sizeof(gp_val) / sizeof(gp_val[0])) == N,
       "sizes of volatile array and param array must be equal");
 
   /* Initialize variable array with zeroes to be safer */
   param_union_t tmp;
   tmp.u32 = 0;
-  for (i = 0; i < len; i++){
+  for (i = 0; i < N; i++){
     gp_val[i] = tmp;
   }
 
   /* check hardcoded name lengths */
-  for (i = 0; i<len; i++){
-    if (strlen(param_db[i].name) > ONBOARD_PARAM_NAME_LENGTH)
+  for (i = 0; i<N; i++) {
+    if (strlen(param_db[i].name) > PARAM_REGISTRY_ID_SIZE)
       osalSysHalt("name too long");
   }
 
   /* check for keys' names collisions */
-  for (n=0; n<len; n++){
-    for (i=n+1; i<len; i++){
-      if (0 == strcmp(param_db[i].name, param_db[n].name))
+  for (j=0; j<N; j++) {
+    for (i=j+1; i<N; i++) {
+      if (0 == strncmp(param_db[i].name, param_db[j].name, PARAM_REGISTRY_ID_SIZE))
         osalSysHalt("name collision detected");
     }
   }
@@ -305,12 +307,13 @@ bool ParamRegistry::syncParam(const char* key) {
   /* ensure we found exacly what we need */
   status = ParamFile->read((uint8_t *)&eeprombuf, sizeof(eeprombuf));
   osalDbgAssert(status == sizeof(eeprombuf), "read failed");
-  osalDbgAssert(strcmp(eeprombuf.name, key) == 0, "param not found in EEPROM");
+  osalDbgAssert(strncmp(eeprombuf.name, key, PARAM_REGISTRY_ID_SIZE) == 0,
+                "Parameter not found in EEPROM");
 
   /* write only if value differ */
   v_eeprom.u32 = ParamFile->getU32();
   v_ram = *param_db[i].valuep;
-  if (v_eeprom.u32 != v_ram.u32){
+  if (v_eeprom.u32 != v_ram.u32) {
     eeprombuf.v = v_ram;
     fill_param_crc(&eeprombuf);
     ParamFile->setPosition(i * sizeof(eeprombuf));
@@ -356,7 +359,7 @@ bool ParamRegistry::loadToRam(void) {
 
     /* if no updates was previously in parameter structure than order of
      * parameters in registry must be the same as in eeprom */
-    if (0 == strcmp(param_db[i].name, eeprombuf.name) &&
+    if (0 == strncmp(param_db[i].name, eeprombuf.name, PARAM_REGISTRY_ID_SIZE) &&
         OSAL_SUCCESS == check_param_crc(&eeprombuf)) {
       /* OK, this parameter already presents in EEPROM and checksum is correct */
       v = eeprombuf.v;
@@ -414,7 +417,7 @@ void ParamRegistry::stop(void) {
 bool ParamRegistry::saveAll(void){
   bool ret;
 
-  osalDbgCheck(true == ready);
+  osalDbgCheck(ready);
 
   acquire();
   ret = this->save_all();
@@ -428,7 +431,7 @@ bool ParamRegistry::saveAll(void){
  */
 ParamStatus ParamRegistry::setParam(const param_union_t *value,
                                     const GlobalParam_t *param) {
-  osalDbgCheck(true == ready);
+  osalDbgCheck(ready);
   return validator.set(value, param);
 }
 
@@ -451,14 +454,14 @@ int ParamRegistry::paramCount(void){
  */
 const GlobalParam_t * ParamRegistry::getParam(const char *key, int n, int *i) {
   int index = -1;
-  osalDbgCheck(true == ready);
+  osalDbgCheck(ready);
 
-  if (key != nullptr){
+  if (key != nullptr) {
     index = param_registry.key_index_search(key);
     if (-1 == index)
       return nullptr;
   }
-  else{
+  else {
     if ((n > paramCount()) || (-1 == n))
       return nullptr;
     else

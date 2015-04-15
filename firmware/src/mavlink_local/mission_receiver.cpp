@@ -412,8 +412,6 @@ void MissionReceiver::main(void) {
   mav_postman.subscribe(MAVLINK_MSG_ID_MISSION_ITEM,          &mission_item_link);
   mav_postman.subscribe(MAVLINK_MSG_ID_MISSION_ACK,           &mission_ack_link);
 
-  wpdb.connect();
-
   while (!chThdShouldTerminateX()) {
     if (MSG_OK == mission_mailbox.fetch(&recv_mail, MISSION_CHECK_PERIOD)) {
       switch(recv_mail->msgid) {
@@ -475,8 +473,6 @@ void MissionReceiver::main(void) {
   mav_postman.unsubscribe(MAVLINK_MSG_ID_MISSION_ACK,           &mission_ack_link);
 
   mission_mailbox.reset();
-
-  wpdb.disconnect();
 
   chThdExit(MSG_OK);
 }

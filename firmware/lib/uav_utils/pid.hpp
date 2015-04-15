@@ -1,7 +1,6 @@
 #ifndef PID_HPP_
 #define PID_HPP_
 
-#include "putinrange.hpp"
 #include "float.h" /* for FLT_EPSILON macro */
 #include "iir.hpp"
 
@@ -14,12 +13,15 @@
  */
 template <typename T>
 struct PIDInit {
-  T const *P = nullptr;
-  T const *I = nullptr;
-  T const *D = nullptr;
-  T const *Min = nullptr;
-  T const *Max = nullptr;
-  uint32_t const *B = nullptr; // bypass
+  PIDInit(void) {
+    memset(this, 0, sizeof(*this));
+  }
+  T const *P;
+  T const *I;
+  T const *D;
+  T const *Min;
+  T const *Max;
+  uint32_t const *B; // bypass
 };
 
 /**
@@ -70,16 +72,6 @@ public:
   }
 
   /**
-   *
-   */
-  void dryRun(T i) {
-    if (fabs(*iGain) < FLT_EPSILON * 10) // zero division protect
-      iState = 0;
-    else
-      iState = i / *iGain;
-  }
-
-  /**
    * @brief   Return integrator state.
    */
   T __dbg_getiState(void) const {
@@ -103,8 +95,7 @@ protected:
   int clamping = PID_CLAMP_NONE;
 
   /**
-   * @brief   Combines all terms and gains. Apply post processing
-   *          function when needed.
+   * @brief   Combines all terms and gains.
    */
   T do_pid(T error, T dTerm) {
 

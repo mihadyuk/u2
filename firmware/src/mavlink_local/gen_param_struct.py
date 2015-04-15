@@ -23,7 +23,7 @@ SERVO_MAX   = 2000
 SEND_MIN    = 20
 SEND_MAX    = 5000
 
-ONBOARD_PARAM_NAME_LENGTH = 15
+ONBOARD_PARAM_NAME_LENGTH = 16
 
 
 # check what we have to use as parameter array
@@ -44,8 +44,8 @@ else:
 ######### checkers ###############
 # name lengths
 for i in param:
-    if len(i[0]) > ONBOARD_PARAM_NAME_LENGTH - 1: # -1 because last char must be 0x00
-        print("ERROR: name", '"'+i[0]+'"', "is more than", ONBOARD_PARAM_NAME_LENGTH - 1, "characters")
+    if len(i[0]) > ONBOARD_PARAM_NAME_LENGTH: # -1 because last char must be 0x00
+        print("ERROR: name", '"'+i[0]+'"', "is more than", ONBOARD_PARAM_NAME_LENGTH, "characters")
         exit()
 
 # name duplications

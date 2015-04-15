@@ -62,4 +62,25 @@ typedef struct {
 
 } StateVector;
 
+
+
+typedef enum {
+  STATE_VECTOR_vx,
+  STATE_VECTOR_vy,
+  STATE_VECTOR_vz,
+  STATE_VECTOR_dZ,
+  STATE_VECTOR_dYaw,
+  STATE_VECTOR_roll,
+  STATE_VECTOR_pitch,
+  STATE_VECTOR_yaw,
+  STATE_VECTOR_ENUM_END,
+} state_vector_enum;
+
+
+
+
+
+
+
+
 #endif /* STATE_VECTOR_H_ */

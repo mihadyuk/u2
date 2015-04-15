@@ -48,6 +48,9 @@ __CCM__ static unsigned int           param_send_drop = 0;
  ******************************************************************************
  */
 
+/* overflow protect */
+static_assert(sizeof(mavlink_param_value_t::param_id) == PARAM_REGISTRY_ID_SIZE, "");
+
 /**
  *
  */
@@ -55,7 +58,7 @@ static void param_value_send(const mavlink_param_value_t &m) {
 
   size_t retry = PARAM_POST_TIMEOUT / SEND_PAUSE;
 
-  while(retry--) {
+  while (retry--) {
     if (param_mail.free()) {
       param_mail.fill(&m, GLOBAL_COMPONENT_ID, MAVLINK_MSG_ID_PARAM_VALUE);
       mav_postman.postAhead(param_mail);
@@ -85,7 +88,7 @@ static bool send_value(const char *key, int n){
     mavlink_out_param_value_struct.param_type  = p->param_type;
     mavlink_out_param_value_struct.param_count = param_registry.paramCount();
     mavlink_out_param_value_struct.param_index = index;
-    strncpy(mavlink_out_param_value_struct.param_id, p->name, ONBOARD_PARAM_NAME_LENGTH);
+    strncpy(mavlink_out_param_value_struct.param_id, p->name, PARAM_REGISTRY_ID_SIZE);
 
     /* inform sending thread */
     param_value_send(mavlink_out_param_value_struct);
@@ -108,7 +111,7 @@ static void ignore_value(const mavlink_param_set_t *p){
   mavlink_out_param_value_struct.param_type  = p->param_type;
   mavlink_out_param_value_struct.param_count = param_registry.paramCount();
   mavlink_out_param_value_struct.param_index = param_registry.paramCount();
-  strncpy(mavlink_out_param_value_struct.param_id, p->param_id, ONBOARD_PARAM_NAME_LENGTH);
+  strncpy(mavlink_out_param_value_struct.param_id, p->param_id, PARAM_REGISTRY_ID_SIZE);
 
   /* inform sending thread */
   param_value_send(mavlink_out_param_value_struct);
@@ -120,8 +123,8 @@ static void ignore_value(const mavlink_param_set_t *p){
  */
 static void send_all_values(const mavMail *recv_mail){
 
-  const mavlink_param_request_list_t *prlp
-  = static_cast<const mavlink_param_request_list_t *>(recv_mail->mavmsg);
+  const mavlink_param_request_list_t *prlp =
+      static_cast<const mavlink_param_request_list_t *>(recv_mail->mavmsg);
 
   if (!mavlink_msg_for_me(prlp))
     return;
@@ -142,8 +145,8 @@ static void param_set_handler(const mavMail *recv_mail) {
   param_union_t *valuep = nullptr;
   const GlobalParam_t *paramp = nullptr;
   ParamStatus status;
-  const mavlink_param_set_t *psp
-  = static_cast<const mavlink_param_set_t *>(recv_mail->mavmsg);
+  const mavlink_param_set_t *psp =
+      static_cast<const mavlink_param_set_t *>(recv_mail->mavmsg);
 
   if (!mavlink_msg_for_me(psp))
     return;
@@ -187,8 +190,8 @@ static void param_set_handler(const mavMail *recv_mail) {
  *
  */
 static void param_request_read_handler(const mavMail *recv_mail) {
-  const mavlink_param_request_read_t *prrp
-  = static_cast<const mavlink_param_request_read_t *>(recv_mail->mavmsg);
+  const mavlink_param_request_read_t *prrp =
+      static_cast<const mavlink_param_request_read_t *>(recv_mail->mavmsg);
 
   if (!mavlink_msg_for_me(prrp))
     return;
@@ -206,8 +209,8 @@ static void command_long_handler(const mavMail *recv_mail) {
 
   enum MAV_RESULT result = MAV_RESULT_FAILED;
   bool status = OSAL_FAILED;
-  const mavlink_command_long_t *clp
-  = static_cast<const mavlink_command_long_t *>(recv_mail->mavmsg);
+  const mavlink_command_long_t *clp =
+      static_cast<const mavlink_command_long_t *>(recv_mail->mavmsg);
 
   if (!mavlink_msg_for_me(clp))
     return;

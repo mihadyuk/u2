@@ -7,6 +7,8 @@
 #include "mav_mail.hpp"
 #include "subscribe_link.hpp"
 #include "alcoi.hpp"
+#include "mission_executor.hpp"
+#include "stab_vm.hpp"
 
 namespace control {
 
@@ -24,9 +26,12 @@ private:
   void fullauto(float dT, const FutabaOutput &fut_data);
   void semiauto(float dT, const FutabaOutput &fut_data);
   void manual(float dT, const FutabaOutput &fut_data);
+  void command_long_handler(const mavMail *recv_mail);
   Futaba futaba;
   Stabilizer stabilizer;
   Alcoi alcoi;
+  MissionExecutor mission;
+  StabVM vm;
   chibios_rt::Mailbox<mavMail*, 1> command_mailbox;
   SubscribeLink command_long_link;
   bool ready = false;

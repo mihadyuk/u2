@@ -57,7 +57,7 @@ WpDB::WpDB(void) {
 /**
  *
  */
-uint16_t WpDB::connect(void) {
+uint16_t WpDB::start(void) {
 
   size_t offset, readcnt;
   uint8_t crc;
@@ -89,7 +89,7 @@ FAILED:
 /**
  *
  */
-void WpDB::disconnect(void) {
+void WpDB::stop(void) {
 
   nvram_fs.close(this->dbfile);
   this->dbfile = nullptr;
