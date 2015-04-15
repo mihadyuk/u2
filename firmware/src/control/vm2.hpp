@@ -13,6 +13,7 @@ public:
   void update(float dT);
 private:
   void pid_pool_start(void);
+  void scale_pool_start(void);
   void exec(void);
   void compile(const uint8_t *bytecode);
   void destroy_chain(void);

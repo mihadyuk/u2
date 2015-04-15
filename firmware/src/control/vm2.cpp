@@ -15,9 +15,15 @@ using namespace control;
 
 #define TOTAL_PID_CNT         16
 #define TOTAL_CHAIN_CNT       4
+#define TOTAL_SCALE_CNT       4
+#define TOTAL_FORK_CNT        4
+#define TOTAL_SUM_CNT         4
+#define TOTAL_OUT_CNT         4
 
 
 #define vmDbgCheck(c) osalDbgCheck(c)
+#define vmDbgPanic(c) osalSysHalt(c)
+
 
 static float VM_dT = 0.01;
 
@@ -26,13 +32,16 @@ static float VM_dT = 0.01;
  */
 class Link {
 public:
-  void add(Link *_next) {
-    if (nullptr == next)
-      next = _next;
-    else
-      next->add(_next);
+
+  virtual Link* append(Link *ptr) {
+    vmDbgCheck(nullptr != ptr);
+    vmDbgCheck(nullptr == next); /* already connected */
+    next = ptr;
+    return next;
   }
+
   virtual void update(float val) = 0;
+
 protected:
   Link *next = nullptr;
 };
@@ -40,12 +49,35 @@ protected:
 /**
  *
  */
-class LinkStub : public Link {
+class LinkFork: public Link {
 public:
-  void update(float val) {
-    (void)val;
-    return;
+
+  Link* append(Link *ptr) {
+    vmDbgCheck(nullptr != ptr);
+
+    if (nullptr == next) {
+      next = ptr;
+      return next;
+    }
+    else if (nullptr == fork) {
+      fork = ptr;
+      return fork;
+    }
+    else {
+      vmDbgPanic("both slots busy");
+      return nullptr;
+    }
   }
+
+  void update(float val) {
+    if (nullptr != next)
+      next->update(val);
+    if (nullptr != fork)
+      fork->update(val);
+  }
+
+private:
+  Link *fork = nullptr;
 };
 
 /**
@@ -53,16 +85,17 @@ public:
  */
 class LinkScale : public Link {
 public:
-  void update(float val) {
-    vmDbgCheck((nullptr != next) && (nullptr != c));
-    this->next->update(*c * val);
-  }
-
-  void start(const float *_c) {
+  void init(const float *_c) {
     vmDbgCheck(nullptr != _c);
     this->c = _c;
   }
-private:
+
+  void update(float val) {
+    vmDbgCheck((nullptr != next) && (nullptr != c));
+    next->update(*c * val);
+  }
+
+  private:
   const float *c = nullptr;
 };
 
@@ -71,16 +104,18 @@ private:
  */
 class LinkInput : public Link {
 public:
+  Link* compile(const float *_target) {
+    vmDbgCheck(nullptr != _target);
+    this->target = _target;
+    return this;
+  }
+
   void update(float val) {
     (void)val;
     vmDbgCheck((nullptr != next) && (nullptr != target));
-    this->next->update(*target);
+    next->update(*target);
   }
 
-  void start(const float *_target) {
-    vmDbgCheck(nullptr != _target);
-    this->target = _target;
-  }
 private:
   const float *target = nullptr;
 };
@@ -90,18 +125,19 @@ private:
  */
 class LinkPID : public Link {
 public:
-  void update(float target) {
-    vmDbgCheck((nullptr != next) && (nullptr != position));
-    this->next->update(this->pid(*position, target, VM_dT));
-  }
-
-  void start(const float *_position) {
+  Link* compile(const float *_position) {
     vmDbgCheck(nullptr != _position);
     this->position = _position;
+    return this;
   }
 
-  void start_pid(const PIDInit<float> &init) {
+  void init(const PIDInit<float> &init) {
     pid.start(init, nullptr, nullptr);
+  }
+
+  void update(float target) {
+    vmDbgCheck((nullptr != next) && (nullptr != position));
+    next->update(this->pid(*position, target, VM_dT));
   }
 
 private:
@@ -113,12 +149,13 @@ private:
  *
  */
 class LinkSum : public Link {
+
   void update(float val) {
     vmDbgCheck(nullptr != next);
 
     if (wait_second) {
       wait_second = false;
-      this->next->update(first + val);
+      next->update(first + val);
     }
     else {
       wait_second = true;
@@ -137,16 +174,19 @@ private:
  */
 class LinkOutput : public Link {
 
+public:
+  Link* compile(float *_impact) {
+    vmDbgCheck(nullptr != _impact);
+    this->impact = _impact;
+    return this;
+  }
+
+private:
   void update(float val) {
-    vmDbgCheck(nullptr != impact);
+    vmDbgCheck((nullptr != next) &&(nullptr != impact));
     *impact = val;
   }
 
-  void start(float *_impact) {
-    vmDbgCheck(nullptr != _impact);
-    this->impact = _impact;
-  }
-private:
   float *impact = nullptr;
 };
 
@@ -155,12 +195,14 @@ private:
  */
 typedef enum {
   END,
+  CHAIN,
   CHAIN_END,
-  INPUT,
   PID,
   SUM,
   SCALE,
-  OUTPUT,
+  FORK,
+  FORK_END,
+  OUTPUT
 } vm_opcode_enum;
 
 /*
@@ -180,14 +222,33 @@ typedef enum {
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-static LinkInput input;
-static LinkPID pid_pool[TOTAL_PID_CNT];
-static LinkScale scale_pool[4];
-static LinkStub stub;
 
-static LinkInput input_pool[TOTAL_CHAIN_CNT];
+static LinkPID    pid_pool[TOTAL_PID_CNT];
+static LinkInput  input_pool[TOTAL_CHAIN_CNT];
+static LinkScale  scale_pool[TOTAL_SCALE_CNT];
+static LinkFork   fork_pool[TOTAL_FORK_CNT];
+static LinkSum    sum_pool[TOTAL_SUM_CNT];
+static LinkOutput out_pool[TOTAL_OUT_CNT];
 
 static float StateVector2[STATE_VECTOR_ENUM_END];
+
+typedef enum {
+  IMPACT_VECTOR_ail,
+  IMPACT_VECTOR_ele,
+  IMPACT_VECTOR_rud,
+  IMPACT_VECTOR_thr,
+  IMPACT_VECTOR_ENUM_END,
+} impact_vector_enum;
+
+static float ImpactVector2[IMPACT_VECTOR_ENUM_END];
+
+static uint8_t takeoff[] = {
+    END
+};
+
+static uint8_t fly[] = {
+    END
+};
 
 /*
  ******************************************************************************
@@ -252,52 +313,123 @@ void VM2::pid_pool_start(void) {
 
   for (i=0; i<TOTAL_PID_CNT; i++) {
     tmp = get_pid_init(i);
-    pid_pool[i].start_pid(tmp);
+    pid_pool[i].init(tmp);
   }
 }
 
-static uint8_t takeoff[] = {
-    END
-};
+/**
+ *
+ */
+void VM2::scale_pool_start(void) {
+  const size_t N = 16;
+  char key[N];
+  char numstr[4];
+  size_t sumnum;
+  float *tmp;
 
-static uint8_t fly[] = {
-    END
-};
+  for (sumnum=0; sumnum<TOTAL_SCALE_CNT; sumnum++) {
+    memset(numstr, 0, sizeof(numstr));
+    numstr[0] = '_';
+    numstr[1] = (sumnum / 10) + '0';
+    numstr[2] = (sumnum % 10) + '0';
 
+    memset(key, 0, N);
+    strncpy(key, "PID_vm_scale", N);
+    strncat(key, numstr, N);
+
+    param_registry.valueSearch(key, &tmp);
+    scale_pool[sumnum].init(tmp);
+  }
+}
+
+/**
+ *
+ */
 void VM2::compile(const uint8_t *bytecode) {
-  size_t pc = 0; /* program counter */
+  size_t pc = 0;        /* program counter */
+  Link *tip = nullptr;
+  Link *fork_ptr = nullptr;
+
   uint8_t cmd;
   uint8_t arg, arg2;
-  size_t chain = 0; /* currently compiling chain */
+  size_t chain = 0;     /* currently compiling chain */
+  size_t fork = 0;
 
   while(true) {
     cmd = bytecode[pc];
+
     switch (cmd){
     case END:
       return;
-      break;
 
-    case INPUT:
+    case CHAIN:
       arg = bytecode[pc+1];
       osalDbgCheck(arg < STATE_VECTOR_ENUM_END);
-      input_pool[chain].start(&StateVector2[arg]);
+      tip = input_pool[chain].compile(&StateVector2[arg]);
       pc += 2;
+      break;
+
+    case CHAIN_END:
+      tip = nullptr;
+      fork_ptr = nullptr;
+      pc += 1;
+      chain += 1;
       break;
 
     case PID:
       arg  = bytecode[pc+1];
       arg2 = bytecode[pc+2];
-      pid_pool[arg].start(&StateVector2[arg2]);
-      //input_pool[]
+      tip = tip->append(pid_pool[arg].compile(&StateVector2[arg2]));
       pc += 3;
       break;
 
-    case CHAIN_END:
+    case SUM:
+      arg = bytecode[pc+1];
+      tip = tip->append(&sum_pool[arg]);
+      pc += 2;
+      break;
+
+    case SCALE:
+      arg = bytecode[pc+1];
+      tip = tip->append(&scale_pool[arg]);
+      pc += 2;
+      break;
+
+    case FORK:
+      vmDbgCheck(nullptr == fork_ptr); /* nested forks forbidden */
+      vmDbgCheck(fork < TOTAL_FORK_CNT);
+      tip = tip->append(&fork_pool[fork]);
+      fork_ptr = tip;
+      fork += 1;
       pc += 1;
-      chain += 1;
+      break;
+
+    case FORK_END:
+      vmDbgCheck(nullptr != fork_ptr); /* now fork pending */
+      tip = fork_ptr;
+      pc += 1;
+      break;
+
+    case OUTPUT:
+      arg  = bytecode[pc+1];
+      arg2 = bytecode[pc+2];
+      tip = tip->append(out_pool[arg].compile(&ImpactVector2[arg2]));
+      pc += 3;
+      break;
+
+    default:
+      vmDbgPanic("illegal instruction");
       break;
     }
   }
+}
+
+/**
+ *
+ */
+void VM2::exec(void) {
+  for (size_t i=0; i<TOTAL_CHAIN_CNT; i++)
+    input_pool[i].update(0);
 }
 
 /*
@@ -311,13 +443,10 @@ void VM2::compile(const uint8_t *bytecode) {
 void VM2::start(void) {
 
   pid_pool_start();
+  scale_pool_start();
 
-  scale_pool[0].add(&scale_pool[1]);
-  scale_pool[0].add(&scale_pool[2]);
-  scale_pool[0].add(&scale_pool[3]);
-  scale_pool[0].add(&stub);
-  pid_pool[0].add(&scale_pool[0]);
-  input.add(&pid_pool[0]);
+  compile(takeoff);
+  compile(fly);
 
   ready = true;
 };
@@ -336,7 +465,8 @@ void VM2::update(float dT) {
 
   osalDbgCheck(ready);
   VM_dT = dT;
-  input.update(42);
+
+  this->exec();
 };
 
 
