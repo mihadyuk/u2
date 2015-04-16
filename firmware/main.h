@@ -9,7 +9,7 @@
 #endif
 
 #include "hal.h"
-
+//int snprintf(char *, size_t, const char *, ...);
 #define __CCM__ __attribute__((section(".ram4")))
 
 /* Heap size for dynamic thread creation */
