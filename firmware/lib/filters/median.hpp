@@ -4,10 +4,18 @@
 namespace filters {
 
 /**
- * Template of median filter
+ *
+ */
+template <typename T>
+class MedianBase {
+  virtual T operator() (T sample) = 0;
+};
+
+/**
+ *
  */
 template<typename T, unsigned int N>
-class Median {
+class Median : public MedianBase<T> {
 public:
   /**
    * default constructor
