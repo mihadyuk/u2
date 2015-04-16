@@ -1,0 +1,30 @@
+4.9
+-Os
+SRAM:  used    = 92880, mcu_ram   = 114688,      utilization = 80%
+CCRAM: used    = 43848, mcu_ccram = 65536,    utilization = 66%
+FLASH: program = 319284, mcu_flash = 1048576,    utilization = 30%
+-O2
+SRAM:  used    = 92888, mcu_ram   = 114688,      utilization = 80%
+CCRAM: used    = 43880, mcu_ccram = 65536,    utilization = 66%
+FLASH: program = 348276, mcu_flash = 1048576,    utilization = 33%
+
+4.8
+-Os
+SRAM:  used    = 92880, mcu_ram   = 114688,      utilization = 80%
+CCRAM: used    = 43848, mcu_ccram = 65536,    utilization = 66%
+FLASH: program = 320212, mcu_flash = 1048576,    utilization = 30%
+-O2
+SRAM:  used    = 92888, mcu_ram   = 114688,      utilization = 80%
+CCRAM: used    = 43880, mcu_ccram = 65536,    utilization = 66%
+FLASH: program = 345620, mcu_flash = 1048576,    utilization = 32%
+
+4.7.4
+-Os
+SRAM:  used    = 93136, mcu_ram   = 114688,      utilization = 81%
+CCRAM: used    = 43848, mcu_ccram = 65536,    utilization = 66%
+FLASH: program = 331396, mcu_flash = 1048576,    utilization = 31%
+-O2
+SRAM:  used    = 93144, mcu_ram   = 114688,      utilization = 81%
+CCRAM: used    = 43880, mcu_ccram = 65536,    utilization = 66%
+FLASH: program = 393092, mcu_flash = 1048576,    utilization = 37%
+
