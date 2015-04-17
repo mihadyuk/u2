@@ -15,6 +15,7 @@ using namespace control;
 
 #define TOTAL_PID_CNT         16
 #define TOTAL_CHAIN_CNT       4
+#define TOTAL_INPUT_CNT       4
 #define TOTAL_SCALE_CNT       4
 #define TOTAL_FORK_CNT        4
 #define TOTAL_SUM_CNT         4
@@ -38,6 +39,10 @@ public:
     vmDbgCheck(nullptr == next); /* already connected */
     next = ptr;
     return next;
+  }
+
+  virtual void disconnect(void) {
+    next = nullptr;
   }
 
   virtual void update(float val) = 0;
@@ -69,6 +74,11 @@ public:
     }
   }
 
+  virtual void disconnect(void) {
+    next = nullptr;
+    fork = nullptr;
+  }
+
   void update(float val) {
     if (nullptr != next)
       next->update(val);
@@ -78,6 +88,22 @@ public:
 
 private:
   Link *fork = nullptr;
+};
+
+/**
+ *
+ */
+class LinkStub: public Link {
+
+  Link* append(Link *ptr) {
+    (void)ptr;
+    vmDbgPanic("You can not connect any link to stub");
+    return nullptr;
+  }
+
+  void update(float val) {
+    (void)val;
+  }
 };
 
 /**
@@ -97,6 +123,18 @@ public:
 
   private:
   const float *c = nullptr;
+};
+
+
+/**
+ * inverter
+ */
+class LinkNeg : public Link {
+public:
+  void update(float val) {
+    vmDbgCheck(nullptr != next);
+    next->update(val * -1);
+  }
 };
 
 /**
@@ -195,14 +233,15 @@ private:
  */
 typedef enum {
   END,
-  CHAIN,
-  CHAIN_END,
+  INPUT,
   PID,
   SUM,
   SCALE,
   FORK,
-  FORK_END,
-  OUTPUT
+  FORK_RET,
+  OUTPUT,
+  NEG,
+  TERM /* terminator */
 } vm_opcode_enum;
 
 /*
@@ -223,12 +262,15 @@ typedef enum {
  ******************************************************************************
  */
 
+static Link*      exec_chain[TOTAL_CHAIN_CNT];
 static LinkPID    pid_pool[TOTAL_PID_CNT];
-static LinkInput  input_pool[TOTAL_CHAIN_CNT];
+static LinkInput  input_pool[TOTAL_INPUT_CNT];
 static LinkScale  scale_pool[TOTAL_SCALE_CNT];
 static LinkFork   fork_pool[TOTAL_FORK_CNT];
 static LinkSum    sum_pool[TOTAL_SUM_CNT];
 static LinkOutput out_pool[TOTAL_OUT_CNT];
+static LinkStub   terminator;
+static LinkNeg    inverter;
 
 static float StateVector2[STATE_VECTOR_ENUM_END];
 
@@ -242,13 +284,34 @@ typedef enum {
 
 static float ImpactVector2[IMPACT_VECTOR_ENUM_END];
 
-static uint8_t takeoff[] = {
+
+static const uint8_t manual[] = {
+    INPUT, STATE_VECTOR_futaba_raw_00,
+    OUTPUT, IMPACT_VECTOR_thr,
+    TERM,
+
+    INPUT, STATE_VECTOR_futaba_raw_01,
+    OUTPUT, IMPACT_VECTOR_ele,
+    TERM,
+
+    INPUT, STATE_VECTOR_futaba_raw_02,
+    FORK,
+      OUTPUT, IMPACT_VECTOR_ail,
+      TERM,
+    FORK_RET,
+    OUTPUT, IMPACT_VECTOR_rud,
+    TERM,
+
     END
 };
 
-static uint8_t fly[] = {
+static const uint8_t full_auto[] = {
+    INPUT, STATE_VECTOR_vx,
+    OUTPUT, 0,
     END
 };
+
+
 
 /*
  ******************************************************************************
@@ -351,7 +414,7 @@ void VM2::compile(const uint8_t *bytecode) {
   Link *fork_ptr = nullptr;
 
   uint8_t cmd;
-  uint8_t arg, arg2;
+  uint8_t arg0, arg1;
   size_t chain = 0;     /* currently compiling chain */
   size_t fork = 0;
 
@@ -362,36 +425,38 @@ void VM2::compile(const uint8_t *bytecode) {
     case END:
       return;
 
-    case CHAIN:
-      arg = bytecode[pc+1];
-      osalDbgCheck(arg < STATE_VECTOR_ENUM_END);
-      tip = input_pool[chain].compile(&StateVector2[arg]);
+    case INPUT:
+      arg0 = bytecode[pc+1];
+      osalDbgCheck(arg0 < STATE_VECTOR_ENUM_END);
+      tip = input_pool[chain].compile(&StateVector2[arg0]);
+      exec_chain[chain] = tip;
+      chain += 1;
       pc += 2;
       break;
 
-    case CHAIN_END:
+    case TERM:
+      tip->append(&terminator);
       tip = nullptr;
       fork_ptr = nullptr;
       pc += 1;
-      chain += 1;
       break;
 
     case PID:
-      arg  = bytecode[pc+1];
-      arg2 = bytecode[pc+2];
-      tip = tip->append(pid_pool[arg].compile(&StateVector2[arg2]));
+      arg0 = bytecode[pc+1];
+      arg1 = bytecode[pc+2];
+      tip = tip->append(pid_pool[arg0].compile(&StateVector2[arg1]));
       pc += 3;
       break;
 
     case SUM:
-      arg = bytecode[pc+1];
-      tip = tip->append(&sum_pool[arg]);
+      arg0 = bytecode[pc+1];
+      tip = tip->append(&sum_pool[arg0]);
       pc += 2;
       break;
 
     case SCALE:
-      arg = bytecode[pc+1];
-      tip = tip->append(&scale_pool[arg]);
+      arg0 = bytecode[pc+1];
+      tip = tip->append(&scale_pool[arg0]);
       pc += 2;
       break;
 
@@ -404,16 +469,16 @@ void VM2::compile(const uint8_t *bytecode) {
       pc += 1;
       break;
 
-    case FORK_END:
-      vmDbgCheck(nullptr != fork_ptr); /* now fork pending */
+    case FORK_RET:
+      vmDbgCheck(nullptr != fork_ptr); /* there is no fork return pending */
       tip = fork_ptr;
       pc += 1;
       break;
 
     case OUTPUT:
-      arg  = bytecode[pc+1];
-      arg2 = bytecode[pc+2];
-      tip = tip->append(out_pool[arg].compile(&ImpactVector2[arg2]));
+      arg0  = bytecode[pc+1];
+      arg1 = bytecode[pc+2];
+      tip = tip->append(out_pool[arg0].compile(&ImpactVector2[arg1]));
       pc += 3;
       break;
 
@@ -427,9 +492,40 @@ void VM2::compile(const uint8_t *bytecode) {
 /**
  *
  */
+void VM2::destroy(void) {
+  size_t i=0;
+
+  for (i=0; i<TOTAL_CHAIN_CNT; i++)
+    exec_chain[i] = nullptr;
+
+  for (i=0; i<TOTAL_PID_CNT; i++)
+    pid_pool[i].disconnect();
+
+  for (i=0; i<TOTAL_INPUT_CNT; i++)
+    input_pool[i].disconnect();
+
+  for (i=0; i<TOTAL_SCALE_CNT; i++)
+    scale_pool[i].disconnect();
+
+  for (i=0; i<TOTAL_FORK_CNT; i++)
+    fork_pool[i].disconnect();
+
+  for (i=0; i<TOTAL_SUM_CNT; i++)
+    sum_pool[i].disconnect();
+
+  for (i=0; i<TOTAL_OUT_CNT; i++)
+    out_pool[i].disconnect();
+
+  terminator.disconnect();
+  inverter.disconnect();
+}
+
+/**
+ *
+ */
 void VM2::exec(void) {
   for (size_t i=0; i<TOTAL_CHAIN_CNT; i++)
-    input_pool[i].update(0);
+    exec_chain[i]->update(0);
 }
 
 /*
@@ -442,11 +538,12 @@ void VM2::exec(void) {
  */
 void VM2::start(void) {
 
+  (void)manual;
+
   pid_pool_start();
   scale_pool_start();
 
-  compile(takeoff);
-  compile(fly);
+  compile(full_auto);
 
   ready = true;
 };

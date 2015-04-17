@@ -73,6 +73,21 @@ typedef enum {
   STATE_VECTOR_roll,
   STATE_VECTOR_pitch,
   STATE_VECTOR_yaw,
+
+  STATE_VECTOR_futaba_raw_00,
+  STATE_VECTOR_futaba_raw_01,
+  STATE_VECTOR_futaba_raw_02,
+  STATE_VECTOR_futaba_raw_03,
+
+  STATE_VECTOR_futaba_roll,
+  STATE_VECTOR_futaba_pitch,
+  STATE_VECTOR_futaba_thr,
+  STATE_VECTOR_futaba_dyaw,
+
+  STATE_VECTOR_futaba_speed,
+  STATE_VECTOR_futaba_height,
+  STATE_VECTOR_futaba_yaw,
+
   STATE_VECTOR_ENUM_END,
 } state_vector_enum;
 
