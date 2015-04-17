@@ -1,5 +1,4 @@
 #include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
 
 #include "main.h"
@@ -72,7 +71,6 @@ static THD_FUNCTION(LoopCmdThread, arg) {
   while (!chThdShouldTerminateX()){
     int n = 16;
     char str[n];
-
     snprintf(str, n, "%i\r\n", -666);
     cli_print(str);
     chThdSleepMilliseconds(25);

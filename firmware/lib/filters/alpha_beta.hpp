@@ -9,13 +9,9 @@ namespace filters {
 template<typename T>
 class AlphaBetaBase {
 public:
-  T operator() (T val) {
-    return this->update(val);
-  }
+  virtual T operator() (T val)= 0;
   virtual T get(void) = 0;
   virtual void reset(T val) = 0;
-private:
-  virtual T update(T val) = 0;
 };
 
 /**
@@ -61,17 +57,17 @@ public:
     S = val * static_cast<T>(L);
   }
 
-private:
   /**
    * Perform addition of new sample to filter and return current filtered
    * result
    */
-  T update (T val) {
+  T operator() (T val) {
     T tmp = S / static_cast<T>(L);
     S = S - tmp + val;
     return tmp;
   }
 
+private:
   /**
    * Accumulator
    */
