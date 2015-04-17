@@ -427,7 +427,8 @@ void VM2::compile(const uint8_t *bytecode) {
 
     case INPUT:
       arg0 = bytecode[pc+1];
-      osalDbgCheck(arg0 < STATE_VECTOR_ENUM_END);
+      vmDbgCheck(arg0 < STATE_VECTOR_ENUM_END);
+      vmDbgCheck(chain < TOTAL_INPUT_CNT);
       tip = input_pool[chain].compile(&StateVector2[arg0]);
       exec_chain[chain] = tip;
       chain += 1;
@@ -441,21 +442,30 @@ void VM2::compile(const uint8_t *bytecode) {
       pc += 1;
       break;
 
+    case NEG:
+      tip = tip->append(&inverter);
+      pc += 1;
+      break;
+
     case PID:
       arg0 = bytecode[pc+1];
       arg1 = bytecode[pc+2];
+      vmDbgCheck(arg0 < TOTAL_PID_CNT);
+      vmDbgCheck(arg1 < STATE_VECTOR_ENUM_END);
       tip = tip->append(pid_pool[arg0].compile(&StateVector2[arg1]));
       pc += 3;
       break;
 
     case SUM:
       arg0 = bytecode[pc+1];
+      vmDbgCheck(arg0 < TOTAL_SUM_CNT);
       tip = tip->append(&sum_pool[arg0]);
       pc += 2;
       break;
 
     case SCALE:
       arg0 = bytecode[pc+1];
+      vmDbgCheck(arg0 < TOTAL_SCALE_CNT);
       tip = tip->append(&scale_pool[arg0]);
       pc += 2;
       break;
@@ -476,8 +486,10 @@ void VM2::compile(const uint8_t *bytecode) {
       break;
 
     case OUTPUT:
-      arg0  = bytecode[pc+1];
+      arg0 = bytecode[pc+1];
       arg1 = bytecode[pc+2];
+      vmDbgCheck(arg0 < TOTAL_OUT_CNT);
+      vmDbgCheck(arg1 < IMPACT_VECTOR_ENUM_END);
       tip = tip->append(out_pool[arg0].compile(&ImpactVector2[arg1]));
       pc += 3;
       break;
@@ -538,11 +550,10 @@ void VM2::exec(void) {
  */
 void VM2::start(void) {
 
-  (void)manual;
-
   pid_pool_start();
   scale_pool_start();
 
+  compile(manual);
   compile(full_auto);
 
   ready = true;
