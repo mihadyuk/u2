@@ -11,7 +11,7 @@
  * @brief   This value will be used for create parameter file in case
  *          of totally empty nvram.
  */
-#define BOOTSTRAP_PARAM_FILE_SIZE     (1024 * 6)
+#define BOOTSTRAP_PARAM_FILE_SIZE     (1024 * 8)
 #define BOOTSTRAP_WPDB_FILE_SIZE      (1024 * 16)
 
 void NvramInit(void);

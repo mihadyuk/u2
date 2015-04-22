@@ -380,6 +380,13 @@ param = [
 ("PID_15_Max",      PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
 ("PID_15_proc",     0,          0,          1,          "u", "default",     "NULL"),
 
+("PID_vm_scale_00", -10000,     1,          10000,      "f", "default",     "NULL"),
+("PID_vm_scale_01", -10000,     1,          10000,      "f", "default",     "NULL"),
+("PID_vm_scale_02", -10000,     1,          10000,      "f", "default",     "NULL"),
+("PID_vm_scale_03", -10000,     1,          10000,      "f", "default",     "NULL"),
+
+
+
 #/* intervals between sending different data (mS) */
 ("T_raw_imu",       SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "Interval of sending this data in milliseconds.\\nSet it to 0 for disabling"),
 ("T_scal_imu",      SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),

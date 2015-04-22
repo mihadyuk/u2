@@ -9,6 +9,7 @@
 #include "alcoi.hpp"
 #include "mission_executor.hpp"
 #include "stab_vm.hpp"
+#include "vm2.hpp"
 
 namespace control {
 
@@ -32,6 +33,7 @@ private:
   Alcoi alcoi;
   MissionExecutor mission;
   StabVM vm;
+  VM2 vm2;
   chibios_rt::Mailbox<mavMail*, 1> command_mailbox;
   SubscribeLink command_long_link;
   bool ready = false;

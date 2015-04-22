@@ -157,7 +157,8 @@ void ACS::start(void) {
   stabilizer.start();
   futaba.start();
   alcoi.start();
-  vm.start();
+  //vm.start();
+  vm2.start();
   mav_postman.subscribe(MAVLINK_MSG_ID_COMMAND_LONG, &command_long_link);
 
   ready = true;
@@ -172,7 +173,8 @@ void ACS::stop(void) {
   mav_postman.unsubscribe(MAVLINK_MSG_ID_COMMAND_LONG, &command_long_link);
   command_mailbox.reset();
 
-  vm.stop();
+  vm2.stop();
+  //vm.stop();
   futaba.stop();
   stabilizer.stop();
 }

@@ -263,6 +263,7 @@ typedef enum {
  */
 
 static Link*      exec_chain[TOTAL_CHAIN_CNT];
+
 static LinkPID    pid_pool[TOTAL_PID_CNT];
 static LinkInput  input_pool[TOTAL_INPUT_CNT];
 static LinkScale  scale_pool[TOTAL_SCALE_CNT];
@@ -335,7 +336,7 @@ static void construct_key(char *buf, size_t buflen, uint8_t pidnum, const char *
   numstr[2] = (pidnum % 10) + '0';
 
   memset(buf, 0, buflen);
-  strncpy(buf, "PID_", buflen);
+  strncpy(buf, "PID", buflen);
   strncat(buf, numstr, buflen);
   strncat(buf, suffix, buflen);
 }
@@ -416,6 +417,7 @@ void VM2::compile(const uint8_t *bytecode) {
   uint8_t cmd;
   uint8_t arg0, arg1;
   size_t chain = 0;     /* currently compiling chain */
+  size_t output = 0;
   size_t fork = 0;
 
   while(true) {
@@ -438,7 +440,6 @@ void VM2::compile(const uint8_t *bytecode) {
     case TERM:
       tip->append(&terminator);
       tip = nullptr;
-      fork_ptr = nullptr;
       pc += 1;
       break;
 
@@ -487,11 +488,11 @@ void VM2::compile(const uint8_t *bytecode) {
 
     case OUTPUT:
       arg0 = bytecode[pc+1];
-      arg1 = bytecode[pc+2];
-      vmDbgCheck(arg0 < TOTAL_OUT_CNT);
-      vmDbgCheck(arg1 < IMPACT_VECTOR_ENUM_END);
-      tip = tip->append(out_pool[arg0].compile(&ImpactVector2[arg1]));
-      pc += 3;
+      vmDbgCheck(output < TOTAL_OUT_CNT);
+      vmDbgCheck(arg0 < IMPACT_VECTOR_ENUM_END);
+      tip = tip->append(out_pool[output].compile(&ImpactVector2[arg0]));
+      output += 1;
+      pc += 2;
       break;
 
     default:
@@ -554,6 +555,7 @@ void VM2::start(void) {
   scale_pool_start();
 
   compile(manual);
+  destroy();
   compile(full_auto);
 
   ready = true;
