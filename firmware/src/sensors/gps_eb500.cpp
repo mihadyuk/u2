@@ -58,11 +58,11 @@ static const uint8_t fix_period_2hz[] = "$PMTK300,500,0,0,0,0*28\r\n";
 /* set serial port baudrate */
 static const uint8_t gps_high_baudrate[] = "$PMTK251,57600*2C\r\n";
 
-static NmeaParser nmea_parser __CCM__;
+__CCM__ static NmeaParser nmea_parser;
 
-static nmea_gga_t gga   __CCM__;
-static nmea_rmc_t rmc   __CCM__;
-static gps_data_t cache __CCM__;
+__CCM__ static nmea_gga_t gga;
+__CCM__ static nmea_rmc_t rmc;
+__CCM__ static gps_data_t cache;
 
 static chibios_rt::BinarySemaphore pps_sem(true);
 static chibios_rt::BinarySemaphore protect_sem(false);
@@ -234,6 +234,7 @@ void GPSGetData(gps_data_t &result) {
 
   acquire();
   result = cache;
+  cache.fix_valid = false;
   release();
 }
 
