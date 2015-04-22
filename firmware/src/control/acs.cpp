@@ -157,8 +157,7 @@ void ACS::start(void) {
   stabilizer.start();
   futaba.start();
   alcoi.start();
-  //vm.start();
-  vm2.start();
+  vm.start();
   mav_postman.subscribe(MAVLINK_MSG_ID_COMMAND_LONG, &command_long_link);
 
   ready = true;
@@ -173,8 +172,7 @@ void ACS::stop(void) {
   mav_postman.unsubscribe(MAVLINK_MSG_ID_COMMAND_LONG, &command_long_link);
   command_mailbox.reset();
 
-  vm2.stop();
-  //vm.stop();
+  vm.stop();
   futaba.stop();
   stabilizer.stop();
 }
@@ -189,6 +187,8 @@ void ACS::update(float dT) {
   osalDbgCheck(ready);
 
   futaba_status = futaba.update(fut_data, dT);
+
+  vm.update(dT);
 
   /* toggle ignore flag for futaba fail */
   if (MSG_OK == futaba_status) {

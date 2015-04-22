@@ -5,7 +5,7 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -O0 -ggdb -fomit-frame-pointer -falign-functions=16
+  USE_OPT = -Os -ggdb -fomit-frame-pointer -falign-functions=16
 endif
 
 # C specific options here (added to USE_OPT).
@@ -142,8 +142,7 @@ CONTROLSRC =\
 		src/control/acs.cpp \
 		src/control/mission_executor.cpp \
 		src/control/stab_vm.cpp \
-		src/control/alcoi.cpp \
-		src/control/vm2.cpp
+		src/control/alcoi.cpp
 
 NVRAMSRC = src/nvram_local.cpp \
 		lib/24aa/src/mtd.cpp \
