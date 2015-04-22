@@ -20,7 +20,7 @@ using namespace control;
 #define TOTAL_FORK_CNT        4
 #define TOTAL_SUM_CNT         4
 #define TOTAL_OUT_CNT         8
-
+#define TOTAL_INV_CNT         4
 
 #define vmDbgCheck(c) osalDbgCheck(c)
 #define vmDbgPanic(c) osalSysHalt(c)
@@ -138,6 +138,17 @@ public:
 };
 
 /**
+ * No operation. For testing and benchmarking only
+ */
+class LinkNop : public Link {
+public:
+  void update(float val) {
+    vmDbgCheck(nullptr != next);
+    next->update(val);
+  }
+};
+
+/**
  *
  */
 class LinkInput : public Link {
@@ -229,22 +240,6 @@ private:
   float *impact = nullptr;
 };
 
-/**
- * Command set
- */
-typedef enum {
-  END,
-  INPUT,
-  PID,
-  SUM,
-  SCALE,
-  FORK,
-  FORK_RET,
-  OUTPUT,
-  NEG,    /* value negation */
-  TERM    /* terminator */
-} vm_opcode_enum;
-
 /*
  ******************************************************************************
  * EXTERNS
@@ -271,20 +266,8 @@ static LinkScale  scale_pool[TOTAL_SCALE_CNT];
 static LinkFork   fork_pool[TOTAL_FORK_CNT];
 static LinkSum    sum_pool[TOTAL_SUM_CNT];
 static LinkOutput out_pool[TOTAL_OUT_CNT];
+static LinkNeg    inverter_pool[TOTAL_INV_CNT];
 static LinkStub   terminator;
-static LinkNeg    inverter;
-
-static float StateVector2[STATE_VECTOR_ENUM_END];
-
-typedef enum {
-  IMPACT_VECTOR_ail,
-  IMPACT_VECTOR_ele,
-  IMPACT_VECTOR_rud,
-  IMPACT_VECTOR_thr,
-  IMPACT_VECTOR_ENUM_END,
-} impact_vector_enum;
-
-static float ImpactVector2[IMPACT_VECTOR_ENUM_END];
 
 
 static const uint8_t test_program[] = {
@@ -292,14 +275,14 @@ static const uint8_t test_program[] = {
     PID, 0, STATE_VECTOR_vx,
     PID, 1, STATE_VECTOR_vx,
     PID, 2, STATE_VECTOR_vx,
-    OUTPUT, IMPACT_VECTOR_thr,
+    OUTPUT, IMPACT_THR,
     TERM,
 
     INPUT,  STATE_VECTOR_futaba_raw_01,
     PID, 3, STATE_VECTOR_vy,
     PID, 4, STATE_VECTOR_vy,
     PID, 5, STATE_VECTOR_vy,
-    OUTPUT, IMPACT_VECTOR_ele,
+    OUTPUT, IMPACT_ELE_L,
     TERM,
 
     INPUT, STATE_VECTOR_futaba_raw_02,
@@ -308,17 +291,17 @@ static const uint8_t test_program[] = {
     PID, 8, STATE_VECTOR_vx,
     FORK,
       NEG,
-      OUTPUT, IMPACT_VECTOR_ail,
+      OUTPUT, IMPACT_AIL_L,
       TERM,
     FORK_RET,
-    OUTPUT, IMPACT_VECTOR_rud,
+    OUTPUT, IMPACT_AIL_R,
     TERM,
 
     INPUT,  STATE_VECTOR_futaba_raw_01,
     PID, 9, STATE_VECTOR_vy,
     PID,10, STATE_VECTOR_vy,
     PID,11, STATE_VECTOR_vy,
-    OUTPUT, IMPACT_VECTOR_ele,
+    OUTPUT, IMPACT_ELE,
     TERM,
 
     END
@@ -329,8 +312,6 @@ static const uint8_t fly_program[] = {
     OUTPUT, 0,
     END
 };
-
-
 
 /*
  ******************************************************************************
@@ -435,8 +416,9 @@ void StabVM::compile(const uint8_t *bytecode) {
   uint8_t cmd;
   uint8_t arg0, arg1;
   size_t chain = 0;     /* currently compiling chain */
-  size_t output = 0;
-  size_t fork = 0;
+  size_t output = 0;    /* used outputs counter */
+  size_t fork = 0;      /* used forks counter */
+  size_t inv = 0;       /* used inverters counter */
 
   while(true) {
     cmd = bytecode[pc];
@@ -449,7 +431,7 @@ void StabVM::compile(const uint8_t *bytecode) {
       arg0 = bytecode[pc+1];
       vmDbgCheck(arg0 < STATE_VECTOR_ENUM_END);
       vmDbgCheck(chain < TOTAL_INPUT_CNT);
-      tip = input_pool[chain].compile(&StateVector2[arg0]);
+      tip = input_pool[chain].compile(&sv.ch[arg0]);
       exec_chain[chain] = tip;
       chain += 1;
       pc += 2;
@@ -462,7 +444,9 @@ void StabVM::compile(const uint8_t *bytecode) {
       break;
 
     case NEG:
-      tip = tip->append(&inverter);
+      vmDbgCheck(inv < TOTAL_INV_CNT);
+      tip = tip->append(&inverter_pool[inv]);
+      inv += 1;
       pc += 1;
       break;
 
@@ -471,7 +455,7 @@ void StabVM::compile(const uint8_t *bytecode) {
       arg1 = bytecode[pc+2];
       vmDbgCheck(arg0 < TOTAL_PID_CNT);
       vmDbgCheck(arg1 < STATE_VECTOR_ENUM_END);
-      tip = tip->append(pid_pool[arg0].compile(&StateVector2[arg1]));
+      tip = tip->append(pid_pool[arg0].compile(&sv.ch[arg1]));
       pc += 3;
       break;
 
@@ -507,8 +491,8 @@ void StabVM::compile(const uint8_t *bytecode) {
     case OUTPUT:
       arg0 = bytecode[pc+1];
       vmDbgCheck(output < TOTAL_OUT_CNT);
-      vmDbgCheck(arg0 < IMPACT_VECTOR_ENUM_END);
-      tip = tip->append(out_pool[output].compile(&ImpactVector2[arg0]));
+      vmDbgCheck(arg0 < IMPACT_ENUM_END);
+      tip = tip->append(out_pool[output].compile(&impact.ch[arg0]));
       output += 1;
       pc += 2;
       break;
@@ -547,8 +531,10 @@ void StabVM::destroy(void) {
   for (i=0; i<TOTAL_OUT_CNT; i++)
     out_pool[i].disconnect();
 
+  for (i=0; i<TOTAL_INV_CNT; i++)
+    inverter_pool[i].disconnect();
+
   terminator.disconnect();
-  inverter.disconnect();
 }
 
 /**
@@ -566,6 +552,16 @@ void StabVM::exec(void) {
  * EXPORTED FUNCTIONS
  ******************************************************************************
  */
+/**
+ *
+ */
+StabVM::StabVM(DrivetrainImpact &impact, const StateVector &sv) :
+impact(impact),
+sv(sv)
+{
+  return;
+}
+
 /**
  *
  */
@@ -596,10 +592,26 @@ void StabVM::stop(void) {
 /**
  *
  */
-void StabVM::update(float dT) {
+bool StabVM::verify(const uint8_t *bytecode) {
+
+  compile(bytecode);
+  destroy();
+
+  return OSAL_SUCCESS;
+}
+
+/**
+ *
+ */
+void StabVM::update(float dT, const uint8_t *bytecode) {
 
   osalDbgCheck(ready);
   VM_dT = dT;
+
+  if (bytecode != current_program) {
+    compile(bytecode);
+    current_program = bytecode;
+  }
 
   chTMStartMeasurementX(&exec_tmo);
   this->exec();

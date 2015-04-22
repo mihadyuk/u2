@@ -31,6 +31,12 @@ using namespace control;
  ******************************************************************************
  */
 
+static const uint8_t fly_program[] = {
+    INPUT, STATE_VECTOR_vx,
+    OUTPUT, 0,
+    END
+};
+
 /*
  ******************************************************************************
  ******************************************************************************
@@ -107,10 +113,8 @@ void ACS::fullauto(float dT, const FutabaOutput &fut_data) {
     }
   }
 
-  vm.update(dT);
   navigator(stab_input);
   alcoi.update(stab_input, dT);
-  stabilizer.update(stab_input, dT);
 }
 
 /**
@@ -118,20 +122,20 @@ void ACS::fullauto(float dT, const FutabaOutput &fut_data) {
  */
 void ACS::semiauto(float dT, const FutabaOutput &fut_data) {
   (void)fut_data;
+  (void)dT;
   StabInput stab_input;
 
   navigator(stab_input);
-  stabilizer.update(stab_input, dT);
 }
 
 /**
  *
  */
 void ACS::manual(float dT, const FutabaOutput &fut_data) {
+  (void)dT;
   StabInput stab_input;
 
   futaba2stab_input(fut_data, stab_input);
-  stabilizer.update(stab_input, dT);
 }
 
 /*
@@ -142,8 +146,10 @@ void ACS::manual(float dT, const FutabaOutput &fut_data) {
 /**
  *
  */
-ACS::ACS(Drivetrain &drivetrain, const StateVector &s) :
-stabilizer(drivetrain, s),
+ACS::ACS(Drivetrain &drivetrain, StateVector &sv) :
+drivetrain(drivetrain),
+sv(sv),
+vm(impact, sv),
 command_long_link(&command_mailbox)
 {
   return;
@@ -154,7 +160,6 @@ command_long_link(&command_mailbox)
  */
 void ACS::start(void) {
 
-  stabilizer.start();
   futaba.start();
   alcoi.start();
   vm.start();
@@ -174,7 +179,6 @@ void ACS::stop(void) {
 
   vm.stop();
   futaba.stop();
-  stabilizer.stop();
 }
 
 /**
@@ -188,7 +192,7 @@ void ACS::update(float dT) {
 
   futaba_status = futaba.update(fut_data, dT);
 
-  vm.update(dT);
+  vm.update(dT, fly_program);
 
   /* toggle ignore flag for futaba fail */
   if (MSG_OK == futaba_status) {
@@ -216,5 +220,7 @@ void ACS::update(float dT) {
     manual(dT, fut_data);
     break;
   }
+
+  drivetrain.update(this->impact);
 }
 
