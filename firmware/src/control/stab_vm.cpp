@@ -267,7 +267,7 @@ static LinkFork   fork_pool[TOTAL_FORK_CNT];
 static LinkSum    sum_pool[TOTAL_SUM_CNT];
 static LinkOutput out_pool[TOTAL_OUT_CNT];
 static LinkNeg    inverter_pool[TOTAL_INV_CNT];
-static LinkStub   terminator;
+static LinkStub   terminator; /* single terminator may be used many times */
 
 
 static const uint8_t test_program[] = {
@@ -609,6 +609,7 @@ void StabVM::update(float dT, const uint8_t *bytecode) {
   VM_dT = dT;
 
   if (bytecode != current_program) {
+    destroy();
     compile(bytecode);
     current_program = bytecode;
   }

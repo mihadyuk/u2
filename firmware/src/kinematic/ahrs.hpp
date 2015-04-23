@@ -3,6 +3,7 @@
 
 #include "marg.hpp"
 #include "ahrs_data.hpp"
+#include "state_vector.hpp"
 
 /**
  *
@@ -23,7 +24,7 @@ public:
   Ahrs(void);
   void start(void);
   void stop(void);
-  msg_t get(ahrs_data_t &result, systime_t timeout);
+  msg_t get(ahrs_data_t &result, StateVector &sv, systime_t timeout);
 private:
   msg_t get_adis(ahrs_data_t &result, systime_t timeout);
   msg_t get_starlino(ahrs_data_t &result, systime_t timeout);

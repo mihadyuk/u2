@@ -32,7 +32,7 @@ private:
   Futaba futaba;
   Alcoi alcoi;
   MissionExecutor mission;
-  StabVM vm;
+  StabVM stabilizer;
   chibios_rt::Mailbox<mavMail*, 1> command_mailbox;
   SubscribeLink command_long_link;
   bool ready = false;

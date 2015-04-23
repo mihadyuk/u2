@@ -1,8 +1,9 @@
 #ifndef STAB_VM_HPP_
 #define STAB_VM_HPP_
 
+#include "drivetrain/drivetrain.hpp"
+#include "state_vector.hpp"
 #include "mavlink_local.hpp"
-#include "stabilizer/stabilizer.hpp"
 
 namespace control {
 

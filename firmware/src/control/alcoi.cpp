@@ -48,18 +48,12 @@ using namespace control;
 
 static bool validate_pulse(const AlcoiPulse &pulse) {
 
-  if (pulse.ch >= PID_CHAIN_ENUM_END)
-    return OSAL_FAILED;
+  osalSysHalt("add pid number overflow here");
+//  if (pulse.ch >= PID_CHAIN_ENUM_END)
+//    return OSAL_FAILED;
 
   /* pulse longer than 1s looks dangerous */
   if (pulse.width > ALCOI_MAX_PULSE_WIDTH)
-    return OSAL_FAILED;
-
-  if (pulse.lvl > OverrideLevel::bypass)
-    return OSAL_FAILED;
-
-  /* pointless value */
-  if (pulse.lvl == OverrideLevel::none)
     return OSAL_FAILED;
 
   return OSAL_SUCCESS;
@@ -90,8 +84,7 @@ bool Alcoi::load_pulse(const AlcoiPulse &pulse) {
  *
  */
 void Alcoi::start(void) {
-  pulse.lvl       = OverrideLevel::none;
-  pulse.ch        = PID_CHAIN_AIL;
+  pulse.ch        = 0;
   pulse.width     = 0;
   pulse.strength  = 0;
 
@@ -108,15 +101,14 @@ void Alcoi::stop(void) {
 /**
  *
  */
-void Alcoi::update(StabInput &stab, float dT) {
+void Alcoi::update(float dT) {
 
   osalDbgCheck(AlcoiState::uninit != state);
 
   switch (state) {
   case AlcoiState::pulse:
     if (this->pulse_time_elapsed < pulse.width) {
-      stab.ch[pulse.ch].override_target = pulse.strength;
-      stab.ch[pulse.ch].override_level  = pulse.lvl;
+      osalSysHalt("unrealized");
       pulse_time_elapsed += dT;
     }
     else { /* pulse end */
@@ -138,8 +130,7 @@ enum MAV_RESULT Alcoi::commandHandler(const mavlink_command_long_t *clp) {
   bool status = OSAL_FAILED;
   AlcoiPulse pulse;
 
-  pulse.lvl     = static_cast<OverrideLevel>(roundf(clp->PARAM_PULSE_LEVEL));
-  pulse.ch      = static_cast<pid_chain_t>(roundf(clp->PARAM_PULSE_CHANNEL));
+  pulse.ch      = roundf(clp->PARAM_PULSE_CHANNEL);
   pulse.width   = clp->PARAM_PULSE_WIDTH;
   pulse.strength= clp->PARAM_PULSE_STRENGTH;
 

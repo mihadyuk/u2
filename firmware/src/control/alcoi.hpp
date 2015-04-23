@@ -2,7 +2,6 @@
 #define ALCOI_HPP_
 
 #include "mavlink_local.hpp"
-#include "stabilizer/stabilizer.hpp"
 
 namespace control {
 
@@ -10,8 +9,7 @@ namespace control {
  *
  */
 struct AlcoiPulse {
-  OverrideLevel lvl;
-  pid_chain_t   ch;
+  size_t        ch;
   float         width; // seconds
   float         strength;
 };
@@ -34,7 +32,7 @@ public:
   void start(void);
   void stop(void);
   enum MAV_RESULT commandHandler(const mavlink_command_long_t *clp);
-  void update(StabInput &stab, float dT);
+  void update(float dT);
 private:
   bool load_pulse(const AlcoiPulse &pulse);
   AlcoiState state = AlcoiState::uninit;

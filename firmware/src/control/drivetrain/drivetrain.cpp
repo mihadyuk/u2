@@ -86,3 +86,18 @@ msg_t Drivetrain::update(const DrivetrainImpact &impact) {
 
   return MSG_OK;
 }
+
+/**
+ *
+ */
+uint32_t Drivetrain::capabilities(void) {
+  uint32_t ret = 0;
+
+  ret |= (1 << IMPACT_THR) | (1 << IMPACT_RUD);
+
+  return ret;
+}
+
+
+
+

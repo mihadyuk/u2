@@ -5,7 +5,7 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -O2 -ggdb -fomit-frame-pointer -falign-functions=16
+  USE_OPT = -O0 -ggdb -fomit-frame-pointer -falign-functions=16
 endif
 
 # C specific options here (added to USE_OPT).
@@ -136,9 +136,6 @@ CONTROLSRC =\
 		src/control/futaba/receiver_pwm.cpp \
 		src/control/futaba/receiver_synth.cpp \
 		src/control/futaba/receiver_mavlink.cpp \
-		src/control/stabilizer/pid_link.cpp \
-		src/control/stabilizer/pid_chain.cpp \
-		src/control/stabilizer/stabilizer.cpp \
 		src/control/acs.cpp \
 		src/control/mission_executor.cpp \
 		src/control/stab_vm.cpp \

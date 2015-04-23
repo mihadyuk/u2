@@ -63,10 +63,6 @@ typedef enum {
   STATE_VECTOR_futaba_raw_01,
   STATE_VECTOR_futaba_raw_02,
   STATE_VECTOR_futaba_raw_03,
-  STATE_VECTOR_futaba_raw_04,
-  STATE_VECTOR_futaba_raw_05,
-  STATE_VECTOR_futaba_raw_06,
-  STATE_VECTOR_futaba_raw_07,
 
   // values converted from sticks positions to attitude targets
   STATE_VECTOR_futaba_roll,

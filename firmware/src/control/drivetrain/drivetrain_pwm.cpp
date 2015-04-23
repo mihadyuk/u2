@@ -1,5 +1,3 @@
-#include <cstring>
-
 #include "main.h"
 #include "drivetrain_pwm.hpp"
 
@@ -103,7 +101,7 @@ void PWM::start(void) {
   pwmStart(&PWMD1, &pwm_default_cfg);
   pwmEnablePeriodicNotification(&PWMD1);
 
-  /* pause between starts needs to spread PWM ISRs through time */
+  /* pause between starts needs to spread PWM ISRs in time */
   osalThreadSleepMicroseconds(DRIVETRAIN_PWM_PERIOD / 2);
 
 //  pwmStart(&PWMD4, &pwm_default_cfg);

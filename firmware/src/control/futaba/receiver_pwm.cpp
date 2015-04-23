@@ -3,7 +3,6 @@
 #include "receiver_pwm.hpp"
 #include "param_registry.hpp"
 #include "mavlink_local.hpp"
-#include <cstring>
 
 using namespace chibios_rt;
 using namespace control;
@@ -17,7 +16,7 @@ using namespace control;
 
 /* middle point in uS */
 #define NORMALIZE_SHIFT     1500
-/* max - mid. Good futabas have maximum at 2000uS but not all futabas good enough */
+/* max - mid. Good futabas have max at 2000uS but not all futabas good enough */
 #define NORMALIZE_SCALE     400
 
 /*
@@ -137,39 +136,27 @@ static bool check_timeout(int32_t map, systime_t timeout) {
 /**
  *
  */
-void ReceiverPWM::get_ch(int32_t map, float *result, uint32_t *status,
-                         uint32_t error_bit) const {
+void ReceiverPWM::get_ch(size_t chnum, float *result, uint32_t *status) const {
 
-  if (-1 == map) { /* channel unused */
-    *result = 0;
-    *status &= ~error_bit;
-  }
-  else {
-    *result = pwm_normalize(cache[map], NORMALIZE_SHIFT, NORMALIZE_SCALE);
-    if (check_timeout(map, MS2ST(this->timeout)))
-      *status |= error_bit;
-    else
-      *status &= ~error_bit;
-  }
+  *result = pwm_normalize(cache[chnum], NORMALIZE_SHIFT, NORMALIZE_SCALE);
+
+  if (check_timeout(chnum, MS2ST(this->timeout)))
+    *status |= (1 << chnum);
+  else
+    *status &= ~(1 << chnum);
 }
 
 /**
  *
  */
-void ReceiverPWM::get_tumbler(int32_t map, ManualSwitch *result,
-                              uint32_t *status, uint32_t error_bit) {
+void ReceiverPWM::get_tumbler(size_t chnum, ManualSwitch *result, uint32_t *status) {
 
-  if (-1 == map) { /* channel unused */
-    *result = ManualSwitch::fullauto;
-    *status &= ~error_bit;
-  }
-  else {
-    *result = static_cast<ManualSwitch>(manual_switch.update(cache[map]));
-    if (check_timeout(map, MS2ST(this->timeout)))
-      *status |= error_bit;
-    else
-      *status &= ~error_bit;
-  }
+  *result = static_cast<ManualSwitch>(manual_switch.update(cache[chnum]));
+
+  if (check_timeout(chnum, MS2ST(this->timeout)))
+    *status |= 1 << chnum;
+  else
+    *status &= ~(1 << chnum);
 }
 
 /*
@@ -184,16 +171,8 @@ void ReceiverPWM::start(const uint32_t *timeout) {
 
   this->timeout = timeout;
 
-  param_registry.valueSearch("RC_map_ail", &map_ail);
-  param_registry.valueSearch("RC_map_ele", &map_ele);
-  param_registry.valueSearch("RC_map_rud", &map_rud);
-  param_registry.valueSearch("RC_map_thr", &map_thr);
   param_registry.valueSearch("RC_map_man", &map_man);
 
-  osalDbgCheck(CHANNEL_CNT > *map_ail);
-  osalDbgCheck(CHANNEL_CNT > *map_ele);
-  osalDbgCheck(CHANNEL_CNT > *map_rud);
-  osalDbgCheck(CHANNEL_CNT > *map_thr);
   osalDbgCheck(CHANNEL_CNT > *map_man);
 
   eicuStart(&EICUD4, &eicucfg);
@@ -222,11 +201,15 @@ void ReceiverPWM::update(RecevierOutput &result) {
 
   receiver2mavlink(cache);
 
-  get_ch(*map_ail, &result.ch[PID_CHAIN_AIL], &result.status, RECEIVER_STATUS_AIL_CH_ERROR);
-  get_ch(*map_ele, &result.ch[PID_CHAIN_ELE], &result.status, RECEIVER_STATUS_ELE_CH_ERROR);
-  get_ch(*map_rud, &result.ch[PID_CHAIN_RUD], &result.status, RECEIVER_STATUS_RUD_CH_ERROR);
-  get_ch(*map_thr, &result.ch[PID_CHAIN_THR], &result.status, RECEIVER_STATUS_THR_CH_ERROR);
+  for (size_t i=0; i<CHANNEL_CNT; i++) {
+    get_ch(i, &result.ch[i], &result.status);
+  }
 
-  get_tumbler(*map_man, &result.man, &result.status, RECEIVER_STATUS_MAN_CH_ERROR);
+  /* manual switch will be processed separately because I still have no
+   * ideas how to do this elegantly inside ACS. */
+  if (-1 == *map_man)
+    result.man = ManualSwitch::fullauto;
+  else
+    get_tumbler(*map_man, &result.man, &result.status);
 }
 

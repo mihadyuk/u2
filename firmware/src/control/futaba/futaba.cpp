@@ -50,69 +50,6 @@ typedef enum {
  ******************************************************************************
  ******************************************************************************
  */
-/**
- *
- */
-static msg_t futaba2high(RecevierOutput const &recv, FutabaOutput &result) {
-
-  memcpy(result.ch, recv.ch, sizeof(recv.ch));
-
-  result.man = ManualSwitch::semiauto;
-  for (size_t i=0; i<PID_CHAIN_ENUM_END; i++)
-    result.ol[i] = OverrideLevel::high;
-
-  return MSG_OK;
-}
-
-/**
- *
- */
-static msg_t futaba2medium(RecevierOutput const &recv, FutabaOutput &result) {
-
-  memcpy(result.ch, recv.ch, sizeof(recv.ch));
-
-  result.man = ManualSwitch::semiauto;
-  for (size_t i=0; i<PID_CHAIN_ENUM_END; i++)
-    result.ol[i] = OverrideLevel::medium;
-
-  return MSG_OK;
-}
-
-/**
- *
- */
-static msg_t futaba2low(RecevierOutput const &recv, FutabaOutput &result) {
-
-  memcpy(result.ch, recv.ch, sizeof(recv.ch));
-
-  result.man = ManualSwitch::semiauto;
-  for (size_t i=0; i<PID_CHAIN_ENUM_END; i++)
-    result.ol[i] = OverrideLevel::low;
-
-  return MSG_OK;
-}
-
-/**
- *
- */
-msg_t Futaba::semiauto_interpret(RecevierOutput const &recv,
-                                 FutabaOutput &result) {
-  msg_t ret = MSG_OK;
-
-  switch(*override){
-  case RC_OVERRIDE_HIGH:
-    ret = futaba2high(recv, result);
-    break;
-  case RC_OVERRIDE_MEDIUM:
-    ret = futaba2medium(recv, result);
-    break;
-  case RC_OVERRIDE_LOW:
-    ret = futaba2low(recv, result);
-    break;
-  }
-
-  return ret;
-}
 
 /**
  *
@@ -121,26 +58,9 @@ msg_t Futaba::man_switch_interpret(RecevierOutput const &recv,
                                    FutabaOutput &result) {
   msg_t ret = MSG_OK;
 
-  switch(recv.man) {
-  case ManualSwitch::manual:
-    memcpy(result.ch, recv.ch, sizeof(recv.ch));
-    result.man = ManualSwitch::manual;
-    for (size_t i=0; i<PID_CHAIN_ENUM_END; i++)
-      result.ol[i] = OverrideLevel::bypass;
-    ret = MSG_OK;
-    break;
-
-  case ManualSwitch::fullauto:
-    result.man = ManualSwitch::fullauto;
-    for (size_t i=0; i<PID_CHAIN_ENUM_END; i++)
-      result.ol[i] = OverrideLevel::none;
-    ret = MSG_OK;
-    break;
-
-  case ManualSwitch::semiauto:
-    ret = semiauto_interpret(recv, result);
-    break;
-  }
+  static_assert(sizeof(recv.ch) == sizeof(result.ch), "checker for temporal code");
+  memcpy(result.ch, recv.ch, sizeof(recv.ch));
+  result.man = recv.man;
 
   return ret;
 }
@@ -154,15 +74,7 @@ msg_t Futaba::man_switch_interpret(RecevierOutput const &recv,
  *
  */
 Futaba::Futaba(void) {
-
-  static_assert(OverrideLevel::high ==
-      static_cast<OverrideLevel>(RC_OVERRIDE_HIGH),   "");
-  static_assert(OverrideLevel::medium ==
-      static_cast<OverrideLevel>(RC_OVERRIDE_MEDIUM), "");
-  static_assert(OverrideLevel::low ==
-      static_cast<OverrideLevel>(RC_OVERRIDE_LOW),    "");
-//  static_assert(OverrideLevel::bypass ==
-//      static_cast<OverrideLevel>(RC_OVERRIDE_BYPASS), "");
+  return;
 }
 
 /**
