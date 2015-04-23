@@ -2,6 +2,7 @@
 #define STATE_VECTOR_HPP_
 
 #include "string.h" /* for memset() */
+#include "manual_switch_enum.hpp"
 
 /**
  *
@@ -63,6 +64,11 @@ typedef enum {
   STATE_VECTOR_futaba_raw_01,
   STATE_VECTOR_futaba_raw_02,
   STATE_VECTOR_futaba_raw_03,
+  STATE_VECTOR_futaba_raw_04,
+  STATE_VECTOR_futaba_raw_05,
+  STATE_VECTOR_futaba_raw_06,
+  STATE_VECTOR_futaba_raw_07,
+  STATE_VECTOR_futaba_raw_end,
 
   // values converted from sticks positions to attitude targets
   STATE_VECTOR_futaba_roll,
@@ -88,6 +94,8 @@ struct StateVector {
     memset(this, 0, sizeof(*this));
   }
   float ch[STATE_VECTOR_ENUM_END];
+  bool futaba_good = false;
+  control::ManualSwitch futaba_man = control::ManualSwitch::fullauto;
 };
 
 /**

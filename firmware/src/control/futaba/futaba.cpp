@@ -50,19 +50,74 @@ typedef enum {
  ******************************************************************************
  ******************************************************************************
  */
+/**
+ *
+ */
+float pwm_normalize(uint16_t v, float shift, float scale) {
+  return putinrange(((float)v - shift) / scale, -1, 1);
+}
 
 /**
  *
  */
-msg_t Futaba::man_switch_interpret(RecevierOutput const &recv,
-                                   FutabaOutput &result) {
-  msg_t ret = MSG_OK;
+void Futaba::process_man_tumbler(RecevierOutput const &recv, ManualSwitch &man) {
 
-  static_assert(sizeof(recv.ch) == sizeof(result.ch), "checker for temporal code");
-  memcpy(result.ch, recv.ch, sizeof(recv.ch));
-  result.man = recv.man;
+  /* manual switch will be processed separately because I still have no
+   * ideas how to do this elegantly inside ACS. */
+  if (-1 == *map_man)
+    man = ManualSwitch::fullauto;
+  else {
+    uint16_t tmp = recv.ch[*map_man];
+    if ((tmp & RECEIVER_FLAGS_MASK) == RECEIVER_STATUS_NO_ERRORS) {
+      man = static_cast<ManualSwitch>(manual_switch.update(tmp));
+    }
+  }
+}
 
-  return ret;
+/**
+ *
+ */
+static bool check_errors(RecevierOutput const &recv) {
+  for (size_t i=0; i<MAX_RC_CHANNELS; i++) {
+    if ((recv.ch[i] & RECEIVER_FLAGS_MASK) != RECEIVER_STATUS_NO_ERRORS)
+      return OSAL_FAILED;
+  }
+
+  return OSAL_SUCCESS;
+}
+
+/**
+ *
+ */
+static void scale(RecevierOutput const &recv, StateVector &result) {
+  static_assert(STATE_VECTOR_futaba_raw_end - STATE_VECTOR_futaba_raw_00 ==
+      MAX_RC_CHANNELS, "Checker for allowing loop based conversion");
+
+  float *raw_start = &result.ch[STATE_VECTOR_futaba_raw_00];
+
+  for (size_t i=0; i<MAX_RC_CHANNELS; i++) {
+    uint16_t tmp = recv.ch[i];
+    if ((tmp & RECEIVER_FLAGS_MASK) != RECEIVER_STATUS_NO_ERRORS) {
+      raw_start[i] = pwm_normalize(tmp & RECEIVER_DATA_MASK, recv.normalize_shift, recv.normalize_scale);
+    }
+  }
+}
+
+/**
+ *
+ */
+void Futaba::recevier2futaba(RecevierOutput const &recv, StateVector &result) {
+
+  process_man_tumbler(recv, result.futaba_man);
+
+  /* first check errors */
+  if (OSAL_SUCCESS == check_errors(recv))
+    error_rate(100);
+  else
+    error_rate(0);
+
+  result.futaba_good = hyst.check(error_rate.get());
+  scale(recv, result);
 }
 
 /*
@@ -106,28 +161,20 @@ void Futaba::stop(void){
 /**
  * @brief   Process all receivers in priorities order (higher to lower)
  */
-msg_t Futaba::update(FutabaOutput &result, float dT) {
+void Futaba::update(StateVector &result, float dT) {
   (void)dT;
   RecevierOutput recv;
 
   osalDbgCheck(ready);
 
-
-  /* manual switch will be processed separately because I still have no
-     * ideas how to do this elegantly inside ACS. */
-    if (-1 == *map_man)
-      result.man = ManualSwitch::fullauto;
-    else
-      get_tumbler(*map_man, &result.man, &result.status);
-
   receiver_rc.update(recv);
-  if (RECEIVER_STATUS_NO_ERRORS == recv.status)
-    return man_switch_interpret(recv, result);
+  recevier2futaba(recv, result);
+  if (result.futaba_good == true)
+    return;
 
   receiver_mavlink.update(recv);
-  if (RECEIVER_STATUS_NO_ERRORS == recv.status)
-    return man_switch_interpret(recv, result);
-
-  return MSG_TIMEOUT;
+  recevier2futaba(recv, result);
+  if (result.futaba_good == true)
+    return;
 }
 

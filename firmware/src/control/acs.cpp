@@ -188,29 +188,25 @@ void futaba2state_vector(const FutabaOutput &fut_data, StateVector &sv) {
  *
  */
 void ACS::update(float dT) {
-  FutabaOutput fut_data;
-  msg_t futaba_status = MSG_OK;
 
   osalDbgCheck(ready);
 
-  futaba_status = futaba.update(fut_data, dT);
-  if (MSG_OK == futaba_status)
-    futaba2state_vector(fut_data, this->sv);
+  futaba.update(sv, dT);
 
   /* toggle ignore flag for futaba fail */
-  if (MSG_OK == futaba_status) {
-    if (ManualSwitch::fullauto == fut_data.man)
+  if (true == sv.futaba_good) {
+    if (ManualSwitch::fullauto == sv.futaba_man)
       ignore_futaba_fail = true;
     else
       ignore_futaba_fail = false;
   }
 
   /* futaba fail handling */
-  if (!ignore_futaba_fail && (MSG_OK != futaba_status))
+  if (!ignore_futaba_fail && (false == sv.futaba_good))
     return this->failsafe();
 
   /* main code */
-  switch (fut_data.man) {
+  switch (sv.futaba_man) {
   case ManualSwitch::fullauto:
     stabilizer.update(dT, auto_program);
     break;
