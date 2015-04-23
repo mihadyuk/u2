@@ -12,8 +12,12 @@ namespace control {
  * @brief   Output data from Futaba
  */
 struct FutabaOutput {
+
   float ch[MAX_FUTABA_CHANNELS];
-  ManualSwitch man;
+  /**
+   * @brief   Manual switch state
+   */
+  ManualSwitch man = ManualSwitch::manual;
 };
 
 } /* namespace */

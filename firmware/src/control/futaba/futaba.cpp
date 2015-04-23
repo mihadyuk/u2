@@ -84,6 +84,7 @@ void Futaba::start(void) {
 
   param_registry.valueSearch("RC_timeout",  &timeout);
   param_registry.valueSearch("RC_override", &override);
+  param_registry.valueSearch("RC_map_man",  &map_man);
 
   receiver_rc.start(timeout);
   receiver_mavlink.start(timeout);
@@ -110,6 +111,14 @@ msg_t Futaba::update(FutabaOutput &result, float dT) {
   RecevierOutput recv;
 
   osalDbgCheck(ready);
+
+
+  /* manual switch will be processed separately because I still have no
+     * ideas how to do this elegantly inside ACS. */
+    if (-1 == *map_man)
+      result.man = ManualSwitch::fullauto;
+    else
+      get_tumbler(*map_man, &result.man, &result.status);
 
   receiver_rc.update(recv);
   if (RECEIVER_STATUS_NO_ERRORS == recv.status)

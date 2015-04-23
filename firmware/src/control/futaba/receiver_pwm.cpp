@@ -16,6 +16,7 @@ using namespace control;
 
 /* middle point in uS */
 #define NORMALIZE_SHIFT     1500
+
 /* max - mid. Good futabas have max at 2000uS but not all futabas good enough */
 #define NORMALIZE_SCALE     400
 
@@ -39,8 +40,8 @@ extern mavlink_rc_channels_scaled_t   mavlink_out_rc_channels_scaled_struct;
  ******************************************************************************
  */
 
-static uint16_t cache[CHANNEL_CNT];
-static systime_t timestamp[CHANNEL_CNT]; // timestamp array for timeout detect
+static uint16_t  cache[CHANNEL_CNT];
+static systime_t timestamp[CHANNEL_CNT]; // timestamp array for timeout detection
 
 /**
  *
@@ -87,7 +88,7 @@ static const EICUConfig eicucfg = {
 /**
  *
  */
-static void receiver2mavlink(const uint16_t *pwm) {
+static void receiver2mavlink(const uint16_t *pwm, size_t channels) {
   // A value of UINT16_MAX implies the channel is unused.
 
   memset(&mavlink_out_rc_channels_struct, 0xFF, sizeof(mavlink_out_rc_channels_struct));
@@ -96,7 +97,8 @@ static void receiver2mavlink(const uint16_t *pwm) {
   mavlink_out_rc_channels_struct.chan2_raw = pwm[1];
   mavlink_out_rc_channels_struct.chan3_raw = pwm[2];
   mavlink_out_rc_channels_struct.chan4_raw = pwm[3];
-  mavlink_out_rc_channels_struct.chancount = 4;
+  mavlink_out_rc_channels_struct.chancount = channels;
+  mavlink_out_rc_channels_struct.rssi = 255;
 
   // A value of UINT16_MAX implies the channel is unused.
   mavlink_out_rc_channels_scaled_struct.time_boot_ms = TIME_BOOT_MS;
@@ -136,27 +138,17 @@ static bool check_timeout(int32_t map, systime_t timeout) {
 /**
  *
  */
-void ReceiverPWM::get_ch(size_t chnum, float *result, uint32_t *status) const {
+uint16_t ReceiverPWM::get_ch(size_t chnum) const {
 
-  *result = pwm_normalize(cache[chnum], NORMALIZE_SHIFT, NORMALIZE_SCALE);
+  uint16_t ret = cache[chnum];
 
-  if (check_timeout(chnum, MS2ST(this->timeout)))
-    *status |= (1 << chnum);
-  else
-    *status &= ~(1 << chnum);
-}
-
-/**
- *
- */
-void ReceiverPWM::get_tumbler(size_t chnum, ManualSwitch *result, uint32_t *status) {
-
-  *result = static_cast<ManualSwitch>(manual_switch.update(cache[chnum]));
+  if ((ret > RECEIVER_MAX_VALID_VALUE) || (ret < RECEIVER_MIN_VALID_VALUE))
+    ret |= RECEIVER_STATUS_INCORRECT_VALUE;
 
   if (check_timeout(chnum, MS2ST(this->timeout)))
-    *status |= 1 << chnum;
-  else
-    *status &= ~(1 << chnum);
+    ret |= RECEIVER_STATUS_CONN_LOST;
+
+  return ret;
 }
 
 /*
@@ -170,10 +162,6 @@ void ReceiverPWM::get_tumbler(size_t chnum, ManualSwitch *result, uint32_t *stat
 void ReceiverPWM::start(const uint32_t *timeout) {
 
   this->timeout = timeout;
-
-  param_registry.valueSearch("RC_map_man", &map_man);
-
-  osalDbgCheck(CHANNEL_CNT > *map_man);
 
   eicuStart(&EICUD4, &eicucfg);
   eicuEnable(&EICUD4);
@@ -199,17 +187,13 @@ void ReceiverPWM::update(RecevierOutput &result) {
 
   osalDbgCheck(ready);
 
-  receiver2mavlink(cache);
+  receiver2mavlink(cache, CHANNEL_CNT);
 
-  for (size_t i=0; i<CHANNEL_CNT; i++) {
-    get_ch(i, &result.ch[i], &result.status);
-  }
+  for (size_t i=0; i<CHANNEL_CNT; i++)
+    result.ch[i] = get_ch(i);
 
-  /* manual switch will be processed separately because I still have no
-   * ideas how to do this elegantly inside ACS. */
-  if (-1 == *map_man)
-    result.man = ManualSwitch::fullauto;
-  else
-    get_tumbler(*map_man, &result.man, &result.status);
+  result.normalize_scale = NORMALIZE_SCALE;
+  result.normalize_shift = NORMALIZE_SHIFT;
+  result.channels = CHANNEL_CNT;
 }
 

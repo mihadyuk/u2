@@ -6,7 +6,11 @@
 #include "manual_switch_enum.hpp"
 
 #define RECEIVER_STATUS_NO_ERRORS         0
-#define RECEIVER_STATUS_CONN_LOST         ((uint32_t)1 << 31)
+#define RECEIVER_STATUS_CONN_LOST         ((uint16_t)1 << 15)
+#define RECEIVER_STATUS_INCORRECT_VALUE   ((uint16_t)1 << 14)
+
+#define RECEIVER_MAX_VALID_VALUE          2000
+#define RECEIVER_MIN_VALID_VALUE          1000
 
 #define MAX_RC_CHANNELS                   8
 
@@ -17,20 +21,20 @@ namespace control {
  */
 struct RecevierOutput {
   /**
-   * @brief   Status register
-   * @details Low 16 bits reserved for 16 channels error flags (1 == error)
+   * @brief   Channel values (2000..1000). MSB contain flags
    */
-  uint32_t status = 0;
-
+  size_t ch[MAX_RC_CHANNELS];
   /**
-   * @brief   Channel values normalized -1..1
+   * @brief   Total number of channels available in this receiver
+   * @details Set to 0 if no channels available
    */
-  float ch[MAX_RC_CHANNELS];
-
+  size_t channels = 0;
   /**
-   * @brief   Manual switch state
+   * @brief   Numbers used in normalization procedure.
+   * @details May differ from receiver to receiver.
    */
-  ManualSwitch man = ManualSwitch::manual;
+  uint16_t normalize_shift = 1500;
+  uint16_t normalize_scale = 500;
 };
 
 /**
@@ -42,12 +46,8 @@ public:
   virtual void stop(void) = 0;
   virtual void update(RecevierOutput &result) = 0;
 protected:
-  float pwm_normalize(uint16_t v, float shift, float scale) const {
-    return putinrange(((float)v - shift) / scale, -1, 1);
-  }
   bool ready = false;
   const uint32_t *timeout = nullptr;
-  Tumbler3<int, 1000, 1500, 2000, 150> manual_switch;
 };
 
 } /* namespace */
