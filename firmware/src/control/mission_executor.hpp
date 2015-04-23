@@ -2,7 +2,6 @@
 #define MISSION_EXECUTOR_HPP_
 
 #include "mavlink_local.hpp"
-#include "stabilizer/stabilizer.hpp"
 
 namespace control {
 
@@ -25,7 +24,7 @@ public:
   void start(void);
   void stop(void);
   void launch(void);
-  void update(StabInput &stab, float dT);
+  void update(float dT);
   void setHome(void);
 private:
   void maneuver(void);

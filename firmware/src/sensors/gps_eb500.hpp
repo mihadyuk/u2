@@ -16,7 +16,7 @@ typedef struct {
   float     course;     // deg
   struct tm time;
   bool      sec_round;  /* there is no fractional part in seconds' field */
-  bool      fix_valid;
+  bool      fix_valid;  /* sets when fresh valid fix acquired, clears after any structure reading */
 } gps_data_t;
 
 } /* namespace */

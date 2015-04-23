@@ -18,6 +18,9 @@ typedef enum {
   PWM_CH_THR = 3,
 } pwm_ch_t;
 
+/**
+ *
+ */
 class PWM {
 public:
   PWM(void);

@@ -1,7 +1,6 @@
 #ifndef CONTROL_ACS_HPP_
 #define CONTROL_ACS_HPP_
 
-#include "stabilizer/stabilizer.hpp"
 #include "futaba/futaba.hpp"
 #include "state_vector.hpp"
 #include "mav_mail.hpp"
@@ -17,7 +16,7 @@ namespace control {
  */
 class ACS {
 public:
-  ACS(Drivetrain &drivetrain, const StateVector &s);
+  ACS(Drivetrain &drivetrain, StateVector &sv);
   void start(void);
   void update(float dT);
   void stop(void);
@@ -27,11 +26,13 @@ private:
   void semiauto(float dT, const FutabaOutput &fut_data);
   void manual(float dT, const FutabaOutput &fut_data);
   void command_long_handler(const mavMail *recv_mail);
+  Drivetrain &drivetrain;
+  StateVector &sv;
+  DrivetrainImpact impact;
   Futaba futaba;
-  Stabilizer stabilizer;
   Alcoi alcoi;
   MissionExecutor mission;
-  StabVM vm;
+  StabVM stabilizer;
   chibios_rt::Mailbox<mavMail*, 1> command_mailbox;
   SubscribeLink command_long_link;
   bool ready = false;

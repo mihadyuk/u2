@@ -5,7 +5,6 @@
 #include "state_vector.hpp"
 #include "override_level_enum.hpp"
 #include "drivetrain/drivetrain.hpp"
-#include "pid_chain_enum.hpp"
 
 namespace control {
 

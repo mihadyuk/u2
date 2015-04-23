@@ -95,11 +95,10 @@ void MissionExecutor::launch(void) {
 /**
  *
  */
-void MissionExecutor::update(StabInput &stab, float dT) {
+void MissionExecutor::update(float dT) {
 
   osalDbgCheck(MissionState::uninit != state);
 
-  (void)stab;
   (void)dT;
 
   switch (state) {

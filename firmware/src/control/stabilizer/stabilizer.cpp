@@ -28,21 +28,21 @@ using namespace control;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-static PidControlSelfDerivative<float> pid_ail_h(nullptr);
-static PidControlSelfDerivative<float> pid_ail_m(wrap_pi);
-static PidControlSelfDerivative<float> pid_ail_l(nullptr);
+static PidControlSelfDerivative<float> pid_ail_h;
+static PidControlSelfDerivative<float> pid_ail_m;
+static PidControlSelfDerivative<float> pid_ail_l;
 
-static PidControlSelfDerivative<float> pid_ele_h(nullptr);
-static PidControlSelfDerivative<float> pid_ele_m(nullptr);
-static PidControlSelfDerivative<float> pid_ele_l(nullptr);
+static PidControlSelfDerivative<float> pid_ele_h;
+static PidControlSelfDerivative<float> pid_ele_m;
+static PidControlSelfDerivative<float> pid_ele_l;
 
-static PidControlSelfDerivative<float> pid_rud_h(nullptr);
-static PidControlSelfDerivative<float> pid_rud_m(nullptr);
-static PidControlSelfDerivative<float> pid_rud_l(nullptr);
+static PidControlSelfDerivative<float> pid_rud_h;
+static PidControlSelfDerivative<float> pid_rud_m;
+static PidControlSelfDerivative<float> pid_rud_l;
 
-static PidControlSelfDerivative<float> pid_thr_h(nullptr);
-static PidControlSelfDerivative<float> pid_thr_m(nullptr);
-static PidControlSelfDerivative<float> pid_thr_l(nullptr);
+static PidControlSelfDerivative<float> pid_thr_h;
+static PidControlSelfDerivative<float> pid_thr_m;
+static PidControlSelfDerivative<float> pid_thr_l;
 
 /*
  ******************************************************************************
@@ -77,9 +77,6 @@ static PIDInit<float> get_pid_init(const char *name) {
   prepare_key(name, "_D", key, N);
   param_registry.valueSearch(key, &ret.D);
 
-  prepare_key(name, "_B", key, N);
-  param_registry.valueSearch(key, &ret.B);
-
   prepare_key(name, "_Min", key, N);
   param_registry.valueSearch(key, &ret.Min);
 
@@ -100,10 +97,10 @@ static PIDInit<float> get_pid_init(const char *name) {
  */
 Stabilizer::Stabilizer(Drivetrain &drivetrain, const StateVector &s) :
 drivetrain(drivetrain),
-ail_chain(s.dZ,     s.dYaw,   s.roll,         pid_ail_h, pid_ail_m, pid_ail_l),
-ele_chain(s.empty,  s.alt,    s.pitch,        pid_ele_h, pid_ele_m, pid_ele_l),
-rud_chain(s.empty,  s.empty,  s.free_ay_body, pid_rud_h, pid_rud_m, pid_rud_l),
-thr_chain(s.empty,  s.empty,  s.speed,        pid_thr_h, pid_thr_m, pid_thr_l)
+ail_chain(s.ch[STATE_VECTOR_dZ],     s.ch[STATE_VECTOR_dYaw],   s.ch[STATE_VECTOR_roll],         pid_ail_h, pid_ail_m, pid_ail_l),
+ele_chain(s.ch[STATE_VECTOR_empty],  s.ch[STATE_VECTOR_alt],    s.ch[STATE_VECTOR_pitch],        pid_ele_h, pid_ele_m, pid_ele_l),
+rud_chain(s.ch[STATE_VECTOR_empty],  s.ch[STATE_VECTOR_empty],  s.ch[STATE_VECTOR_free_ay_body], pid_rud_h, pid_rud_m, pid_rud_l),
+thr_chain(s.ch[STATE_VECTOR_empty],  s.ch[STATE_VECTOR_empty],  s.ch[STATE_VECTOR_speed],        pid_thr_h, pid_thr_m, pid_thr_l)
 {
   return;
 }

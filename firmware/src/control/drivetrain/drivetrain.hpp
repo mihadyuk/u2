@@ -16,6 +16,7 @@ public:
   void start(void);
   void stop(void);
   msg_t update(const DrivetrainImpact &impact);
+  uint32_t capabilities(void);
 
 private:
   bool ready = false;

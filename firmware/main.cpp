@@ -55,9 +55,7 @@ Giovanni
 #include "mission_receiver.hpp"
 #include "mavlink_local.hpp"
 #include "endianness.h"
-//#include "attitude_unit_rover.hpp"
 #include "acs.hpp"
-#include "stabilizer/stabilizer.hpp"
 #include "drivetrain/drivetrain.hpp"
 #include "exti_local.hpp"
 #include "ahrs.hpp"
@@ -192,7 +190,7 @@ int main(void) {
   mpxv.start();
 
   while (TRUE) {
-    ahrs.get(ahrs_data, MS2ST(200));
+    ahrs.get(ahrs_data, state_vector, MS2ST(200));
     GPSGetData(gps_data);
     speedometer.update(speed, path, ahrs_data.dt);
     acs.update(ahrs_data.dt);

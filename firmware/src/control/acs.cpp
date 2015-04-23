@@ -3,7 +3,6 @@
 #include "param_registry.hpp"
 #include "mavlink_local.hpp"
 #include "mav_cmd_confirm.hpp"
-//#include "mav_dbg.hpp"
 
 using namespace control;
 
@@ -30,6 +29,42 @@ using namespace control;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
+
+static const uint8_t auto_program[] = {
+    INPUT,  STATE_VECTOR_wx,
+    OUTPUT, IMPACT_RUD,
+    TERM,
+
+    INPUT,  STATE_VECTOR_wy,
+    OUTPUT, IMPACT_THR,
+    TERM,
+
+    END
+};
+
+static const uint8_t semiauto_program[] = {
+    INPUT,  STATE_VECTOR_roll,
+    OUTPUT, IMPACT_RUD,
+    TERM,
+
+    INPUT,  STATE_VECTOR_pitch,
+    OUTPUT, IMPACT_THR,
+    TERM,
+
+    END
+};
+
+static const uint8_t manual_program[] = {
+    INPUT,  STATE_VECTOR_futaba_raw_00,
+    OUTPUT, IMPACT_RUD,
+    TERM,
+
+    INPUT,  STATE_VECTOR_futaba_raw_01,
+    OUTPUT, IMPACT_THR,
+    TERM,
+
+    END
+};
 
 /*
  ******************************************************************************
@@ -71,34 +106,10 @@ void ACS::failsafe(void) {
 }
 
 /**
- * TODO:
- */
-static void navigator(StabInput &result) {
-
-  for (size_t i=0; i<PID_CHAIN_ENUM_END; i++) {
-    result.ch[i].target = 0;
-    result.ch[i].override_target = 0;
-    result.ch[i].override_level = OverrideLevel::high;
-  }
-}
-
-/**
- *  TODO:
- */
-static void futaba2stab_input(const FutabaOutput &fut, StabInput &result) {
-
-  for (size_t i=0; i<PID_CHAIN_ENUM_END; i++) {
-    result.ch[i].override_target = fut.ch[i];
-    result.ch[i].override_level  = fut.ol[i];
-  }
-}
-
-/**
  *
  */
 void ACS::fullauto(float dT, const FutabaOutput &fut_data) {
   (void)fut_data;
-  StabInput stab_input;
   mavMail *recv_mail;
 
   if (MSG_OK == command_mailbox.fetch(&recv_mail, TIME_IMMEDIATE)) {
@@ -107,10 +118,7 @@ void ACS::fullauto(float dT, const FutabaOutput &fut_data) {
     }
   }
 
-  vm.update(dT);
-  navigator(stab_input);
-  alcoi.update(stab_input, dT);
-  stabilizer.update(stab_input, dT);
+  alcoi.update(dT);
 }
 
 /**
@@ -118,20 +126,7 @@ void ACS::fullauto(float dT, const FutabaOutput &fut_data) {
  */
 void ACS::semiauto(float dT, const FutabaOutput &fut_data) {
   (void)fut_data;
-  StabInput stab_input;
-
-  navigator(stab_input);
-  stabilizer.update(stab_input, dT);
-}
-
-/**
- *
- */
-void ACS::manual(float dT, const FutabaOutput &fut_data) {
-  StabInput stab_input;
-
-  futaba2stab_input(fut_data, stab_input);
-  stabilizer.update(stab_input, dT);
+  (void)dT;
 }
 
 /*
@@ -142,8 +137,10 @@ void ACS::manual(float dT, const FutabaOutput &fut_data) {
 /**
  *
  */
-ACS::ACS(Drivetrain &drivetrain, const StateVector &s) :
-stabilizer(drivetrain, s),
+ACS::ACS(Drivetrain &drivetrain, StateVector &sv) :
+drivetrain(drivetrain),
+sv(sv),
+stabilizer(impact, sv),
 command_long_link(&command_mailbox)
 {
   return;
@@ -154,10 +151,10 @@ command_long_link(&command_mailbox)
  */
 void ACS::start(void) {
 
-  stabilizer.start();
   futaba.start();
   alcoi.start();
-  vm.start();
+  stabilizer.start();
+  drivetrain.start();
   mav_postman.subscribe(MAVLINK_MSG_ID_COMMAND_LONG, &command_long_link);
 
   ready = true;
@@ -172,9 +169,19 @@ void ACS::stop(void) {
   mav_postman.unsubscribe(MAVLINK_MSG_ID_COMMAND_LONG, &command_long_link);
   command_mailbox.reset();
 
-  vm.stop();
-  futaba.stop();
+  drivetrain.stop();
   stabilizer.stop();
+  futaba.stop();
+}
+
+/**
+ *
+ */
+void futaba2state_vector(const FutabaOutput &fut_data, StateVector &sv) {
+  sv.ch[STATE_VECTOR_futaba_raw_00] = fut_data.ch[0];
+  sv.ch[STATE_VECTOR_futaba_raw_01] = fut_data.ch[1];
+  sv.ch[STATE_VECTOR_futaba_raw_02] = fut_data.ch[2];
+  sv.ch[STATE_VECTOR_futaba_raw_03] = fut_data.ch[3];
 }
 
 /**
@@ -187,6 +194,8 @@ void ACS::update(float dT) {
   osalDbgCheck(ready);
 
   futaba_status = futaba.update(fut_data, dT);
+  if (MSG_OK == futaba_status)
+    futaba2state_vector(fut_data, this->sv);
 
   /* toggle ignore flag for futaba fail */
   if (MSG_OK == futaba_status) {
@@ -203,16 +212,20 @@ void ACS::update(float dT) {
   /* main code */
   switch (fut_data.man) {
   case ManualSwitch::fullauto:
-    fullauto(dT, fut_data);
+    stabilizer.update(dT, auto_program);
     break;
+
   case ManualSwitch::semiauto:
     command_mailbox.reset(); // prevent spurious pulse execution when switch to full auto mode
-    semiauto(dT, fut_data);
+    stabilizer.update(dT, semiauto_program);
     break;
+
   case ManualSwitch::manual:
     command_mailbox.reset(); // prevent spurious pulse execution when switch to full auto mode
-    manual(dT, fut_data);
+    stabilizer.update(dT, manual_program);
     break;
   }
+
+  drivetrain.update(this->impact);
 }
 

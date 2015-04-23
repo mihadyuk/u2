@@ -4,16 +4,11 @@
 #include "putinrange.hpp"
 #include "tumbler.hpp"
 #include "manual_switch_enum.hpp"
-#include "pid_chain_enum.hpp"
 
 #define RECEIVER_STATUS_NO_ERRORS         0
-#define RECEIVER_STATUS_AIL_CH_ERROR      ((uint32_t)1 << 0)
-#define RECEIVER_STATUS_ELE_CH_ERROR      ((uint32_t)1 << 1)
-#define RECEIVER_STATUS_RUD_CH_ERROR      ((uint32_t)1 << 2)
-#define RECEIVER_STATUS_THR_CH_ERROR      ((uint32_t)1 << 3)
-#define RECEIVER_STATUS_MAN_CH_ERROR      ((uint32_t)1 << 4)
-
 #define RECEIVER_STATUS_CONN_LOST         ((uint32_t)1 << 31)
+
+#define MAX_RC_CHANNELS                   8
 
 namespace control {
 
@@ -26,10 +21,15 @@ struct RecevierOutput {
    * @details Low 16 bits reserved for 16 channels error flags (1 == error)
    */
   uint32_t status = 0;
+
   /**
    * @brief   Channel values normalized -1..1
    */
-  float ch[PID_CHAIN_ENUM_END];
+  float ch[MAX_RC_CHANNELS];
+
+  /**
+   * @brief   Manual switch state
+   */
   ManualSwitch man = ManualSwitch::manual;
 };
 
