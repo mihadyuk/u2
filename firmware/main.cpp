@@ -86,9 +86,9 @@ memory_heap_t ThdHeap;
 static uint8_t link_thd_buf[THREAD_HEAP_SIZE + sizeof(stkalign_t)];
 
 /* State vector of system. Calculated mostly in IMU, used mostly in ACS */
-__CCM__ static StateVector state_vector;
+__CCM__ static ACSInput acs_in;
 __CCM__ static control::Drivetrain drivetrain;
-static control::ACS acs(drivetrain, state_vector);
+static control::ACS acs(drivetrain, acs_in);
 
 
 MissionReceiver mission_receiver;
@@ -190,7 +190,7 @@ int main(void) {
   mpxv.start();
 
   while (TRUE) {
-    ahrs.get(ahrs_data, state_vector, MS2ST(200));
+    ahrs.get(ahrs_data, acs_in, MS2ST(200));
     GPSGetData(gps_data);
     speedometer.update(speed, path, ahrs_data.dt);
     acs.update(ahrs_data.dt);

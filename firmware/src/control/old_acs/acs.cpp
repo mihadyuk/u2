@@ -170,7 +170,7 @@ acs_status_t ACS::emergency_loop(void){
 /**
  *
  */
-ACS::ACS(Impact &impact, const StateVector &state_vector,
+ACS::ACS(Impact &impact, const ACSInput &state_vector,
     SemiautoVector &semiauto_vector, PWMReceiver &pwm_receiver,
     Stabilizer &stabilizer) :
 state_vector(state_vector),

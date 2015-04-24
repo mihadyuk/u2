@@ -31,11 +31,11 @@ using namespace control;
  */
 
 static const uint8_t auto_program[] = {
-    INPUT,  STATE_VECTOR_wx,
+    INPUT,  ACS_INPUT_wx,
     OUTPUT, IMPACT_RUD,
     TERM,
 
-    INPUT,  STATE_VECTOR_wy,
+    INPUT,  ACS_INPUT_wy,
     OUTPUT, IMPACT_THR,
     TERM,
 
@@ -43,11 +43,11 @@ static const uint8_t auto_program[] = {
 };
 
 static const uint8_t semiauto_program[] = {
-    INPUT,  STATE_VECTOR_roll,
+    INPUT,  ACS_INPUT_roll,
     OUTPUT, IMPACT_RUD,
     TERM,
 
-    INPUT,  STATE_VECTOR_pitch,
+    INPUT,  ACS_INPUT_pitch,
     OUTPUT, IMPACT_THR,
     TERM,
 
@@ -55,11 +55,11 @@ static const uint8_t semiauto_program[] = {
 };
 
 static const uint8_t manual_program[] = {
-    INPUT,  STATE_VECTOR_futaba_raw_00,
+    INPUT,  ACS_INPUT_futaba_raw_00,
     OUTPUT, IMPACT_RUD,
     TERM,
 
-    INPUT,  STATE_VECTOR_futaba_raw_01,
+    INPUT,  ACS_INPUT_futaba_raw_01,
     OUTPUT, IMPACT_THR,
     TERM,
 
@@ -137,10 +137,10 @@ void ACS::semiauto(float dT, const FutabaOutput &fut_data) {
 /**
  *
  */
-ACS::ACS(Drivetrain &drivetrain, StateVector &sv) :
+ACS::ACS(Drivetrain &drivetrain, ACSInput &acs_in) :
 drivetrain(drivetrain),
-sv(sv),
-stabilizer(impact, sv),
+acs_in(acs_in),
+stabilizer(impact, acs_in),
 command_long_link(&command_mailbox)
 {
   return;
@@ -177,11 +177,11 @@ void ACS::stop(void) {
 /**
  *
  */
-void futaba2state_vector(const FutabaOutput &fut_data, StateVector &sv) {
-  sv.ch[STATE_VECTOR_futaba_raw_00] = fut_data.ch[0];
-  sv.ch[STATE_VECTOR_futaba_raw_01] = fut_data.ch[1];
-  sv.ch[STATE_VECTOR_futaba_raw_02] = fut_data.ch[2];
-  sv.ch[STATE_VECTOR_futaba_raw_03] = fut_data.ch[3];
+void futaba2state_vector(const FutabaOutput &fut_data, ACSInput &sv) {
+  sv.ch[ACS_INPUT_futaba_raw_00] = fut_data.ch[0];
+  sv.ch[ACS_INPUT_futaba_raw_01] = fut_data.ch[1];
+  sv.ch[ACS_INPUT_futaba_raw_02] = fut_data.ch[2];
+  sv.ch[ACS_INPUT_futaba_raw_03] = fut_data.ch[3];
 }
 
 /**
@@ -191,22 +191,22 @@ void ACS::update(float dT) {
 
   osalDbgCheck(ready);
 
-  futaba.update(sv, dT);
+  futaba.update(acs_in, dT);
 
   /* toggle ignore flag for futaba fail */
-  if (true == sv.futaba_good) {
-    if (ManualSwitch::fullauto == sv.futaba_man)
+  if (true == acs_in.futaba_good) {
+    if (ManualSwitch::fullauto == acs_in.futaba_man)
       ignore_futaba_fail = true;
     else
       ignore_futaba_fail = false;
   }
 
   /* futaba fail handling */
-  if (!ignore_futaba_fail && (false == sv.futaba_good))
+  if (!ignore_futaba_fail && (false == acs_in.futaba_good))
     return this->failsafe();
 
   /* main code */
-  switch (sv.futaba_man) {
+  switch (acs_in.futaba_man) {
   case ManualSwitch::fullauto:
     stabilizer.update(dT, auto_program);
     break;

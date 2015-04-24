@@ -67,11 +67,11 @@ void Futaba::process_man_tumbler(RecevierOutput const &recv, ManualSwitch &man) 
 /**
  *
  */
-static void scale(RecevierOutput const &recv, StateVector &result) {
-  static_assert(STATE_VECTOR_futaba_raw_end - STATE_VECTOR_futaba_raw_00 ==
+static void scale(RecevierOutput const &recv, ACSInput &result) {
+  static_assert(ACS_INPUT_futaba_raw_end - ACS_INPUT_futaba_raw_00 ==
       MAX_RC_CHANNELS, "Checker for allowing loop based conversion");
 
-  float *out = &result.ch[STATE_VECTOR_futaba_raw_00];
+  float *out = &result.ch[ACS_INPUT_futaba_raw_00];
 
   if (recv.data_valid) {
     for (size_t i=0; i<MAX_RC_CHANNELS; i++) {
@@ -83,7 +83,7 @@ static void scale(RecevierOutput const &recv, StateVector &result) {
 /**
  *
  */
-void Futaba::recevier2futaba(RecevierOutput const &recv, StateVector &result) {
+void Futaba::recevier2futaba(RecevierOutput const &recv, ACSInput &result) {
 
   process_man_tumbler(recv, result.futaba_man);
 
@@ -138,7 +138,7 @@ void Futaba::stop(void){
 /**
  * @brief   Process all receivers in priorities order (higher to lower)
  */
-void Futaba::update(StateVector &result, float dT) {
+void Futaba::update(ACSInput &result, float dT) {
   (void)dT;
   RecevierOutput recv;
 

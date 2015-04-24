@@ -8,92 +8,91 @@
  *
  */
 typedef enum {
-  STATE_VECTOR_lat,      // lattitude from GNSS (WGS-84, rad)
-  STATE_VECTOR_lon,      // longitude from GNSS (WGS-84, rad)
-  STATE_VECTOR_alt,      // altitude from GNSS (WGS-84, m)
-  STATE_VECTOR_alt_baro, // barometric height
+  ACS_INPUT_lat,      // lattitude from GNSS (WGS-84, rad)
+  ACS_INPUT_lon,      // longitude from GNSS (WGS-84, rad)
+  ACS_INPUT_alt,      // altitude from GNSS (WGS-84, m)
+  ACS_INPUT_alt_baro, // barometric height
 
-  STATE_VECTOR_roll,     // rad (-pi..pi)
-  STATE_VECTOR_pitch,    // rad (-pi/2..pi/2)
-  STATE_VECTOR_yaw,      // rad (0..2*pi)
-  STATE_VECTOR_yaw_mag,  // rad (0..2*pi)
+  ACS_INPUT_roll,     // rad (-pi..pi)
+  ACS_INPUT_pitch,    // rad (-pi/2..pi/2)
+  ACS_INPUT_yaw,      // rad (0..2*pi)
+  ACS_INPUT_yaw_mag,  // rad (0..2*pi)
 
-  STATE_VECTOR_q0,       // orientation quaternion (Qnb NED)
-  STATE_VECTOR_q1,
-  STATE_VECTOR_q2,
-  STATE_VECTOR_q3,
+  ACS_INPUT_q0,       // orientation quaternion (Qnb NED)
+  ACS_INPUT_q1,
+  ACS_INPUT_q2,
+  ACS_INPUT_q3,
 
-  STATE_VECTOR_xn,       // X coordinate, North (m)
-  STATE_VECTOR_ye,       // Y coordinate, East  (m)
-  STATE_VECTOR_zd,       // Z coordinate, Down  (m)
+  ACS_INPUT_xn,       // X coordinate, North (m)
+  ACS_INPUT_ye,       // Y coordinate, East  (m)
+  ACS_INPUT_zd,       // Z coordinate, Down  (m)
 
   // speed from GPS (m/s) (NED)
-  STATE_VECTOR_vx,
-  STATE_VECTOR_vy,
-  STATE_VECTOR_vz,
+  ACS_INPUT_vx,
+  ACS_INPUT_vy,
+  ACS_INPUT_vz,
 
-  STATE_VECTOR_air_speed,    // m/s
-  STATE_VECTOR_ground_speed, // m/s
-  STATE_VECTOR_speed,        // скорость для кормления САУ (m/s)
-
+  ACS_INPUT_air_speed,    // m/s
+  ACS_INPUT_ground_speed, // m/s
+  ACS_INPUT_speed,        // правильная скорость для САУ (m/s)
 
   // free accelerations (NED)
-  STATE_VECTOR_free_ax,
-  STATE_VECTOR_free_ay,
-  STATE_VECTOR_free_az,
+  ACS_INPUT_free_ax,
+  ACS_INPUT_free_ay,
+  ACS_INPUT_free_az,
 
   // free accelerations in body frame
-  STATE_VECTOR_free_ax_body,
-  STATE_VECTOR_free_ay_body,
-  STATE_VECTOR_free_az_body,
+  ACS_INPUT_free_ax_body,
+  ACS_INPUT_free_ay_body,
+  ACS_INPUT_free_az_body,
 
   // angular rates in rad/s (NED)
-  STATE_VECTOR_wx,
-  STATE_VECTOR_wy,
-  STATE_VECTOR_wz,
+  ACS_INPUT_wx,
+  ACS_INPUT_wy,
+  ACS_INPUT_wz,
 
-  STATE_VECTOR_vgps,     // speed from GPS (m/s)
-  STATE_VECTOR_vodo,     // speed from odometer (m/s)
-  STATE_VECTOR_vair,     // air speed (m/s)
+  ACS_INPUT_vgps,     // speed from GPS (m/s)
+  ACS_INPUT_vodo,     // speed from odometer (m/s)
+  ACS_INPUT_vair,     // air speed (m/s)
 
-  STATE_VECTOR_dZ,
-  STATE_VECTOR_dYaw,
+  ACS_INPUT_dZ,
+  ACS_INPUT_dYaw,
 
   // raw futaba values (normalized -1..1)
-  STATE_VECTOR_futaba_raw_00,
-  STATE_VECTOR_futaba_raw_01,
-  STATE_VECTOR_futaba_raw_02,
-  STATE_VECTOR_futaba_raw_03,
-  STATE_VECTOR_futaba_raw_04,
-  STATE_VECTOR_futaba_raw_05,
-  STATE_VECTOR_futaba_raw_06,
-  STATE_VECTOR_futaba_raw_07,
-  STATE_VECTOR_futaba_raw_end,
+  ACS_INPUT_futaba_raw_00,
+  ACS_INPUT_futaba_raw_01,
+  ACS_INPUT_futaba_raw_02,
+  ACS_INPUT_futaba_raw_03,
+  ACS_INPUT_futaba_raw_04,
+  ACS_INPUT_futaba_raw_05,
+  ACS_INPUT_futaba_raw_06,
+  ACS_INPUT_futaba_raw_07,
+  ACS_INPUT_futaba_raw_end,
 
   // values converted from sticks positions to attitude targets
-  STATE_VECTOR_futaba_roll,
-  STATE_VECTOR_futaba_pitch,
-  STATE_VECTOR_futaba_thr,
-  STATE_VECTOR_futaba_dyaw,
+  ACS_INPUT_futaba_roll,
+  ACS_INPUT_futaba_pitch,
+  ACS_INPUT_futaba_thr,
+  ACS_INPUT_futaba_dyaw,
 
   // values converted from sticks positions to high level targets
-  STATE_VECTOR_futaba_speed,
-  STATE_VECTOR_futaba_height,
-  STATE_VECTOR_futaba_yaw,
+  ACS_INPUT_futaba_speed,
+  ACS_INPUT_futaba_height,
+  ACS_INPUT_futaba_yaw,
 
-  STATE_VECTOR_empty,    // special field for passing to unused PIDs
+  ACS_INPUT_empty,    // special field for passing to unused PIDs
 
-  STATE_VECTOR_ENUM_END,
+  ACS_INPUT_ENUM_END,
 } state_vector_enum;
 
 /**
  *
  */
-struct StateVector {
-  StateVector(void) {
+struct ACSInput {
+  ACSInput(void) {
     memset(this, 0, sizeof(*this));
   }
-  float ch[STATE_VECTOR_ENUM_END];
+  float ch[ACS_INPUT_ENUM_END];
   bool futaba_good = false;
   control::ManualSwitch futaba_man = control::ManualSwitch::fullauto;
 };
@@ -101,7 +100,7 @@ struct StateVector {
 /**
  *
  */
-static_assert(STATE_VECTOR_ENUM_END < 256, "Stabilizer virtual machine limit.");
+static_assert(ACS_INPUT_ENUM_END < 256, "Stabilizer virtual machine limit.");
 
 #endif /* STATE_VECTOR_HPP_ */
 

@@ -271,24 +271,24 @@ static LinkStub   terminator; /* single terminator may be used many times */
 
 
 static const uint8_t test_program[] = {
-    INPUT,  STATE_VECTOR_futaba_raw_00,
-    PID, 0, STATE_VECTOR_vx,
-    PID, 1, STATE_VECTOR_vx,
-    PID, 2, STATE_VECTOR_vx,
+    INPUT,  ACS_INPUT_futaba_raw_00,
+    PID, 0, ACS_INPUT_vx,
+    PID, 1, ACS_INPUT_vx,
+    PID, 2, ACS_INPUT_vx,
     OUTPUT, IMPACT_THR,
     TERM,
 
-    INPUT,  STATE_VECTOR_futaba_raw_01,
-    PID, 3, STATE_VECTOR_vy,
-    PID, 4, STATE_VECTOR_vy,
-    PID, 5, STATE_VECTOR_vy,
+    INPUT,  ACS_INPUT_futaba_raw_01,
+    PID, 3, ACS_INPUT_vy,
+    PID, 4, ACS_INPUT_vy,
+    PID, 5, ACS_INPUT_vy,
     OUTPUT, IMPACT_ELE_L,
     TERM,
 
-    INPUT, STATE_VECTOR_futaba_raw_02,
-    PID, 6, STATE_VECTOR_vx,
-    PID, 7, STATE_VECTOR_vx,
-    PID, 8, STATE_VECTOR_vx,
+    INPUT, ACS_INPUT_futaba_raw_02,
+    PID, 6, ACS_INPUT_vx,
+    PID, 7, ACS_INPUT_vx,
+    PID, 8, ACS_INPUT_vx,
     FORK,
       NEG,
       OUTPUT, IMPACT_AIL_L,
@@ -297,10 +297,10 @@ static const uint8_t test_program[] = {
     OUTPUT, IMPACT_AIL_R,
     TERM,
 
-    INPUT,  STATE_VECTOR_futaba_raw_01,
-    PID, 9, STATE_VECTOR_vy,
-    PID,10, STATE_VECTOR_vy,
-    PID,11, STATE_VECTOR_vy,
+    INPUT,  ACS_INPUT_futaba_raw_01,
+    PID, 9, ACS_INPUT_vy,
+    PID,10, ACS_INPUT_vy,
+    PID,11, ACS_INPUT_vy,
     OUTPUT, IMPACT_ELE,
     TERM,
 
@@ -308,7 +308,7 @@ static const uint8_t test_program[] = {
 };
 
 static const uint8_t fly_program[] = {
-    INPUT, STATE_VECTOR_vx,
+    INPUT, ACS_INPUT_vx,
     OUTPUT, 0,
     END
 };
@@ -429,9 +429,9 @@ void StabVM::compile(const uint8_t *bytecode) {
 
     case INPUT:
       arg0 = bytecode[pc+1];
-      vmDbgCheck(arg0 < STATE_VECTOR_ENUM_END);
+      vmDbgCheck(arg0 < ACS_INPUT_ENUM_END);
       vmDbgCheck(chain < TOTAL_INPUT_CNT);
-      tip = input_pool[chain].compile(&sv.ch[arg0]);
+      tip = input_pool[chain].compile(&acs_in.ch[arg0]);
       exec_chain[chain] = tip;
       chain += 1;
       pc += 2;
@@ -454,8 +454,8 @@ void StabVM::compile(const uint8_t *bytecode) {
       arg0 = bytecode[pc+1];
       arg1 = bytecode[pc+2];
       vmDbgCheck(arg0 < TOTAL_PID_CNT);
-      vmDbgCheck(arg1 < STATE_VECTOR_ENUM_END);
-      tip = tip->append(pid_pool[arg0].compile(&sv.ch[arg1]));
+      vmDbgCheck(arg1 < ACS_INPUT_ENUM_END);
+      tip = tip->append(pid_pool[arg0].compile(&acs_in.ch[arg1]));
       pc += 3;
       break;
 
@@ -555,9 +555,9 @@ void StabVM::exec(void) {
 /**
  *
  */
-StabVM::StabVM(DrivetrainImpact &impact, const StateVector &sv) :
+StabVM::StabVM(DrivetrainImpact &impact, const ACSInput &acs_in) :
 impact(impact),
-sv(sv)
+acs_in(acs_in)
 {
   return;
 }

@@ -5,8 +5,9 @@
 #include <futaba/tumbler.hpp>
 #include <futaba/receiver_mavlink.hpp>
 #include <futaba/receiver_pwm.hpp>
-#include "state_vector.hpp"
+
 #include "alpha_beta.hpp"
+#include "acs_input.hpp"
 
 namespace control {
 
@@ -18,10 +19,10 @@ public:
   Futaba(void);
   void start(void);
   void stop(void);
-  void update(StateVector &result, float dT);
+  void update(ACSInput &result, float dT);
 private:
   void process_man_tumbler(RecevierOutput const &recv, ManualSwitch &man);
-  void recevier2futaba(RecevierOutput const &recv, StateVector &result);
+  void recevier2futaba(RecevierOutput const &recv, ACSInput &result);
 
   ReceiverPWM receiver_rc;
   ReceiverMavlink receiver_mavlink;

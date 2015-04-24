@@ -95,12 +95,12 @@ static PIDInit<float> get_pid_init(const char *name) {
 /**
  *
  */
-Stabilizer::Stabilizer(Drivetrain &drivetrain, const StateVector &s) :
+Stabilizer::Stabilizer(Drivetrain &drivetrain, const ACSInput &s) :
 drivetrain(drivetrain),
-ail_chain(s.ch[STATE_VECTOR_dZ],     s.ch[STATE_VECTOR_dYaw],   s.ch[STATE_VECTOR_roll],         pid_ail_h, pid_ail_m, pid_ail_l),
-ele_chain(s.ch[STATE_VECTOR_empty],  s.ch[STATE_VECTOR_alt],    s.ch[STATE_VECTOR_pitch],        pid_ele_h, pid_ele_m, pid_ele_l),
-rud_chain(s.ch[STATE_VECTOR_empty],  s.ch[STATE_VECTOR_empty],  s.ch[STATE_VECTOR_free_ay_body], pid_rud_h, pid_rud_m, pid_rud_l),
-thr_chain(s.ch[STATE_VECTOR_empty],  s.ch[STATE_VECTOR_empty],  s.ch[STATE_VECTOR_speed],        pid_thr_h, pid_thr_m, pid_thr_l)
+ail_chain(s.ch[ACS_INPUT_dZ],     s.ch[ACS_INPUT_dYaw],   s.ch[ACS_INPUT_roll],         pid_ail_h, pid_ail_m, pid_ail_l),
+ele_chain(s.ch[ACS_INPUT_empty],  s.ch[ACS_INPUT_alt],    s.ch[ACS_INPUT_pitch],        pid_ele_h, pid_ele_m, pid_ele_l),
+rud_chain(s.ch[ACS_INPUT_empty],  s.ch[ACS_INPUT_empty],  s.ch[ACS_INPUT_free_ay_body], pid_rud_h, pid_rud_m, pid_rud_l),
+thr_chain(s.ch[ACS_INPUT_empty],  s.ch[ACS_INPUT_empty],  s.ch[ACS_INPUT_speed],        pid_thr_h, pid_thr_m, pid_thr_l)
 {
   return;
 }

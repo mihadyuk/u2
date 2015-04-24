@@ -1,8 +1,8 @@
 #ifndef CONTROL_ACS_HPP_
 #define CONTROL_ACS_HPP_
 
+#include "acs_input.hpp"
 #include "futaba/futaba.hpp"
-#include "state_vector.hpp"
 #include "mav_mail.hpp"
 #include "subscribe_link.hpp"
 #include "alcoi.hpp"
@@ -16,7 +16,7 @@ namespace control {
  */
 class ACS {
 public:
-  ACS(Drivetrain &drivetrain, StateVector &sv);
+  ACS(Drivetrain &drivetrain, ACSInput &acs_in);
   void start(void);
   void update(float dT);
   void stop(void);
@@ -27,7 +27,7 @@ private:
   void manual(float dT, const FutabaOutput &fut_data);
   void command_long_handler(const mavMail *recv_mail);
   Drivetrain &drivetrain;
-  StateVector &sv;
+  ACSInput &acs_in;
   DrivetrainImpact impact;
   Futaba futaba;
   Alcoi alcoi;

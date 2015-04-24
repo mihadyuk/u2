@@ -1,8 +1,8 @@
 #ifndef STAB_VM_HPP_
 #define STAB_VM_HPP_
 
+#include "acs_input.hpp"
 #include "drivetrain/drivetrain.hpp"
-#include "state_vector.hpp"
 #include "mavlink_local.hpp"
 
 namespace control {
@@ -28,7 +28,7 @@ typedef enum {
  */
 class StabVM {
 public:
-  StabVM(DrivetrainImpact &impact, const StateVector &sv);
+  StabVM(DrivetrainImpact &impact, const ACSInput &acs_in);
   void start(void);
   void stop(void);
   void update(float dT, const uint8_t *bytecode);
@@ -41,7 +41,7 @@ private:
   void destroy(void);
 
   DrivetrainImpact &impact;
-  const StateVector &sv;
+  const ACSInput &acs_in;
   bool ready = false;
   time_measurement_t exec_tmo;
   const uint8_t *current_program = nullptr;

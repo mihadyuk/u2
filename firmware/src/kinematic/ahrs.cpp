@@ -76,15 +76,15 @@ static void attitude2mavlink(const ahrs_data_t &att) {
 /**
  *
  */
-static void attitude2state_vector(const ahrs_data_t &att, StateVector &sv) {
-  sv.ch[STATE_VECTOR_roll]  = att.euler[0];
-  sv.ch[STATE_VECTOR_pitch] = att.euler[1];
-  sv.ch[STATE_VECTOR_yaw]   = att.euler[2];
+static void attitude2state_vector(const ahrs_data_t &att, ACSInput &acs_in) {
+  acs_in.ch[ACS_INPUT_roll]  = att.euler[0];
+  acs_in.ch[ACS_INPUT_pitch] = att.euler[1];
+  acs_in.ch[ACS_INPUT_yaw]   = att.euler[2];
 
-  sv.ch[STATE_VECTOR_q0] = att.quat[0];
-  sv.ch[STATE_VECTOR_q1] = att.quat[1];
-  sv.ch[STATE_VECTOR_q2] = att.quat[2];
-  sv.ch[STATE_VECTOR_q3] = att.quat[3];
+  acs_in.ch[ACS_INPUT_q0] = att.quat[0];
+  acs_in.ch[ACS_INPUT_q1] = att.quat[1];
+  acs_in.ch[ACS_INPUT_q2] = att.quat[2];
+  acs_in.ch[ACS_INPUT_q3] = att.quat[3];
 }
 
 /**
@@ -232,7 +232,7 @@ void Ahrs::start(void) {
 /**
  *
  */
-msg_t Ahrs::get(ahrs_data_t &result, StateVector &sv, systime_t timeout) {
+msg_t Ahrs::get(ahrs_data_t &result, ACSInput &acs_in, systime_t timeout) {
   msg_t sem_status = MSG_RESET;
 
   reschedule();
@@ -256,7 +256,7 @@ msg_t Ahrs::get(ahrs_data_t &result, StateVector &sv, systime_t timeout) {
   }
 
   attitude2mavlink(result);
-  attitude2state_vector(result, sv);
+  attitude2state_vector(result, acs_in);
   log_append();
   return sem_status;
 }

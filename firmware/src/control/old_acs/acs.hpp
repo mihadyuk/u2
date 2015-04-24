@@ -1,13 +1,13 @@
 #ifndef ACS_HPP_
 #define ACS_HPP_
 
+#include <acs_input.hpp>
 #include <drivetrain_impact.hpp>
 #include <futaba/__futaba_old.hpp>
 #include <old_stabilizer/stabilizer.hpp>
 
 #include "message.hpp"
 #include "navigator.hpp"
-#include "state_vector.hpp"
 
 /**
  * @brief   Status of operation returned by ACS
@@ -41,7 +41,7 @@ public:
     Mission,
   };
 
-  ACS(Impact &impact, const StateVector &state_vector,
+  ACS(Impact &impact, const ACSInput &state_vector,
       SemiautoVector &semiauto_vector,
       PWMReceiver &pwm_receiver, Stabilizer &stabilizer);
   void start(void);
@@ -73,7 +73,7 @@ private:
   acs_status_t emergency_loop(void);
   acs_status_t idle_loop(void);
 
-  const StateVector &state_vector;
+  const ACSInput &state_vector;
   Stabilizer &stabilizer;
   Navigator navigator;
   Futaba futaba;
