@@ -14,11 +14,19 @@ using namespace control;
  */
 #define CHANNEL_CNT         4
 
+/* mask with for connected/used channels */
+#define CHANNEL_MASK        0b1011
+
 /* middle point in uS */
 #define NORMALIZE_SHIFT     1500
 
 /* max - mid. Good futabas have max at 2000uS but not all futabas good enough */
 #define NORMALIZE_SCALE     400
+
+#define MAX_VALID_VALUE     2200
+#define MIN_VALID_VALUE     800
+
+#define CHANNEL_TIMEOUT     MS2ST(200)
 
 /*
  ******************************************************************************
@@ -118,7 +126,7 @@ static void receiver2mavlink(const uint16_t *pwm, size_t channels) {
  * retval   true == timeout
  *          fasle == OK
  */
-static bool check_timeout(int32_t map, systime_t timeout) {
+static bool is_timeout(int32_t map, systime_t timeout) {
   bool ret;
 
   osalSysLock();
@@ -138,15 +146,15 @@ static bool check_timeout(int32_t map, systime_t timeout) {
 /**
  *
  */
-uint16_t ReceiverPWM::get_ch(size_t chnum) const {
+uint16_t ReceiverPWM::get_ch(size_t chnum, bool *data_valid) const {
 
   uint16_t ret = cache[chnum];
 
-  if ((ret > RECEIVER_MAX_VALID_VALUE) || (ret < RECEIVER_MIN_VALID_VALUE))
-    ret |= RECEIVER_STATUS_INCORRECT_VALUE;
+  if ((ret > MAX_VALID_VALUE) || (ret < MIN_VALID_VALUE))
+    *data_valid = false;
 
-  if (check_timeout(chnum, MS2ST(this->timeout)))
-    ret |= RECEIVER_STATUS_CONN_LOST;
+  if (is_timeout(chnum, CHANNEL_TIMEOUT))
+    *data_valid = false;
 
   return ret;
 }
@@ -159,9 +167,7 @@ uint16_t ReceiverPWM::get_ch(size_t chnum) const {
 /**
  *
  */
-void ReceiverPWM::start(const uint32_t *timeout) {
-
-  this->timeout = timeout;
+void ReceiverPWM::start(void) {
 
   eicuStart(&EICUD4, &eicucfg);
   eicuEnable(&EICUD4);
@@ -184,14 +190,25 @@ void ReceiverPWM::stop(void) {
  *
  */
 void ReceiverPWM::update(RecevierOutput &result) {
+  bool data_valid = true;
 
   osalDbgCheck(ready);
 
   receiver2mavlink(cache, CHANNEL_CNT);
 
-  for (size_t i=0; i<CHANNEL_CNT; i++)
-    result.ch[i] = get_ch(i);
+  /* fill all with valid values */
+  for (size_t i=0; i<ArrayLen(result.ch); i++)
+    result.ch[i] = 1500;
 
+  /* overwrite actual values with acquired results */
+  for (size_t i=0; i<CHANNEL_CNT; i++) {
+    if (1 == ((CHANNEL_MASK >> i) & 1))
+      result.ch[i] = get_ch(i, &data_valid);
+    else
+      result.ch[i] = NORMALIZE_SHIFT; /* special case for unconnected input */
+  }
+
+  result.data_valid = data_valid;
   result.normalize_scale = NORMALIZE_SCALE;
   result.normalize_shift = NORMALIZE_SHIFT;
   result.channels = CHANNEL_CNT;

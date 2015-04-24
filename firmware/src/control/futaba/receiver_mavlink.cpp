@@ -45,8 +45,7 @@ using namespace control;
 /**
  *
  */
-void ReceiverMavlink::start(const uint32_t *timeout) {
-  this->timeout = timeout;
+void ReceiverMavlink::start(void) {
   ready = true;
 }
 

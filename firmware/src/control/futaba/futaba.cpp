@@ -14,16 +14,6 @@ using namespace control;
  * DEFINES
  ******************************************************************************
  */
-/**
- *
- */
-typedef enum {
-  RC_OVERRIDE_NONE,
-  RC_OVERRIDE_HIGH,
-  RC_OVERRIDE_MEDIUM,
-  RC_OVERRIDE_LOW,
-  RC_OVERRIDE_ENUM_END
-}rc_override_level_t;
 
 /*
  ******************************************************************************
@@ -54,7 +44,7 @@ typedef enum {
  *
  */
 float pwm_normalize(uint16_t v, float shift, float scale) {
-  return putinrange(((float)v - shift) / scale, -1, 1);
+  return putinrange(((float)v - shift) / scale, -1.0f, 1.0f);
 }
 
 /**
@@ -68,22 +58,10 @@ void Futaba::process_man_tumbler(RecevierOutput const &recv, ManualSwitch &man) 
     man = ManualSwitch::fullauto;
   else {
     uint16_t tmp = recv.ch[*map_man];
-    if ((tmp & RECEIVER_FLAGS_MASK) == RECEIVER_STATUS_NO_ERRORS) {
+    if (recv.data_valid) {
       man = static_cast<ManualSwitch>(manual_switch.update(tmp));
     }
   }
-}
-
-/**
- *
- */
-static bool check_errors(RecevierOutput const &recv) {
-  for (size_t i=0; i<MAX_RC_CHANNELS; i++) {
-    if ((recv.ch[i] & RECEIVER_FLAGS_MASK) != RECEIVER_STATUS_NO_ERRORS)
-      return OSAL_FAILED;
-  }
-
-  return OSAL_SUCCESS;
 }
 
 /**
@@ -93,12 +71,11 @@ static void scale(RecevierOutput const &recv, StateVector &result) {
   static_assert(STATE_VECTOR_futaba_raw_end - STATE_VECTOR_futaba_raw_00 ==
       MAX_RC_CHANNELS, "Checker for allowing loop based conversion");
 
-  float *raw_start = &result.ch[STATE_VECTOR_futaba_raw_00];
+  float *out = &result.ch[STATE_VECTOR_futaba_raw_00];
 
-  for (size_t i=0; i<MAX_RC_CHANNELS; i++) {
-    uint16_t tmp = recv.ch[i];
-    if ((tmp & RECEIVER_FLAGS_MASK) != RECEIVER_STATUS_NO_ERRORS) {
-      raw_start[i] = pwm_normalize(tmp & RECEIVER_DATA_MASK, recv.normalize_shift, recv.normalize_scale);
+  if (recv.data_valid) {
+    for (size_t i=0; i<MAX_RC_CHANNELS; i++) {
+      out[i] = pwm_normalize(recv.ch[i], recv.normalize_shift, recv.normalize_scale);
     }
   }
 }
@@ -111,10 +88,10 @@ void Futaba::recevier2futaba(RecevierOutput const &recv, StateVector &result) {
   process_man_tumbler(recv, result.futaba_man);
 
   /* first check errors */
-  if (OSAL_SUCCESS == check_errors(recv))
-    error_rate(100);
-  else
+  if (recv.data_valid)
     error_rate(0);
+  else
+    error_rate(100);
 
   result.futaba_good = hyst.check(error_rate.get());
   scale(recv, result);
@@ -141,8 +118,8 @@ void Futaba::start(void) {
   param_registry.valueSearch("RC_override", &override);
   param_registry.valueSearch("RC_map_man",  &map_man);
 
-  receiver_rc.start(timeout);
-  receiver_mavlink.start(timeout);
+  receiver_rc.start();
+  receiver_mavlink.start();
 
   ready = true;
 }
