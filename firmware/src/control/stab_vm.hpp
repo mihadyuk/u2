@@ -11,9 +11,9 @@ namespace control {
  *
  */
 struct AlcoiPulse {
-  size_t        ch = 0xFF;
+  size_t        pid = 0xFF;
   float         width = 0; // seconds
-  float         strength = 0;
+  float         strength = 0; // context dependent
 };
 
 /**

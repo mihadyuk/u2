@@ -184,9 +184,12 @@ public:
     pid.start(init, nullptr, nullptr);
   }
 
+  void reset(void) {
+    this->pid.reset();
+  }
+
   void update(float target) {
     vmDbgCheck((nullptr != next) && (nullptr != position));
-
     if (alcoi_time_elapsed > 0) {
       next->update(this->pid(*position, alcoi_target, VM_dT));
       alcoi_time_elapsed -= VM_dT;
@@ -281,7 +284,6 @@ static LinkSum    sum_pool[TOTAL_SUM_CNT];
 static LinkOutput out_pool[TOTAL_OUT_CNT];
 static LinkNeg    inverter_pool[TOTAL_INV_CNT];
 static LinkStub   terminator; /* single terminator may be used many times */
-
 
 static const uint8_t test_program[] = {
     INPUT,  ACS_INPUT_futaba_raw_00,
@@ -526,8 +528,10 @@ void StabVM::destroy(void) {
   for (i=0; i<TOTAL_CHAIN_CNT; i++)
     exec_chain[i] = nullptr;
 
-  for (i=0; i<TOTAL_PID_CNT; i++)
+  for (i=0; i<TOTAL_PID_CNT; i++) {
     pid_pool[i].disconnect();
+    pid_pool[i].reset();
+  }
 
   for (i=0; i<TOTAL_INPUT_CNT; i++)
     input_pool[i].disconnect();
@@ -637,10 +641,10 @@ void StabVM::update(float dT, const uint8_t *bytecode) {
  */
 bool StabVM::alcoiPulse(const AlcoiPulse &pulse) {
 
-  if (pulse.ch >= TOTAL_PID_CNT)
+  if (pulse.pid >= TOTAL_PID_CNT)
     return OSAL_FAILED;
 
-  pid_pool[pulse.ch].alcoi_pulse(pulse.strength, pulse.width);
+  pid_pool[pulse.pid].alcoi_pulse(pulse.strength, pulse.width);
 
   return OSAL_SUCCESS;
 }

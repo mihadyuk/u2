@@ -12,6 +12,14 @@ using namespace control;
  ******************************************************************************
  */
 
+#define ALCOI_MAX_PULSE_WIDTH     2 // seconds
+
+/* convenience defines */
+#define PARAM_PULSE_LEVEL         param4
+#define PARAM_PULSE_CHANNEL       param5
+#define PARAM_PULSE_WIDTH         param6
+#define PARAM_PULSE_STRENGTH      param7
+
 /*
  ******************************************************************************
  * EXTERNS
@@ -74,21 +82,13 @@ static const uint8_t manual_program[] = {
  ******************************************************************************
  */
 
-#define ALCOI_MAX_PULSE_WIDTH     2 // seconds
-
-/* convenience defines */
-#define PARAM_PULSE_LEVEL         param4
-#define PARAM_PULSE_CHANNEL       param5
-#define PARAM_PULSE_WIDTH         param6
-#define PARAM_PULSE_STRENGTH      param7
-
 /**
  *
  */
 enum MAV_RESULT ACS::alcoi_command_handler(const mavlink_command_long_t *clp) {
   AlcoiPulse pulse;
 
-  pulse.ch      = roundf(clp->PARAM_PULSE_CHANNEL);
+  pulse.pid      = roundf(clp->PARAM_PULSE_CHANNEL);
   pulse.width   = clp->PARAM_PULSE_WIDTH;
   pulse.strength= clp->PARAM_PULSE_STRENGTH;
 
