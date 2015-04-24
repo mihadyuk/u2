@@ -3,6 +3,7 @@
 #include "param_registry.hpp"
 #include "stab_vm.hpp"
 #include "pid.hpp"
+#include "geometry.hpp"
 
 using namespace chibios_rt;
 using namespace control;
@@ -362,6 +363,7 @@ static PIDInit<float> get_pid_init(uint8_t pidnum) {
   const size_t N = 16;
   char key[N];
   PIDInit<float> ret;
+  uint32_t *postproc;
 
   construct_key(key, N, pidnum, "_P");
   param_registry.valueSearch(key, &ret.P);
@@ -377,6 +379,20 @@ static PIDInit<float> get_pid_init(uint8_t pidnum) {
 
   construct_key(key, N, pidnum, "_Max");
   param_registry.valueSearch(key, &ret.Max);
+
+  construct_key(key, N, pidnum, "_proc");
+  param_registry.valueSearch(key, &postproc);
+  switch (*postproc) {
+  case 0:
+    ret.postproc = nullptr;
+    break;
+  case 1:
+    ret.postproc = wrap_2pi;
+    break;
+  default:
+    osalSysHalt("Unrecognized function");
+    break;
+  }
 
   return ret;
 }
