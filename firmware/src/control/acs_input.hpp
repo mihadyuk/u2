@@ -1,5 +1,5 @@
-#ifndef STATE_VECTOR_HPP_
-#define STATE_VECTOR_HPP_
+#ifndef ACS_INPUT_HPP_
+#define ACS_INPUT_HPP_
 
 #include "string.h" /* for memset() */
 #include "manual_switch_enum.hpp"
@@ -102,7 +102,7 @@ struct ACSInput {
  */
 static_assert(ACS_INPUT_ENUM_END < 256, "Stabilizer virtual machine limit.");
 
-#endif /* STATE_VECTOR_HPP_ */
+#endif /* ACS_INPUT_HPP_ */
 
 
 ///**
