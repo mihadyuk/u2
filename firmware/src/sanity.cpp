@@ -40,6 +40,8 @@ static mavMail hearbeat_mail;
 
 static uint32_t LastResetFlags;
 
+thread_t *worker = nullptr;
+
 /*
  *******************************************************************************
  *******************************************************************************
@@ -101,6 +103,33 @@ static THD_FUNCTION(SanityControlThread, arg) {
   chThdExit(MSG_OK);
 }
 
+/**
+ *
+ */
+#define PAUSE() chThdSleepMilliseconds(50)
+static THD_FUNCTION(BootBlinkThread, arg) {
+  chRegSetThreadName("BootBlink");
+  (void)arg;
+
+  while (!chThdShouldTerminateX()) {
+    red_led_on();
+    blue_led_off();
+    PAUSE();
+
+    red_led_off();
+    blue_led_on();
+    PAUSE();
+
+    blue_led_off();
+    red_led_off();
+    PAUSE();
+  }
+
+  blue_led_off();
+  red_led_off();
+  chThdExit(MSG_OK);
+}
+
 /*
  *******************************************************************************
  * EXPORTED FUNCTIONS
@@ -109,7 +138,7 @@ static THD_FUNCTION(SanityControlThread, arg) {
 /**
  *
  */
-void SanityControlInit(void){
+void SanityControlInit(void) {
 
   /* write soft reset event to "log" and clean it in case of pad reset */
   if (was_softreset())
@@ -125,13 +154,27 @@ void SanityControlInit(void){
               SANITY_3D_ANGULAR_RATE_CONTROL | SANITY_ATTITUDE_STABILIZATION |
               SANITY_Z_CONTROL | SANITY_XY_CONTROL | SANITY_MOTOR_CONTROL |
               SANITY_RC_RECEIVER);
-  mavlink_out_sys_status_struct.onboard_control_sensors_enabled = mavlink_out_sys_status_struct.onboard_control_sensors_present;
-  mavlink_out_sys_status_struct.onboard_control_sensors_health = mavlink_out_sys_status_struct.onboard_control_sensors_present;
+  mavlink_out_sys_status_struct.onboard_control_sensors_enabled =
+      mavlink_out_sys_status_struct.onboard_control_sensors_present;
+  mavlink_out_sys_status_struct.onboard_control_sensors_health =
+      mavlink_out_sys_status_struct.onboard_control_sensors_present;
 
   /* */
-  chThdCreateStatic(SanityControlThreadWA, sizeof(SanityControlThreadWA),
-          NORMALPRIO, SanityControlThread, NULL);
+  chThdTerminate(worker);
+  chThdWait(worker);
+  worker = chThdCreateStatic(SanityControlThreadWA, sizeof(SanityControlThreadWA),
+                NORMALPRIO, SanityControlThread, NULL);
+  osalDbgCheck(nullptr != worker);
 }
 
+/**
+ *
+ */
+void BootBlinkStart(void) {
+  /* */
+  worker = chThdCreateStatic(SanityControlThreadWA, sizeof(SanityControlThreadWA),
+            NORMALPRIO, BootBlinkThread, NULL);
 
+  osalDbgCheck(nullptr != worker);
+}
 

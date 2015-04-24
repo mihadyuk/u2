@@ -140,6 +140,7 @@ int main(void) {
   halInit();
   System::init();
 
+  BootBlinkStart();
   endianness_test();
   osalThreadSleepMilliseconds(300);
 
@@ -161,8 +162,6 @@ int main(void) {
 
   Exti.start();
   time_keeper.start();
-  blinker.start();
-  SanityControlInit();
   I2CInitLocal();
   NvramInit();
   ParametersInit();   /* read parameters from EEPROM via I2C */
@@ -189,6 +188,9 @@ int main(void) {
   pps.start();
   mpxv.start();
 
+  blinker.start();
+  SanityControlInit();
+
   while (TRUE) {
     ahrs.get(ahrs_data, acs_in, MS2ST(200));
     GPSGetData(gps_data);
@@ -197,14 +199,6 @@ int main(void) {
     mpxv.get();
 
     PwrMgrUpdate();
-
-    //osalThreadSleepMilliseconds(200);
-//    if (ATTITUDE_UNIT_UPDATE_RESULT_OK == attitude_unit.update()){
-//      sins.update();
-//      if (ACS_STATUS_ERROR == acs.update())
-//        chDbgPanic("ACS. Broken.");
-//      drivetrain.update();
-//    }
   }
 
   return 0;
