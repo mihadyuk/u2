@@ -74,6 +74,33 @@ static const uint8_t manual_program[] = {
  ******************************************************************************
  */
 
+#define ALCOI_MAX_PULSE_WIDTH     2 // seconds
+
+/* convenience defines */
+#define PARAM_PULSE_LEVEL         param4
+#define PARAM_PULSE_CHANNEL       param5
+#define PARAM_PULSE_WIDTH         param6
+#define PARAM_PULSE_STRENGTH      param7
+
+/**
+ *
+ */
+enum MAV_RESULT ACS::alcoi_command_handler(const mavlink_command_long_t *clp) {
+  AlcoiPulse pulse;
+
+  pulse.ch      = roundf(clp->PARAM_PULSE_CHANNEL);
+  pulse.width   = clp->PARAM_PULSE_WIDTH;
+  pulse.strength= clp->PARAM_PULSE_STRENGTH;
+
+  if (pulse.width > ALCOI_MAX_PULSE_WIDTH)
+    return MAV_RESULT_FAILED;
+
+  if (OSAL_SUCCESS == stabilizer.alcoiPulse(pulse))
+    return MAV_RESULT_ACCEPTED;
+  else
+    return MAV_RESULT_FAILED;
+}
+
 /**
  *
  */
@@ -88,7 +115,7 @@ void ACS::command_long_handler(const mavMail *recv_mail) {
 
   switch (clp->command) {
   case MAV_CMD_DO_SET_SERVO:
-    result = this->alcoi.commandHandler(clp);
+    result = this->alcoi_command_handler(clp);
     break;
   default:
     break;
@@ -108,8 +135,8 @@ void ACS::failsafe(void) {
 /**
  *
  */
-void ACS::fullauto(float dT, const FutabaOutput &fut_data) {
-  (void)fut_data;
+void ACS::alcoi_handler(void) {
+
   mavMail *recv_mail;
 
   if (MSG_OK == command_mailbox.fetch(&recv_mail, TIME_IMMEDIATE)) {
@@ -117,8 +144,6 @@ void ACS::fullauto(float dT, const FutabaOutput &fut_data) {
       command_long_handler(recv_mail);
     }
   }
-
-  alcoi.update(dT);
 }
 
 /*
@@ -144,7 +169,6 @@ command_long_link(&command_mailbox)
 void ACS::start(void) {
 
   futaba.start();
-  alcoi.start();
   stabilizer.start();
   drivetrain.start();
   mav_postman.subscribe(MAVLINK_MSG_ID_COMMAND_LONG, &command_long_link);
@@ -190,6 +214,7 @@ void ACS::update(float dT) {
   /* main code */
   switch (acs_in.futaba_man) {
   case ManualSwitch::fullauto:
+    alcoi_handler();
     stabilizer.update(dT, auto_program);
     break;
 

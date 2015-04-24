@@ -186,10 +186,23 @@ public:
 
   void update(float target) {
     vmDbgCheck((nullptr != next) && (nullptr != position));
-    next->update(this->pid(*position, target, VM_dT));
+
+    if (alcoi_time_elapsed > 0) {
+      next->update(this->pid(*position, alcoi_target, VM_dT));
+      alcoi_time_elapsed -= VM_dT;
+    }
+    else
+      next->update(this->pid(*position, target, VM_dT));
+  }
+
+  void alcoi_pulse(float strength, float time) {
+    alcoi_target = *position + strength;
+    alcoi_time_elapsed = time;
   }
 
 private:
+  float alcoi_target = 0;
+  float alcoi_time_elapsed = 0;
   const float *position = nullptr;
   PidControlSelfDerivative<float> pid;
 };
@@ -618,6 +631,19 @@ void StabVM::update(float dT, const uint8_t *bytecode) {
   this->exec();
   chTMStopMeasurementX(&exec_tmo);
 };
+
+/**
+ *
+ */
+bool StabVM::alcoiPulse(const AlcoiPulse &pulse) {
+
+  if (pulse.ch >= TOTAL_PID_CNT)
+    return OSAL_FAILED;
+
+  pid_pool[pulse.ch].alcoi_pulse(pulse.strength, pulse.width);
+
+  return OSAL_SUCCESS;
+}
 
 
 

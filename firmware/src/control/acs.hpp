@@ -5,7 +5,6 @@
 #include "futaba/futaba.hpp"
 #include "mav_mail.hpp"
 #include "subscribe_link.hpp"
-#include "alcoi.hpp"
 #include "mission_executor.hpp"
 #include "stab_vm.hpp"
 
@@ -22,15 +21,13 @@ public:
   void stop(void);
 private:
   void failsafe(void);
-  void fullauto(float dT, const FutabaOutput &fut_data);
-  void semiauto(float dT, const FutabaOutput &fut_data);
-  void manual(float dT, const FutabaOutput &fut_data);
+  void alcoi_handler(void);
   void command_long_handler(const mavMail *recv_mail);
+  enum MAV_RESULT alcoi_command_handler(const mavlink_command_long_t *clp);
   Drivetrain &drivetrain;
   ACSInput &acs_in;
   DrivetrainImpact impact;
   Futaba futaba;
-  Alcoi alcoi;
   MissionExecutor mission;
   StabVM stabilizer;
   chibios_rt::Mailbox<mavMail*, 1> command_mailbox;

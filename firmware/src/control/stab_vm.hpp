@@ -8,6 +8,15 @@
 namespace control {
 
 /**
+ *
+ */
+struct AlcoiPulse {
+  size_t        ch = 0xFF;
+  float         width = 0; // seconds
+  float         strength = 0;
+};
+
+/**
  * Command set
  */
 typedef enum {
@@ -32,6 +41,7 @@ public:
   void start(void);
   void stop(void);
   void update(float dT, const uint8_t *bytecode);
+  bool alcoiPulse(const AlcoiPulse &pulse);
   bool verify(const uint8_t *bytecode);
 private:
   void pid_pool_start(void);

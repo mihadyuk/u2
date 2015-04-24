@@ -4,7 +4,6 @@
 #include "geometry.hpp"
 #include "param_registry.hpp"
 #include "mavlink_local.hpp"
-#include "override_level_enum.hpp"
 #include "futaba.hpp"
 
 using namespace control;

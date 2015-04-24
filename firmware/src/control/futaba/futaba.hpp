@@ -1,7 +1,6 @@
 #ifndef FUTABA_HPP_
 #define FUTABA_HPP_
 
-#include <futaba_output.hpp>
 #include <futaba/tumbler.hpp>
 #include <futaba/receiver_mavlink.hpp>
 #include <futaba/receiver_pwm.hpp>
