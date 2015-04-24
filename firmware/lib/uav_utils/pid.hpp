@@ -54,19 +54,7 @@ public:
    *
    */
   void start(const PIDInit<T> &init) {
-
-    osalDbgCheck((nullptr != init.P) &&
-                 (nullptr != init.I) &&
-                 (nullptr != init.D) &&
-                 (nullptr != init.Min) &&
-                 (nullptr != init.Max));
-
-    this->pGain     = init.P;
-    this->iGain     = init.I;
-    this->dGain     = init.D;
-    this->Min       = init.Min;
-    this->Max       = init.Max;
-    this->postproc  = init.postproc;
+    start_common(init);
   }
 
   /**
@@ -90,6 +78,25 @@ protected:
   T const *Min;
   T const *Max;
   int clamping = PID_CLAMP_NONE;
+
+  /**
+   *
+   */
+  void start_common(const PIDInit<T> &init) {
+
+    osalDbgCheck((nullptr != init.P) &&
+                 (nullptr != init.I) &&
+                 (nullptr != init.D) &&
+                 (nullptr != init.Min) &&
+                 (nullptr != init.Max));
+
+    this->pGain     = init.P;
+    this->iGain     = init.I;
+    this->dGain     = init.D;
+    this->Min       = init.Min;
+    this->Max       = init.Max;
+    this->postproc  = init.postproc;
+  }
 
   /**
    * @brief   Combines all terms and gains.
@@ -133,17 +140,7 @@ public:
    */
   void start(const PIDInit<T> &init, const T *iir_a, const T *iir_b) {
 
-    osalDbgCheck((nullptr != init.P) &&
-                 (nullptr != init.I) &&
-                 (nullptr != init.D) &&
-                 (nullptr != init.Min) &&
-                 (nullptr != init.Max));
-
-    this->pGain = init.P;
-    this->iGain = init.I;
-    this->dGain = init.D;
-    this->Min = init.Min;
-    this->Max = init.Max;
+    this->start_common(init);
 
     osalDbgCheck(((nullptr == iir_a) && (nullptr == iir_b)) ||
                  ((nullptr != iir_a) && (nullptr != iir_b)));
