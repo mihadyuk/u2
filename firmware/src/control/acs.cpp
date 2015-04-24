@@ -121,14 +121,6 @@ void ACS::fullauto(float dT, const FutabaOutput &fut_data) {
   alcoi.update(dT);
 }
 
-/**
- *
- */
-void ACS::semiauto(float dT, const FutabaOutput &fut_data) {
-  (void)fut_data;
-  (void)dT;
-}
-
 /*
  ******************************************************************************
  * EXPORTED FUNCTIONS
@@ -172,16 +164,6 @@ void ACS::stop(void) {
   drivetrain.stop();
   stabilizer.stop();
   futaba.stop();
-}
-
-/**
- *
- */
-void futaba2state_vector(const FutabaOutput &fut_data, ACSInput &sv) {
-  sv.ch[ACS_INPUT_futaba_raw_00] = fut_data.ch[0];
-  sv.ch[ACS_INPUT_futaba_raw_01] = fut_data.ch[1];
-  sv.ch[ACS_INPUT_futaba_raw_02] = fut_data.ch[2];
-  sv.ch[ACS_INPUT_futaba_raw_03] = fut_data.ch[3];
 }
 
 /**
