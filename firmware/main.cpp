@@ -140,6 +140,7 @@ int main(void) {
   halInit();
   System::init();
 
+  blinker.start();
   BootBlinkStart();
   endianness_test();
   osalThreadSleepMilliseconds(300);
@@ -188,7 +189,6 @@ int main(void) {
   pps.start();
   mpxv.start();
 
-  blinker.start();
   SanityControlInit();
 
   while (TRUE) {
