@@ -22,6 +22,7 @@ public:
 private:
   void failsafe(void);
   void alcoi_handler(void);
+  const uint8_t* select_bytecode(MissionState mi_state);
   void command_long_handler(const mavMail *recv_mail);
   enum MAV_RESULT alcoi_command_handler(const mavlink_command_long_t *clp);
   Drivetrain &drivetrain;

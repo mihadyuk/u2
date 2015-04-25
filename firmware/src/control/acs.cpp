@@ -39,11 +39,11 @@ using namespace control;
  */
 
 static const uint8_t auto_program[] = {
-    INPUT,  ACS_INPUT_wx,
+    INPUT,  ACS_INPUT_roll,
     OUTPUT, IMPACT_RUD,
     TERM,
 
-    INPUT,  ACS_INPUT_wy,
+    INPUT,  ACS_INPUT_pitch,
     OUTPUT, IMPACT_THR,
     TERM,
 
@@ -51,11 +51,11 @@ static const uint8_t auto_program[] = {
 };
 
 static const uint8_t semiauto_program[] = {
-    INPUT,  ACS_INPUT_roll,
+    INPUT,  ACS_INPUT_wx,
     OUTPUT, IMPACT_RUD,
     TERM,
 
-    INPUT,  ACS_INPUT_pitch,
+    INPUT,  ACS_INPUT_wy,
     OUTPUT, IMPACT_THR,
     TERM,
 
@@ -81,6 +81,20 @@ static const uint8_t manual_program[] = {
  ******************************************************************************
  ******************************************************************************
  */
+/**
+ *
+ */
+const uint8_t* ACS::select_bytecode(MissionState mi_state) {
+
+  switch(mi_state) {
+  case MissionState::navigate:
+    return auto_program;
+    break;
+  default:
+    return manual_program;
+    break;
+  }
+}
 
 /**
  *
@@ -195,6 +209,9 @@ void ACS::stop(void) {
  */
 void ACS::update(float dT) {
 
+  MissionState mi_state;
+  const uint8_t *auto_bytecode;
+
   osalDbgCheck(ready);
 
   futaba.update(acs_in, dT);
@@ -214,8 +231,10 @@ void ACS::update(float dT) {
   /* main code */
   switch (acs_in.futaba_man) {
   case ManualSwitch::fullauto:
+    mi_state = mission.update(dT);
+    auto_bytecode = select_bytecode(mi_state);
     alcoi_handler();
-    stabilizer.update(dT, auto_program);
+    stabilizer.update(dT, auto_bytecode);
     break;
 
   case ManualSwitch::semiauto:
