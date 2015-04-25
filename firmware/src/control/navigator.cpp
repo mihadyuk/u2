@@ -56,7 +56,8 @@ Navigator::Navigator(void) {
 NavigatorStatus Navigator::update(ACSInput &acs_in) {
   osalDbgCheck(ready);
 
-  acs_in.ch[ACS_INPUT_dZ] = 42;
+  sphere.crosstrack(acs_in.ch[ACS_INPUT_lat], acs_in.ch[ACS_INPUT_lon],
+                    &acs_in.ch[ACS_INPUT_dZ], nullptr);
 
   return NavigatorStatus::navigate;
 }

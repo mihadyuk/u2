@@ -96,7 +96,7 @@ private:
  * @brief   Update points of path
  */
 template<typename T>
-bool NavSphere<T>::updatePoints(T latA, T lonA, T latB, T lonB){
+bool NavSphere<T>::updatePoints(T latA, T lonA, T latB, T lonB) {
   this->latA = latA;
   this->lonA = lonA;
   this->latB = latB;
@@ -118,7 +118,7 @@ bool NavSphere<T>::updatePoints(T latA, T lonA, T latB, T lonB){
  * (positive XTD means right of course, negative means left)
  */
 template<typename T>
-bool NavSphere<T>::crosstrack(T latD, T lonD, T *xtdres, T *atdres){
+bool NavSphere<T>::crosstrack(T latD, T lonD, T *xtdres, T *atdres) {
 
   chDbgCheck(true == ready);
 
@@ -129,7 +129,7 @@ bool NavSphere<T>::crosstrack(T latD, T lonD, T *xtdres, T *atdres){
   /* We obtain the initial course, tc1, (at point 1) from point 1 to
   point 2 by the following. The formula fails if the initial point is a
   pole. We can special case this with: */
-  if(cos(latA) < static_cast<T>(FLT_EPSILON)){
+  if (cos(latA) < static_cast<T>(FLT_EPSILON)) {
     // starting from N pole
     if(latA > 0){
       xtd = asin(sin(distAD) * sin(lonD - this->lonB));
@@ -144,7 +144,7 @@ bool NavSphere<T>::crosstrack(T latD, T lonD, T *xtdres, T *atdres){
   /* */
   if (distAD > (T)0.05)
     atd = acos(cos(distAD) / cos(xtd));
-  else{
+  else {
     //For very short distances:
     T sindist = sin(distAD);
     T sinxtd = sin(xtd);
@@ -153,15 +153,18 @@ bool NavSphere<T>::crosstrack(T latD, T lonD, T *xtdres, T *atdres){
   }
 
   /**/
-  if (isinf(xtd) || isnan(xtd))
-    *xtdres = 0;
-  else
-    *xtdres = xtd;
-
-  if (isinf(atd) || isnan(atd))
-    *atdres = 0;
-  else
-    *atdres = atd;
+  if (nullptr != xtdres) {
+    if (isinf(xtd) || isnan(xtd))
+      *xtdres = 0;
+    else
+      *xtdres = xtd;
+  }
+  if (nullptr != atdres) {
+    if (isinf(atd) || isnan(atd))
+      *atdres = 0;
+    else
+      *atdres = atd;
+  }
 
   return OSAL_SUCCESS;
 }
@@ -170,7 +173,7 @@ bool NavSphere<T>::crosstrack(T latD, T lonD, T *xtdres, T *atdres){
  * course from current point D to target point B
  */
 template<typename T>
-bool NavSphere<T>::course(T latD, T lonD, T *crsres, T *distres){
+bool NavSphere<T>::course(T latD, T lonD, T *crsres, T *distres) {
   T distDB = dist_cyrcle(latD, lonD, this->latB, this->lonB);
   T crs = course_cyrcle(latD, lonD, this->latB, this->lonB, distDB);
   *crsres = crs;
@@ -187,7 +190,7 @@ bool NavSphere<T>::course(T latD, T lonD, T *crsres, T *distres){
  * @retval    true if overshot detected.
  */
 template<typename T>
-bool NavSphere<T>::isOvershot(T latD, T lonD){
+bool NavSphere<T>::isOvershot(T latD, T lonD) {
   T distAD = dist_cyrcle(this->latA, this->lonA, latD, lonD);
 
   if (isinf(distAD) || isnan(distAD))
