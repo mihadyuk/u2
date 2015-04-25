@@ -156,7 +156,7 @@ int main(void) {
   ADCInitLocal();
   gps_power_on();
   xbee_reset_clear();
-  eeprom_power_on();
+  nvram_power_on();
   osalThreadSleepMilliseconds(10);
 
   chHeapObjectInit(&ThdHeap, (uint8_t *)MEM_ALIGN_NEXT(link_thd_buf), THREAD_HEAP_SIZE);
