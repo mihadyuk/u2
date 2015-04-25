@@ -20,6 +20,5 @@
 #define SANITY_RC_RECEIVER                ((uint32_t)1 << 15)
 
 void SanityControlInit(void);
-void BootBlinkStart(void);
 
 #endif /* SANITY_H_ */

@@ -148,6 +148,33 @@ static THD_FUNCTION(BlueBlinkThread, arg) {
   chThdExit(MSG_OK);
 }
 
+/**
+ *
+ */
+#define PAUSE() chThdSleepMilliseconds(100)
+static THD_FUNCTION(BootBlinkThread, arg) {
+  chRegSetThreadName("BootBlink");
+  (void)arg;
+
+  while (!chThdShouldTerminateX()) {
+    red_led_on();
+    blue_led_off();
+    PAUSE();
+
+    red_led_off();
+    blue_led_on();
+    PAUSE();
+
+    blue_led_off();
+    red_led_off();
+    PAUSE();
+  }
+
+  blue_led_off();
+  red_led_off();
+  chThdExit(MSG_OK);
+}
+
 /*
  ******************************************************************************
  * EXPORTED FUNCTIONS
@@ -164,6 +191,9 @@ Blinker::Blinker(void) {
  *
  */
 void Blinker::start(void){
+  chThdTerminate(this->redworker);
+  chThdWait(this->redworker);
+
   this->redworker = chThdCreateStatic(RedBlinkThreadWA,
           sizeof(RedBlinkThreadWA),
           NORMALPRIO - 10,
@@ -210,4 +240,18 @@ void Blinker::error_post(const int16_t *array){
 void Blinker::normal_post(const int16_t *array){
   if (true == ready)
     blue_blink_mb.post(array, TIME_IMMEDIATE);
+}
+
+/**
+ *
+ */
+void Blinker::bootIndication(void) {
+
+  this->redworker = chThdCreateStatic(RedBlinkThreadWA,
+          sizeof(RedBlinkThreadWA),
+          NORMALPRIO - 10,
+          BootBlinkThread,
+          NULL);
+
+  osalDbgCheck(nullptr != this->redworker);
 }

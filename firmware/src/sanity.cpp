@@ -103,33 +103,6 @@ static THD_FUNCTION(SanityControlThread, arg) {
   chThdExit(MSG_OK);
 }
 
-/**
- *
- */
-#define PAUSE() chThdSleepMilliseconds(50)
-static THD_FUNCTION(BootBlinkThread, arg) {
-  chRegSetThreadName("BootBlink");
-  (void)arg;
-
-  while (!chThdShouldTerminateX()) {
-    red_led_on();
-    blue_led_off();
-    PAUSE();
-
-    red_led_off();
-    blue_led_on();
-    PAUSE();
-
-    blue_led_off();
-    red_led_off();
-    PAUSE();
-  }
-
-  blue_led_off();
-  red_led_off();
-  chThdExit(MSG_OK);
-}
-
 /*
  *******************************************************************************
  * EXPORTED FUNCTIONS
@@ -167,14 +140,4 @@ void SanityControlInit(void) {
   osalDbgCheck(nullptr != worker);
 }
 
-/**
- *
- */
-void BootBlinkStart(void) {
-  /* */
-  worker = chThdCreateStatic(SanityControlThreadWA, sizeof(SanityControlThreadWA),
-            NORMALPRIO, BootBlinkThread, NULL);
-
-  osalDbgCheck(nullptr != worker);
-}
 

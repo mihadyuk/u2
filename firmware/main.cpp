@@ -140,8 +140,8 @@ int main(void) {
   halInit();
   System::init();
 
-  blinker.start();
-  BootBlinkStart();
+  blinker.bootIndication();
+
   endianness_test();
   osalThreadSleepMilliseconds(300);
 
@@ -167,6 +167,7 @@ int main(void) {
   NvramInit();
   ParametersInit();   /* read parameters from EEPROM via I2C */
   wpdb.start();
+  SanityControlInit();
 
   PwrMgrInit();
   if (PwrMgr6vGood())
@@ -189,7 +190,7 @@ int main(void) {
   pps.start();
   mpxv.start();
 
-  SanityControlInit();
+  blinker.start();
 
   while (TRUE) {
     ahrs.get(ahrs_data, acs_in, MS2ST(200));
