@@ -1,5 +1,5 @@
-#ifndef GPS_EB500_HPP_
-#define GPS_EB500_HPP_
+#ifndef EB500_HPP_
+#define EB500_HPP_
 
 #define EVMSK_GPS_UPATED       (1UL << 0)
 
@@ -27,4 +27,4 @@ void GPSInit(void);
 void GPSGetData(gps::gps_data_t &result);
 void GPS_PPS_ISR_I(void);
 
-#endif /* GPS_EB500_HPP_ */
+#endif /* EB500_HPP_ */

@@ -5,7 +5,7 @@
 #include "fir.hpp"
 #include "marg_data.hpp"
 
-#define mpu6050addr         0b1101000
+#define MPU6050_I2C_ADDR    0b1101000
 
 #define MPU_RX_DEPTH        16  /* 1 status byte + 14 bytes of data + 1 padding */
 #define MPU_TX_DEPTH        4

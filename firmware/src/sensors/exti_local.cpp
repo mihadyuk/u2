@@ -5,7 +5,7 @@
 #include "mpu6050.hpp"
 #include "lsm303_mag.hpp"
 #include "time_keeper.hpp"
-#include "gps_eb500.hpp"
+#include "eb500.hpp"
 #include "bmp085.hpp"
 
 /*

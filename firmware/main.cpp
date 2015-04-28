@@ -38,7 +38,7 @@ Giovanni
 #include "global_flags.h"
 #include "fault_handlers.h"
 #include "mavlink_local.hpp"
-#include "gps_eb500.hpp"
+#include "eb500.hpp"
 #include "sanity.hpp"
 #include "i2c_local.hpp"
 #include "nvram_local.hpp"
@@ -98,14 +98,13 @@ TlmSender tlm_sender;
 static LinkMgr link_mgr;
 MavLogger mav_logger;
 Ahrs ahrs;
-BMP085 bmp_085(&I2CD_SLOW, bmp085addr);
+BMP085 bmp_085(&I2CD_SLOW, BMP085_I2C_ADDR);
 
 
 
 #include "maxsonar.hpp"
 #include "pps.hpp"
 #include "speedometer.hpp"
-#include "gps_eb500.hpp"
 #include "mpxv.hpp"
 __CCM__ static MaxSonar maxsonar;
 

@@ -2,7 +2,7 @@
 
 #include "nmea.hpp"
 #include "mavlink_local.hpp"
-#include "gps_eb500.hpp"
+#include "eb500.hpp"
 #include "geometry.hpp"
 #include "time_keeper.hpp"
 

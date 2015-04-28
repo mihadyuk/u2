@@ -1,5 +1,3 @@
-#include <cmath>
-
 #include "main.h"
 #include "global_flags.h"
 #include "alpha_beta.hpp"
