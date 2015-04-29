@@ -133,8 +133,6 @@ void SanityControlInit(void) {
       mavlink_out_sys_status_struct.onboard_control_sensors_present;
 
   /* */
-  chThdTerminate(worker);
-  chThdWait(worker);
   worker = chThdCreateStatic(SanityControlThreadWA, sizeof(SanityControlThreadWA),
                 NORMALPRIO, SanityControlThread, NULL);
   osalDbgCheck(nullptr != worker);

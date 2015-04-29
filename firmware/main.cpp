@@ -133,7 +133,7 @@ __CCM__ static MPXV mpxv;
  *******************************************************************************
  *******************************************************************************
  */
-
+volatile uint8_t data[8];
 int main(void) {
 
   halInit();
@@ -191,7 +191,29 @@ int main(void) {
 
   blinker.start();
 
-  while (TRUE) {
+  static const SPIConfig spicfg = {
+    NULL,
+    GPIOB,
+    GPIOB_SPI2_NSS_UEXT,
+    SPI_CR1_BR_1
+  };
+
+  spiStart(&UEXT_SPI, &spicfg);
+  palClearPad(GPIOB, GPIOB_SPI2_NSS_UEXT);
+  data[0] = spiPolledExchange(&UEXT_SPI, 0x05);
+  data[1] = spiPolledExchange(&UEXT_SPI, 0x00);
+  data[2] = spiPolledExchange(&UEXT_SPI, 0x00);
+  data[3] = spiPolledExchange(&UEXT_SPI, 0x00);
+
+  data[4] = spiPolledExchange(&UEXT_SPI, 0x00);
+  data[5] = spiPolledExchange(&UEXT_SPI, 0x00);
+  data[6] = spiPolledExchange(&UEXT_SPI, 0x00);
+  data[7] = spiPolledExchange(&UEXT_SPI, 0x00);
+
+  palSetPad(GPIOB, GPIOB_SPI2_NSS_UEXT);
+  spiStop(&UEXT_SPI);
+
+  while (true) {
     ahrs.get(ahrs_data, acs_in, MS2ST(200));
     GPSGetData(gps_data);
     speedometer.update(speed, path, ahrs_data.dt);

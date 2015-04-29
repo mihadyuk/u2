@@ -26,6 +26,9 @@
 #define XBEESD                  SD3
 #define GPSSD                   SD1
 
+#define ADIS_SPI                SPID1
+#define UEXT_SPI                SPID2
+
 #define XBEE_BAUDRATE           115200
 #define XBEE_USE_CTS_RTS        FALSE
 
@@ -279,7 +282,7 @@
                                 PIN_MODE_ALTERNATE(GPIOB_RECEIVER_PPM) |      \
                                 PIN_MODE_ALTERNATE(GPIOB_I2C_FAST_SCL) |      \
                                 PIN_MODE_ALTERNATE(GPIOB_I2C_FAST_SDA) |      \
-                                PIN_MODE_ALTERNATE(GPIOB_SPI2_NSS_UEXT) |     \
+                                PIN_MODE_OUTPUT(GPIOB_SPI2_NSS_UEXT) |        \
                                 PIN_MODE_ALTERNATE(GPIOB_SPI2_SCK_UEXT) |     \
                                 PIN_MODE_ALTERNATE(GPIOB_SPI2_MISO_UEXT) |    \
                                 PIN_MODE_ALTERNATE(GPIOB_SPI2_MOSI_UEXT))
@@ -359,7 +362,7 @@
                                 PIN_AFIO_AF(GPIOB_RECEIVER_PPM, 3) |          \
                                 PIN_AFIO_AF(GPIOB_I2C_FAST_SCL, 4) |          \
                                 PIN_AFIO_AF(GPIOB_I2C_FAST_SDA, 4) |          \
-                                PIN_AFIO_AF(GPIOB_SPI2_NSS_UEXT, 5) |         \
+                                PIN_AFIO_AF(GPIOB_SPI2_NSS_UEXT, 0) |         \
                                 PIN_AFIO_AF(GPIOB_SPI2_SCK_UEXT, 5) |         \
                                 PIN_AFIO_AF(GPIOB_SPI2_MISO_UEXT, 5) |        \
                                 PIN_AFIO_AF(GPIOB_SPI2_MOSI_UEXT, 5))
