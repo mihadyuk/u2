@@ -325,7 +325,7 @@ RULESPATH = $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC
 include $(RULESPATH)/rules.mk
 
 ######## resource usage show ################
-MAKE_ALL_RULE_HOOK: res_usage
+POST_MAKE_ALL_RULE_HOOK: res_usage
 
 res_usage: $(BUILDDIR)/$(PROJECT).bin $(BUILDDIR)/$(PROJECT).elf \
 			$(BUILDDIR)/$(PROJECT).hex $(BUILDDIR)/$(PROJECT).dmp
