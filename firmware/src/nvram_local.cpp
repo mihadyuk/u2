@@ -1,7 +1,8 @@
 #include "main.h"
 
 #include "nvram_local.hpp"
-#include "fram_mtd.hpp"
+#include "mtd_fm24.hpp"
+#include "bus_i2c.hpp"
 
 using namespace chibios_rt;
 using namespace nvram;
@@ -18,16 +19,13 @@ using namespace nvram;
  ******************************************************************************
  */
 
-static const FramConfig fram_cfg = {
+static const FM24Config fram_cfg = {
   FRAM_SIZE
 };
 
-static const MtdConfig mtd_cfg = {
-  &FRAM_I2CD,
-  FRAM_I2C_ADDR,
-};
+static BusI2C fram_bus(&FRAM_I2CD, FRAM_I2C_ADDR);
 
-static FramMtd nvram_mtd(&mtd_cfg, &fram_cfg);
+static MtdFM24 nvram_mtd(fram_bus, &fram_cfg);
 
 Fs nvram_fs(nvram_mtd);
 
