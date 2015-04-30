@@ -59,18 +59,32 @@ static mavMail attitude_quaternion_mail;
 /**
  *
  */
-static void attitude2mavlink(const ahrs_data_t &result) {
+static void attitude2mavlink(const ahrs_data_t &att) {
 
-  mavlink_out_attitude_struct.roll  = result.euler[0];
-  mavlink_out_attitude_struct.pitch = result.euler[1];
-  mavlink_out_attitude_struct.yaw   = result.euler[2];
+  mavlink_out_attitude_struct.roll  = att.euler[0];
+  mavlink_out_attitude_struct.pitch = att.euler[1];
+  mavlink_out_attitude_struct.yaw   = att.euler[2];
   mavlink_out_attitude_struct.time_boot_ms = TIME_BOOT_MS;
 
-  mavlink_out_attitude_quaternion_struct.q1 = result.quat[0];
-  mavlink_out_attitude_quaternion_struct.q2 = result.quat[1];
-  mavlink_out_attitude_quaternion_struct.q3 = result.quat[2];
-  mavlink_out_attitude_quaternion_struct.q4 = result.quat[3];
+  mavlink_out_attitude_quaternion_struct.q1 = att.quat[0];
+  mavlink_out_attitude_quaternion_struct.q2 = att.quat[1];
+  mavlink_out_attitude_quaternion_struct.q3 = att.quat[2];
+  mavlink_out_attitude_quaternion_struct.q4 = att.quat[3];
   mavlink_out_attitude_quaternion_struct.time_boot_ms = TIME_BOOT_MS;
+}
+
+/**
+ *
+ */
+static void attitude2state_vector(const ahrs_data_t &att, ACSInput &acs_in) {
+  acs_in.ch[ACS_INPUT_roll]  = att.euler[0];
+  acs_in.ch[ACS_INPUT_pitch] = att.euler[1];
+  acs_in.ch[ACS_INPUT_yaw]   = att.euler[2];
+
+  acs_in.ch[ACS_INPUT_q0] = att.quat[0];
+  acs_in.ch[ACS_INPUT_q1] = att.quat[1];
+  acs_in.ch[ACS_INPUT_q2] = att.quat[2];
+  acs_in.ch[ACS_INPUT_q3] = att.quat[3];
 }
 
 /**
@@ -218,7 +232,7 @@ void Ahrs::start(void) {
 /**
  *
  */
-msg_t Ahrs::get(ahrs_data_t &result, systime_t timeout) {
+msg_t Ahrs::get(ahrs_data_t &result, ACSInput &acs_in, systime_t timeout) {
   msg_t sem_status = MSG_RESET;
 
   reschedule();
@@ -242,6 +256,7 @@ msg_t Ahrs::get(ahrs_data_t &result, systime_t timeout) {
   }
 
   attitude2mavlink(result);
+  attitude2state_vector(result, acs_in);
   log_append();
   return sem_status;
 }

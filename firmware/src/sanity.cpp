@@ -40,6 +40,8 @@ static mavMail hearbeat_mail;
 
 static uint32_t LastResetFlags;
 
+thread_t *worker = nullptr;
+
 /*
  *******************************************************************************
  *******************************************************************************
@@ -109,7 +111,7 @@ static THD_FUNCTION(SanityControlThread, arg) {
 /**
  *
  */
-void SanityControlInit(void){
+void SanityControlInit(void) {
 
   /* write soft reset event to "log" and clean it in case of pad reset */
   if (was_softreset())
@@ -125,13 +127,15 @@ void SanityControlInit(void){
               SANITY_3D_ANGULAR_RATE_CONTROL | SANITY_ATTITUDE_STABILIZATION |
               SANITY_Z_CONTROL | SANITY_XY_CONTROL | SANITY_MOTOR_CONTROL |
               SANITY_RC_RECEIVER);
-  mavlink_out_sys_status_struct.onboard_control_sensors_enabled = mavlink_out_sys_status_struct.onboard_control_sensors_present;
-  mavlink_out_sys_status_struct.onboard_control_sensors_health = mavlink_out_sys_status_struct.onboard_control_sensors_present;
+  mavlink_out_sys_status_struct.onboard_control_sensors_enabled =
+      mavlink_out_sys_status_struct.onboard_control_sensors_present;
+  mavlink_out_sys_status_struct.onboard_control_sensors_health =
+      mavlink_out_sys_status_struct.onboard_control_sensors_present;
 
   /* */
-  chThdCreateStatic(SanityControlThreadWA, sizeof(SanityControlThreadWA),
-          NORMALPRIO, SanityControlThread, NULL);
+  worker = chThdCreateStatic(SanityControlThreadWA, sizeof(SanityControlThreadWA),
+                NORMALPRIO, SanityControlThread, NULL);
+  osalDbgCheck(nullptr != worker);
 }
-
 
 

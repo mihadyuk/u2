@@ -6,6 +6,7 @@ public:
   Blinker(void);
   void start(void);
   void stop(void);
+  void bootIndication(void);
   void normal_post(const int16_t *array);
   void warning_post(const int16_t *array);
   void error_post(const int16_t *array);

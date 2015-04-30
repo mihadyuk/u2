@@ -1,11 +1,10 @@
 #ifndef STABILIZER_HPP_
 #define STABILIZER_HPP_
 
+#include "acs_input.hpp"
 #include "pid_chain.hpp"
-#include "state_vector.hpp"
 #include "override_level_enum.hpp"
 #include "drivetrain/drivetrain.hpp"
-#include "pid_chain_enum.hpp"
 
 namespace control {
 
@@ -28,7 +27,7 @@ struct pid_out {
  */
 class Stabilizer {
 public:
-  Stabilizer(Drivetrain &drivetrain, const StateVector &s);
+  Stabilizer(Drivetrain &drivetrain, const ACSInput &s);
   void start(void);
   void update(const StabInput &in, float dT);
   void stop(void);

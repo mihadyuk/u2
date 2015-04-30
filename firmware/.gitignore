@@ -1,5 +1,6 @@
 .dep/
 build/
+.settings/
 .cproject
 .project
-.settings/
+firmware_version.h

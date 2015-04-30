@@ -4,10 +4,10 @@
 #include "i2c_sensor.hpp"
 #include "marg_data.hpp"
 
-#define lsm303magaddr       0b0011110
+#define LSM303_MAG_I2C_ADDR   0b0011110
 
-#define LSM_MAG_RX_DEPTH    8
-#define LSM_MAG_TX_DEPTH    4
+#define LSM_MAG_RX_DEPTH      8
+#define LSM_MAG_TX_DEPTH      4
 
 class LSM303_mag: private I2CSensor {
 public:

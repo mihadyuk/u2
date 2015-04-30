@@ -4,7 +4,7 @@
 #include "i2c_sensor.hpp"
 #include "marg_data.hpp"
 
-#define lsm303accaddr           0b0011001
+#define LSM303_ACC_I2C_ADDR     0b0011001
 
 #define LSM_ACC_RX_DEPTH        8
 #define LSM_ACC_TX_DEPTH        8

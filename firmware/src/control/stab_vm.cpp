@@ -1,14 +1,12 @@
 #include "main.h"
 
+#include "param_registry.hpp"
 #include "stab_vm.hpp"
+#include "pid.hpp"
+#include "geometry.hpp"
 
 using namespace chibios_rt;
 using namespace control;
-
-/*
-Виртуальная машина имеет 2 регистра (r0, r1)
-Тип данных - плавающая точка одинарной точности
-*/
 
 /*
  ******************************************************************************
@@ -16,136 +14,247 @@ using namespace control;
  ******************************************************************************
  */
 
-float VM_dT = 0.01;
+#define TOTAL_PID_CNT         16
+#define TOTAL_CHAIN_CNT       4
+#define TOTAL_INPUT_CNT       4
+#define TOTAL_SCALE_CNT       4
+#define TOTAL_FORK_CNT        4
+#define TOTAL_SUM_CNT         4
+#define TOTAL_OUT_CNT         8
+#define TOTAL_INV_CNT         4
 
-float StateVector2[STATE_VECTOR_ENUM_END];
+#define vmDbgCheck(c) osalDbgCheck(c)
+#define vmDbgPanic(c) osalSysHalt(c)
 
-typedef enum {
-  IMPACT_VECTOR_ail,
-  IMPACT_VECTOR_ele,
-  IMPACT_VECTOR_rud,
-  IMPACT_VECTOR_thr,
-  IMPACT_VECTOR_ENUM_END,
-} impact_vector_enum;
-
-float ImpactVector2[IMPACT_VECTOR_ENUM_END];
-
-
-typedef enum {
-  SCALE_VECTOR_ail,
-  SCALE_VECTOR_ele,
-  SCALE_VECTOR_rud,
-  SCALE_VECTOR_thr,
-  SCALE_VECTOR_ENUM_END,
-} scale_vector_enum;
-
-float ScaleVector[SCALE_VECTOR_ENUM_END];
-
-
-#if defined(END) ||\
-    defined(ADD) ||\
-    defined(MUL) ||\
-    defined(PID) ||\
-    defined(PID_START) ||\
-    defined(LDR) ||\
-    defined(STR) ||\
-    defined(MOV)
-#error ""
-#endif
+/* this variable needed only for PIDs */
+static float VM_dT = 0.01;
 
 /**
- * Command set
+ *
  */
-typedef enum {
-  /**
-   * 1b
-   * Program termination
-   */
-  END,
+class Link {
+public:
 
-  /**
-   * 1b
-   * r0 = r0 + r1
-   */
-  ADD,
+  virtual Link* append(Link *ptr) {
+    vmDbgCheck(nullptr != ptr);
+    vmDbgCheck(nullptr == next); /* already connected */
+    next = ptr;
+    return next;
+  }
 
-  /**
-   * 2b (multiplier address)
-   *
-   * Just scale r0 value
-   * r0 = r0 * C
-   */
-  MUL,
+  virtual void disconnect(void) {
+    next = nullptr;
+  }
 
-  /**
-   * 2b (PID address)
-   * r0 = pid(r0)
-   */
-  PID,
+  virtual void update(float val) = 0;
 
-  /**
-   * 3b (PID address,
-   *     Current position: pointer to some position in StateVector)
-   */
-  PID_START,
-
-  /**
-   * 2b (pointer to some position in StateVector)
-   * r0 = StateVector[C]
-   */
-  LDR,
-
-  /**
-   * 2b (address in TargetVector)
-   * TargetVector[C] = r0
-   */
-  STR,
-
-  /**
-   * 1b
-   * r1 = r0
-   */
-  MOV
-} vm_opcode_enum;
-
-typedef enum {
-  PID_AIL_H,
-  PID_AIL_M,
-  PID_AIL_L,
-  PID_ELE_H,
-  PID_ELE_M,
-  PID_ELE_L,
-  PID_ENUM_END
-} pid_name_t;
-
-static uint8_t bytecode_init[] = {
-    PID_START, PID_AIL_H, STATE_VECTOR_vx,
-    PID_START, PID_AIL_M, STATE_VECTOR_vy,
-    PID_START, PID_AIL_L, STATE_VECTOR_dYaw,
-
-    PID_START, PID_ELE_H, STATE_VECTOR_roll,
-    PID_START, PID_ELE_M, STATE_VECTOR_pitch,
-    PID_START, PID_ELE_L, STATE_VECTOR_yaw,
-
-    END
+protected:
+  Link *next = nullptr;
 };
 
-static uint8_t bytecode_fly[] = {
-    LDR, STATE_VECTOR_dZ,
+/**
+ *
+ */
+class LinkFork: public Link {
+public:
 
-    PID, PID_AIL_H,
-    PID, PID_AIL_M,
-    PID, PID_AIL_L,
-    MOV,
+  Link* append(Link *ptr) {
+    vmDbgCheck(nullptr != ptr);
 
-    PID, PID_ELE_H,
-    PID, PID_ELE_M,
-    PID, PID_ELE_L,
+    if (nullptr == next) {
+      next = ptr;
+      return next;
+    }
+    else if (nullptr == fork) {
+      fork = ptr;
+      return fork;
+    }
+    else {
+      vmDbgPanic("both slots busy");
+      return nullptr;
+    }
+  }
 
-    MUL, SCALE_VECTOR_ele,
-    ADD,
-    STR, IMPACT_VECTOR_ail,
-    END
+  virtual void disconnect(void) {
+    next = nullptr;
+    fork = nullptr;
+  }
+
+  void update(float val) {
+    if (nullptr != next)
+      next->update(val);
+    if (nullptr != fork)
+      fork->update(val);
+  }
+
+private:
+  Link *fork = nullptr;
+};
+
+/**
+ *
+ */
+class LinkStub: public Link {
+
+  Link* append(Link *ptr) {
+    (void)ptr;
+    vmDbgPanic("You can not connect any link to stub");
+    return nullptr;
+  }
+
+  void update(float val) {
+    (void)val;
+  }
+};
+
+/**
+ *
+ */
+class LinkScale : public Link {
+public:
+  void init(const float *_c) {
+    vmDbgCheck(nullptr != _c);
+    this->c = _c;
+  }
+
+  void update(float val) {
+    vmDbgCheck((nullptr != next) && (nullptr != c));
+    next->update(*c * val);
+  }
+
+  private:
+  const float *c = nullptr;
+};
+
+
+/**
+ * inverter
+ */
+class LinkNeg : public Link {
+public:
+  void update(float val) {
+    vmDbgCheck(nullptr != next);
+    next->update(val * -1);
+  }
+};
+
+/**
+ * No operation. For testing and benchmarking only
+ */
+class LinkNop : public Link {
+public:
+  void update(float val) {
+    vmDbgCheck(nullptr != next);
+    next->update(val);
+  }
+};
+
+/**
+ *
+ */
+class LinkInput : public Link {
+public:
+  Link* compile(const float *_target) {
+    vmDbgCheck(nullptr != _target);
+    this->target = _target;
+    return this;
+  }
+
+  void update(float val) {
+    (void)val;
+    vmDbgCheck((nullptr != next) && (nullptr != target));
+    next->update(*target);
+  }
+
+private:
+  const float *target = nullptr;
+};
+
+/**
+ *
+ */
+class LinkPID : public Link {
+public:
+  Link* compile(const float *_position) {
+    vmDbgCheck(nullptr != _position);
+    this->position = _position;
+    return this;
+  }
+
+  void init(const PIDInit<float> &init) {
+    pid.start(init, nullptr, nullptr);
+  }
+
+  void reset(void) {
+    this->pid.reset();
+  }
+
+  void update(float target) {
+    vmDbgCheck((nullptr != next) && (nullptr != position));
+    if (alcoi_time_elapsed > 0) {
+      next->update(this->pid(*position, alcoi_target, VM_dT));
+      alcoi_time_elapsed -= VM_dT;
+    }
+    else
+      next->update(this->pid(*position, target, VM_dT));
+  }
+
+  void alcoi_pulse(float strength, float time) {
+    alcoi_target = *position + strength;
+    alcoi_time_elapsed = time;
+  }
+
+private:
+  float alcoi_target = 0;
+  float alcoi_time_elapsed = 0;
+  const float *position = nullptr;
+  PidControlSelfDerivative<float> pid;
+};
+
+/**
+ *
+ */
+class LinkSum : public Link {
+
+  void update(float val) {
+    vmDbgCheck(nullptr != next);
+
+    if (wait_second) {
+      wait_second = false;
+      next->update(first + val);
+    }
+    else {
+      wait_second = true;
+      first = val;
+      return;
+    }
+  }
+
+private:
+  bool wait_second = false;
+  float first;
+};
+
+/**
+ *
+ */
+class LinkOutput : public Link {
+
+public:
+  Link* compile(float *_impact) {
+    vmDbgCheck(nullptr != _impact);
+    this->impact = _impact;
+    return this;
+  }
+
+private:
+  void update(float val) {
+    vmDbgCheck((nullptr != next) &&(nullptr != impact));
+    *impact = val;
+    next->update(val);
+  }
+
+  float *impact = nullptr;
 };
 
 /*
@@ -166,15 +275,58 @@ static uint8_t bytecode_fly[] = {
  ******************************************************************************
  */
 
-static PidControlSelfDerivative<float> pid_pool[8] = {
-    {nullptr},
-    {nullptr},
-    {nullptr},
-    {nullptr},
-    {nullptr},
-    {nullptr},
-    {nullptr},
-    {nullptr}
+static Link*      exec_chain[TOTAL_CHAIN_CNT];
+
+static LinkPID    pid_pool[TOTAL_PID_CNT];
+static LinkInput  input_pool[TOTAL_INPUT_CNT];
+static LinkScale  scale_pool[TOTAL_SCALE_CNT];
+static LinkFork   fork_pool[TOTAL_FORK_CNT];
+static LinkSum    sum_pool[TOTAL_SUM_CNT];
+static LinkOutput out_pool[TOTAL_OUT_CNT];
+static LinkNeg    inverter_pool[TOTAL_INV_CNT];
+static LinkStub   terminator; /* single terminator may be used many times */
+
+static const uint8_t test_program[] = {
+    INPUT,  ACS_INPUT_futaba_raw_00,
+    PID, 0, ACS_INPUT_vx,
+    PID, 1, ACS_INPUT_vx,
+    PID, 2, ACS_INPUT_vx,
+    OUTPUT, IMPACT_THR,
+    TERM,
+
+    INPUT,  ACS_INPUT_futaba_raw_01,
+    PID, 3, ACS_INPUT_vy,
+    PID, 4, ACS_INPUT_vy,
+    PID, 5, ACS_INPUT_vy,
+    OUTPUT, IMPACT_ELE_L,
+    TERM,
+
+    INPUT, ACS_INPUT_futaba_raw_02,
+    PID, 6, ACS_INPUT_vx,
+    PID, 7, ACS_INPUT_vx,
+    PID, 8, ACS_INPUT_vx,
+    FORK,
+      NEG,
+      OUTPUT, IMPACT_AIL_L,
+      TERM,
+    FORK_RET,
+    OUTPUT, IMPACT_AIL_R,
+    TERM,
+
+    INPUT,  ACS_INPUT_futaba_raw_01,
+    PID, 9, ACS_INPUT_vy,
+    PID,10, ACS_INPUT_vy,
+    PID,11, ACS_INPUT_vy,
+    OUTPUT, IMPACT_ELE,
+    TERM,
+
+    END
+};
+
+static const uint8_t fly_program[] = {
+    INPUT, ACS_INPUT_vx,
+    OUTPUT, 0,
+    END
 };
 
 /*
@@ -185,95 +337,333 @@ static PidControlSelfDerivative<float> pid_pool[8] = {
  ******************************************************************************
  */
 
-static void vm_pid_start(size_t pid_number, size_t position) {
-  (void)position;
-  PIDInit<float> fake;
+/**
+ *
+ */
+static void construct_key(char *buf, size_t buflen, uint8_t pidnum, const char *suffix) {
+  char numstr[4];
 
-  pid_pool[pid_number].start(fake, nullptr, nullptr);
+  osalDbgCheck(pidnum < TOTAL_PID_CNT);
+
+  memset(numstr, 0, sizeof(numstr));
+  numstr[0] = '_';
+  numstr[1] = (pidnum / 10) + '0';
+  numstr[2] = (pidnum % 10) + '0';
+
+  memset(buf, 0, buflen);
+  strncpy(buf, "PID", buflen);
+  strncat(buf, numstr, buflen);
+  strncat(buf, suffix, buflen);
 }
 
-static float vm_ldr(size_t value_idx) {
-  return StateVector2[value_idx];
+/**
+ *
+ */
+static PIDInit<float> get_pid_init(uint8_t pidnum) {
+  const size_t N = 16;
+  char key[N];
+  PIDInit<float> ret;
+  uint32_t *postproc;
+
+  construct_key(key, N, pidnum, "_P");
+  param_registry.valueSearch(key, &ret.P);
+
+  construct_key(key, N, pidnum, "_I");
+  param_registry.valueSearch(key, &ret.I);
+
+  construct_key(key, N, pidnum, "_D");
+  param_registry.valueSearch(key, &ret.D);
+
+  construct_key(key, N, pidnum, "_Min");
+  param_registry.valueSearch(key, &ret.Min);
+
+  construct_key(key, N, pidnum, "_Max");
+  param_registry.valueSearch(key, &ret.Max);
+
+  construct_key(key, N, pidnum, "_proc");
+  param_registry.valueSearch(key, &postproc);
+  switch (*postproc) {
+  case 0:
+    ret.postproc = nullptr;
+    break;
+  case 1:
+    ret.postproc = wrap_2pi;
+    break;
+  default:
+    osalSysHalt("Unrecognized function");
+    break;
+  }
+
+  return ret;
 }
 
-static void vm_str(float val, size_t value_idx) {
-  ImpactVector2[value_idx] = val;
+/**
+ *
+ */
+void StabVM::pid_pool_start(void) {
+
+  size_t i = 0;
+  PIDInit<float> tmp;
+
+  for (i=0; i<TOTAL_PID_CNT; i++) {
+    tmp = get_pid_init(i);
+    pid_pool[i].init(tmp);
+  }
 }
 
-static float vm_pid(float target, size_t pid_idx) {
-  return pid_pool[pid_idx](StateVector2[-1], target, VM_dT);
+/**
+ *
+ */
+void StabVM::scale_pool_start(void) {
+  const size_t N = 16;
+  char key[N];
+  char numstr[4];
+  size_t sumnum;
+  float *tmp;
+
+  for (sumnum=0; sumnum<TOTAL_SCALE_CNT; sumnum++) {
+    memset(numstr, 0, sizeof(numstr));
+    numstr[0] = '_';
+    numstr[1] = (sumnum / 10) + '0';
+    numstr[2] = (sumnum % 10) + '0';
+
+    memset(key, 0, N);
+    strncpy(key, "PID_vm_scale", N);
+    strncat(key, numstr, N);
+
+    param_registry.valueSearch(key, &tmp);
+    scale_pool[sumnum].init(tmp);
+  }
 }
 
+/**
+ *
+ */
+void StabVM::compile(const uint8_t *bytecode) {
+  size_t pc = 0;        /* program counter */
+  Link *tip = nullptr;
+  Link *fork_ptr = nullptr;
 
+  uint8_t cmd;
+  uint8_t arg0, arg1;
+  size_t chain = 0;     /* currently compiling chain */
+  size_t output = 0;    /* used outputs counter */
+  size_t fork = 0;      /* used forks counter */
+  size_t inv = 0;       /* used inverters counter */
 
-void StabVM::exec(const uint8_t *program) {
-  size_t pc = 0; /* program counter */
-  float r0 = 0, r1 = 0; /* registers */
+  while(true) {
+    cmd = bytecode[pc];
 
-  while (true) {
-    switch (program[pc]) {
-
+    switch (cmd){
     case END:
       return;
+
+    case INPUT:
+      arg0 = bytecode[pc+1];
+      vmDbgCheck(arg0 < ACS_INPUT_ENUM_END);
+      vmDbgCheck(chain < TOTAL_INPUT_CNT);
+      tip = input_pool[chain].compile(&acs_in.ch[arg0]);
+      exec_chain[chain] = tip;
+      chain += 1;
+      pc += 2;
       break;
 
-    case ADD:
-      r0 += r1;
+    case TERM:
+      tip->append(&terminator);
+      tip = nullptr;
       pc += 1;
       break;
 
-    case MUL:
-      r0 *= program[pc+1];
-      pc += 2;
+    case NEG:
+      vmDbgCheck(inv < TOTAL_INV_CNT);
+      tip = tip->append(&inverter_pool[inv]);
+      inv += 1;
+      pc += 1;
       break;
 
     case PID:
-      r0 = vm_pid(r0, program[pc+1]);
-      pc += 2;
-      break;
-
-    case PID_START:
-      vm_pid_start(program[pc+1], program[pc+2]);
+      arg0 = bytecode[pc+1];
+      arg1 = bytecode[pc+2];
+      vmDbgCheck(arg0 < TOTAL_PID_CNT);
+      vmDbgCheck(arg1 < ACS_INPUT_ENUM_END);
+      tip = tip->append(pid_pool[arg0].compile(&acs_in.ch[arg1]));
       pc += 3;
       break;
 
-    case LDR:
-      r0 = vm_ldr(program[pc+1]);
+    case SUM:
+      arg0 = bytecode[pc+1];
+      vmDbgCheck(arg0 < TOTAL_SUM_CNT);
+      tip = tip->append(&sum_pool[arg0]);
       pc += 2;
       break;
 
-    case STR:
-      vm_str(r0, program[pc+1]);
+    case SCALE:
+      arg0 = bytecode[pc+1];
+      vmDbgCheck(arg0 < TOTAL_SCALE_CNT);
+      tip = tip->append(&scale_pool[arg0]);
       pc += 2;
       break;
 
-    case MOV:
-      r1 = r0;
+    case FORK:
+      vmDbgCheck(nullptr == fork_ptr); /* nested forks forbidden */
+      vmDbgCheck(fork < TOTAL_FORK_CNT);
+      tip = tip->append(&fork_pool[fork]);
+      fork_ptr = tip;
+      fork += 1;
       pc += 1;
       break;
 
+    case FORK_RET:
+      vmDbgCheck(nullptr != fork_ptr); /* there is no fork return pending */
+      tip = fork_ptr;
+      pc += 1;
+      break;
+
+    case OUTPUT:
+      arg0 = bytecode[pc+1];
+      vmDbgCheck(output < TOTAL_OUT_CNT);
+      vmDbgCheck(arg0 < IMPACT_ENUM_END);
+      tip = tip->append(out_pool[output].compile(&impact.ch[arg0]));
+      output += 1;
+      pc += 2;
+      break;
+
     default:
-      osalSysHalt("Unknown instruction");
+      vmDbgPanic("illegal instruction");
       break;
     }
   }
-};
+}
+
+/**
+ *
+ */
+void StabVM::destroy(void) {
+  size_t i=0;
+
+  for (i=0; i<TOTAL_CHAIN_CNT; i++)
+    exec_chain[i] = nullptr;
+
+  for (i=0; i<TOTAL_PID_CNT; i++) {
+    pid_pool[i].disconnect();
+    pid_pool[i].reset();
+  }
+
+  for (i=0; i<TOTAL_INPUT_CNT; i++)
+    input_pool[i].disconnect();
+
+  for (i=0; i<TOTAL_SCALE_CNT; i++)
+    scale_pool[i].disconnect();
+
+  for (i=0; i<TOTAL_FORK_CNT; i++)
+    fork_pool[i].disconnect();
+
+  for (i=0; i<TOTAL_SUM_CNT; i++)
+    sum_pool[i].disconnect();
+
+  for (i=0; i<TOTAL_OUT_CNT; i++)
+    out_pool[i].disconnect();
+
+  for (i=0; i<TOTAL_INV_CNT; i++)
+    inverter_pool[i].disconnect();
+
+  terminator.disconnect();
+}
+
+/**
+ *
+ */
+void StabVM::exec(void) {
+  for (size_t i=0; i<TOTAL_CHAIN_CNT; i++) {
+    if (nullptr != exec_chain[i])
+      exec_chain[i]->update(0);
+  }
+}
 
 /*
  ******************************************************************************
  * EXPORTED FUNCTIONS
  ******************************************************************************
  */
-
-void StabVM::start(void) {
-  exec(bytecode_init);
-};
-
-void StabVM::stop(void) {
+/**
+ *
+ */
+StabVM::StabVM(DrivetrainImpact &impact, const ACSInput &acs_in) :
+impact(impact),
+acs_in(acs_in)
+{
   return;
+}
+
+/**
+ *
+ */
+void StabVM::start(void) {
+
+  pid_pool_start();
+  scale_pool_start();
+
+  compile(fly_program);
+  destroy();
+
+  chTMStartMeasurementX(&exec_tmo);
+  compile(test_program);
+  chTMStopMeasurementX(&exec_tmo);
+
+  chTMObjectInit(&exec_tmo);
+
+  ready = true;
 };
 
-void StabVM::update(float dT) {
-  VM_dT = dT;
-  exec(bytecode_fly);
+/**
+ *
+ */
+void StabVM::stop(void) {
+  ready = false;
 };
+
+/**
+ *
+ */
+bool StabVM::verify(const uint8_t *bytecode) {
+
+  compile(bytecode);
+  destroy();
+
+  return OSAL_SUCCESS;
+}
+
+/**
+ *
+ */
+void StabVM::update(float dT, const uint8_t *bytecode) {
+
+  osalDbgCheck(ready);
+  VM_dT = dT;
+
+  if (bytecode != current_program) {
+    destroy();
+    compile(bytecode);
+    current_program = bytecode;
+  }
+
+  chTMStartMeasurementX(&exec_tmo);
+  this->exec();
+  chTMStopMeasurementX(&exec_tmo);
+};
+
+/**
+ *
+ */
+bool StabVM::alcoiPulse(const AlcoiPulse &pulse) {
+
+  if (pulse.pid >= TOTAL_PID_CNT)
+    return OSAL_FAILED;
+
+  pid_pool[pulse.pid].alcoi_pulse(pulse.strength, pulse.width);
+
+  return OSAL_SUCCESS;
+}
+
+
+

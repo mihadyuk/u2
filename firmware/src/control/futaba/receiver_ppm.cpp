@@ -44,8 +44,7 @@ using namespace control;
 /**
  *
  */
-void ReceiverPPM::start(const uint32_t *timeout) {
-  this->timeout = timeout;
+void ReceiverPPM::start(void) {
   ready = true;
 }
 

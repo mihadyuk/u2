@@ -1,6 +1,8 @@
 #ifndef MATH_F_HPP_
 #define MATH_F_HPP_
 
+#include <math.h>
+
 /**
  * Fast hardware square root
  */

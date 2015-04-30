@@ -176,10 +176,6 @@ param = [
 # Radio control settings
 ("RC_timeout",      500,        2000,       10000,      "u", "default",     "NULL"),
 ("RC_override",     0,          0,          3,          "u", "default",     "NULL"),
-("RC_map_ail",     -1,          0,          3,          "i", "default",     "NULL"),
-("RC_map_ele",     -1,          0,          3,          "i", "default",     "NULL"),
-("RC_map_rud",     -1,          0,          3,          "i", "default",     "NULL"),
-("RC_map_thr",     -1,          0,          3,          "i", "default",     "NULL"),
 ("RC_map_man",     -1,          0,          3,          "i", "default",     "NULL"),
 
 # PID settings
@@ -266,6 +262,126 @@ param = [
 ("PID_thr_l_Min",   -PID_MAX,   PID_MIN,    PID_MIN,    "f", "default",     "NULL"),
 ("PID_thr_l_Max",   PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
 ("PID_thr_l_B",     0,          0,          1,          "u", "default",     "NULL"),
+
+# brand new PIDs initialization
+("PID_00_P",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_00_I",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_00_D",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_00_Min",      -PID_MAX,   PID_MIN,    PID_MIN,    "f", "default",     "NULL"),
+("PID_00_Max",      PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_00_proc",     0,          0,          1,          "u", "default",     "NULL"),
+
+("PID_01_P",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_01_I",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_01_D",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_01_Min",      -PID_MAX,   PID_MIN,    PID_MIN,    "f", "default",     "NULL"),
+("PID_01_Max",      PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_01_proc",     0,          0,          1,          "u", "default",     "NULL"),
+
+("PID_02_P",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_02_I",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_02_D",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_02_Min",      -PID_MAX,   PID_MIN,    PID_MIN,    "f", "default",     "NULL"),
+("PID_02_Max",      PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_02_proc",     0,          0,          1,          "u", "default",     "NULL"),
+
+("PID_03_P",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_03_I",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_03_D",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_03_Min",      -PID_MAX,   PID_MIN,    PID_MIN,    "f", "default",     "NULL"),
+("PID_03_Max",      PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_03_proc",     0,          0,          1,          "u", "default",     "NULL"),
+
+("PID_04_P",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_04_I",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_04_D",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_04_Min",      -PID_MAX,   PID_MIN,    PID_MIN,    "f", "default",     "NULL"),
+("PID_04_Max",      PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_04_proc",     0,          0,          1,          "u", "default",     "NULL"),
+
+("PID_05_P",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_05_I",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_05_D",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_05_Min",      -PID_MAX,   PID_MIN,    PID_MIN,    "f", "default",     "NULL"),
+("PID_05_Max",      PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_05_proc",     0,          0,          1,          "u", "default",     "NULL"),
+
+("PID_06_P",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_06_I",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_06_D",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_06_Min",      -PID_MAX,   PID_MIN,    PID_MIN,    "f", "default",     "NULL"),
+("PID_06_Max",      PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_06_proc",     0,          0,          1,          "u", "default",     "NULL"),
+
+("PID_07_P",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_07_I",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_07_D",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_07_Min",      -PID_MAX,   PID_MIN,    PID_MIN,    "f", "default",     "NULL"),
+("PID_07_Max",      PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_07_proc",     0,          0,          1,          "u", "default",     "NULL"),
+
+("PID_08_P",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_08_I",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_08_D",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_08_Min",      -PID_MAX,   PID_MIN,    PID_MIN,    "f", "default",     "NULL"),
+("PID_08_Max",      PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_08_proc",     0,          0,          1,          "u", "default",     "NULL"),
+
+("PID_09_P",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_09_I",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_09_D",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_09_Min",      -PID_MAX,   PID_MIN,    PID_MIN,    "f", "default",     "NULL"),
+("PID_09_Max",      PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_09_proc",     0,          0,          1,          "u", "default",     "NULL"),
+
+("PID_10_P",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_10_I",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_10_D",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_10_Min",      -PID_MAX,   PID_MIN,    PID_MIN,    "f", "default",     "NULL"),
+("PID_10_Max",      PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_10_proc",     0,          0,          1,          "u", "default",     "NULL"),
+
+("PID_11_P",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_11_I",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_11_D",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_11_Min",      -PID_MAX,   PID_MIN,    PID_MIN,    "f", "default",     "NULL"),
+("PID_11_Max",      PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_11_proc",     0,          0,          1,          "u", "default",     "NULL"),
+
+("PID_12_P",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_12_I",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_12_D",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_12_Min",      -PID_MAX,   PID_MIN,    PID_MIN,    "f", "default",     "NULL"),
+("PID_12_Max",      PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_12_proc",     0,          0,          1,          "u", "default",     "NULL"),
+
+("PID_13_P",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_13_I",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_13_D",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_13_Min",      -PID_MAX,   PID_MIN,    PID_MIN,    "f", "default",     "NULL"),
+("PID_13_Max",      PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_13_proc",     0,          0,          1,          "u", "default",     "NULL"),
+
+("PID_14_P",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_14_I",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_14_D",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_14_Min",      -PID_MAX,   PID_MIN,    PID_MIN,    "f", "default",     "NULL"),
+("PID_14_Max",      PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_14_proc",     0,          0,          1,          "u", "default",     "NULL"),
+
+("PID_15_P",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_15_I",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_15_D",        PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_15_Min",      -PID_MAX,   PID_MIN,    PID_MIN,    "f", "default",     "NULL"),
+("PID_15_Max",      PID_MIN,    PID_MIN,    PID_MAX,    "f", "default",     "NULL"),
+("PID_15_proc",     0,          0,          1,          "u", "default",     "NULL"),
+
+("PID_vm_scale_00", -10000,     1,          10000,      "f", "default",     "NULL"),
+("PID_vm_scale_01", -10000,     1,          10000,      "f", "default",     "NULL"),
+("PID_vm_scale_02", -10000,     1,          10000,      "f", "default",     "NULL"),
+("PID_vm_scale_03", -10000,     1,          10000,      "f", "default",     "NULL"),
+
+
 
 #/* intervals between sending different data (mS) */
 ("T_raw_imu",       SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "Interval of sending this data in milliseconds.\\nSet it to 0 for disabling"),

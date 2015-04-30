@@ -10,7 +10,7 @@ namespace control {
  */
 class ReceiverPPM : public Receiver {
 public:
-  void start(const uint32_t *timeout);
+  void start(void);
   void stop(void);
   void update(RecevierOutput &result);
 };

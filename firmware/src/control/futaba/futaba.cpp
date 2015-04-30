@@ -4,7 +4,6 @@
 #include "geometry.hpp"
 #include "param_registry.hpp"
 #include "mavlink_local.hpp"
-#include "override_level_enum.hpp"
 #include "futaba.hpp"
 
 using namespace control;
@@ -14,16 +13,6 @@ using namespace control;
  * DEFINES
  ******************************************************************************
  */
-/**
- *
- */
-typedef enum {
-  RC_OVERRIDE_NONE,
-  RC_OVERRIDE_HIGH,
-  RC_OVERRIDE_MEDIUM,
-  RC_OVERRIDE_LOW,
-  RC_OVERRIDE_ENUM_END
-}rc_override_level_t;
 
 /*
  ******************************************************************************
@@ -53,96 +42,58 @@ typedef enum {
 /**
  *
  */
-static msg_t futaba2high(RecevierOutput const &recv, FutabaOutput &result) {
-
-  memcpy(result.ch, recv.ch, sizeof(recv.ch));
-
-  result.man = ManualSwitch::semiauto;
-  for (size_t i=0; i<PID_CHAIN_ENUM_END; i++)
-    result.ol[i] = OverrideLevel::high;
-
-  return MSG_OK;
+float pwm_normalize(uint16_t v, float shift, float scale) {
+  return putinrange(((float)v - shift) / scale, -1.0f, 1.0f);
 }
 
 /**
  *
  */
-static msg_t futaba2medium(RecevierOutput const &recv, FutabaOutput &result) {
+void Futaba::process_man_tumbler(RecevierOutput const &recv, ManualSwitch &man) {
 
-  memcpy(result.ch, recv.ch, sizeof(recv.ch));
-
-  result.man = ManualSwitch::semiauto;
-  for (size_t i=0; i<PID_CHAIN_ENUM_END; i++)
-    result.ol[i] = OverrideLevel::medium;
-
-  return MSG_OK;
-}
-
-/**
- *
- */
-static msg_t futaba2low(RecevierOutput const &recv, FutabaOutput &result) {
-
-  memcpy(result.ch, recv.ch, sizeof(recv.ch));
-
-  result.man = ManualSwitch::semiauto;
-  for (size_t i=0; i<PID_CHAIN_ENUM_END; i++)
-    result.ol[i] = OverrideLevel::low;
-
-  return MSG_OK;
-}
-
-/**
- *
- */
-msg_t Futaba::semiauto_interpret(RecevierOutput const &recv,
-                                 FutabaOutput &result) {
-  msg_t ret = MSG_OK;
-
-  switch(*override){
-  case RC_OVERRIDE_HIGH:
-    ret = futaba2high(recv, result);
-    break;
-  case RC_OVERRIDE_MEDIUM:
-    ret = futaba2medium(recv, result);
-    break;
-  case RC_OVERRIDE_LOW:
-    ret = futaba2low(recv, result);
-    break;
+  /* manual switch will be processed separately because I still have no
+   * ideas how to do this elegantly inside ACS. */
+  if (-1 == *map_man)
+    man = ManualSwitch::fullauto;
+  else {
+    uint16_t tmp = recv.ch[*map_man];
+    if (recv.data_valid) {
+      man = static_cast<ManualSwitch>(manual_switch.update(tmp));
+    }
   }
-
-  return ret;
 }
 
 /**
  *
  */
-msg_t Futaba::man_switch_interpret(RecevierOutput const &recv,
-                                   FutabaOutput &result) {
-  msg_t ret = MSG_OK;
+static void scale(RecevierOutput const &recv, ACSInput &result) {
+  static_assert(ACS_INPUT_futaba_raw_end - ACS_INPUT_futaba_raw_00 ==
+      MAX_RC_CHANNELS, "Checker for allowing loop based conversion");
 
-  switch(recv.man) {
-  case ManualSwitch::manual:
-    memcpy(result.ch, recv.ch, sizeof(recv.ch));
-    result.man = ManualSwitch::manual;
-    for (size_t i=0; i<PID_CHAIN_ENUM_END; i++)
-      result.ol[i] = OverrideLevel::bypass;
-    ret = MSG_OK;
-    break;
+  float *out = &result.ch[ACS_INPUT_futaba_raw_00];
 
-  case ManualSwitch::fullauto:
-    result.man = ManualSwitch::fullauto;
-    for (size_t i=0; i<PID_CHAIN_ENUM_END; i++)
-      result.ol[i] = OverrideLevel::none;
-    ret = MSG_OK;
-    break;
-
-  case ManualSwitch::semiauto:
-    ret = semiauto_interpret(recv, result);
-    break;
+  if (recv.data_valid) {
+    for (size_t i=0; i<MAX_RC_CHANNELS; i++) {
+      out[i] = pwm_normalize(recv.ch[i], recv.normalize_shift, recv.normalize_scale);
+    }
   }
+}
 
-  return ret;
+/**
+ *
+ */
+void Futaba::recevier2futaba(RecevierOutput const &recv, ACSInput &result) {
+
+  process_man_tumbler(recv, result.futaba_man);
+
+  /* first check errors */
+  if (recv.data_valid)
+    error_rate(0);
+  else
+    error_rate(100);
+
+  result.futaba_good = hyst.check(error_rate.get());
+  scale(recv, result);
 }
 
 /*
@@ -154,15 +105,7 @@ msg_t Futaba::man_switch_interpret(RecevierOutput const &recv,
  *
  */
 Futaba::Futaba(void) {
-
-  static_assert(OverrideLevel::high ==
-      static_cast<OverrideLevel>(RC_OVERRIDE_HIGH),   "");
-  static_assert(OverrideLevel::medium ==
-      static_cast<OverrideLevel>(RC_OVERRIDE_MEDIUM), "");
-  static_assert(OverrideLevel::low ==
-      static_cast<OverrideLevel>(RC_OVERRIDE_LOW),    "");
-//  static_assert(OverrideLevel::bypass ==
-//      static_cast<OverrideLevel>(RC_OVERRIDE_BYPASS), "");
+  return;
 }
 
 /**
@@ -172,9 +115,10 @@ void Futaba::start(void) {
 
   param_registry.valueSearch("RC_timeout",  &timeout);
   param_registry.valueSearch("RC_override", &override);
+  param_registry.valueSearch("RC_map_man",  &map_man);
 
-  receiver_rc.start(timeout);
-  receiver_mavlink.start(timeout);
+  receiver_rc.start();
+  receiver_mavlink.start();
 
   ready = true;
 }
@@ -193,20 +137,20 @@ void Futaba::stop(void){
 /**
  * @brief   Process all receivers in priorities order (higher to lower)
  */
-msg_t Futaba::update(FutabaOutput &result, float dT) {
+void Futaba::update(ACSInput &result, float dT) {
   (void)dT;
   RecevierOutput recv;
 
   osalDbgCheck(ready);
 
   receiver_rc.update(recv);
-  if (RECEIVER_STATUS_NO_ERRORS == recv.status)
-    return man_switch_interpret(recv, result);
+  recevier2futaba(recv, result);
+  if (result.futaba_good == true)
+    return;
 
   receiver_mavlink.update(recv);
-  if (RECEIVER_STATUS_NO_ERRORS == recv.status)
-    return man_switch_interpret(recv, result);
-
-  return MSG_TIMEOUT;
+  recevier2futaba(recv, result);
+  if (result.futaba_good == true)
+    return;
 }
 

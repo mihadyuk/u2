@@ -14,7 +14,6 @@
  ******************************************************************************
  */
 #define ADIS_START_TIME_MS        560
-#define ADIS_SPI                  SPID1
 #define ADIS_WAIT_TIMEOUT         MS2ST(200)
 
 /* some address definitions */

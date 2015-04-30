@@ -4,10 +4,10 @@
 #include "i2c_sensor.hpp"
 #include "marg_data.hpp"
 
-#define ak8975addr       0x0C
+#define AK8975_I2C_ADDR       0x0C
 
 /* buffers depth */
-#define AK_RX_DEPTH 14
+#define AK8975_RX_DEPTH       14
 
 class AK8975: protected I2CSensor {
 public:
@@ -26,7 +26,7 @@ private:
   bool hw_init_full(void);
   bool hw_init_fast(void);
   msg_t start_measurement(void);
-  uint8_t rxbuf[AK_RX_DEPTH];
+  uint8_t rxbuf[AK8975_RX_DEPTH];
   float cache[3];
   int16_t cache_raw[3];
 };

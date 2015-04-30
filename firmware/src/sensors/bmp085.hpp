@@ -4,7 +4,7 @@
 #include "alpha_beta.hpp"
 #include "i2c_sensor.hpp"
 
-#define bmp085addr          0b1110111
+#define BMP085_I2C_ADDR     0b1110111
 
 #define BMP085_RX_DEPTH     24
 #define BMP085_TX_DEPTH     4

@@ -7,6 +7,8 @@
 #include "cli.hpp"
 #include "cli_cmd.hpp"
 
+#include "firmware_version.h"
+
 /*
  ******************************************************************************
  * DEFINES
@@ -175,6 +177,9 @@ thread_t* uname_clicmd(int argc, const char * const * argv, SerialDriver *sdp){
   chprintf(chp, "Build time:   %s%s%s\r\n", __DATE__, " - ", __TIME__);
 #endif
 #endif
+  cli_println("GIT info:     ");
+  cli_println(commit_hash);
+  cli_println(commit_date);
   return NULL;
 }
 

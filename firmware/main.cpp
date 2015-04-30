@@ -38,7 +38,7 @@ Giovanni
 #include "global_flags.h"
 #include "fault_handlers.h"
 #include "mavlink_local.hpp"
-#include "gps_eb500.hpp"
+#include "eb500.hpp"
 #include "sanity.hpp"
 #include "i2c_local.hpp"
 #include "nvram_local.hpp"
@@ -55,9 +55,7 @@ Giovanni
 #include "mission_receiver.hpp"
 #include "mavlink_local.hpp"
 #include "endianness.h"
-//#include "attitude_unit_rover.hpp"
 #include "acs.hpp"
-#include "stabilizer/stabilizer.hpp"
 #include "drivetrain/drivetrain.hpp"
 #include "exti_local.hpp"
 #include "ahrs.hpp"
@@ -88,9 +86,9 @@ memory_heap_t ThdHeap;
 static uint8_t link_thd_buf[THREAD_HEAP_SIZE + sizeof(stkalign_t)];
 
 /* State vector of system. Calculated mostly in IMU, used mostly in ACS */
-__CCM__ static StateVector state_vector;
+__CCM__ static ACSInput acs_in;
 __CCM__ static control::Drivetrain drivetrain;
-static control::ACS acs(drivetrain, state_vector);
+static control::ACS acs(drivetrain, acs_in);
 
 
 MissionReceiver mission_receiver;
@@ -100,14 +98,13 @@ TlmSender tlm_sender;
 static LinkMgr link_mgr;
 MavLogger mav_logger;
 Ahrs ahrs;
-BMP085 bmp_085(&I2CD_SLOW, bmp085addr);
+BMP085 bmp_085(&I2CD_SLOW, BMP085_I2C_ADDR);
 
 
 
 #include "maxsonar.hpp"
 #include "pps.hpp"
 #include "speedometer.hpp"
-#include "gps_eb500.hpp"
 #include "mpxv.hpp"
 __CCM__ static MaxSonar maxsonar;
 
@@ -136,11 +133,13 @@ __CCM__ static MPXV mpxv;
  *******************************************************************************
  *******************************************************************************
  */
-
+volatile uint8_t data[8];
 int main(void) {
 
   halInit();
   System::init();
+
+  blinker.bootIndication();
 
   endianness_test();
   osalThreadSleepMilliseconds(300);
@@ -156,19 +155,18 @@ int main(void) {
   ADCInitLocal();
   gps_power_on();
   xbee_reset_clear();
-  eeprom_power_on();
+  nvram_power_on();
   osalThreadSleepMilliseconds(10);
 
   chHeapObjectInit(&ThdHeap, (uint8_t *)MEM_ALIGN_NEXT(link_thd_buf), THREAD_HEAP_SIZE);
 
   Exti.start();
   time_keeper.start();
-  blinker.start();
-  SanityControlInit();
   I2CInitLocal();
   NvramInit();
   ParametersInit();   /* read parameters from EEPROM via I2C */
   wpdb.start();
+  SanityControlInit();
 
   PwrMgrInit();
   if (PwrMgr6vGood())
@@ -191,22 +189,38 @@ int main(void) {
   pps.start();
   mpxv.start();
 
-  while (TRUE) {
-    ahrs.get(ahrs_data, MS2ST(200));
+  blinker.start();
+
+  static const SPIConfig spicfg = {
+    NULL,
+    GPIOB,
+    GPIOB_SPI2_NSS_UEXT,
+    SPI_CR1_BR_1
+  };
+
+  spiStart(&UEXT_SPI, &spicfg);
+  palClearPad(GPIOB, GPIOB_SPI2_NSS_UEXT);
+  data[0] = spiPolledExchange(&UEXT_SPI, 0x05);
+  data[1] = spiPolledExchange(&UEXT_SPI, 0x00);
+  data[2] = spiPolledExchange(&UEXT_SPI, 0x00);
+  data[3] = spiPolledExchange(&UEXT_SPI, 0x00);
+
+  data[4] = spiPolledExchange(&UEXT_SPI, 0x00);
+  data[5] = spiPolledExchange(&UEXT_SPI, 0x00);
+  data[6] = spiPolledExchange(&UEXT_SPI, 0x00);
+  data[7] = spiPolledExchange(&UEXT_SPI, 0x00);
+
+  palSetPad(GPIOB, GPIOB_SPI2_NSS_UEXT);
+  spiStop(&UEXT_SPI);
+
+  while (true) {
+    ahrs.get(ahrs_data, acs_in, MS2ST(200));
     GPSGetData(gps_data);
     speedometer.update(speed, path, ahrs_data.dt);
     acs.update(ahrs_data.dt);
     mpxv.get();
 
     PwrMgrUpdate();
-
-    //osalThreadSleepMilliseconds(200);
-//    if (ATTITUDE_UNIT_UPDATE_RESULT_OK == attitude_unit.update()){
-//      sins.update();
-//      if (ACS_STATUS_ERROR == acs.update())
-//        chDbgPanic("ACS. Broken.");
-//      drivetrain.update();
-//    }
   }
 
   return 0;

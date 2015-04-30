@@ -1,13 +1,13 @@
-#include <ctime>
-#include <cstdio>
-#include <cstdlib>
+#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "main.h"
 #include "pads.h"
 #include "global_flags.h"
 #include "time_keeper.hpp"
 #include "exti_local.hpp"
-#include "gps_eb500.hpp"
+#include "eb500.hpp"
 
 /*
  * Время работает следующим образом:

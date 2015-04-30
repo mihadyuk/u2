@@ -6,7 +6,6 @@
 #include "message.hpp"
 #include "nav_sphere.hpp"
 #include "nav_plane.hpp"
-#include "state_vector.hpp"
 #include "acs_mission_item.hpp"
 #include "semiauto_vector.hpp"
 #include "std_maneur.hpp"
@@ -48,7 +47,7 @@ typedef enum {
  */
 class Navigator {
 public:
-  Navigator(const StateVector &state_vector,
+  Navigator(const ACSInput &state_vector,
       const SemiautoVector &semiauto_vector, Stabilizer &stabilizer);
   navigator_status_t update(void);
   void start(void);
@@ -92,7 +91,7 @@ private:
   navigator_status_t _EmergencyJump(uint16_t seq);
 
   navigator_state_t state;
-  const StateVector &state_vector;
+  const ACSInput &state_vector;
   const SemiautoVector &semiauto_vector;
   systime_t semiauto_first_call;
   Stabilizer &stabilizer;

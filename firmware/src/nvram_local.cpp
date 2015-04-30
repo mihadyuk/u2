@@ -56,7 +56,9 @@ Fs nvram_fs(nvram_mtd);
  * EXPORTED FUNCTIONS
  ******************************************************************************
  */
-
+/**
+ *
+ */
 void NvramInit(void){
 
   if (OSAL_SUCCESS != nvram_fs.mount()){

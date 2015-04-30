@@ -223,7 +223,7 @@ navigator_status_t Navigator::reload_mission(void){
 /**
  *
  */
-Navigator::Navigator(const StateVector &state_vector,
+Navigator::Navigator(const ACSInput &state_vector,
     const SemiautoVector &semiauto_vector, Stabilizer &stabilizer) :
 state_vector(state_vector),
 semiauto_vector(semiauto_vector),
