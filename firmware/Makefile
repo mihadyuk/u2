@@ -142,10 +142,7 @@ CONTROLSRC =\
 
 NVRAMSRC = src/nvram_local.cpp \
 		lib/24aa/src/mtd.cpp \
-		lib/24aa/src/blk_dev.cpp \
 		lib/24aa/src/bus_i2c.cpp \
-		lib/24aa/src/mtd_at24.cpp \
-		lib/24aa/src/mtd_fm24.cpp \
 		lib/24aa/src/nvram_fs.cpp \
 		lib/24aa/src/nvram_file.cpp
 
