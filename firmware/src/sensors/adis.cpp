@@ -319,6 +319,7 @@ void Adis::param_update(void) {
  *
  */
 float Adis::dt(void) {
+#warning "May be incorrect result when 0 value in 'smplrtdiv_current'"
   return smplrtdiv_current / static_cast<float>(ADIS_INTERNAL_SAMPLE_RATE);
 }
 

@@ -68,7 +68,6 @@ Fs nvram_fs(nvram_mtd);
  *
  */
 void NvramInit(void){
-
   if (OSAL_SUCCESS != nvram_fs.mount()){
     nvram_fs.mkfs();
     if (OSAL_SUCCESS != nvram_fs.mount()){
