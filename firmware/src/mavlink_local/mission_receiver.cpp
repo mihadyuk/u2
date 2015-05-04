@@ -22,9 +22,10 @@ using namespace chibios_rt;
 #define MIN_POINTS_PER_MISSION        2       /* minimal number of waypoints in valid mission */
 #define TARGET_RADIUS                 param2  /* convenience alias */
 
-#define MISSION_RETRY_CNT             5
-#define MISSION_CHECK_PERIOD          MS2ST(50)
+#define MISSION_RETRY_CNT             10
+#define MISSION_CHECK_PERIOD          MS2ST(100)
 #define MISSION_TIMEOUT               MS2ST(2000)
+#define MISSION_SEND_PAUSE            MS2ST(100)
 
 /*
  ******************************************************************************
@@ -163,6 +164,8 @@ static void send_mission_item(uint16_t seq) {
   wpdb.read(&mavlink_out_mission_item_struct, seq);
   mavlink_out_mission_item_struct.target_component = destCompID;
   mavlink_out_mission_item_struct.target_system = GROUND_SYSTEM_ID;
+
+  osalThreadSleep(MISSION_SEND_PAUSE);
 
   if (mission_item_mail.free()) {
     mission_item_mail.fill(&mavlink_out_mission_item_struct,

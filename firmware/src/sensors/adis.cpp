@@ -319,13 +319,14 @@ void Adis::param_update(void) {
  *
  */
 float Adis::dt(void) {
+#warning "May be incorrect result when 0 value in 'smplrtdiv_current'"
   return smplrtdiv_current / static_cast<float>(ADIS_INTERNAL_SAMPLE_RATE);
 }
 
 /**
  *
  */
-static THD_WORKING_AREA(AdisThreadWA, 256) __CCM__;
+__CCM__ static THD_WORKING_AREA(AdisThreadWA, 256);
 THD_FUNCTION(AdisThread, arg) {
   chRegSetThreadName("Adis");
   Adis *self = static_cast<Adis *>(arg);

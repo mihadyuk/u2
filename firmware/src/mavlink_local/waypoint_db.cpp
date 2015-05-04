@@ -66,7 +66,7 @@ uint16_t WpDB::start(void) {
   osalDbgCheck(nullptr != dbfile);
 
   dbfile->setPosition(0);
-  count = dbfile->getU16();
+  dbfile->get(&count);
 
   for (size_t seq=0; seq<count; seq++) {
     offset = HEADER_SIZE + seq * WAYPOINT_FOOTPRINT;
@@ -164,7 +164,7 @@ uint16_t WpDB::getCapacity(void)  const {
 bool WpDB::seal(void){
 
   dbfile->setPosition(0);
-  size_t result = dbfile->putU16(count);
+  size_t result = dbfile->put(count);
 
   if (HEADER_SIZE == result)
     return OSAL_SUCCESS;
@@ -179,7 +179,7 @@ bool WpDB::reset(void) {
   size_t result = 0;
   count = 0;
   dbfile->setPosition(0);
-  result = dbfile->putU16(0);
+  result = dbfile->put((uint16_t)0);
   if (HEADER_SIZE == result)
     return OSAL_SUCCESS;
   else

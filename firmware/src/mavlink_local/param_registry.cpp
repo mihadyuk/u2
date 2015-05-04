@@ -311,7 +311,8 @@ bool ParamRegistry::syncParam(const char* key) {
                 "Parameter not found in EEPROM");
 
   /* write only if value differ */
-  v_eeprom.u32 = ParamFile->getU32();
+  status = ParamFile->get(&v_eeprom.u32);
+  osalDbgAssert(status == sizeof(v_eeprom.u32), "read failed");
   v_ram = *param_db[i].valuep;
   if (v_eeprom.u32 != v_ram.u32) {
     eeprombuf.v = v_ram;
