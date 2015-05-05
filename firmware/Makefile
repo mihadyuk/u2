@@ -5,7 +5,7 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -O0 -ggdb -fomit-frame-pointer -falign-functions=16
+  USE_OPT = -O2 -ggdb -fomit-frame-pointer -falign-functions=16
 endif
 
 # C specific options here (added to USE_OPT).
@@ -142,8 +142,8 @@ CONTROLSRC =\
 
 NVRAMSRC = src/nvram_local.cpp \
 		lib/24aa/src/mtd.cpp \
-		lib/24aa/src/bus_i2c.cpp \
-		lib/24aa/src/bus_spi.cpp \
+		lib/24aa/src/mtd24.cpp \
+		lib/24aa/src/mtd25.cpp \
 		lib/24aa/src/nvram_fs.cpp \
 		lib/24aa/src/nvram_file.cpp
 

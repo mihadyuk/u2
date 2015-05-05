@@ -1,8 +1,8 @@
 #include "main.h"
+#include "pads.h"
 
 #include "nvram_local.hpp"
-#include "mtd.hpp"
-#include "bus_i2c.hpp"
+#include "mtd24.hpp"
 
 using namespace chibios_rt;
 using namespace nvram;
@@ -13,29 +13,40 @@ using namespace nvram;
  ******************************************************************************
  */
 
+#define MTD_WRITE_BUF_SIZE                  (64 + 2)
+
 /*
  ******************************************************************************
  * EXTERNS
  ******************************************************************************
  */
 
+static void mtd_led_on(Mtd *mtd) {
+  (void)mtd;
+  red_led_on();
+}
+
+static void mtd_led_off(Mtd *mtd) {
+  (void)mtd;
+  red_led_off();
+}
+
 static const MtdConfig fram_cfg = {
     0,
     1,
     FRAM_SIZE,
     2,
-    NvramType::fm24,
+    mtd_led_on,
+    mtd_led_off,
     nullptr,
     nullptr,
-    nullptr,
-    nullptr,
-    nullptr,
-    nullptr
+    mtd_led_on,
+    mtd_led_off,
 };
 
-static BusI2C fram_bus(&FRAM_I2CD, FRAM_I2C_ADDR);
+static uint8_t workbuf[MTD_WRITE_BUF_SIZE];
 
-static Mtd nvram_mtd(fram_bus, fram_cfg);
+static Mtd24 nvram_mtd(fram_cfg, workbuf, MTD_WRITE_BUF_SIZE, &FRAM_I2CD, FRAM_I2C_ADDR);
 
 Fs nvram_fs(nvram_mtd);
 

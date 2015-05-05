@@ -43,7 +43,4 @@ static inline void warning_led_off(void)      {blue_led_off();}
 static inline void error_led_on(void)         {red_led_on();}
 static inline void error_led_off(void)        {red_led_off();}
 
-static inline void mtd_led_on(void)           {error_led_on();}
-static inline void mtd_led_off(void)          {error_led_off();}
-
 #endif /* PADS_H_ */

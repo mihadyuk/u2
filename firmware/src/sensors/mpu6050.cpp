@@ -1,4 +1,5 @@
 #include "main.h"
+#include "pads.h"
 
 #include "exti_local.hpp"
 #include "mpu6050.hpp"
