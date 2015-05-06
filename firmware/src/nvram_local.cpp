@@ -3,6 +3,7 @@
 
 #include "nvram_local.hpp"
 #include "mtd24.hpp"
+#include "nvram_test.hpp"
 
 using namespace chibios_rt;
 using namespace nvram;
@@ -78,7 +79,13 @@ Fs nvram_fs(nvram_mtd);
 /**
  *
  */
-void NvramInit(void){
+void NvramInit(void) {
+
+  nvramTest(nvram_mtd);
+
+
+
+
   if (OSAL_SUCCESS != nvram_fs.mount()){
     nvram_fs.mkfs();
     if (OSAL_SUCCESS != nvram_fs.mount()){
