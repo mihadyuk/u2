@@ -245,7 +245,7 @@ static void command_long_handler(const mavMail *recv_mail) {
 /**
  * Receive messages with parameters and transmit parameters by requests.
  */
-static THD_WORKING_AREA(ParametersThreadWA, 400);
+static THD_WORKING_AREA(ParametersThreadWA, 512);
 static THD_FUNCTION(ParametersThread, arg){
   chRegSetThreadName("ParamWorker");
 

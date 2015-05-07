@@ -35,6 +35,7 @@ Giovanni
 
 #include "main.h"
 
+#include "pads.h"
 #include "global_flags.h"
 #include "fault_handlers.h"
 #include "mavlink_local.hpp"

@@ -30,7 +30,7 @@ public:
   }
 
   /**
-   * @brief     Return sizeof of single buffer.
+   * @brief     Return size of of single buffer.
    */
   size_t size(void) {
     return L * sizeof(T);
@@ -41,7 +41,7 @@ private:
    *
    */
   void constructor_impl(int pattern) {
-    static_assert(Count > 1, "Multibuffer with zero count value is pointless");
+    static_assert(Count > 1, "Multibuffer with 1 count value is pointless");
     memset(internal_buf, pattern, sizeof(internal_buf));
     head = 0;
   }
@@ -54,7 +54,7 @@ private:
  * @brief   Convenient class allowing to add portions of data to the
  *          multiple buffer without gaps on the buffers' boundaries.
  */
-template <typename T, int L, int Count>
+template <typename T, size_t L, size_t Count>
 class MultiBufferAccumulator {
 public:
   /**
@@ -86,7 +86,7 @@ public:
       memcpy(tip, data, free);// first portion to the end of current buffer
       ret = multi_buffer.current();
       tip = multi_buffer.next();
-      memcpy(tip, data+free, remainder);// second to the beginign of the next buffer
+      memcpy(tip, data+free, remainder);// second to the beginning of the next buffer
       tip += remainder;
     }
     else { /* free == len */

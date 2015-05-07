@@ -1,7 +1,9 @@
 #include "main.h"
+#include "pads.h"
 
 #include "nvram_local.hpp"
-#include "fram_mtd.hpp"
+#include "mtd24.hpp"
+#include "nvram_test.hpp"
 
 using namespace chibios_rt;
 using namespace nvram;
@@ -12,22 +14,40 @@ using namespace nvram;
  ******************************************************************************
  */
 
+#define MTD_WRITE_BUF_SIZE                  (64 + 2)
+
 /*
  ******************************************************************************
  * EXTERNS
  ******************************************************************************
  */
 
-static const FramConfig fram_cfg = {
-  FRAM_SIZE
+static void mtd_led_on(Mtd *mtd) {
+  (void)mtd;
+  red_led_on();
+}
+
+static void mtd_led_off(Mtd *mtd) {
+  (void)mtd;
+  red_led_off();
+}
+
+static const MtdConfig fram_cfg = {
+    0,
+    1,
+    FRAM_SIZE,
+    2,
+    mtd_led_on,
+    mtd_led_off,
+    nullptr,
+    nullptr,
+    mtd_led_on,
+    mtd_led_off,
 };
 
-static const MtdConfig mtd_cfg = {
-  &FRAM_I2CD,
-  FRAM_I2C_ADDR,
-};
+static uint8_t workbuf[MTD_WRITE_BUF_SIZE];
 
-static FramMtd nvram_mtd(&mtd_cfg, &fram_cfg);
+static Mtd24 nvram_mtd(fram_cfg, workbuf, MTD_WRITE_BUF_SIZE, &FRAM_I2CD, FRAM_I2C_ADDR);
 
 Fs nvram_fs(nvram_mtd);
 
@@ -59,7 +79,12 @@ Fs nvram_fs(nvram_mtd);
 /**
  *
  */
-void NvramInit(void){
+void NvramInit(void) {
+
+  nvramTest(nvram_mtd);
+
+
+
 
   if (OSAL_SUCCESS != nvram_fs.mount()){
     nvram_fs.mkfs();
