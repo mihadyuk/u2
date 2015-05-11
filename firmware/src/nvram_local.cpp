@@ -15,7 +15,7 @@ using namespace nvram;
  ******************************************************************************
  */
 
-#define MTD_WRITE_BUF_SIZE                  (256 + 8)
+#define MTD_WRITE_BUF_SIZE                  (64 + 2)
 
 /*
  ******************************************************************************
@@ -52,8 +52,6 @@ static uint8_t workbuf[MTD_WRITE_BUF_SIZE];
 static Mtd24 nvram_mtd(fram_cfg, workbuf, MTD_WRITE_BUF_SIZE, &FRAM_I2CD, FRAM_I2C_ADDR);
 
 Fs nvram_fs(nvram_mtd);
-
-
 
 
 #define S25_PAGE_SIZE     256
@@ -104,19 +102,18 @@ static const SPIConfig spicfg = {
  *
  */
 static void fram_test(void) {
-
-
+  //nvramTestSuite(nvram_mtd);
 }
 
 /**
  *
  */
 static void eeprom_test(void) {
-  Mtd25 eeprom_mtd(eeprom_cfg, workbuf, MTD_WRITE_BUF_SIZE, &UEXT_SPI);
-
-  spiStart(&UEXT_SPI, &spicfg);
-  nvramTest(eeprom_mtd);
-  spiStop(&UEXT_SPI);
+//  Mtd25 eeprom_mtd(eeprom_cfg, workbuf, MTD_WRITE_BUF_SIZE, &UEXT_SPI);
+//
+//  spiStart(&UEXT_SPI, &spicfg);
+//  nvramTestSuite(eeprom_mtd);
+//  spiStop(&UEXT_SPI);
 }
 
 /*
