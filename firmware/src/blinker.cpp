@@ -191,8 +191,11 @@ Blinker::Blinker(void) {
  *
  */
 void Blinker::start(void){
-  chThdTerminate(this->redworker);
-  chThdWait(this->redworker);
+
+  if (nullptr != this->redworker) {
+    chThdTerminate(this->redworker);
+    chThdWait(this->redworker);
+  }
 
   this->redworker = chThdCreateStatic(RedBlinkThreadWA,
           sizeof(RedBlinkThreadWA),

@@ -12,8 +12,8 @@ public:
   void error_post(const int16_t *array);
 private:
   bool ready = false;
-  thread_t *redworker = NULL;
-  thread_t *blueworker = NULL;
+  thread_t *redworker = nullptr;
+  thread_t *blueworker = nullptr;
 };
 
 extern Blinker blinker;
