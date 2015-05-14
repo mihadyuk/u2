@@ -21,10 +21,30 @@
 #include "float.h" /* for FLT_EPSILON macro */
 
 /**
+ *
+ */
+template<typename T>
+struct crosstrack_t {
+  crosstrack_t(T xtd, T atd) : xtd(xtd), atd(atd){;}
+  T xtd; // cross track
+  T atd; // along track
+};
+
+/**
+ *
+ */
+template<typename T>
+struct crs_dist_t {
+  crs_dist_t(T crs, T dist) : crs(crs), dist(dist){;}
+  T crs;
+  T dist;
+};
+
+/**
  * Great circle distance between 2 points
  */
 template<typename T>
-T dist_cyrcle(T lat1, T lon1, T lat2, T lon2){
+T dist_cyrcle(T lat1, T lon1, T lat2, T lon2) {
   T dist;
   T slat;
   T slon;
@@ -41,27 +61,26 @@ T dist_cyrcle(T lat1, T lon1, T lat2, T lon2){
  * course between points
  */
 template<typename T>
-T course_cyrcle(T lat1, T lon1, T lat2, T lon2, T dist){
+T course_cyrcle(T lat1, T lon1, T lat2, T lon2, T dist) {
 
   /* We obtain the initial course, tc1, (at point 1) from point 1 to
   point 2 by the following. The formula fails if the initial point is a
   pole. We can special case this with: */
   T crs;
 
-  if(cos(lat1) < static_cast<T>(FLT_EPSILON)){
+  if (cos(lat1) < static_cast<T>(FLT_EPSILON)) {
     if(lat1 > 0)
       return PI;        //  starting from N pole
     else
       return PI2;       //  starting from S pole
   }
 
-  /* For starting points other than the poles: */
-  if(sin(lon2-lon1) < 0){
+  if (sin(lon2-lon1) < 0) { /* For starting points other than the poles: */
     crs = (sin(lat2)-sin(lat1)*cos(dist)) / (sin(dist)*cos(lat1));
     crs = putinrange(crs, -1, 1);
     crs = acos(crs);
   }
-  else{
+  else {
     crs = (sin(lat2)-sin(lat1)*cos(dist)) / (sin(dist)*cos(lat1));
     crs = putinrange(crs, -1, 1);
     crs = static_cast<T>(PI2) - acos(crs);
@@ -78,13 +97,13 @@ T course_cyrcle(T lat1, T lon1, T lat2, T lon2, T dist){
  * @note    All values in radians!
  */
 template<typename T>
-class NavSphere{
+class NavSphere {
 public:
-  NavSphere(void){ready = false;};
-  bool updatePoints(T latA, T lonA, T latB, T lonB);
-  bool crosstrack(T latD, T lonD, T *xtd, T *atd);
-  bool course(T latD, T lonD, T *crsres, T *distres);
-  bool isOvershot(T latD, T lonD);
+  NavSphere(void) : ready(false){;}
+  void updatePoints(T latA, T lonA, T latB, T lonB);
+  crosstrack_t<T> crosstrack(T latD, T lonD);
+  crs_dist_t<T> course_distance(T latD, T lonD);
+  T targetDistance(T latD, T lonD);
 
 private:
   T latA, lonA, latB, lonB; // radians
@@ -96,7 +115,7 @@ private:
  * @brief   Update points of path
  */
 template<typename T>
-bool NavSphere<T>::updatePoints(T latA, T lonA, T latB, T lonB) {
+void NavSphere<T>::updatePoints(T latA, T lonA, T latB, T lonB) {
   this->latA = latA;
   this->lonA = lonA;
   this->latB = latB;
@@ -104,8 +123,6 @@ bool NavSphere<T>::updatePoints(T latA, T lonA, T latB, T lonB) {
   this->distAB = dist_cyrcle(latA, lonA, latB, lonB);
   this->crsAB = course_cyrcle(latA, lonA, latB, lonB, this->distAB);
   this->ready = true;
-
-  return OSAL_SUCCESS;
 }
 
 /**
@@ -118,9 +135,9 @@ bool NavSphere<T>::updatePoints(T latA, T lonA, T latB, T lonB) {
  * (positive XTD means right of course, negative means left)
  */
 template<typename T>
-bool NavSphere<T>::crosstrack(T latD, T lonD, T *xtdres, T *atdres) {
+crosstrack_t<T> NavSphere<T>::crosstrack(T latD, T lonD) {
 
-  chDbgCheck(true == ready);
+  osalDbgCheck(ready);
 
   T xtd, atd;
   T distAD = dist_cyrcle(this->latA, this->lonA, latD, lonD);
@@ -152,54 +169,39 @@ bool NavSphere<T>::crosstrack(T latD, T lonD, T *xtdres, T *atdres) {
     atd = asin(atd / cos(xtd));
   }
 
-  /**/
-  if (nullptr != xtdres) {
-    if (isinf(xtd) || isnan(xtd))
-      *xtdres = 0;
-    else
-      *xtdres = xtd;
-  }
-  if (nullptr != atdres) {
-    if (isinf(atd) || isnan(atd))
-      *atdres = 0;
-    else
-      *atdres = atd;
-  }
+  /* */
+  if (isnan(xtd) || isinf(xtd))
+    xtd = 0;
+  if (isnan(atd) || isinf(atd))
+    atd = 0;
 
-  return OSAL_SUCCESS;
+  return crosstrack_t<T>(xtd, atd);
 }
 
 /**
- * course from current point D to target point B
+ * calculate: 1) course from current point D to target point B
+ *            2) distance from current point D to target point B
  */
 template<typename T>
-bool NavSphere<T>::course(T latD, T lonD, T *crsres, T *distres) {
+crs_dist_t<T> NavSphere<T>::course_distance(T latD, T lonD) {
+
+  osalDbgCheck(ready);
+
   T distDB = dist_cyrcle(latD, lonD, this->latB, this->lonB);
   T crs = course_cyrcle(latD, lonD, this->latB, this->lonB, distDB);
-  *crsres = crs;
-  *distres = distDB;
 
-  return OSAL_SUCCESS;
+  return crs_dist_t<T>(crs, distDB);
 }
 
 /**
- * @brief     Check overshot.
- * @details   Current point is D. Overshot detected if distance from A to B
- *            is less than distance from A to D.
- *
- * @retval    true if overshot detected.
+ * @brief     Calculate distance from current point D to target point B.
  */
 template<typename T>
-bool NavSphere<T>::isOvershot(T latD, T lonD) {
-  T distAD = dist_cyrcle(this->latA, this->lonA, latD, lonD);
+T NavSphere<T>::targetDistance(T latD, T lonD) {
 
-  if (isinf(distAD) || isnan(distAD))
-    return true; // something goint too wrong. Presume overshot
+  osalDbgCheck(ready);
 
-  if (this->distAB < distAD)
-    return true; // overshot
-  else
-    return false;
+  return dist_cyrcle(latD, lonD, this->latB, this->lonB);
 }
 
 #endif /* NAV_SPHERE_HPP_ */

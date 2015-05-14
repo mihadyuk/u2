@@ -107,6 +107,7 @@ BMP085 bmp_085(&I2CD_SLOW, BMP085_I2C_ADDR);
 #include "pps.hpp"
 #include "speedometer.hpp"
 #include "mpxv.hpp"
+#include "calibrator.hpp"
 __CCM__ static MaxSonar maxsonar;
 
 __CCM__ static Speedometer speedometer;
@@ -118,8 +119,10 @@ __CCM__ static ahrs_data_t ahrs_data;
 
 __CCM__ static PPS pps;
 __CCM__ static MPXV mpxv;
+__CCM__ static Calibrator calibrator;
 
 
+extern mavlink_system_info_t   mavlink_system_info_struct;
 
 /*
  ******************************************************************************
@@ -139,7 +142,7 @@ int main(void) {
   halInit();
   System::init();
 
-  //blinker.bootIndication();
+  blinker.bootIndication();
 
   endianness_test();
   osalThreadSleepMilliseconds(300);
@@ -184,6 +187,7 @@ int main(void) {
   osalThreadSleepMilliseconds(1);
 
   ahrs.start();
+  calibrator.start();
   maxsonar.start();
   speedometer.start();
   acs.start();
@@ -192,14 +196,24 @@ int main(void) {
 
   blinker.start();
 
-  while (true) {
-    ahrs.get(ahrs_data, acs_in, MS2ST(200));
-    GPSGetData(gps_data);
-    speedometer.update(speed, path, ahrs_data.dt);
-    acs.update(ahrs_data.dt);
-    mpxv.get();
+  mavlink_system_info_struct.state = MAV_STATE_STANDBY;
 
+  while (true) {
+    float dT;
+    ahrs.get(ahrs_data, acs_in, MS2ST(200));
+    dT = ahrs_data.dt;
+    GPSGetData(gps_data);
+    speedometer.update(speed, path, dT);
+    mpxv.get();
     PwrMgrUpdate();
+
+    if (MAV_STATE_CALIBRATING == mavlink_system_info_struct.state) {
+      CalibratorState cs = calibrator.update(ahrs_data);
+      if (CalibratorState::idle == cs)
+        mavlink_system_info_struct.state = MAV_STATE_STANDBY;
+    }
+    else
+      acs.update(dT);
   }
 
   return 0;

@@ -1,9 +1,8 @@
 #include "main.h"
-#include "engine.hpp"
-#include "float2pwm.hpp"
-#include "param_registry.hpp"
 
-using namespace control;
+#include "calibrator.hpp"
+
+using namespace chibios_rt;
 
 /*
  ******************************************************************************
@@ -28,7 +27,6 @@ using namespace control;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-const int16_t THRUST_DISARMED_VALUE = 1500;
 
 /*
  ******************************************************************************
@@ -43,65 +41,49 @@ const int16_t THRUST_DISARMED_VALUE = 1500;
  * EXPORTED FUNCTIONS
  ******************************************************************************
  */
-
 /**
  *
  */
-Engine::Engine(PWM &pwm) :
-pwm(pwm),
-state(EngineState::uninit)
-{
-  return;
+void Calibrator::start(void) {
+
+  state = CalibratorState::idle;
 }
 
 /**
  *
  */
-void Engine::start(void) {
+void Calibrator::stop(void) {
 
-  param_registry.valueSearch("SRV_thr_min", &thr_min);
-  param_registry.valueSearch("SRV_thr_mid", &thr_mid);
-  param_registry.valueSearch("SRV_thr_max", &thr_max);
-
-  state = EngineState::disarmed;
+  state = CalibratorState::uninit;
 }
+
+static const systime_t fake_calibration_time = S2ST(6);
 
 /**
  *
  */
-void Engine::stop(void) {
-  state = EngineState::uninit;
+CalibratorState Calibrator::update(const ahrs_data_t &data) {
+  (void)data;
+
+  osalDbgCheck(CalibratorState::uninit != state);
+
+  if (CalibratorState::idle == state) {
+    this->start_time = chVTGetSystemTimeX();
+    state = CalibratorState::active;
+  }
+  else if (CalibratorState::active == state) {
+    systime_t end = chVTGetSystemTimeX() + fake_calibration_time;
+    if (! chVTIsSystemTimeWithinX(start_time, end)) {
+      state = CalibratorState::idle;
+    }
+  }
+  else {
+    osalSysHalt("Uninit");
+  }
+
+  return this->state;
 }
 
-/**
- *
- */
-void Engine::update(const DrivetrainImpact &impact) {
-  int16_t thrust;
 
-  osalDbgCheck(EngineState::uninit != state);
 
-  thrust = float2pwm(impact.ch[IMPACT_THR], *thr_min, *thr_mid, *thr_max);
-
-  if (EngineState::armed == state)
-    pwm.update(thrust, PWM_CH_THR);
-  else if (EngineState::disarmed == state)
-    pwm.update(THRUST_DISARMED_VALUE, PWM_CH_THR);
-  else
-    osalSysHalt("Unhandled value");
-}
-
-/**
- *
- */
-void Engine::arm(void) {
-  state = EngineState::armed;
-}
-
-/**
- *
- */
-void Engine::disarm(void) {
-  state = EngineState::disarmed;
-}
 

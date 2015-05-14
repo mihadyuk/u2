@@ -55,11 +55,21 @@ Navigator::Navigator(void) {
  */
 NavigatorStatus Navigator::update(ACSInput &acs_in) {
   osalDbgCheck(ready);
+  float lat = acs_in.ch[ACS_INPUT_lat];
+  float lon = acs_in.ch[ACS_INPUT_lon];
 
-  sphere.crosstrack(acs_in.ch[ACS_INPUT_lat], acs_in.ch[ACS_INPUT_lon],
-                    &acs_in.ch[ACS_INPUT_dZ], nullptr);
+  /* get cross track error */
+  auto crosstrack = sphere.crosstrack(lat, lon);
+  acs_in.ch[ACS_INPUT_dZ] = crosstrack.xtd;
 
-  return NavigatorStatus::navigate;
+  /* get target distance and cource */
+  auto crc_dist = sphere.course_distance(lat, lon);
+
+  /* make dicision */
+  if (crc_dist.dist < 10)
+    return NavigatorStatus::navigate;
+  else
+    return NavigatorStatus::navigate;
 }
 
 /**

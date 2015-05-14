@@ -95,7 +95,7 @@ struct ACSInput {
   }
   float ch[ACS_INPUT_ENUM_END];
   bool futaba_good = false;
-  control::ManualSwitch futaba_man = control::ManualSwitch::fullauto;
+  control::ManualSwitch futaba_man_switch = control::ManualSwitch::fullauto;
 };
 
 /**

@@ -136,6 +136,7 @@ CONTROLSRC =\
 		src/control/futaba/receiver_synth.cpp \
 		src/control/futaba/receiver_mavlink.cpp \
 		src/control/acs.cpp \
+		src/control/acs_commands.cpp \
 		src/control/mission_executor.cpp \
 		src/control/navigator.cpp \
 		src/control/stab_vm.cpp
@@ -181,6 +182,7 @@ SENSORSRC = src/i2c_local.cpp \
 		src/sensors/pwr_mgr.cpp \
 		src/sensors/mpxv.cpp \
 		src/sensors/pps.cpp \
+		src/sensors/calibrator.cpp \
           
 CLISRC = src/cli/cli.cpp \
 		src/cli/cli_cmd.cpp \

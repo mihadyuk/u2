@@ -143,7 +143,7 @@ void MissionExecutor::maneuver(void) {
  *
  */
 void MissionExecutor::navigate(void) {
-  return;
+  navigator.update(this->acs_in);
 }
 
 /*
@@ -154,7 +154,9 @@ void MissionExecutor::navigate(void) {
 /**
  *
  */
-MissionExecutor::MissionExecutor(void) {
+MissionExecutor::MissionExecutor(ACSInput &acs_in) :
+acs_in(acs_in)
+{
   state = MissionState::uninit;
   memset(segment, 0, sizeof(segment));
 }
@@ -177,13 +179,21 @@ void MissionExecutor::stop(void) {
 /**
  *
  */
-void MissionExecutor::takeoff(void) {
+bool MissionExecutor::takeoff(void) {
 
-  wpdb.read(&this->segment[0], 0);
-  wpdb.read(&this->segment[1], 1);
-  wpdb.read(&this->segment[2], 2);
+  if (wpdb.getCount() < 3) {
+    mavlink_dbg_print(MAV_SEVERITY_INFO, "ACS: mission must be at least 3 WP long", MAV_COMP_ID_SYSTEM_CONTROL);
+    return OSAL_FAILED;
+  }
+  else {
+    wpdb.read(&this->segment[0], 0);
+    wpdb.read(&this->segment[1], 1);
+    wpdb.read(&this->segment[2], 2);
 
-  state = MissionState::navigate;
+    state = MissionState::navigate;
+
+    return OSAL_SUCCESS;
+  }
 }
 
 /**
@@ -198,12 +208,9 @@ MissionState MissionExecutor::update(float dT) {
   switch (state) {
   case MissionState::idle:
     break;
-
   case MissionState::navigate:
     this->navigate();
     break;
-
-  /**/
   default:
     break;
   }

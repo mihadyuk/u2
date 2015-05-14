@@ -6,16 +6,32 @@
 
 namespace control {
 
+/**
+ *
+ */
+enum class EngineState {
+  uninit,
+  disarmed,
+  armed
+};
+
+/**
+ *
+ */
 class Engine {
 public:
   Engine(PWM &pwm);
   void start(void);
   void stop(void);
+  void arm(void);
+  void disarm(void);
   void update(const DrivetrainImpact &impact);
 private:
   PWM &pwm;
-  bool ready = false;
-  const uint32_t *thr_min = nullptr, *thr_mid = nullptr, *thr_max = nullptr;
+  EngineState state;
+  const uint32_t *thr_min = nullptr;
+  const uint32_t *thr_mid = nullptr;
+  const uint32_t *thr_max = nullptr;
 };
 
 } /* namespace */

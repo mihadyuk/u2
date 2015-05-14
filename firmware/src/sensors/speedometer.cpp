@@ -1,5 +1,3 @@
-#pragma GCC optimize "-O0"
-
 #include "main.h"
 #include "pads.h"
 #include "speedometer.hpp"

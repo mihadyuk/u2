@@ -12,9 +12,7 @@ namespace control {
 enum class MissionState {
   uninit,
   idle,
-  navigate,
-  takeoff,
-  land
+  navigate
 };
 
 /**
@@ -22,10 +20,10 @@ enum class MissionState {
  */
 class MissionExecutor {
 public:
-  MissionExecutor(void);
+  MissionExecutor(ACSInput &acs_in);
   void start(void);
   void stop(void);
-  void takeoff(void);
+  bool takeoff(void);
   MissionState update(float dT);
   void setHome(void);
 private:
@@ -42,6 +40,7 @@ private:
   void navigate(void);
   mavlink_mission_item_t segment[NAVIGATOR_SEGMENT_LEN];
   MissionState state;
+  ACSInput &acs_in;
 };
 
 } /* namespace */

@@ -48,6 +48,8 @@
 #define TIME_BOOT_MS ((chVTGetSystemTimeX()) / ((CH_CFG_ST_FREQUENCY) / 1000))
 #endif
 
+#define ForbiddenDestructor() osalSysHalt("Destruction forbidden.")
+
 ///* stop watchdog timer in debugging mode */
 ///*unlock PR register*/
 ///*set 1.6384s timeout*/

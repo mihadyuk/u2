@@ -79,12 +79,15 @@ EvtSource event_parameters_updated;
 /**
  *
  */
-void MavlinkInit(void){
-  uint32_t *type = NULL;
+void MavlinkInit(void) {
+  uint32_t *type = nullptr;
+  uint32_t *id = nullptr;
+
   param_registry.valueSearch("SYS_mavtype", &type);
+  param_registry.valueSearch("SYS_id", &id);
 
   /* mavlink initial values */
-  mavlink_system_struct.sysid  = 20;
+  mavlink_system_struct.sysid  = *id;
   mavlink_system_struct.compid = MAV_COMP_ID_ALL;
 
   mavlink_system_info_struct.state  = MAV_STATE_BOOT;
