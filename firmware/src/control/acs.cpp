@@ -31,7 +31,7 @@ using namespace control;
  ******************************************************************************
  */
 
-static const uint8_t __auto_bytecode[] = {
+static const uint8_t auto_bytecode[] = {
     INPUT,  ACS_INPUT_roll,
     OUTPUT, IMPACT_RUD,
     TERM,
@@ -110,20 +110,6 @@ static const uint8_t loiter_bytecode[] = {
  ******************************************************************************
  ******************************************************************************
  */
-/**
- *
- */
-const uint8_t* ACS::select_bytecode(MissionState mi_state) {
-
-  switch(mi_state) {
-  case MissionState::navigate:
-    return __auto_bytecode;
-    break;
-  default:
-    return manual_bytecode;
-    break;
-  }
-}
 
 /**
  *
@@ -202,36 +188,104 @@ void ACS::loop_standby(float dT, FutabaResult fr) {
 }
 
 /**
+ * @brief   Currently it does nothing.
+ */
+void ACS::loop_takeoff(float dT, FutabaResult fr) {
+  (void)dT;
+  (void)fr;
+  NavLine<float> line;
+
+  if (OSAL_SUCCESS == mission.takeoff(line)) {
+    navigator.loadLine(line);
+    state = ACSState::navigate;
+  }
+}
+
+/**
+ *
+ */
+static void nav_out_to_acs_in(const NavOut<float> &nav_out, ACSInput &acs_in) {
+  acs_in.ch[ACS_INPUT_dZ] = nav_out.xtd;
+}
+
+/**
  * @brief   Execute mission.
  */
-void ACS::loop_navigate(float dT, FutabaResult fr) {
-  MissionState mi_state;
-  const uint8_t *auto_bytecode;
+void ACS::loop_navigate(float dT) {
+
+  MissionStatus mi_status;
+
+  NavIn<float> nav_in(acs_in.ch[ACS_INPUT_lat], acs_in.ch[ACS_INPUT_lon]);
+  NavOut<float> nav_out;
 
   /* */
-  switch (fr) {
-  case FutabaResult::fullauto:
-    mi_state = mission.update(dT);
-    auto_bytecode = select_bytecode(mi_state);
-    stabilizer.update(dT, auto_bytecode);
-    mode = MAV_MODE_FLAG_AUTO_ENABLED;
-    break;
+  navigator.update(nav_in, nav_out);
+  mi_status = mission.update(dT, nav_out);
 
-  case FutabaResult::semiauto:
-    stabilizer.update(dT, semiauto_bytecode);
-    mode = MAV_MODE_FLAG_STABILIZE_ENABLED;
-    break;
+  nav_out_to_acs_in(nav_out, this->acs_in);
+  stabilizer.update(dT, auto_bytecode);
 
-  case FutabaResult::manual:
-    stabilizer.update(dT, manual_bytecode);
-    mode = MAV_MODE_FLAG_MANUAL_INPUT_ENABLED;
-    break;
-
-  case FutabaResult::emergency:
-    stabilizer.update(dT, emergency_bytecode);
-    mode = MAV_MODE_FLAG_AUTO_ENABLED;
-    break;
+  if (mi_status == reached) {
+    mission.currentLine(line);
+    navigator.loadLine(line);
   }
+}
+
+///**
+// * @brief   Execute mission.
+// */
+//void ACS::loop_navigate(float dT, FutabaResult fr) {
+//  MissionState mi_state;
+//  const uint8_t *auto_bytecode;
+//
+//  /* */
+//  switch (fr) {
+//  case FutabaResult::fullauto:
+//    mi_state = mission.update(dT);
+//    auto_bytecode = select_bytecode(mi_state);
+//    stabilizer.update(dT, auto_bytecode);
+//    mode = MAV_MODE_FLAG_AUTO_ENABLED;
+//    break;
+//
+//  case FutabaResult::semiauto:
+//    stabilizer.update(dT, semiauto_bytecode);
+//    mode = MAV_MODE_FLAG_STABILIZE_ENABLED;
+//    break;
+//
+//  case FutabaResult::manual:
+//    stabilizer.update(dT, manual_bytecode);
+//    mode = MAV_MODE_FLAG_MANUAL_INPUT_ENABLED;
+//    break;
+//
+//  case FutabaResult::emergency:
+//    stabilizer.update(dT, emergency_bytecode);
+//    mode = MAV_MODE_FLAG_AUTO_ENABLED;
+//    break;
+//  }
+//}
+
+/**
+ * @brief   Something goes wrong. Pull hand break or eject 'chute.
+ */
+void ACS::loop_manual(float dT, FutabaResult fr) {
+  (void)dT;
+  (void)fr;
+
+  osalSysHalt("unrealized");
+  stabilizer.update(dT, emergency_bytecode);
+  mode = MAV_MODE_FLAG_AUTO_ENABLED;
+}
+
+/**
+ * @brief   Something goes wrong. Pull hand break or eject 'chute.
+ */
+void ACS::loop_semiauto(float dT, FutabaResult fr) {
+  (void)dT;
+  (void)fr;
+
+  osalSysHalt("unrealized");
+  stabilizer.update(dT, emergency_bytecode);
+  mode = MAV_MODE_FLAG_AUTO_ENABLED;
 }
 
 /**
@@ -324,7 +378,7 @@ ACSState ACS::update(float dT) {
     loop_standby(dT, fr);
     break;
   case ACSState::navigate:
-    loop_navigate(dT, fr);
+    loop_navigate(dT);
     break;
   case ACSState::loiter:
     loop_loiter(dT, fr);

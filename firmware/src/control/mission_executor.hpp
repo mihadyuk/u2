@@ -3,6 +3,9 @@
 
 #include "mavlink_local.hpp"
 #include "navigator.hpp"
+#include "navigator_types.hpp"
+
+#define NAVIGATOR_SEGMENT_LEN     3
 
 namespace control {
 
@@ -18,13 +21,22 @@ enum class MissionState {
 /**
  *
  */
+enum class MissionStatus {
+  flite,
+  reached,
+  mission_end
+};
+
+/**
+ *
+ */
 class MissionExecutor {
 public:
   MissionExecutor(ACSInput &acs_in);
   void start(void);
   void stop(void);
-  bool takeoff(void);
-  MissionState update(float dT);
+  bool takeoff(NavLine<float> &line);
+  MissionStatus update(float dT);
   void setHome(void);
 private:
   void broadcast_mission_current(uint16_t seq);
@@ -35,7 +47,6 @@ private:
   void fake_last_point(void);
   void load_mission_item(void);
   event_listener_t el_mission_updated;
-  Navigator navigator;
   void maneuver(void);
   void navigate(void);
   mavlink_mission_item_t segment[NAVIGATOR_SEGMENT_LEN];

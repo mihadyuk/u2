@@ -71,7 +71,6 @@ void MissionExecutor::what_to_do_here(void) {
   case (MAV_CMD_NAV_LOITER_UNLIM || MAV_CMD_NAV_LOITER_TURNS ||  MAV_CMD_NAV_LOITER_TIME):
     /* we must loter here according to mission plan */
     mavlink_dbg_print(MAV_SEVERITY_INFO, "ACS: start loitering", MAV_COMP_ID_SYSTEM_CONTROL);
-    navigator.start_loiter();
     break;
 
   case MAV_CMD_NAV_WAYPOINT:
@@ -116,7 +115,7 @@ void MissionExecutor::load_mission_item(void) {
   if (wpdb.getCount() <= (mi_next->seq + 1)){ // no more items
     /* if we fall here than last mission was not 'land'. System do not know
      * what to do so start unlimited loitering */
-    navigator.start_loiter();
+    //navigator.start_loiter();
   }
   else {
     next = mi_next->seq + 1;
@@ -125,7 +124,7 @@ void MissionExecutor::load_mission_item(void) {
     load_status = wpdb.read(mi_next, next);
     if (OSAL_SUCCESS != load_status){
       /* something goes wrong with waypoint loading */
-      navigator.start_loiter();
+      //navigator.start_loiter();
     }
   }
 
@@ -137,13 +136,6 @@ void MissionExecutor::load_mission_item(void) {
  */
 void MissionExecutor::maneuver(void) {
   return;
-}
-
-/**
- *
- */
-void MissionExecutor::navigate(void) {
-  navigator.update(this->acs_in);
 }
 
 /*
@@ -199,7 +191,7 @@ bool MissionExecutor::takeoff(void) {
 /**
  *
  */
-MissionState MissionExecutor::update(float dT) {
+MissionStatus MissionExecutor::update(float dT) {
 
   osalDbgCheck(MissionState::uninit != state);
 

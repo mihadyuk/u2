@@ -6,6 +6,7 @@
 #include "mav_mail.hpp"
 #include "subscribe_link.hpp"
 #include "mission_executor.hpp"
+#include "navigator.hpp"
 #include "stab_vm.hpp"
 
 namespace control {
@@ -49,12 +50,14 @@ public:
 private:
   void loop_boot(float dT, FutabaResult fr);
   void loop_standby(float dT, FutabaResult fr);
-  void loop_navigate(float dT, FutabaResult fr);
+  void loop_takeoff(float dT, FutabaResult fr);
+  void loop_navigate(float dT);
   void loop_emergency(float dT, FutabaResult fr);
   void loop_loiter(float dT, FutabaResult fr);
+  void loop_manual(float dT, FutabaResult fr);
+  void loop_semiauto(float dT, FutabaResult fr);
   FutabaResult analize_futaba(float dT);
   void message_handler(void);
-  const uint8_t* select_bytecode(MissionState mi_state);
   void command_long_handler(const mavMail *recv_mail);
   void set_mode_handler(const mavMail *recv_mail);
   enum MAV_RESULT alcoi_command_handler(const mavlink_command_long_t *clp);
@@ -65,6 +68,7 @@ private:
   DrivetrainImpact impact;
   Futaba futaba;
   MissionExecutor mission;
+  Navigator navigator;
   StabVM stabilizer;
   chibios_rt::Mailbox<mavMail*, 3> command_mailbox;
   SubscribeLink command_link, set_mode_link;
