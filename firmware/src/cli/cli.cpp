@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "microrl.h"
 
@@ -12,7 +13,7 @@
 #include "time_keeper.hpp"
 //#include "irq_storm.hpp"
 //#include "cli_cal.hpp"
-//#include "dcm_cli.hpp"
+#include "hil_cli.hpp"
 //#include "servo_cli.hpp"
 //#include "sensors_cli.hpp"
 
@@ -56,6 +57,7 @@ static const ShellCmd_t cliutils[] = {
 //    {"dcm",       &dcm_clicmd,        "print DCM in realtime until ^C pressed"},
     {"echo",      &echo_clicmd,       "echo it's input to terminal"},
     {"help",      &help_clicmd,       "this message"},
+    {"hil",       &hil_clicmd,        "HIL applet for manual checks"},
     {"info",      &uname_clicmd,      "system information"},
 //    {"irqstorm",  &irqstorm_clicmd,   "run longterm stability load test"},
     {"loop",      &loop_clicmd,       "command to test ^C fucntionallity"},
@@ -303,6 +305,42 @@ void cli_print(const char *str){
     sdPut(ShellSDp, str[i]);
     i++;
   }
+}
+
+/**
+ * Print routine for microrl.
+ */
+void cli_print(double var) {
+  const size_t N = 33;
+  char buf[N];
+  memset(buf, 0, sizeof(buf));
+
+  snprintf(buf, N-1, "%f", var);
+  cli_print(buf);
+}
+
+/**
+ * Print routine for microrl.
+ */
+void cli_print(unsigned int var) {
+  const size_t N = 33;
+  char buf[N];
+  memset(buf, 0, sizeof(buf));
+
+  snprintf(buf, N-1, "%u", var);
+  cli_print(buf);
+}
+
+/**
+ * Print routine for microrl.
+ */
+void cli_print(int var) {
+  const size_t N = 33;
+  char buf[N];
+  memset(buf, 0, sizeof(buf));
+
+  snprintf(buf, N-1, "%i", var);
+  cli_print(buf);
 }
 
 /**

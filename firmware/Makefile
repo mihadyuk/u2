@@ -5,7 +5,7 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -O2 -ggdb -fomit-frame-pointer -falign-functions=16
+  USE_OPT = -O0 -ggdb -fomit-frame-pointer -falign-functions=16
 endif
 
 # C specific options here (added to USE_OPT).
@@ -112,6 +112,7 @@ CSRC = $(STARTUPSRC) \
        $(CHIBIOS)/os/various/syscalls.c \
        $(CHIBIOS)/os/hal/lib/streams/chprintf.c \
        $(CHIBIOS)/os/hal/lib/streams/memstreams.c \
+       $(CHIBIOS)/community/os/various/bitmap.c \
        lib/uav_utils/endianness.c \
        lib/uav_utils/cpu_load.c \
        lib/uav_utils/crc.c \
@@ -139,7 +140,9 @@ CONTROLSRC =\
 		src/control/acs_commands.cpp \
 		src/control/mission_executor.cpp \
 		src/control/navigator.cpp \
-		src/control/stab_vm.cpp
+		src/control/stab_vm.cpp \
+		src/control/hil.cpp \
+		src/control/hil_cli.cpp \
 
 NVRAMSRC = src/nvram_local.cpp \
 		lib/24aa/src/mtd.cpp \
@@ -234,6 +237,7 @@ INCDIR = $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
          $(CHIBIOS)/os/various \
          $(CHIBIOS)/os/hal/lib/streams \
          $(CHIBIOS)/os/various/cpp_wrappers \
+         $(CHIBIOS)/community/os/various \
          src/sensors \
          lib/microrl/src \
          lib/uav_utils \

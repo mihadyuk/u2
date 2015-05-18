@@ -193,10 +193,8 @@ void ACS::loop_standby(float dT, FutabaResult fr) {
 void ACS::loop_takeoff(float dT, FutabaResult fr) {
   (void)dT;
   (void)fr;
-  NavLine<float> line;
 
-  if (OSAL_SUCCESS == mission.takeoff(line)) {
-    navigator.loadLine(line);
+  if (OSAL_SUCCESS == mission.takeoff()) {
     state = ACSState::navigate;
   }
 }
@@ -204,8 +202,32 @@ void ACS::loop_takeoff(float dT, FutabaResult fr) {
 /**
  *
  */
-static void nav_out_to_acs_in(const NavOut<float> &nav_out, ACSInput &acs_in) {
-  acs_in.ch[ACS_INPUT_dZ] = nav_out.xtd;
+void ACS::reached_handler(void) {
+  bool load_status = OSAL_FAILED;
+
+  switch (mission.getTrgtCmd()) {
+  case MAV_CMD_NAV_WAYPOINT:
+    load_status = mission.loadNext();
+    if (OSAL_FAILED == load_status) {
+      this->state = ACSState::emergency;
+    }
+    break;
+
+  /**/
+  case MAV_CMD_NAV_LOITER_UNLIM:
+  case MAV_CMD_NAV_LOITER_TIME:
+  case MAV_CMD_NAV_LOITER_TURNS:
+    this->state = ACSState::loiter;
+    break;
+
+  /**/
+  default:
+    load_status = mission.loadNext();
+    if (OSAL_FAILED == load_status) {
+      this->state = ACSState::emergency;
+    }
+    break;
+  }
 }
 
 /**
@@ -213,21 +235,29 @@ static void nav_out_to_acs_in(const NavOut<float> &nav_out, ACSInput &acs_in) {
  */
 void ACS::loop_navigate(float dT) {
 
-  MissionStatus mi_status;
+  MissionState mi_status = mission.update();
 
-  NavIn<float> nav_in(acs_in.ch[ACS_INPUT_lat], acs_in.ch[ACS_INPUT_lon]);
-  NavOut<float> nav_out;
-
-  /* */
-  navigator.update(nav_in, nav_out);
-  mi_status = mission.update(dT, nav_out);
-
-  nav_out_to_acs_in(nav_out, this->acs_in);
   stabilizer.update(dT, auto_bytecode);
 
-  if (mi_status == reached) {
-    mission.currentLine(line);
-    navigator.loadLine(line);
+  switch (mi_status) {
+  case MissionState::reached:
+    reached_handler();
+    break;
+
+  /**/
+  case MissionState::completed:
+    this->state = ACSState::loiter;
+    break;
+
+  /**/
+  case MissionState::error:
+    this->state = ACSState::emergency;
+    break;
+
+  /**/
+  default:
+    osalSysHalt("Unhandled case");
+    break;
   }
 }
 

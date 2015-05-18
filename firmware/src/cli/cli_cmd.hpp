@@ -11,5 +11,4 @@ thread_t* reboot_clicmd(int argc, const char * const * argv, SerialDriver *sdp);
 thread_t* sleep_clicmd(int argc, const char * const * argv, SerialDriver *sdp);
 thread_t* selftest_clicmd(int argc, const char * const * argv, SerialDriver *sdp);
 
-
 #endif /* CLI_CMD_H_ */

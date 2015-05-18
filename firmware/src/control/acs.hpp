@@ -56,6 +56,7 @@ private:
   void loop_loiter(float dT, FutabaResult fr);
   void loop_manual(float dT, FutabaResult fr);
   void loop_semiauto(float dT, FutabaResult fr);
+  void reached_handler(void);
   FutabaResult analize_futaba(float dT);
   void message_handler(void);
   void command_long_handler(const mavMail *recv_mail);

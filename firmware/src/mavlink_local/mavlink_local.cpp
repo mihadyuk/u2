@@ -33,6 +33,7 @@ mavlink_heartbeat_t             mavlink_out_heartbeat_struct;
 mavlink_highres_imu_t           mavlink_out_highres_imu_struct;
 mavlink_hil_state_t             mavlink_out_hil_state_struct;
 mavlink_local_position_ned_t    mavlink_out_local_position_ned_struct;
+mavlink_mission_current_t       mavlink_out_mission_current_struct;
 mavlink_nav_controller_output_t mavlink_out_nav_controller_output_struct;
 mavlink_raw_imu_t               mavlink_out_raw_imu_struct;
 mavlink_raw_pressure_t          mavlink_out_raw_pressure_struct;

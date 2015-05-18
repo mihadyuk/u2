@@ -99,7 +99,6 @@ T course_cyrcle(T lat1, T lon1, T lat2, T lon2, T dist) {
 template<typename T>
 class NavSphere {
 public:
-  NavSphere(void) : ready(false){;}
   void updatePoints(T latA, T lonA, T latB, T lonB);
   crosstrack_t<T> crosstrack(T latD, T lonD);
   crs_dist_t<T> course_distance(T latD, T lonD);
@@ -108,7 +107,6 @@ public:
 private:
   T latA, lonA, latB, lonB; // radians
   T crsAB, distAB; // radians
-  bool ready;
 };
 
 /**
@@ -122,7 +120,6 @@ void NavSphere<T>::updatePoints(T latA, T lonA, T latB, T lonB) {
   this->lonB = lonB;
   this->distAB = dist_cyrcle(latA, lonA, latB, lonB);
   this->crsAB = course_cyrcle(latA, lonA, latB, lonB, this->distAB);
-  this->ready = true;
 }
 
 /**
@@ -136,8 +133,6 @@ void NavSphere<T>::updatePoints(T latA, T lonA, T latB, T lonB) {
  */
 template<typename T>
 crosstrack_t<T> NavSphere<T>::crosstrack(T latD, T lonD) {
-
-  osalDbgCheck(ready);
 
   T xtd, atd;
   T distAD = dist_cyrcle(this->latA, this->lonA, latD, lonD);
@@ -185,8 +180,6 @@ crosstrack_t<T> NavSphere<T>::crosstrack(T latD, T lonD) {
 template<typename T>
 crs_dist_t<T> NavSphere<T>::course_distance(T latD, T lonD) {
 
-  osalDbgCheck(ready);
-
   T distDB = dist_cyrcle(latD, lonD, this->latB, this->lonB);
   T crs = course_cyrcle(latD, lonD, this->latB, this->lonB, distDB);
 
@@ -198,8 +191,6 @@ crs_dist_t<T> NavSphere<T>::course_distance(T latD, T lonD) {
  */
 template<typename T>
 T NavSphere<T>::targetDistance(T latD, T lonD) {
-
-  osalDbgCheck(ready);
 
   return dist_cyrcle(latD, lonD, this->latB, this->lonB);
 }

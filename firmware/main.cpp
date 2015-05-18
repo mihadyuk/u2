@@ -108,6 +108,8 @@ BMP085 bmp_085(&I2CD_SLOW, BMP085_I2C_ADDR);
 #include "speedometer.hpp"
 #include "mpxv.hpp"
 #include "calibrator.hpp"
+#include "hil.hpp"
+
 __CCM__ static MaxSonar maxsonar;
 
 __CCM__ static Speedometer speedometer;
@@ -121,6 +123,7 @@ __CCM__ static PPS pps;
 __CCM__ static MPXV mpxv;
 __CCM__ static Calibrator calibrator;
 
+__CCM__ control::HIL hil;
 
 extern mavlink_system_info_t   mavlink_system_info_struct;
 
@@ -200,6 +203,7 @@ int main(void) {
 
   while (true) {
     float dT;
+
     ahrs.get(ahrs_data, acs_in, MS2ST(200));
     dT = ahrs_data.dt;
     GPSGetData(gps_data);
@@ -212,8 +216,10 @@ int main(void) {
       if (CalibratorState::idle == cs)
         mavlink_system_info_struct.state = MAV_STATE_STANDBY;
     }
-    else
+    else {
+      hil.update(acs_in); /* must be called _before_ ACS */
       acs.update(dT);
+    }
   }
 
   return 0;

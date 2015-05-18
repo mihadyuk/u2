@@ -12,8 +12,7 @@ namespace control {
 class Navigator {
 public:
   Navigator(void);
-  void update(const NavIn<float> &in, NavOut<float> &out);
-  void start(void);
+  NavOut<float> update(const NavIn<float> &in);
   void stop(void);
   void loadLine(const NavLine<float> &line);
 private:

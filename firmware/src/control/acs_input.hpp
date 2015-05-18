@@ -35,7 +35,7 @@ typedef enum {
   ACS_INPUT_air_speed,    // m/s
   ACS_INPUT_ground_speed, // m/s
   ACS_INPUT_gsp_speed,    // m/s
-  ACS_INPUT_speed,        // правильная с точки зрения САУ скорость (m/s)
+  ACS_INPUT_speed,        // самая правильная с точки зрения САУ скорость (m/s)
 
   // free accelerations (NED)
   ACS_INPUT_free_ax,
@@ -56,8 +56,9 @@ typedef enum {
   ACS_INPUT_vodo,     // speed from odometer (m/s)
   ACS_INPUT_vair,     // air speed (m/s)
 
-  ACS_INPUT_dZ,
+  ACS_INPUT_dZ,       // cross track error (rad)
   ACS_INPUT_dYaw,
+  ACS_INPUT_trgt_crs, // course to target point (rad)
 
   // raw futaba values (normalized -1..1)
   ACS_INPUT_futaba_raw_00,

@@ -3,6 +3,7 @@
 #include "mission_executor.hpp"
 #include "waypoint_db.hpp"
 #include "mav_dbg.hpp"
+#include "navigator_types.hpp"
 
 using namespace chibios_rt;
 using namespace control;
@@ -12,6 +13,7 @@ using namespace control;
  * DEFINES
  ******************************************************************************
  */
+#define WP_RADIUS     param1
 
 /*
  ******************************************************************************
@@ -58,84 +60,74 @@ void MissionExecutor::broadcast_mission_item_reached(uint16_t seq) {
 /**
  *
  */
-uint16_t MissionExecutor::current_cmd(void) {
-  return segment[1].command;
-}
-
-/**
- *
- */
-void MissionExecutor::what_to_do_here(void) {
-
-  switch(current_cmd()) {
-  case (MAV_CMD_NAV_LOITER_UNLIM || MAV_CMD_NAV_LOITER_TURNS ||  MAV_CMD_NAV_LOITER_TIME):
-    /* we must loter here according to mission plan */
-    mavlink_dbg_print(MAV_SEVERITY_INFO, "ACS: start loitering", MAV_COMP_ID_SYSTEM_CONTROL);
-    break;
-
-  case MAV_CMD_NAV_WAYPOINT:
-    /* this is regular waypoint. Just go to next item */
-    load_mission_item();
-    break;
-
-  default:
-    /* do not know hot to handle it. Just got to next one */
-    load_mission_item();
-    break;
-  }
-}
-
-/**
- *
- */
-uint16_t MissionExecutor::do_jump(void){
-  return 0;
-}
-
-/**
- *
- */
-void MissionExecutor::fake_last_point(void) {
-  segment[2] = segment[1];
-}
-
-/**
- *
- */
-void MissionExecutor::load_mission_item(void) {
+bool MissionExecutor::load_next_mission_item(void) {
 
   bool load_status = OSAL_FAILED;
   uint16_t next;
 
-  mavlink_mission_item_t *mi_next = &this->segment[2];
+  prev = trgt;
+  trgt = third;
 
-  segment[0] = segment[1];
-  segment[1] = segment[2];
-
-  if (wpdb.getCount() <= (mi_next->seq + 1)){ // no more items
+  if (wpdb.getCount() <= (third.seq + 1)){ // no more items
     /* if we fall here than last mission was not 'land'. System do not know
      * what to do so start unlimited loitering */
-    //navigator.start_loiter();
+    third = trgt;
+    third.x += 0.0001;
+    third.y += 0.0001;
+    third.command = MAV_CMD_NAV_LOITER_UNLIM;
+    state = MissionState::completed;
   }
   else {
-    next = mi_next->seq + 1;
-
-    /* try to load */
-    load_status = wpdb.read(mi_next, next);
-    if (OSAL_SUCCESS != load_status){
-      /* something goes wrong with waypoint loading */
-      //navigator.start_loiter();
-    }
+    next = third.seq + 1;
+    load_status = wpdb.read(&third, next);
   }
 
-  broadcast_mission_current(segment[1].seq);
+  if (OSAL_SUCCESS == load_status) {
+    state = MissionState::navigate;
+    broadcast_mission_current(trgt.seq);
+  }
+  else
+    state = MissionState::error;
+
+  return load_status;
 }
 
 /**
  *
  */
-void MissionExecutor::maneuver(void) {
-  return;
+static void nav_out_to_acs_in(const NavOut<float> &nav_out, ACSInput &acs_in) {
+  acs_in.ch[ACS_INPUT_dZ] = nav_out.xtd;
+}
+
+/**
+ * @brief   Detects waypoint reachable status.
+ * @details Kind of hack. It increases effective radius if
+ *          crosstrack error more than R/1.5
+ */
+bool MissionExecutor::wp_reached(const NavOut<float> &nav_out) {
+
+  float R = nav_out.xtd * 1.5;
+
+  if (R < trgt.WP_RADIUS)
+    R = trgt.WP_RADIUS;
+  /* else branch unneeded here because R already contains correct value */
+
+  return nav_out.dist < R;
+}
+
+/**
+ *
+ */
+void MissionExecutor::navigate(void) {
+
+  NavIn<float> nav_in(acs_in.ch[ACS_INPUT_lat], acs_in.ch[ACS_INPUT_lon]);
+  NavOut<float> nav_out = navigator.update(nav_in);
+
+  nav_out_to_acs_in(nav_out, this->acs_in);
+
+  if (wp_reached(nav_out)) {
+    load_next_mission_item();
+  }
 }
 
 /*
@@ -147,10 +139,12 @@ void MissionExecutor::maneuver(void) {
  *
  */
 MissionExecutor::MissionExecutor(ACSInput &acs_in) :
-acs_in(acs_in)
-{
-  state = MissionState::uninit;
-  memset(segment, 0, sizeof(segment));
+state(MissionState::uninit),
+acs_in(acs_in) {
+
+  /* fill home point with invalid data. This denotes it uninitialized. */
+  memset(&home, 0xFF, sizeof(home));
+  home.seq = -1;
 }
 
 /**
@@ -165,44 +159,72 @@ void MissionExecutor::start(void) {
  */
 void MissionExecutor::stop(void) {
   state = MissionState::uninit;
-  memset(segment, 0, sizeof(segment));
 }
 
 /**
  *
  */
-bool MissionExecutor::takeoff(void) {
+void MissionExecutor::artificial_takeoff_point(void) {
 
-  if (wpdb.getCount() < 3) {
-    mavlink_dbg_print(MAV_SEVERITY_INFO, "ACS: mission must be at least 3 WP long", MAV_COMP_ID_SYSTEM_CONTROL);
+  memset(&prev, 0, sizeof(prev));
+
+  prev.x = acs_in.ch[ACS_INPUT_lat];
+  prev.y = acs_in.ch[ACS_INPUT_lon];
+  prev.z = acs_in.ch[ACS_INPUT_alt];
+  prev.command = MAV_CMD_NAV_TAKEOFF;
+  prev.frame = MAV_FRAME_GLOBAL;
+  prev.seq = -1;
+
+  /* store launch point */
+  launch = prev;
+
+  /* set launch point as home if it was not set yet from ground */
+  if (uint16_t(-1) == home.seq) {
+    home = launch;
+    home.command = MAV_CMD_NAV_WAYPOINT;
+  }
+}
+
+
+/**
+ * @brief   Samples current coordinates as prev WP than append
+ *          first 2 points from mission.
+ */
+bool MissionExecutor::takeoff(void) {
+  bool read_status1 = OSAL_FAILED;
+  bool read_status2 = OSAL_FAILED;
+
+  if (wpdb.getCount() < 2) {
+    mavlink_dbg_print(MAV_SEVERITY_INFO, "ACS: mission must be at least 2 WP long", MAV_COMP_ID_SYSTEM_CONTROL);
     return OSAL_FAILED;
   }
   else {
-    wpdb.read(&this->segment[0], 0);
-    wpdb.read(&this->segment[1], 1);
-    wpdb.read(&this->segment[2], 2);
-
-    state = MissionState::navigate;
-
-    return OSAL_SUCCESS;
+    artificial_takeoff_point();
+    read_status1 = wpdb.read(&this->trgt,  0);
+    read_status2 = wpdb.read(&this->third, 1);
+    if ((OSAL_SUCCESS != read_status1) || (OSAL_SUCCESS != read_status2))
+      return OSAL_FAILED;
+    else {
+      NavLine<float> line(prev.x, prev.y, trgt.x, trgt.y);
+      navigator.loadLine(line);
+      state = MissionState::navigate;
+      return OSAL_SUCCESS;
+    }
   }
 }
 
 /**
  *
  */
-MissionStatus MissionExecutor::update(float dT) {
+MissionState MissionExecutor::update(void) {
 
   osalDbgCheck(MissionState::uninit != state);
 
-  (void)dT;
-
   switch (state) {
-  case MissionState::idle:
-    break;
   case MissionState::navigate:
     this->navigate();
     break;
+
   default:
     break;
   }
@@ -214,7 +236,58 @@ MissionStatus MissionExecutor::update(float dT) {
  *
  */
 void MissionExecutor::setHome(void) {
+
+  setHome(acs_in.ch[ACS_INPUT_lat], acs_in.ch[ACS_INPUT_lon], acs_in.ch[ACS_INPUT_alt]);
+}
+
+/**
+ *
+ */
+void MissionExecutor::setHome(float lat, float lon, float alt) {
+
+  memset(&home, 0, sizeof(home));
+
+  home.x = lat;
+  home.y = lon;
+  home.z = alt;
+  home.command = MAV_CMD_NAV_WAYPOINT;
+  home.frame = MAV_FRAME_GLOBAL;
+  home.seq = -1;
+}
+
+/**
+ *
+ */
+bool MissionExecutor::loadNext(void) {
+  return this->load_next_mission_item();
+}
+
+/**
+ *
+ */
+void MissionExecutor::goHome(void) {
   return;
 }
 
+/**
+ *
+ */
+void MissionExecutor::returnToLaunch(void) {
+  return;
+}
 
+/**
+ *
+ */
+bool MissionExecutor::jumpTo(uint16_t seq) {
+  (void)seq;
+
+  return OSAL_FAILED;
+}
+
+/**
+ *
+ */
+uint16_t MissionExecutor::getTrgtCmd(void) {
+  return trgt.command;
+}

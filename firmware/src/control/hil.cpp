@@ -1,9 +1,9 @@
 #include "main.h"
+#include "acs_input.hpp"
+#include "hil.hpp"
 
-#include "navigator.hpp"
-#include "param_registry.hpp"
-
-namespace control {
+using namespace chibios_rt;
+using namespace control;
 
 /*
  ******************************************************************************
@@ -46,36 +46,38 @@ namespace control {
 /**
  *
  */
-Navigator::Navigator(void) {
-  return;
+HIL::HIL(void) {
+
 }
 
 /**
  *
  */
-NavOut<float> Navigator::update(const NavIn<float> &in) {
+void HIL::update(ACSInput &acs_in) {
 
-  osalDbgCheck(ready);
-
-  auto crosstrack = sphere.crosstrack(in.lat, in.lon);
-  auto crs_dist = sphere.course_distance(in.lat, in.lon);
-
-  return NavOut<float>(crosstrack.xtd, crosstrack.atd, crs_dist.dist, crs_dist.crs);
+  for (size_t i=0; i<ACS_INPUT_ENUM_END; i++) {
+    if (bitmapGet(&this->bmp.bitmap, i) > 0) {
+      acs_in.ch[i] = this->shadow.ch[i];
+    }
+  }
 }
 
 /**
  *
  */
-void Navigator::loadLine(const NavLine<float> &line) {
-  ready = true;
-  sphere.updatePoints(line.latA, line.lonA, line.latB, line.lonB);
+void HIL::disable_all(void) {
+  bitmapObjectInit(&this->bmp.bitmap, 0);
 }
 
 /**
  *
  */
-void Navigator::stop(void) {
-  ready = false;
+void HIL::override(float val, state_vector_enum addr) {
+  osalDbgCheck(addr < ACS_INPUT_ENUM_END);
+
+  shadow.ch[addr] = val;
 }
 
-} /* namespace */
+
+
+
