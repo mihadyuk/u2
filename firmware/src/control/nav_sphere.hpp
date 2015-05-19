@@ -19,7 +19,7 @@
  * North Americans I will take North latitudes and West
  * longitudes as positive and South and East negative.
  *
- * So we must change it a bit for WGS-84 compliance: invert sign of longitude.
+ * So we have changed it a bit for WGS-84 compliance: invert sign of longitude.
  */
 
 #ifndef NAV_SPHERE_HPP_
@@ -60,7 +60,7 @@ T dist_cyrcle(T lat1, T lon1, T lat2, T lon2) {
   T slon;
 
   slat = sin((lat1 - lat2) / 2);
-  slon = sin((lon1 - lon2) / 2);
+  slon = sin((lon2 - lon1) / 2);
   dist = sqrt(slat*slat + cos(lat1) * cos(lat2) * slon*slon);
   dist = putinrange(dist, 0, 1);
 
@@ -85,8 +85,8 @@ T course_cyrcle(T lat1, T lon1, T lat2, T lon2, T dist) {
       return PI2;       //  starting from S pole
   }
 
-  if (sin(lon2-lon1) < 0) { /* For starting points other than the poles: */
-    crs = (sin(lat2)-sin(lat1)*cos(dist)) / (sin(dist)*cos(lat1));
+  if (sin(lon1 - lon2) < 0) { /* For starting points other than the poles: */
+    crs = (sin(lat2) - sin(lat1)*cos(dist)) / (sin(dist)*cos(lat1));
     crs = putinrange(crs, -1, 1);
     crs = acos(crs);
   }
@@ -152,22 +152,23 @@ crosstrack_t<T> NavSphere<T>::crosstrack(T latD, T lonD) {
   point 2 by the following. The formula fails if the initial point is a
   pole. We can special case this with: */
   if (cos(latA) < static_cast<T>(FLT_EPSILON)) {
-    // starting from N pole
-    if(latA > 0){
+    if(latA > 0) {                                // starting from N pole
+      xtd = asin(sin(distAD) * sin(this->lonB - lonD));
+    }
+    else {                                        // starting from S pole
       xtd = asin(sin(distAD) * sin(lonD - this->lonB));
     }
-    // starting from S pole
-    else
-      xtd = asin(sin(distAD) * sin(this->lonB - lonD));
   }
-  else
+  else {
     xtd = asin(sin(distAD) * sin(crsAD - this->crsAB));
+  }
 
   /* */
-  if (distAD > (T)0.05)
+  if (distAD > (T)0.05) {
     atd = acos(cos(distAD) / cos(xtd));
+  }
   else {
-    //For very short distances:
+    // For very short distances:
     T sindist = sin(distAD);
     T sinxtd = sin(xtd);
     atd = sqrt(sindist*sindist - sinxtd*sinxtd);
