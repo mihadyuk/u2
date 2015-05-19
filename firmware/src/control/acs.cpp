@@ -209,6 +209,7 @@ void ACS::reached_handler(void) {
   case MAV_CMD_NAV_WAYPOINT:
     load_status = mission.loadNext();
     if (OSAL_FAILED == load_status) {
+      osalSysHalt("");
       this->state = ACSState::emergency;
     }
     break;
@@ -224,6 +225,7 @@ void ACS::reached_handler(void) {
   default:
     load_status = mission.loadNext();
     if (OSAL_FAILED == load_status) {
+      osalSysHalt("");
       this->state = ACSState::emergency;
     }
     break;
@@ -251,7 +253,12 @@ void ACS::loop_navigate(float dT) {
 
   /**/
   case MissionState::error:
+    osalSysHalt("");
     this->state = ACSState::emergency;
+    break;
+
+  /**/
+  case MissionState::navigate:
     break;
 
   /**/

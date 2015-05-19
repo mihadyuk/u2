@@ -1,6 +1,8 @@
 #ifndef EB500_HPP_
 #define EB500_HPP_
 
+#include "acs_input.hpp"
+
 #define EVMSK_GPS_UPATED       (1UL << 0)
 
 namespace gps {
@@ -24,7 +26,8 @@ typedef struct {
 extern chibios_rt::EvtSource event_gps;
 
 void GPSInit(void);
-void GPSGetData(gps::gps_data_t &result);
+void GPSGet(ACSInput &acs_in);
+void GPSGet(gps::gps_data_t &result);
 void GPS_PPS_ISR_I(void);
 
 #endif /* EB500_HPP_ */

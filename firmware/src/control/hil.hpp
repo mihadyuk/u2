@@ -36,8 +36,8 @@ public:
   HIL(void);
   void update(ACSInput &acs_in);
   void override(float val, state_vector_enum addr);
+  void disableAll(void);
 private:
-  void disable_all(void);
   ACSInput shadow;
   HILBitmap<ACS_INPUT_ENUM_END> bmp;
 };

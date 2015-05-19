@@ -12,6 +12,16 @@
  * http://www.movable-type.co.uk/scripts/latlong.html
  */
 
+/**************************************************************************************
+ *                Note!
+ *
+ * All formulae from Aviation Formulary V1.46 is "For the convenience of
+ * North Americans I will take North latitudes and West
+ * longitudes as positive and South and East negative.
+ *
+ * So we must change it a bit for WGS-84 compliance: invert sign of longitude.
+ */
+
 #ifndef NAV_SPHERE_HPP_
 #define NAV_SPHERE_HPP_
 

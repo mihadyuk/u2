@@ -142,11 +142,13 @@ void ACS::command_long_handler(const mavMail *recv_mail) {
     break;
 
   default:
-    result = MAV_RESULT_UNSUPPORTED;
+    goto SILENT_EXIT;
     break;
   }
-
   command_ack(result, clp->command, GLOBAL_COMPONENT_ID);
+
+SILENT_EXIT:
+  return;
 }
 
 /**

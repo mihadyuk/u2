@@ -1,8 +1,9 @@
 #include "main.h"
-#include "acs_input.hpp"
-#include "hil.hpp"
 
-using namespace chibios_rt;
+#include "mavlink_local.hpp"
+#include "acs_input.hpp"
+#include "geometry.hpp"
+
 using namespace control;
 
 /*
@@ -16,6 +17,8 @@ using namespace control;
  * EXTERNS
  ******************************************************************************
  */
+
+extern mavlink_global_position_int_t   mavlink_out_global_position_int_struct;
 
 /*
  ******************************************************************************
@@ -46,35 +49,14 @@ using namespace control;
 /**
  *
  */
-HIL::HIL(void) {
+void acs_input2mavlink(const ACSInput &acs_in) {
+  double tmp;
 
-}
-
-/**
- *
- */
-void HIL::update(ACSInput &acs_in) {
-
-  for (size_t i=0; i<ACS_INPUT_ENUM_END; i++) {
-    if (bitmapGet(&this->bmp.bitmap, i) > 0) {
-      acs_in.ch[i] = this->shadow.ch[i];
-    }
-  }
-}
-
-/**
- *
- */
-void HIL::disableAll(void) {
-  bitmapObjectInit(&this->bmp.bitmap, 0);
-}
-
-/**
- *
- */
-void HIL::override(float val, state_vector_enum addr) {
-  osalDbgCheck(addr < ACS_INPUT_ENUM_END);
-
-  shadow.ch[addr] = val;
-  bitmapSet(&this->bmp.bitmap, addr);
+  tmp = acs_in.ch[ACS_INPUT_lat];
+  mavlink_out_global_position_int_struct.lat = rad2deg(tmp) * DEG_TO_MAVLINK;
+  tmp = acs_in.ch[ACS_INPUT_lon];
+  mavlink_out_global_position_int_struct.lon = rad2deg(tmp) * DEG_TO_MAVLINK;
+  mavlink_out_global_position_int_struct.alt = acs_in.ch[ACS_INPUT_alt] * 1000;
+  mavlink_out_global_position_int_struct.hdg = acs_in.ch[ACS_INPUT_yaw];
+  mavlink_out_global_position_int_struct.time_boot_ms = TIME_BOOT_MS;
 }

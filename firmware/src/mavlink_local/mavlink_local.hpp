@@ -14,6 +14,9 @@
 /* this realization uses one global component ID for all */
 #define GLOBAL_COMPONENT_ID         MAV_COMP_ID_SYSTEM_CONTROL
 
+/* you have to multiply degrees by this value to acquire mavlink suited values */
+#define DEG_TO_MAVLINK              (10 * 1000 * 1000)
+
 /**
  * Global structure used to store system's state.
  * In earlier versions of mavlink this iformation was stored in "mavlink_system_t"

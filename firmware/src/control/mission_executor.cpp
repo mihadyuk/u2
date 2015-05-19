@@ -13,7 +13,7 @@ using namespace control;
  * DEFINES
  ******************************************************************************
  */
-#define WP_RADIUS     param1
+#define WP_RADIUS     param2
 
 /*
  ******************************************************************************
@@ -23,6 +23,7 @@ using namespace control;
 extern mavlink_system_t                 mavlink_system_struct;
 extern mavlink_mission_current_t        mavlink_out_mission_current_struct;
 extern mavlink_mission_item_reached_t   mavlink_out_mission_item_reached_struct;
+extern mavlink_nav_controller_output_t  mavlink_out_nav_controller_output_struct;
 
 /*
  ******************************************************************************
@@ -72,22 +73,24 @@ bool MissionExecutor::load_next_mission_item(void) {
     /* if we fall here than last mission was not 'land'. System do not know
      * what to do so start unlimited loitering */
     third = trgt;
-    third.x += 0.0001;
-    third.y += 0.0001;
+    third.x += 0.0001; /* singularity prevention */
+    third.y += 0.0001; /* singularity prevention */
     third.command = MAV_CMD_NAV_LOITER_UNLIM;
     state = MissionState::completed;
+    load_status = OSAL_SUCCESS;
   }
   else {
     next = third.seq + 1;
     load_status = wpdb.read(&third, next);
+    if (OSAL_SUCCESS == load_status) {
+      state = MissionState::navigate;
+      broadcast_mission_current(trgt.seq);
+    }
+    else {
+      osalSysHalt("");
+      state = MissionState::error;
+    }
   }
-
-  if (OSAL_SUCCESS == load_status) {
-    state = MissionState::navigate;
-    broadcast_mission_current(trgt.seq);
-  }
-  else
-    state = MissionState::error;
 
   return load_status;
 }
@@ -95,8 +98,18 @@ bool MissionExecutor::load_next_mission_item(void) {
 /**
  *
  */
-static void nav_out_to_acs_in(const NavOut<float> &nav_out, ACSInput &acs_in) {
+static void navout2acsin(const NavOut<float> &nav_out, ACSInput &acs_in) {
   acs_in.ch[ACS_INPUT_dZ] = nav_out.xtd;
+}
+
+/**
+ *
+ */
+static void navout2mavlink(const NavOut<float> &nav_out) {
+
+  mavlink_out_nav_controller_output_struct.wp_dist = rad2m(nav_out.dist);
+  mavlink_out_nav_controller_output_struct.xtrack_error = rad2m(nav_out.xtd);
+  mavlink_out_nav_controller_output_struct.target_bearing = rad2deg(nav_out.crs);
 }
 
 /**
@@ -106,13 +119,17 @@ static void nav_out_to_acs_in(const NavOut<float> &nav_out, ACSInput &acs_in) {
  */
 bool MissionExecutor::wp_reached(const NavOut<float> &nav_out) {
 
-  float R = nav_out.xtd * 1.5;
+  float Rmeters = rad2m(nav_out.xtd);
+  Rmeters = fabs(Rmeters * 1.5);
 
-  if (R < trgt.WP_RADIUS)
-    R = trgt.WP_RADIUS;
-  /* else branch unneeded here because R already contains correct value */
+  if (Rmeters < trgt.WP_RADIUS)
+    Rmeters = trgt.WP_RADIUS;
+  /* else branch unneeded here because Rmeters already contains correct value */
 
-  return nav_out.dist < R;
+  if (rad2m(nav_out.dist) < Rmeters)
+    return true;
+  else
+    return false;
 }
 
 /**
@@ -123,10 +140,13 @@ void MissionExecutor::navigate(void) {
   NavIn<float> nav_in(acs_in.ch[ACS_INPUT_lat], acs_in.ch[ACS_INPUT_lon]);
   NavOut<float> nav_out = navigator.update(nav_in);
 
-  nav_out_to_acs_in(nav_out, this->acs_in);
+  navout2acsin(nav_out, this->acs_in);
+  navout2mavlink(nav_out);
 
   if (wp_reached(nav_out)) {
     load_next_mission_item();
+    NavLine<float> line(deg2rad(prev.x), deg2rad(prev.y), deg2rad(trgt.x), deg2rad(trgt.y));
+    navigator.loadLine(line);
   }
 }
 
@@ -168,8 +188,8 @@ void MissionExecutor::artificial_takeoff_point(void) {
 
   memset(&prev, 0, sizeof(prev));
 
-  prev.x = acs_in.ch[ACS_INPUT_lat];
-  prev.y = acs_in.ch[ACS_INPUT_lon];
+  prev.x = rad2deg(acs_in.ch[ACS_INPUT_lat]);
+  prev.y = rad2deg(acs_in.ch[ACS_INPUT_lon]);
   prev.z = acs_in.ch[ACS_INPUT_alt];
   prev.command = MAV_CMD_NAV_TAKEOFF;
   prev.frame = MAV_FRAME_GLOBAL;
@@ -205,7 +225,7 @@ bool MissionExecutor::takeoff(void) {
     if ((OSAL_SUCCESS != read_status1) || (OSAL_SUCCESS != read_status2))
       return OSAL_FAILED;
     else {
-      NavLine<float> line(prev.x, prev.y, trgt.x, trgt.y);
+      NavLine<float> line(deg2rad(prev.x), deg2rad(prev.y), deg2rad(trgt.x), deg2rad(trgt.y));
       navigator.loadLine(line);
       state = MissionState::navigate;
       return OSAL_SUCCESS;
@@ -241,14 +261,14 @@ void MissionExecutor::setHome(void) {
 }
 
 /**
- *
+ * @brief   Accepts coordinates in radians
  */
 void MissionExecutor::setHome(float lat, float lon, float alt) {
 
   memset(&home, 0, sizeof(home));
 
-  home.x = lat;
-  home.y = lon;
+  home.x = rad2deg(lat);
+  home.y = rad2deg(lon);
   home.z = alt;
   home.command = MAV_CMD_NAV_WAYPOINT;
   home.frame = MAV_FRAME_GLOBAL;

@@ -137,6 +137,7 @@ CONTROLSRC =\
 		src/control/futaba/receiver_synth.cpp \
 		src/control/futaba/receiver_mavlink.cpp \
 		src/control/acs.cpp \
+		src/control/acs_input.cpp \
 		src/control/acs_commands.cpp \
 		src/control/mission_executor.cpp \
 		src/control/navigator.cpp \

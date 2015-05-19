@@ -48,9 +48,6 @@ Giovanni
 #include "bmp085.hpp"
 #include "tlm_sender.hpp"
 #include "link_mgr.hpp"
-//#include "controller.hpp"
-//#include "mav_dispatcher.hpp"
-//#include "cmd_executor.hpp"
 #include "blinker.hpp"
 #include "waypoint_db.hpp"
 #include "mission_receiver.hpp"
@@ -206,7 +203,8 @@ int main(void) {
 
     ahrs.get(ahrs_data, acs_in, MS2ST(200));
     dT = ahrs_data.dt;
-    GPSGetData(gps_data);
+    GPSGet(gps_data);
+    GPSGet(acs_in);
     speedometer.update(speed, path, dT);
     mpxv.get();
     PwrMgrUpdate();
@@ -220,6 +218,8 @@ int main(void) {
       hil.update(acs_in); /* must be called _before_ ACS */
       acs.update(dT);
     }
+
+    acs_input2mavlink(acs_in);
   }
 
   return 0;

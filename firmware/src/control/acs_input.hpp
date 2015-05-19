@@ -16,6 +16,7 @@ typedef enum {
   ACS_INPUT_roll,     // rad (-pi..pi)
   ACS_INPUT_pitch,    // rad (-pi/2..pi/2)
   ACS_INPUT_yaw,      // rad (0..2*pi)
+  ACS_INPUT_cog,      // rad (0..2*pi) GPS course over ground
   ACS_INPUT_yaw_mag,  // rad (0..2*pi)
 
   ACS_INPUT_q0,       // orientation quaternion (Qnb NED)
@@ -87,6 +88,8 @@ typedef enum {
   ACS_INPUT_ENUM_END,
 } state_vector_enum;
 
+static_assert(ACS_INPUT_ENUM_END < 256, "Stabilizer virtual machine limit.");
+
 /**
  *
  */
@@ -102,7 +105,7 @@ struct ACSInput {
 /**
  *
  */
-static_assert(ACS_INPUT_ENUM_END < 256, "Stabilizer virtual machine limit.");
+void acs_input2mavlink(const ACSInput &acs_in);
 
 #endif /* ACS_INPUT_HPP_ */
 

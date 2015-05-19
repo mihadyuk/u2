@@ -18,8 +18,6 @@ using namespace gps;
 #define GPS_DEFAULT_BAUDRATE    9600
 #define GPS_HI_BAUDRATE         57600
 
-#define DEG_TO_MAVLINK          (10 * 1000 * 1000)
-
 /*
  ******************************************************************************
  * EXTERNS
@@ -28,7 +26,6 @@ using namespace gps;
 chibios_rt::EvtSource event_gps;
 
 extern mavlink_gps_raw_int_t           mavlink_out_gps_raw_int_struct;
-extern mavlink_global_position_int_t   mavlink_out_global_position_int_struct;
 
 /*
  ******************************************************************************
@@ -96,12 +93,18 @@ static void gps2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc) {
   mavlink_out_gps_raw_int_struct.satellites_visible = gga.satellites;
   mavlink_out_gps_raw_int_struct.cog = rmc.course * 100;
   mavlink_out_gps_raw_int_struct.vel = rmc.speed * 100;
+}
 
-  mavlink_out_global_position_int_struct.time_boot_ms = TIME_BOOT_MS;
-  mavlink_out_global_position_int_struct.alt = mavlink_out_gps_raw_int_struct.alt;
-  mavlink_out_global_position_int_struct.lat = mavlink_out_gps_raw_int_struct.lat;
-  mavlink_out_global_position_int_struct.lon = mavlink_out_gps_raw_int_struct.lon;
-  mavlink_out_global_position_int_struct.hdg = mavlink_out_gps_raw_int_struct.cog;
+/**
+ *
+ */
+static void gps2state_vector(ACSInput &acs_in, const gps_data_t gps) {
+
+  acs_in.ch[ACS_INPUT_lat] = deg2rad(gps.latitude);
+  acs_in.ch[ACS_INPUT_lon] = deg2rad(gps.longitude);
+  acs_in.ch[ACS_INPUT_alt] = gps.altitude;
+  acs_in.ch[ACS_INPUT_cog] = deg2rad(gps.course);
+  acs_in.ch[ACS_INPUT_yaw] = acs_in.ch[ACS_INPUT_cog];
 }
 
 /**
@@ -126,11 +129,11 @@ static void gps_configure(void) {
   gps_ser_cfg.speed = GPS_DEFAULT_BAUDRATE;
   sdStart(&GPSSD, &gps_ser_cfg);
 
-//  /* смена скорости ПРИЁМНИКА на повышенную */
+//  /* смена скорости _приемника_ на повышенную */
 //  sdWrite(&GPSSD, gps_high_baudrate, sizeof(gps_high_baudrate));
 //  chThdSleepSeconds(1);
 //
-//  /* перезапуск порта контроллера на повышенной частоте */
+//  /* перезапуск _порта_ на повышенной частоте */
 //  sdStop(&GPSSD);
 //  gps_ser_cfg.speed = GPS_HI_BAUDRATE;
 //  sdStart(&GPSSD, &gps_ser_cfg);
@@ -230,7 +233,17 @@ void GPSInit(void){
 /**
  *
  */
-void GPSGetData(gps_data_t &result) {
+void GPSGet(ACSInput &acs_in) {
+
+  acquire();
+  gps2state_vector(acs_in, cache);
+  release();
+}
+
+/**
+ *
+ */
+void GPSGet(gps_data_t &result) {
 
   acquire();
   result = cache;

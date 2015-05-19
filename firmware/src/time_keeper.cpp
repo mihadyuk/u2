@@ -192,7 +192,7 @@ static int64_t rtc_get_time_unix_usec(void) {
 static THD_WORKING_AREA(TimekeeperThreadWA, 512) __CCM__;
 THD_FUNCTION(TimekeeperThread, arg) {
   chRegSetThreadName("Timekeeper");
-  TimeKeeper *self = (TimeKeeper *)arg;
+  TimeKeeper *self = static_cast<TimeKeeper *>(arg);
   (void)self;
   msg_t sem_status = MSG_RESET;
   chibios_rt::EvtListener el;
@@ -209,7 +209,7 @@ THD_FUNCTION(TimekeeperThread, arg) {
       while (true) { /* wait first measurement with rounde seconds */
         gps_evt = chEvtWaitOneTimeout(EVMSK_GPS_UPATED, MS2ST(1200));
         if (EVMSK_GPS_UPATED == gps_evt) {
-          GPSGetData(gps_data);
+          GPSGet(gps_data);
           if (gps_data.fix_valid && gps_data.sec_round) {
             int64_t tmp = 1000000;
             tmp *= mktime(&gps_data.time);
