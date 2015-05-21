@@ -65,6 +65,8 @@ __CCM__ static gps_data_t cache;
 static chibios_rt::BinarySemaphore pps_sem(true);
 static chibios_rt::BinarySemaphore protect_sem(false);
 
+static SerialDriver *hook_sdp = nullptr;
+
 /*
  ******************************************************************************
  * PROTOTYPES
@@ -126,9 +128,25 @@ static void release(void) {
  *
  */
 static void gps_configure(void) {
-  /* запуск на дефолтной частоте */
+
+  /* start on default baudrate */
   gps_ser_cfg.speed = GPS_DEFAULT_BAUDRATE;
   sdStart(&GPSSD, &gps_ser_cfg);
+
+  /* set only GGA, RMC output. We have to do this some times
+   * because serial port contains some garbage and this garbage will
+   * be flushed out during sending of some messages */
+  size_t i=3;
+  while (i--) {
+    sdWrite(&GPSSD, msg_gga_rmc_only, sizeof(msg_gga_rmc_only));
+    chThdSleepSeconds(1);
+  }
+
+  /* set fix rate */
+  sdWrite(&GPSSD, fix_period_5hz, sizeof(fix_period_5hz));
+//  sdWrite(&GPSSD, fix_period_4hz, sizeof(fix_period_4hz));
+//  sdWrite(&GPSSD, fix_period_2hz, sizeof(fix_period_2hz));
+  chThdSleepSeconds(1);
 
 //  /* смена скорости _приемника_ на повышенную */
 //  sdWrite(&GPSSD, gps_high_baudrate, sizeof(gps_high_baudrate));
@@ -138,16 +156,7 @@ static void gps_configure(void) {
 //  sdStop(&GPSSD);
 //  gps_ser_cfg.speed = GPS_HI_BAUDRATE;
 //  sdStart(&GPSSD, &gps_ser_cfg);
-
-  /* установка выдачи только GGA и RMC */
-  sdWrite(&GPSSD, msg_gga_rmc_only, sizeof(msg_gga_rmc_only));
-  chThdSleepSeconds(1);
-
-  /* установка частоты обновления */
-  sdWrite(&GPSSD, fix_period_5hz, sizeof(fix_period_5hz));
-//  sdWrite(&GPSSD, fix_period_4hz, sizeof(fix_period_4hz));
-//  sdWrite(&GPSSD, fix_period_2hz, sizeof(fix_period_2hz));
-  chThdSleepSeconds(1);
+//  chThdSleepSeconds(1);
 
   (void)fix_period_5hz;
   (void)fix_period_4hz;
@@ -174,6 +183,8 @@ THD_FUNCTION(gpsRxThread, arg) {
     byte = sdGetTimeout(&GPSSD, MS2ST(100));
     if (MSG_TIMEOUT != byte) {
       status = nmea_parser.collect(byte);
+      if (nullptr != hook_sdp)
+        sdPut(hook_sdp, byte);
 
       switch(status) {
       case collect_status_t::GPGGA:
@@ -203,8 +214,11 @@ THD_FUNCTION(gpsRxThread, arg) {
         cache.speed      = rmc.speed;
         cache.time       = rmc.time;
         cache.sec_round  = rmc.sec_round;
-        if (gga.fix > 0) {
+        if (gga.fix == 1) {
           event_gps.broadcastFlags(EVMSK_GPS_FRESH_VALID);
+          red_led_on();
+          osalThreadSleepMilliseconds(10);
+          red_led_off();
         }
         release();
       }
@@ -236,6 +250,22 @@ void GPSGet(ACSInput &acs_in) {
   acquire();
   gps2state_vector(acs_in, cache);
   release();
+}
+
+/**
+ *
+ */
+void GPSSetDumpHook(SerialDriver *sdp) {
+
+  hook_sdp = sdp;
+}
+
+/**
+ *
+ */
+void GPSDeleteDumpHook(void) {
+
+  hook_sdp = nullptr;
 }
 
 /**

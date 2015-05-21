@@ -179,6 +179,7 @@ SENSORSRC = src/i2c_local.cpp \
 		src/sensors/lsm303_acc.cpp \
 		src/sensors/lsm303_mag.cpp \
 		src/sensors/eb500.cpp \
+		src/sensors/eb500_cli.cpp \
 		src/sensors/bmp085.cpp \
 		src/sensors/maxsonar.cpp \
 		src/sensors/speedometer.cpp \

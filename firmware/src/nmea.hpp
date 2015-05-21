@@ -72,6 +72,7 @@ private:
   collect_state_t state;
   uint8_t buf[GPS_MSG_LEN];
   uint8_t token_map[GPS_TOKEN_MAP_LEN];
+  SerialDriver *dump_sdp = nullptr;
 };
 
 } /* namespace */

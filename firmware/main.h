@@ -37,7 +37,7 @@
 #define LINKPRIO          (NORMALPRIO + 5)
 #define CONTROLLERPRIO    (NORMALPRIO)
 #define CMDPRIO           (LINKPRIO - 2)
-#define GPSPRIO           (NORMALPRIO - 2)
+#define GPSPRIO           (NORMALPRIO + 2)
 #define TELEMTRYPRIO      (LINKPRIO - 1)
 #define SHELLPRIO         (NORMALPRIO - 10)
 #define ADISPRIO          (NORMALPRIO)

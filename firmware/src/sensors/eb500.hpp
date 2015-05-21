@@ -11,6 +11,8 @@ extern chibios_rt::EvtSource event_gps;
 void GPSInit(void);
 void GPSGet(ACSInput &acs_in);
 void GPSGet(gps_data_t &result);
+void GPSSetDumpHook(SerialDriver *sdp);
+void GPSDeleteDumpHook(void);
 void GPS_PPS_ISR_I(void);
 
 #endif /* EB500_HPP_ */

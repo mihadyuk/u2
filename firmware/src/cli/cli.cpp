@@ -11,9 +11,10 @@
 #include "param_registry.hpp"
 #include "param_cli.hpp"
 #include "time_keeper.hpp"
+#include "hil_cli.hpp"
+#include "eb500_cli.hpp"
 //#include "irq_storm.hpp"
 //#include "cli_cal.hpp"
-#include "hil_cli.hpp"
 //#include "servo_cli.hpp"
 //#include "sensors_cli.hpp"
 
@@ -55,6 +56,7 @@ static const ShellCmd_t cliutils[] = {
 //    {"cal",       &cal_clicmd,        "start calibration of onboard sensors"},
     {"date",      &date_clicmd,       "print and set current date"},
 //    {"dcm",       &dcm_clicmd,        "print DCM in realtime until ^C pressed"},
+    {"eb500",     &eb500_clicmd,      "debug interface for EB500 GPS receiver"},
     {"echo",      &echo_clicmd,       "echo it's input to terminal"},
     {"help",      &help_clicmd,       "this message"},
     {"hil",       &hil_clicmd,        "HIL applet for manual checks"},

@@ -3,6 +3,8 @@
 #include <cstring>
 #include <cstdlib>
 
+#pragma GCC optimize "-O2"
+
 #include "main.h"
 #include "nmea.hpp"
 #include "pads.h"
@@ -190,38 +192,8 @@ static double gps2deg(double gps) {
 /**
  *
  */
-void NmeaParser::unpack(nmea_gga_t &result) {
-  char tmp[GPS_MAX_TOKEN_LEN];
-  double c;
-
-  c = copysign(atof(token(tmp, 1)), degrees_sign(token(tmp, 2)));
-  result.latitude    = gps2deg(c);
-  c = copysign(atof(token(tmp, 3)), degrees_sign(token(tmp, 4)));
-  result.longitude   = gps2deg(c);
-  result.fix         = atol(token(tmp, 5));
-  result.satellites  = atol(token(tmp, 6));
-  result.hdop        = atof(token(tmp, 7));
-  result.altitude    = atof(token(tmp, 8));
-  result.geoid       = atof(token(tmp, 10));
-}
-
-/**
- *
- */
 static float knots2mps(float knots) {
   return knots * 0.514444444;
-}
-
-/**
- *
- */
-void NmeaParser::unpack(nmea_rmc_t &result) {
-  char tmp[GPS_MAX_TOKEN_LEN];
-
-  get_time(&result.time, &result.sec_round, token(tmp, 0));
-  result.speed   = knots2mps(atof(token(tmp, 6)));
-  result.course  = atof(token(tmp, 7));
-  get_date(&result.time, token(tmp, 8));
 }
 
 /**
@@ -327,4 +299,35 @@ collect_status_t NmeaParser::collect(uint8_t c) {
   }
 
   return ret;
+}
+
+
+/**
+ *
+ */
+void NmeaParser::unpack(nmea_rmc_t &result) {
+  char tmp[GPS_MAX_TOKEN_LEN];
+
+  get_time(&result.time, &result.sec_round, token(tmp, 0));
+  result.speed   = knots2mps(atof(token(tmp, 6)));
+  result.course  = atof(token(tmp, 7));
+  get_date(&result.time, token(tmp, 8));
+}
+
+/**
+ *
+ */
+void NmeaParser::unpack(nmea_gga_t &result) {
+  char tmp[GPS_MAX_TOKEN_LEN];
+  double c;
+
+  c = copysign(atof(token(tmp, 1)), degrees_sign(token(tmp, 2)));
+  result.latitude    = gps2deg(c);
+  c = copysign(atof(token(tmp, 3)), degrees_sign(token(tmp, 4)));
+  result.longitude   = gps2deg(c);
+  result.fix         = atol(token(tmp, 5));
+  result.satellites  = atol(token(tmp, 6));
+  result.hdop        = atof(token(tmp, 7));
+  result.altitude    = atof(token(tmp, 8));
+  result.geoid       = atof(token(tmp, 10));
 }
