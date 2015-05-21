@@ -34,7 +34,7 @@
 /* приоритеты для потоков */
 #define I2CPRIO           (NORMALPRIO - 5)
 #define TIMEKEEPERPRIO    (I2CPRIO - 1)
-#define LINKPRIO          (NORMALPRIO - 5)
+#define LINKPRIO          (NORMALPRIO + 5)
 #define CONTROLLERPRIO    (NORMALPRIO)
 #define CMDPRIO           (LINKPRIO - 2)
 #define GPSPRIO           (NORMALPRIO - 2)

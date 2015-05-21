@@ -177,14 +177,14 @@ void Speedometer::stop(void) {
 /**
  *
  */
-void Speedometer::update(float &speed, uint32_t &path, float dT) {
+void Speedometer::update(speedometer_data_t &result, float dT) {
   float pps; /* pulse per second */
   uint16_t last_pulse_period;
   bool status;
 
   osalDbgCheck(ready);
 
-  status = check_sample(path, last_pulse_period, dT);
+  status = check_sample(result.path, last_pulse_period, dT);
   if (OSAL_FAILED == status)
     pps = 0;
   else {
@@ -193,7 +193,7 @@ void Speedometer::update(float &speed, uint32_t &path, float dT) {
 
   /* now calculate speed */
   pps = filter_alphabeta(pps);
-  speed = *pulse2m * pps;
+  result.speed = *pulse2m * pps;
   //mavlink_out_debug_vect_struct.z = speed * 3.6;
 }
 

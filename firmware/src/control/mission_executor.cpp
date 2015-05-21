@@ -98,14 +98,14 @@ bool MissionExecutor::load_next_mission_item(void) {
 /**
  *
  */
-static void navout2acsin(const NavOut<float> &nav_out, ACSInput &acs_in) {
+static void navout2acsin(const NavOut<double> &nav_out, ACSInput &acs_in) {
   acs_in.ch[ACS_INPUT_dZ] = nav_out.xtd;
 }
 
 /**
  *
  */
-static void navout2mavlink(const NavOut<float> &nav_out) {
+static void navout2mavlink(const NavOut<double> &nav_out) {
 
   mavlink_out_nav_controller_output_struct.wp_dist = rad2m(nav_out.dist);
   mavlink_out_nav_controller_output_struct.xtrack_error = rad2m(nav_out.xtd);
@@ -117,19 +117,16 @@ static void navout2mavlink(const NavOut<float> &nav_out) {
  * @details Kind of hack. It increases effective radius if
  *          crosstrack error more than R/1.5
  */
-bool MissionExecutor::wp_reached(const NavOut<float> &nav_out) {
+bool MissionExecutor::wp_reached(const NavOut<double> &nav_out) {
 
-  float Rmeters = rad2m(nav_out.xtd);
-  Rmeters = fabs(Rmeters * 1.5);
+  double Rmeters = rad2m(nav_out.xtd);
+  Rmeters = fabs(Rmeters * static_cast<double>(1.5));
 
-  if (Rmeters < trgt.WP_RADIUS)
+  if (Rmeters < static_cast<double>(trgt.WP_RADIUS))
     Rmeters = trgt.WP_RADIUS;
   /* else branch unneeded here because Rmeters already contains correct value */
 
-  if (rad2m(nav_out.dist) < Rmeters)
-    return true;
-  else
-    return false;
+  return rad2m(nav_out.dist) < Rmeters;
 }
 
 /**
@@ -137,15 +134,15 @@ bool MissionExecutor::wp_reached(const NavOut<float> &nav_out) {
  */
 void MissionExecutor::navigate(void) {
 
-  NavIn<float> nav_in(acs_in.ch[ACS_INPUT_lat], acs_in.ch[ACS_INPUT_lon]);
-  NavOut<float> nav_out = navigator.update(nav_in);
+  NavIn<double> nav_in(acs_in.ch[ACS_INPUT_lat], acs_in.ch[ACS_INPUT_lon]);
+  NavOut<double> nav_out = navigator.update(nav_in);
 
   navout2acsin(nav_out, this->acs_in);
   navout2mavlink(nav_out);
 
   if (wp_reached(nav_out)) {
     load_next_mission_item();
-    NavLine<float> line(deg2rad(prev.x), deg2rad(prev.y), deg2rad(trgt.x), deg2rad(trgt.y));
+    NavLine<double> line(deg2rad(prev.x), deg2rad(prev.y), deg2rad(trgt.x), deg2rad(trgt.y));
     navigator.loadLine(line);
   }
 }
@@ -155,6 +152,9 @@ void MissionExecutor::navigate(void) {
  * EXPORTED FUNCTIONS
  ******************************************************************************
  */
+
+static time_measurement_t tmp_nav;
+
 /**
  *
  */
@@ -171,6 +171,7 @@ acs_in(acs_in) {
  *
  */
 void MissionExecutor::start(void) {
+  chTMObjectInit(&tmp_nav);
   state = MissionState::idle;
 }
 
@@ -225,7 +226,7 @@ bool MissionExecutor::takeoff(void) {
     if ((OSAL_SUCCESS != read_status1) || (OSAL_SUCCESS != read_status2))
       return OSAL_FAILED;
     else {
-      NavLine<float> line(deg2rad(prev.x), deg2rad(prev.y), deg2rad(trgt.x), deg2rad(trgt.y));
+      NavLine<double> line(deg2rad(prev.x), deg2rad(prev.y), deg2rad(trgt.x), deg2rad(trgt.y));
       navigator.loadLine(line);
       state = MissionState::navigate;
       return OSAL_SUCCESS;
@@ -242,7 +243,9 @@ MissionState MissionExecutor::update(void) {
 
   switch (state) {
   case MissionState::navigate:
+    chTMStartMeasurementX(&tmp_nav);
     this->navigate();
+    chTMStopMeasurementX(&tmp_nav);
     break;
 
   default:

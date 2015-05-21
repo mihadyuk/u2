@@ -14,7 +14,7 @@ typedef struct {
 /**
  *
  */
-typedef struct {
+struct marg_data_t {
   marg_request_vector_t request;
   float dt;
   float acc[3];
@@ -23,6 +23,6 @@ typedef struct {
   int16_t acc_raw[3];
   int16_t gyr_raw[3];
   int16_t mag_raw[3];
-} marg_data_t;
+};
 
 #endif /* MARG_DATA_HPP_ */

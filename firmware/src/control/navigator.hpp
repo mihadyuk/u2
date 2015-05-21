@@ -12,12 +12,12 @@ namespace control {
 class Navigator {
 public:
   Navigator(void);
-  NavOut<float> update(const NavIn<float> &in);
+  NavOut<double> update(const NavIn<double> &in);
   void stop(void);
-  void loadLine(const NavLine<float> &line);
+  void loadLine(const NavLine<double> &line);
 private:
   bool ready = false;
-  NavSphere<float> sphere;
+  NavSphere<double> sphere;
 };
 
 }/* namespace */

@@ -5,6 +5,7 @@
 
 #include "main.h"
 #include "nmea.hpp"
+#include "pads.h"
 
 using namespace gps;
 

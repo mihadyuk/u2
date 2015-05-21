@@ -5,6 +5,7 @@
 #include "eb500.hpp"
 #include "geometry.hpp"
 #include "time_keeper.hpp"
+#include "pads.h"
 
 using namespace gps;
 
@@ -195,10 +196,6 @@ THD_FUNCTION(gpsRxThread, arg) {
         gps2mavlink(gga, rmc);
 
         acquire();
-        if (gga.fix > 0)
-          cache.fix_valid = true;
-        else
-          cache.fix_valid = false;
         cache.altitude   = gga.altitude;
         cache.latitude   = gga.latitude;
         cache.longitude  = gga.longitude;
@@ -206,9 +203,10 @@ THD_FUNCTION(gpsRxThread, arg) {
         cache.speed      = rmc.speed;
         cache.time       = rmc.time;
         cache.sec_round  = rmc.sec_round;
+        if (gga.fix > 0) {
+          event_gps.broadcastFlags(EVMSK_GPS_FRESH_VALID);
+        }
         release();
-
-        event_gps.broadcastFlags(EVMSK_GPS_UPATED);
       }
     }
   }
@@ -247,7 +245,6 @@ void GPSGet(gps_data_t &result) {
 
   acquire();
   result = cache;
-  cache.fix_valid = false;
   release();
 }
 

@@ -1,6 +1,7 @@
 #ifndef SPEEDOMETER_HPP_
 #define SPEEDOMETER_HPP_
 
+#include <speedometer_data_t.hpp>
 #include "alpha_beta.hpp"
 #include "median.hpp"
 
@@ -19,7 +20,7 @@ class Speedometer {
 public:
   void start(void);
   void stop(void);
-  void update(float &speed, uint32_t &path, float dT);
+  void update(speedometer_data_t &result, float dT);
 private:
   friend void speedometer_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p);
   bool check_sample(uint32_t &path_ret, uint16_t &last_pulse_period, float dT);

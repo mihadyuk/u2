@@ -54,13 +54,13 @@ endif
 # Stack size to be allocated to the Cortex-M process stack. This stack is
 # the stack used by the main() thread.
 ifeq ($(USE_PROCESS_STACKSIZE),)
-  USE_PROCESS_STACKSIZE = 0x400
+  USE_PROCESS_STACKSIZE = 0x1200
 endif
 
 # Stack size to the allocated to the Cortex-M main/exceptions stack. This
 # stack is used for processing interrupts and exceptions.
 ifeq ($(USE_EXCEPTIONS_STACKSIZE),)
-  USE_EXCEPTIONS_STACKSIZE = 0x400
+  USE_EXCEPTIONS_STACKSIZE = 0x1200
 endif
 
 # Enables the use of FPU on Cortex-M4 (no, softfp, hard).
@@ -205,6 +205,7 @@ CPPSRC = $(CHCPPSRC) \
 		src/sanity.cpp \
 		src/time_keeper.cpp \
 		src/nmea.cpp \
+		src/navi6d_wrapper.cpp \
 		src/kinematic/ahrs.cpp \
 		lib/filters/fir_test.cpp \
 
@@ -250,7 +251,8 @@ INCDIR = $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
          src/mavlink_local \
          src/kinematic \
          src/cli \
-         src/control/ \
+         src/control \
+         lib/navi6d \
          lib/mavlink/C/lapwing \
          benchmark \
 

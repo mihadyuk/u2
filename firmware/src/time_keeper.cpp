@@ -102,9 +102,9 @@ static const GPTConfig gptcfg = {
 
 static chibios_rt::BinarySemaphore ppstimesync_sem(true);
 
-static gps::gps_data_t gps_data __CCM__;
+__CCM__ static gps_data_t gps;
 
-static time_staticstic_t time_stat __CCM__;
+__CCM__ static time_staticstic_t time_stat;
 
 /*
  *******************************************************************************
@@ -196,7 +196,7 @@ THD_FUNCTION(TimekeeperThread, arg) {
   (void)self;
   msg_t sem_status = MSG_RESET;
   chibios_rt::EvtListener el;
-  event_gps.registerMask(&el, EVMSK_GPS_UPATED);
+  event_gps.registerMask(&el, EVMSK_GPS_FRESH_VALID);
   eventmask_t gps_evt;
 
   while (!chThdShouldTerminateX()) {
@@ -207,12 +207,12 @@ THD_FUNCTION(TimekeeperThread, arg) {
       jitter_stats_update();
 
       while (true) { /* wait first measurement with rounde seconds */
-        gps_evt = chEvtWaitOneTimeout(EVMSK_GPS_UPATED, MS2ST(1200));
-        if (EVMSK_GPS_UPATED == gps_evt) {
-          GPSGet(gps_data);
-          if (gps_data.fix_valid && gps_data.sec_round) {
+        gps_evt = chEvtWaitOneTimeout(EVMSK_GPS_FRESH_VALID, MS2ST(1200));
+        if (EVMSK_GPS_FRESH_VALID == gps_evt) {
+          GPSGet(gps);
+          if (gps.sec_round) {
             int64_t tmp = 1000000;
-            tmp *= mktime(&gps_data.time);
+            tmp *= mktime(&gps.time);
             osalSysLock();
             time_gps_us = tmp;
             osalSysUnlock();
@@ -223,7 +223,7 @@ THD_FUNCTION(TimekeeperThread, arg) {
             int32_t dt = t1 - t2;
 
             if (abs(dt) > TIME_CORRECTION_THRESHOLD)
-              rtc_set_time(&gps_data.time);
+              rtc_set_time(&gps.time);
 
             break; // while(true)
           }

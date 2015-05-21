@@ -97,7 +97,7 @@ static LinkMgr link_mgr;
 MavLogger mav_logger;
 Ahrs ahrs;
 BMP085 bmp_085(&I2CD_SLOW, BMP085_I2C_ADDR);
-
+__CCM__ static baro_data_t abs_press;
 
 
 #include "maxsonar.hpp"
@@ -109,11 +109,10 @@ BMP085 bmp_085(&I2CD_SLOW, BMP085_I2C_ADDR);
 
 __CCM__ static MaxSonar maxsonar;
 
+__CCM__ static speedometer_data_t speed_data;
 __CCM__ static Speedometer speedometer;
-__CCM__ float speed;
-__CCM__ uint32_t path;
 
-__CCM__ static gps::gps_data_t gps_data;
+__CCM__ static gps_data_t gps_data;
 __CCM__ static ahrs_data_t ahrs_data;
 
 __CCM__ static PPS pps;
@@ -123,6 +122,9 @@ __CCM__ static Calibrator calibrator;
 __CCM__ control::HIL hil;
 
 extern mavlink_system_info_t   mavlink_system_info_struct;
+
+#include "navi6d_wrapper.hpp"
+static Navi6dWrapper navi(acs_in);
 
 /*
  ******************************************************************************
@@ -196,18 +198,19 @@ int main(void) {
 
   blinker.start();
 
+  /* ahrs fake run to acquire dT */
+  ahrs.get(ahrs_data, acs_in, MS2ST(200));
+  navi.start(ahrs_data.dT);
+
   mavlink_system_info_struct.state = MAV_STATE_STANDBY;
-
   while (true) {
-    float dT;
-
     ahrs.get(ahrs_data, acs_in, MS2ST(200));
-    dT = ahrs_data.dt;
     GPSGet(gps_data);
     GPSGet(acs_in);
-    speedometer.update(speed, path, dT);
+    speedometer.update(speed_data, ahrs_data.dT);
     mpxv.get();
     PwrMgrUpdate();
+    bmp_085.get(abs_press);
 
     if (MAV_STATE_CALIBRATING == mavlink_system_info_struct.state) {
       CalibratorState cs = calibrator.update(ahrs_data);
@@ -216,9 +219,10 @@ int main(void) {
     }
     else {
       hil.update(acs_in); /* must be called _before_ ACS */
-      acs.update(dT);
+      acs.update(ahrs_data.dT);
     }
 
+    navi.update(gps_data, abs_press, speed_data);
     acs_input2mavlink(acs_in);
   }
 

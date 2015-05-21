@@ -34,9 +34,9 @@ typedef enum {
   ACS_INPUT_vz,
 
   ACS_INPUT_air_speed,    // m/s
-  ACS_INPUT_ground_speed, // m/s
+  ACS_INPUT_odo_speed,    // m/s odometer
   ACS_INPUT_gsp_speed,    // m/s
-  ACS_INPUT_speed,        // самая правильная с точки зрения САУ скорость (m/s)
+  ACS_INPUT_speed,        // самая правильная, с точки зрения САУ, скорость (m/s)
 
   // free accelerations (NED)
   ACS_INPUT_free_ax,
@@ -47,6 +47,11 @@ typedef enum {
   ACS_INPUT_free_ax_body,
   ACS_INPUT_free_ay_body,
   ACS_INPUT_free_az_body,
+
+  // accelerations in body frame
+  ACS_INPUT_ax_body,
+  ACS_INPUT_ay_body,
+  ACS_INPUT_az_body,
 
   // angular rates in rad/s (NED)
   ACS_INPUT_wx,

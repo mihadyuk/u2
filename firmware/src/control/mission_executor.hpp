@@ -40,7 +40,7 @@ public:
 private:
   void broadcast_mission_current(uint16_t seq);
   void broadcast_mission_item_reached(uint16_t seq);
-  bool wp_reached(const NavOut<float> &nav_out);
+  bool wp_reached(const NavOut<double> &nav_out);
   void artificial_takeoff_point(void);
   bool load_next_mission_item(void);
   void navigate(void);
