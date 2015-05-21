@@ -27,7 +27,6 @@
  * EXTERNS
  ******************************************************************************
  */
-extern mavlink_highres_imu_t            mavlink_out_highres_imu_struct;
 
 /*
  ******************************************************************************
@@ -63,8 +62,10 @@ __CCM__ static KalmanFlags sensor_flags;
  *
  */
 void Navi6dWrapper::prepare_data(const gps_data_t &gps_data,
-                   const baro_data_t &abs_press, const speedometer_data_t &speed) {
-
+                                 const baro_data_t &abs_press,
+                                 const speedometer_data_t &speed,
+                                 const marg_data_t &marg)
+{
   sensor_data.r_sns[0][0] = deg2rad(gps_data.latitude);
   sensor_data.r_sns[1][0] = deg2rad(gps_data.longitude);
   sensor_data.r_sns[2][0] = gps_data.altitude;
@@ -89,17 +90,11 @@ void Navi6dWrapper::prepare_data(const gps_data_t &gps_data,
   sensor_data.alt_b[0][0] = abs_press.alt;
   sensor_flags.alt_b_en = true;
 
-  sensor_data.fb[0][0] = mavlink_out_highres_imu_struct.xacc;
-  sensor_data.fb[1][0] = mavlink_out_highres_imu_struct.yacc;
-  sensor_data.fb[2][0] = mavlink_out_highres_imu_struct.zacc;
-
-  sensor_data.wb[0][0] = mavlink_out_highres_imu_struct.xgyro;
-  sensor_data.wb[1][0] = mavlink_out_highres_imu_struct.ygyro;
-  sensor_data.wb[2][0] = mavlink_out_highres_imu_struct.zgyro;
-
-  sensor_data.mb[0][0] = mavlink_out_highres_imu_struct.xmag;
-  sensor_data.mb[1][0] = mavlink_out_highres_imu_struct.ymag;
-  sensor_data.mb[2][0] = mavlink_out_highres_imu_struct.zmag;
+  for(size_t i=0; i<3; i++) {
+    sensor_data.fb[i][0] = marg.acc[i];
+    sensor_data.wb[i][0] = marg.gyr[i];
+    sensor_data.mb[i][0] = marg.mag[i];
+  }
 }
 
 /**
@@ -109,9 +104,9 @@ void Navi6dWrapper::navi2acs(void) {
 
   const NaviData<double> &data = nav_sins.navi_data;
 
-  acs_in.ch[ACS_INPUT_roll] = data.eu_nv[0][0];
-  acs_in.ch[ACS_INPUT_pitch] = data.eu_nv[1][0];
-  acs_in.ch[ACS_INPUT_yaw] = data.eu_nv[2][0];
+  acs_in.ch[ACS_INPUT_roll]   = data.eu_nv[0][0];
+  acs_in.ch[ACS_INPUT_pitch]  = data.eu_nv[1][0];
+  acs_in.ch[ACS_INPUT_yaw]    = data.eu_nv[2][0];
 
   acs_in.ch[ACS_INPUT_lat] = data.r[0][0];
   acs_in.ch[ACS_INPUT_lon] = data.r[1][0];
@@ -171,7 +166,6 @@ void Navi6dWrapper::start(float dT) {
   }
   calib_params.alpha = 0.02;
 
-  //sensor_data.alt_b[0][0] = acs_in.ch[ACS_INPUT_alt_baro];
   for (size_t i = 0; i<9; i++) {
     kalman_params.R[i][0] = 1.0;
   }
@@ -236,9 +230,11 @@ void Navi6dWrapper::stop(void) {
  *
  */
 void Navi6dWrapper::update(const gps_data_t &gps_data,
-              const baro_data_t &abs_press, const speedometer_data_t &speed) {
-
-  prepare_data(gps_data, abs_press, speed);
+                           const baro_data_t &abs_press,
+                           const speedometer_data_t &speed,
+                           const marg_data_t &marg)
+{
+  prepare_data(gps_data, abs_press, speed, marg);
   nav_sins.run(sensor_data, sensor_flags);
   navi2acs();
 }

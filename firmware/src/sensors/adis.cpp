@@ -318,7 +318,7 @@ void Adis::param_update(void) {
 /**
  *
  */
-float Adis::dt(void) {
+float Adis::dT(void) {
   return smplrtdiv_current / static_cast<float>(ADIS_INTERNAL_SAMPLE_RATE);
 }
 
@@ -480,7 +480,7 @@ sensor_state_t Adis::get(ahrs_data_t &result) {
       memcpy(result.euler, &measurement.euler, sizeof(result.euler));
     if (1 == result.request.quat)
       memcpy(result.quat, &measurement.quat, sizeof(result.quat));
-    result.dT = this->dt();
+    result.dT = this->dT();
     release_lock();
   }
   return this->state;
@@ -506,8 +506,8 @@ sensor_state_t Adis::get(marg_data_t &result) {
       memcpy(result.gyr, &measurement.gyr, sizeof(result.gyr));
     if (1 == result.request.mag)
       memcpy(result.mag, &measurement.mag, sizeof(result.mag));
-    if (1 == result.request.dt)
-      result.dt = this->dt();
+    if (1 == result.request.dT)
+      result.dT = this->dT();
     release_lock();
   }
   return this->state;

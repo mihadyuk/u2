@@ -1,7 +1,7 @@
 #ifndef BMP085_H_
 #define BMP085_H_
 
-#include <baro_data_t.hpp>
+#include "baro_data.hpp"
 #include "alpha_beta.hpp"
 #include "i2c_sensor.hpp"
 

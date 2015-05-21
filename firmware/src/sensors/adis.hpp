@@ -44,7 +44,7 @@ private:
   bool hw_init_full(void);
   void set_lock(void);
   void release_lock(void);
-  float dt(void);
+  float dT(void);
 
   time_measurement_t tm;
   chibios_rt::BinarySemaphore protect_sem;

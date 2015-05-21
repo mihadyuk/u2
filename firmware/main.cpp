@@ -56,7 +56,7 @@ Giovanni
 #include "acs.hpp"
 #include "drivetrain/drivetrain.hpp"
 #include "exti_local.hpp"
-#include "ahrs.hpp"
+#include "marg.hpp"
 #include "mav_logger.hpp"
 #include "adc_local.hpp"
 #include "pwr_mgr.hpp"
@@ -95,7 +95,7 @@ TimeKeeper time_keeper;
 TlmSender tlm_sender;
 static LinkMgr link_mgr;
 MavLogger mav_logger;
-Ahrs ahrs;
+Marg marg;
 BMP085 bmp_085(&I2CD_SLOW, BMP085_I2C_ADDR);
 __CCM__ static baro_data_t abs_press;
 
@@ -113,7 +113,7 @@ __CCM__ static speedometer_data_t speed_data;
 __CCM__ static Speedometer speedometer;
 
 __CCM__ static gps_data_t gps_data;
-__CCM__ static ahrs_data_t ahrs_data;
+__CCM__ static marg_data_t marg_data;
 
 __CCM__ static PPS pps;
 __CCM__ static MPXV mpxv;
@@ -124,7 +124,7 @@ __CCM__ control::HIL hil;
 extern mavlink_system_info_t   mavlink_system_info_struct;
 
 #include "navi6d_wrapper.hpp"
-static Navi6dWrapper navi(acs_in);
+static Navi6dWrapper navi6d(acs_in);
 
 /*
  ******************************************************************************
@@ -188,7 +188,7 @@ int main(void) {
   mav_logger.start(NORMALPRIO);
   osalThreadSleepMilliseconds(1);
 
-  ahrs.start();
+  marg.start();
   calibrator.start();
   maxsonar.start();
   speedometer.start();
@@ -199,30 +199,30 @@ int main(void) {
   blinker.start();
 
   /* ahrs fake run to acquire dT */
-  ahrs.get(ahrs_data, acs_in, MS2ST(200));
-  navi.start(ahrs_data.dT);
+  marg.get(marg_data, MS2ST(200));
+  navi6d.start(marg_data.dT);
 
   mavlink_system_info_struct.state = MAV_STATE_STANDBY;
   while (true) {
-    ahrs.get(ahrs_data, acs_in, MS2ST(200));
+    marg.get(marg_data, MS2ST(200));
     GPSGet(gps_data);
     GPSGet(acs_in);
-    speedometer.update(speed_data, ahrs_data.dT);
+    speedometer.update(speed_data, marg_data.dT);
     mpxv.get();
     PwrMgrUpdate();
     bmp_085.get(abs_press);
 
     if (MAV_STATE_CALIBRATING == mavlink_system_info_struct.state) {
-      CalibratorState cs = calibrator.update(ahrs_data);
+      CalibratorState cs = calibrator.update(marg_data);
       if (CalibratorState::idle == cs)
         mavlink_system_info_struct.state = MAV_STATE_STANDBY;
     }
     else {
       hil.update(acs_in); /* must be called _before_ ACS */
-      acs.update(ahrs_data.dT);
+      acs.update(marg_data.dT);
     }
 
-    navi.update(gps_data, abs_press, speed_data);
+    navi6d.update(gps_data, abs_press, speed_data, marg_data);
     acs_input2mavlink(acs_in);
   }
 

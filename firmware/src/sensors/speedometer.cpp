@@ -110,18 +110,18 @@ bool Speedometer::check_sample(uint32_t &path_ret,
 
   /**/
   switch (sample_state) {
-  case SampleCosher::bad:
+  case SampleCosher::no:
     if ((capture_time < timeout) && (new_sample_seq >= FIRST_SAMPLES_DROP)) {
-      sample_state = SampleCosher::good;
+      sample_state = SampleCosher::yes;
       ret = OSAL_SUCCESS;
     }
     else
       ret = OSAL_FAILED;
     break;
 
-  case SampleCosher::good:
+  case SampleCosher::yes:
     if (capture_time > timeout) {
-      sample_state = SampleCosher::bad;
+      sample_state = SampleCosher::no;
       new_sample_seq = 0;
       ret = OSAL_FAILED;
     }
@@ -155,7 +155,7 @@ void Speedometer::start(void) {
   total_path_prev = 0;
   new_sample_seq = 0;
 
-  sample_state = SampleCosher::bad;
+  sample_state = SampleCosher::no;
 
   eicuStart(&EICUD11, &eicucfg);
   eicuEnable(&EICUD11);

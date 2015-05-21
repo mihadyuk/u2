@@ -1,7 +1,7 @@
 #ifndef SPEEDOMETER_HPP_
 #define SPEEDOMETER_HPP_
 
-#include <speedometer_data_t.hpp>
+#include "speedometer_data.hpp"
 #include "alpha_beta.hpp"
 #include "median.hpp"
 
@@ -9,8 +9,8 @@
  *
  */
 enum class SampleCosher {
-  good,
-  bad
+  yes,
+  no
 };
 
 /**

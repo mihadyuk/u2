@@ -210,8 +210,7 @@ sensor_state_registry_t Marg::param_update(void) {
 /**
  *
  */
-Marg::Marg(Adis &adis) :
-    adis(adis),
+Marg::Marg(void) :
     mpu6050(&I2CD_FAST, MPU6050_I2C_ADDR),
     ak8975(&I2CD_FAST, AK8975_I2C_ADDR),
     lsm303mag(&I2CD_FAST, LSM303_MAG_I2C_ADDR),
@@ -298,7 +297,7 @@ msg_t Marg::get(marg_data_t &result, systime_t timeout) {
     result.request.mag = 1;
   if (MARG_GYR_SRC_ADIS == gyr_src_current) {
     result.request.gyr = 1;
-    result.request.dt = 1;
+    result.request.dT = 1;
   }
   adis.get(result);
 
@@ -310,7 +309,7 @@ msg_t Marg::get(marg_data_t &result, systime_t timeout) {
     result.request.acc = 1;
   if (MARG_GYR_SRC_MPU6050 == gyr_src_current) {
     result.request.gyr = 1;
-    result.request.dt = 1;
+    result.request.dT = 1;
   }
   mpu6050.get(result);
 

@@ -62,7 +62,7 @@ static const systime_t fake_calibration_time = S2ST(6);
 /**
  *
  */
-CalibratorState Calibrator::update(const ahrs_data_t &data) {
+CalibratorState Calibrator::update(const marg_data_t &data) {
   (void)data;
 
   osalDbgCheck(CalibratorState::uninit != state);

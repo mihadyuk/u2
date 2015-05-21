@@ -687,8 +687,8 @@ sensor_state_t MPU6050::get(marg_data_t &result) {
       memcpy(result.gyr,     this->gyr_data,     sizeof(this->gyr_data));
       memcpy(result.gyr_raw, this->gyr_raw_data, sizeof(this->gyr_raw_data));
     }
-    if (1 == result.request.dt) {
-      result.dt = this->dt();
+    if (1 == result.request.dT) {
+      result.dT = this->dT();
     }
     release_lock();
   }
@@ -794,7 +794,7 @@ void MPU6050::extiISR(EXTDriver *extp, expchannel_t channel) {
 /**
  *
  */
-float MPU6050::dt(void) {
+float MPU6050::dT(void) {
   return smplrtdiv_current / static_cast<float>(1000);
 }
 
