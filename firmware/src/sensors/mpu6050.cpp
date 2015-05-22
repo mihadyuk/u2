@@ -102,10 +102,10 @@ static const float gyro_sens_array[4] = {
 };
 
 static const float acc_sens_array[4] = {
-    (2 * 9.81)  / 32768.0,
-    (4 * 9.81)  / 32768.0,
-    (8 * 9.81)  / 32768.0,
-    (16 * 9.81) / 32768.0
+    (2 * 9.81f)  / 32768.0f,
+    (4 * 9.81f)  / 32768.0f,
+    (8 * 9.81f)  / 32768.0f,
+    (16 * 9.81f) / 32768.0f
 };
 
 __CCM__ static MPU6050_fir_block<float, float, MPU6050_FIR_LEN> fir_block(taps, ArrayLen(taps));

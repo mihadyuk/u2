@@ -12,21 +12,21 @@ using namespace control;
  * DEFINES
  ******************************************************************************
  */
-#define CHANNEL_CNT         4
+#define CHANNEL_CNT           4
 
 /* mask with for connected/used channels */
-#define CHANNEL_MASK        0b1011
+#define INPUT_CHANNEL_MASK    0b1011
 
 /* middle point in uS */
-#define NORMALIZE_SHIFT     1500
+#define NORMALIZE_SHIFT       1500
 
-/* max - mid. Good futabas have max at 2000uS but not all futabas good enough */
-#define NORMALIZE_SCALE     400
+/* == (max - mid). Good futabas have max at 2000uS but not all futabas good enough */
+#define NORMALIZE_SCALE       400
 
-#define MAX_VALID_VALUE     2200
-#define MIN_VALID_VALUE     800
+#define MAX_VALID_VALUE       2200
+#define MIN_VALID_VALUE       800
 
-#define CHANNEL_TIMEOUT     MS2ST(200)
+#define CHANNEL_TIMEOUT       MS2ST(200)
 
 /*
  ******************************************************************************
@@ -202,7 +202,7 @@ void ReceiverPWM::update(RecevierOutput &result) {
 
   /* overwrite actual values with acquired results */
   for (size_t i=0; i<CHANNEL_CNT; i++) {
-    if (1 == ((CHANNEL_MASK >> i) & 1))
+    if (1 == ((INPUT_CHANNEL_MASK >> i) & 1))
       result.ch[i] = get_ch(i, &data_valid);
     else
       result.ch[i] = NORMALIZE_SHIFT; /* special case for unconnected input */
