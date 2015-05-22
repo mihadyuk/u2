@@ -166,6 +166,11 @@ void ACS::set_mode_handler(const mavMail *recv_mail) {
   if (MAV_STATE_STANDBY == mavlink_system_info_struct.state) {
     mavlink_system_info_struct.mode = smp->base_mode;
 
+    /* process "armed" flag */
+    if (mavlink_system_info_struct.mode | MAV_MODE_FLAG_SAFETY_ARMED)
+      this->drivetrain.arm();
+    else
+      this->drivetrain.disarm();
   }
   else {
     mavlink_dbg_print(MAV_SEVERITY_ERROR, "Can not change mode when system active", MAV_COMP_ID_ALL);

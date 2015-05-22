@@ -88,7 +88,14 @@ typedef enum {
   ACS_INPUT_futaba_height,
   ACS_INPUT_futaba_yaw,
 
-  ACS_INPUT_empty,    // special field for passing to unused PIDs
+  // some constants
+  ACS_INPUT_one_neg,
+  ACS_INPUT_half_neg,
+  ACS_INPUT_quarter_neg,
+  ACS_INPUT_zero,
+  ACS_INPUT_quarter,
+  ACS_INPUT_half,
+  ACS_INPUT_one,
 
   ACS_INPUT_ENUM_END,
 } state_vector_enum;
@@ -100,8 +107,19 @@ static_assert(ACS_INPUT_ENUM_END < 256, "Stabilizer virtual machine limit.");
  */
 struct ACSInput {
   ACSInput(void) {
+
     memset(this, 0, sizeof(*this));
+
+    /* fill special values */
+    ch[ACS_INPUT_one_neg]     = -1;
+    ch[ACS_INPUT_half_neg]    = -0.5f;
+    ch[ACS_INPUT_quarter_neg] = -0.25f;
+    ch[ACS_INPUT_zero]        = 0;
+    ch[ACS_INPUT_quarter]     = 0.25f;
+    ch[ACS_INPUT_half]        = 0.5f;
+    ch[ACS_INPUT_one]         = 1;
   }
+
   float ch[ACS_INPUT_ENUM_END];
   bool futaba_good = false;
   control::ManualSwitch futaba_man_switch = control::ManualSwitch::fullauto;

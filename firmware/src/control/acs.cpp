@@ -80,7 +80,8 @@ static const uint8_t emergency_bytecode[] = {
 };
 
 static const uint8_t standby_bytecode[] = {
-    INPUT,  ACS_INPUT_futaba_raw_00,
+    INPUT,  ACS_INPUT_yaw,
+    SCALE,  0,
     OUTPUT, IMPACT_RUD,
     TERM,
 
@@ -267,39 +268,6 @@ void ACS::loop_navigate(float dT) {
     break;
   }
 }
-
-///**
-// * @brief   Execute mission.
-// */
-//void ACS::loop_navigate(float dT, FutabaResult fr) {
-//  MissionState mi_state;
-//  const uint8_t *auto_bytecode;
-//
-//  /* */
-//  switch (fr) {
-//  case FutabaResult::fullauto:
-//    mi_state = mission.update(dT);
-//    auto_bytecode = select_bytecode(mi_state);
-//    stabilizer.update(dT, auto_bytecode);
-//    mode = MAV_MODE_FLAG_AUTO_ENABLED;
-//    break;
-//
-//  case FutabaResult::semiauto:
-//    stabilizer.update(dT, semiauto_bytecode);
-//    mode = MAV_MODE_FLAG_STABILIZE_ENABLED;
-//    break;
-//
-//  case FutabaResult::manual:
-//    stabilizer.update(dT, manual_bytecode);
-//    mode = MAV_MODE_FLAG_MANUAL_INPUT_ENABLED;
-//    break;
-//
-//  case FutabaResult::emergency:
-//    stabilizer.update(dT, emergency_bytecode);
-//    mode = MAV_MODE_FLAG_AUTO_ENABLED;
-//    break;
-//  }
-//}
 
 /**
  * @brief   Something goes wrong. Pull hand break or eject 'chute.
