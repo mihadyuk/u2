@@ -1,3 +1,5 @@
+#pragma GCC optimize "-O2"
+
 #include <cmath>
 
 #include "main.h"
@@ -184,7 +186,7 @@ void BMP085::picle(baro_data_t &result) {
 /**
  *
  */
-static THD_WORKING_AREA(bmp085ThreadWA, 256) __CCM__;
+__CCM__ static THD_WORKING_AREA(bmp085ThreadWA, 256);
 THD_FUNCTION(bmp085Thread, arg) {
   chRegSetThreadName("bmp085");
   BMP085 *sensor = (BMP085 *)arg;

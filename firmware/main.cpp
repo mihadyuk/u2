@@ -60,6 +60,7 @@ Giovanni
 #include "mav_logger.hpp"
 #include "adc_local.hpp"
 #include "pwr_mgr.hpp"
+#include "fir_test.hpp"
 
 using namespace chibios_rt;
 
@@ -179,7 +180,7 @@ int main(void) {
     pwr5v_power_on();
 
   MavlinkInit();      /* mavlink constants initialization must be called after parameters init */
-  mission_receiver.start(CONTROLLERPRIO);
+  mission_receiver.start(MISSIONRECVRPRIO);
   link_mgr.start();      /* launch after controller to reduce memory fragmentation on thread creation */
   tlm_sender.start();
 

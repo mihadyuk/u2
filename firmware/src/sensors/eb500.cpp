@@ -6,6 +6,7 @@
 #include "geometry.hpp"
 #include "time_keeper.hpp"
 #include "pads.h"
+#include "chprintf.h"
 
 using namespace gps;
 
@@ -175,6 +176,8 @@ THD_FUNCTION(gpsRxThread, arg) {
   collect_status_t status;
   bool gga_acquired = false;
   bool rmc_acquired = false;
+  systime_t prev = 0;
+  systime_t curr = 0;
 
   osalThreadSleepSeconds(5);
   gps_configure();
@@ -216,9 +219,12 @@ THD_FUNCTION(gpsRxThread, arg) {
         cache.sec_round  = rmc.sec_round;
         if (gga.fix == 1) {
           event_gps.broadcastFlags(EVMSK_GPS_FRESH_VALID);
-          red_led_on();
-          osalThreadSleepMilliseconds(10);
-          red_led_off();
+          if (nullptr != hook_sdp) {
+            curr = chVTGetSystemTimeX();
+            systime_t out = ST2MS(curr - prev);
+            prev = curr;
+            chprintf((BaseSequentialStream *)hook_sdp, "%U\r\n", out);
+          }
         }
         release();
       }

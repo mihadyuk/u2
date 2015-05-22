@@ -1,9 +1,9 @@
+#pragma GCC optimize "-O2"
+
 #include <ctime>
 #include <cmath>
 #include <cstring>
 #include <cstdlib>
-
-#pragma GCC optimize "-O2"
 
 #include "main.h"
 #include "nmea.hpp"

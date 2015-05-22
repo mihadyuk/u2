@@ -1,3 +1,5 @@
+#pragma GCC optimize "-O2"
+
 #include <cstring>
 
 #include "main.h"
@@ -91,7 +93,7 @@ static const uint8_t request[] = {
     0x6C, // pitch (c31)
     0x6E, // yaw (c32)
     0x70, // c33
-    0x70 /* special fake read for stupid adis logic */
+    0x70 /* special fake field for stupid adis logic */
 };
 
 static uint16_t rxbuf[ArrayLen(request)];
@@ -266,7 +268,7 @@ void Adis::acquire_data(void) {
   chTMStartMeasurementX(&tm);
 
   /* reading data */
-  read(request[0]); /* first read for warm up */
+  read(request[0]); /* first read for stupid adis warm up */
   for (size_t i=1; i<ArrayLen(request); i++) // NOTE: this loop must be start from #1
     rxbuf[i-1] = read(request[i]);
 

@@ -1,3 +1,5 @@
+#pragma GCC optimize "-O2"
+
 #include "main.h"
 #include "pads.h"
 
@@ -42,7 +44,7 @@ using namespace filters;
 #define MPUREG_USER_CTRL        0x6A
   #define FIFO_EN               (1 << 6)
   #define I2C_MST_EN            (1 << 5) /* clear this bit to use I2C bypass mode */
-  #define FIFO_RST            (1 << 2)
+  #define FIFO_RST              (1 << 2)
 #define MPUREG_PWR_MGMT1        0x6B
   #define DEVICE_RESET          (1 << 7)
   #define DEVICE_SLEEP          (1 << 6)
