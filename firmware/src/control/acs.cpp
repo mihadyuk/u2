@@ -44,8 +44,9 @@ static const uint8_t auto_bytecode[] = {
 };
 
 static const uint8_t semiauto_bytecode[] = {
-    INPUT,  ACS_INPUT_wx,
+    INPUT,  ACS_INPUT_roll,
     OUTPUT, IMPACT_RUD,
+    SCALE, 0,
     TERM,
 
     INPUT,  ACS_INPUT_wy,
@@ -80,7 +81,7 @@ static const uint8_t emergency_bytecode[] = {
 };
 
 static const uint8_t standby_bytecode[] = {
-    INPUT,  ACS_INPUT_yaw,
+    INPUT,  ACS_INPUT_roll,
     SCALE,  0,
     OUTPUT, IMPACT_RUD,
     TERM,

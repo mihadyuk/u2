@@ -1,8 +1,8 @@
 #ifndef WIND_ESTIMATOR_HPP
 #define WIND_ESTIMATOR_HPP
 
-#include "kalman.hpp"
 #include "matrix_math.hpp"
+#include "kalman.hpp"
 
 template <typename T>
 class Wind_estimator{

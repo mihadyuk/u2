@@ -1,9 +1,9 @@
 #ifndef SINS_KALMAN_LC_HPP
 #define SINS_KALMAN_LC_HPP
-#include "imu_calibrator.hpp"
 #include "kalman.hpp"
-#include "sins.hpp"
 #include "sins_error_model.hpp"
+#include "sins.hpp"
+#include "imu_calibrator.hpp"
 
 #define DWGS_ALT_ALPHA_DEFAULT 0.1f
 
@@ -17,14 +17,14 @@ class Sins_Kalman_LC{
 public:
   Sins_Kalman_LC(void);
   bool initialize(T r_init[3][1], T v_init[3][1], T qnv_init[4][1],
-                  T R[9][1], T Qm[10][1], T P[10][1], T dT_in, unsigned int rst_cnt_max);
+                  T sigma_R[9][1], T sigma_Qm[10][1], T sigma_P[10][1], T dT_in, unsigned int rst_cnt_max);
   void set_qnb_init(T qnv_init[4][1]);
   void init_nav(T r_init[3][1], T v_init[3][1], T qnb_init[4][1]);
   void init_time_const(T dT_in, unsigned int rst_cnt_max);
-  void init_RQmP(T R[9][1], T Qm[10][1], T P[10][1]);
+  void init_RQmP(T sigma_R[9][1], T sigma_Qm[10][1], T sigma_P[10][1]);
   
-  void set_RQ(T R[9][1], T Qm[10][1]);
-  void set_P(T P[10][1]);
+  void set_RQ(T sigma_R[9][1], T sigma_Qm[10][1]);
+  void set_P(T sigma_P[10][1]);
 
   void update(T r_sns[3][1], T v_sns[3][1], T alt_b[1][1], T v_odo[3][1], T mb[3][1], T ang[3][1],
               T fb[3][1], T wb[3][1], T mn[3][1], KalmanFlags en_flg);
@@ -77,6 +77,7 @@ public:
   
   T fb_c[3][1];
   T wb_c[3][1];
+  T mb_c[3][1];
   T acc_f[3][1];
   T course_prev[1][1];
   T dwgs_baro[1][1];
@@ -152,114 +153,113 @@ initialized(false)
 }
 
 template <typename T, int nX, int nY>
-void Sins_Kalman_LC<T, nX, nY>::set_RQ(T R[9][1], T Qm[10][1]){
+void Sins_Kalman_LC<T, nX, nY>::set_RQ(T sigma_R[9][1], T sigma_Qm[10][1]){
 /* initialize R matrix.*/
   m_set<T,nY,1>(Filter.R,0.0);
   
   //sns r(1-2) (N and E)
-  Filter.R[0][0] = R[0][0]*R[0][0];
-  Filter.R[1][0] = R[0][0]*R[0][0];
+  Filter.R[0][0] = sigma_R[0][0]*sigma_R[0][0];
+  Filter.R[1][0] = sigma_R[0][0]*sigma_R[0][0];
   
   //sns r(1-3) (D)
-  Filter.R[2][0] = R[1][0]*R[1][0];
+  Filter.R[2][0] = sigma_R[1][0]*sigma_R[1][0];
 
   //sns velocity
-  Filter.R[3][0] = R[2][0]*R[2][0];
-  Filter.R[4][0] = R[2][0]*R[2][0];
-  Filter.R[5][0] = R[2][0]*R[2][0];
+  Filter.R[3][0] = sigma_R[2][0]*sigma_R[2][0];
+  Filter.R[4][0] = sigma_R[2][0]*sigma_R[2][0];
+  Filter.R[5][0] = sigma_R[2][0]*sigma_R[2][0];
    
   if (nY > 6){ 
     //odo
-    Filter.R[6][0] = R[3][0]*R[3][0];
+    Filter.R[6][0] = sigma_R[3][0]*sigma_R[3][0];
     //non_hol
-    Filter.R[7][0] = R[4][0]*R[4][0];
-    Filter.R[8][0] = R[4][0]*R[4][0];
+    Filter.R[7][0] = sigma_R[4][0]*sigma_R[4][0];
+    Filter.R[8][0] = sigma_R[4][0]*sigma_R[4][0];
   }
-  
-  if (nY > 9){
+  if (nY > 9){ 
     //alt_baro
-    Filter.R[9][0] = R[5][0]*R[5][0];
-
+    Filter.R[9][0] = sigma_R[5][0]*sigma_R[5][0];
+  
     //mag
-    Filter.R[10][0] = R[6][0]*R[6][0];
-    Filter.R[11][0] = R[6][0]*R[6][0];
-    Filter.R[12][0] = R[6][0]*R[6][0];
+    Filter.R[10][0] = sigma_R[6][0]*sigma_R[6][0];
+    Filter.R[11][0] = sigma_R[6][0]*sigma_R[6][0];
+    Filter.R[12][0] = sigma_R[6][0]*sigma_R[6][0];
   
     //ang
-    Filter.R[13][0] = R[7][0]*R[7][0];
-    Filter.R[14][0] = R[7][0]*R[7][0];
-    Filter.R[15][0] = R[7][0]*R[7][0];
+    Filter.R[13][0] = sigma_R[7][0]*sigma_R[7][0];
+    Filter.R[14][0] = sigma_R[7][0]*sigma_R[7][0];
+    Filter.R[15][0] = sigma_R[7][0]*sigma_R[7][0];
   
     //ZIHR
-    Filter.R[16][0] = R[8][0]*R[8][0];
+    Filter.R[16][0] = sigma_R[8][0]*sigma_R[8][0];
   }
   //
   
   /* initialize Qm matrix.*/
   m_set<T,nX-3,1>(Filter.Qm,0.0);
   for(int i = 0; i<=2; i++){ //acc
-    Filter.Qm[i][0] = Qm[0][0]*Qm[0][0];
+    Filter.Qm[i][0] = sigma_Qm[0][0]*sigma_Qm[0][0];
   }
   for(int i = 3; i<=5; i++){ //gyro
-    Filter.Qm[i][0] = Qm[1][0]*Qm[1][0];
+    Filter.Qm[i][0] = sigma_Qm[1][0]*sigma_Qm[1][0];
   }
   
   if (nX > 9){
-    Filter.Qm[6][0] = Qm[2][0]*Qm[2][0];
-    Filter.Qm[7][0] = Qm[3][0]*Qm[3][0];
-    Filter.Qm[8][0] = Qm[4][0]*Qm[4][0];
+    Filter.Qm[6][0] = sigma_Qm[2][0]*sigma_Qm[2][0];
+    Filter.Qm[7][0] = sigma_Qm[3][0]*sigma_Qm[3][0];
+    Filter.Qm[8][0] = sigma_Qm[4][0]*sigma_Qm[4][0];
     for(int i = 9; i<=11; i++){  //gyro bias
-      Filter.Qm[i][0] = Qm[5][0]*Qm[5][0];
+      Filter.Qm[i][0] = sigma_Qm[5][0]*sigma_Qm[5][0];
     }
   }
     if (nX > 15){   
     for(int i = 12; i<=14; i++){ //acc scale
-      Filter.Qm[i][0] = Qm[6][0]*Qm[6][0];
+      Filter.Qm[i][0] = sigma_Qm[6][0]*sigma_Qm[6][0];
     }
     for(int i = 15; i<=17; i++){ //gyro scale
-      Filter.Qm[i][0] = Qm[7][0]*Qm[7][0];
+      Filter.Qm[i][0] = sigma_Qm[7][0]*sigma_Qm[7][0];
     }
   }
   if (nX > 21){
     for(int i = 18; i<=23; i++){ //acc nonort
-      Filter.Qm[i][0] = Qm[8][0]*Qm[8][0];
+      Filter.Qm[i][0] = sigma_Qm[8][0]*sigma_Qm[8][0];
     }
     for(int i = 24; i<=29; i++){ //gyro nonort
-      Filter.Qm[i][0] = Qm[9][0]*Qm[9][0];
+      Filter.Qm[i][0] = sigma_Qm[9][0]*sigma_Qm[9][0];
     }
   }
 };
 
 
 template <typename T, int nX, int nY>
-void Sins_Kalman_LC<T, nX, nY>::set_P(T P[10][1]){
+void Sins_Kalman_LC<T, nX, nY>::set_P(T sigma_P[10][1]){
   /* initialize P matrix.*/
   m_set<T,nX,nX>(Filter.P,0.0);
-  set_diag_cov<T,nX>(Filter.P, 0, 2, P[0][0]);
-  set_diag_cov<T,nX>(Filter.P, 3, 5, P[1][0]);
-  set_diag_cov<T,nX>(Filter.P, 6, 7, P[2][0]);
-  set_diag_cov<T,nX>(Filter.P, 8, 8, P[3][0]);
+  set_diag_cov<T,nX>(Filter.P, 0, 2, sigma_P[0][0]);
+  set_diag_cov<T,nX>(Filter.P, 3, 5, sigma_P[1][0]);
+  set_diag_cov<T,nX>(Filter.P, 6, 7, sigma_P[2][0]);
+  set_diag_cov<T,nX>(Filter.P, 8, 8, sigma_P[3][0]);
   if (nX > 9){
-    set_diag_cov<T,nX>(Filter.P, 9, 11, P[4][0]);
-    set_diag_cov<T,nX>(Filter.P, 12, 14, P[5][0]);
+    set_diag_cov<T,nX>(Filter.P, 9, 11, sigma_P[4][0]);
+    set_diag_cov<T,nX>(Filter.P, 12, 14, sigma_P[5][0]);
   }
   if (nX > 15){
-    set_diag_cov<T,nX>(Filter.P, 15, 17, P[6][0]);
-    set_diag_cov<T,nX>(Filter.P, 18, 20, P[7][0]);
+    set_diag_cov<T,nX>(Filter.P, 15, 17, sigma_P[6][0]);
+    set_diag_cov<T,nX>(Filter.P, 18, 20, sigma_P[7][0]);
   }
   if (nX > 21){
-    set_diag_cov<T,nX>(Filter.P, 21, 26, P[8][0]);
-    set_diag_cov<T,nX>(Filter.P, 27, 32, P[9][0]);
+    set_diag_cov<T,nX>(Filter.P, 21, 26, sigma_P[8][0]);
+    set_diag_cov<T,nX>(Filter.P, 27, 32, sigma_P[9][0]);
   }
 };
 
 template <typename T, int nX, int nY>
 bool Sins_Kalman_LC<T, nX, nY>::initialize(T r_init[3][1], T v_init[3][1], T qnv_init[4][1],
-                                           T R[9][1], T Qm[10][1], T P[10][1], T dT_in, unsigned int rst_cnt_max){
+                                           T sigma_R[9][1], T sigma_Qm[10][1], T sigma_P[10][1], T dT_in, unsigned int rst_cnt_max){
   set_qnb_init(qnv_init);
   init_nav(r_init, v_init, this->qnb_init_int);
   init_time_const(dT_in, rst_cnt_max);
-  init_RQmP(R, Qm, P);
+  init_RQmP(sigma_R, sigma_Qm, sigma_P);
    
   get_nav();
   get_bias_scale();
@@ -306,9 +306,9 @@ void Sins_Kalman_LC<T, nX, nY>::init_time_const(T dT_in, unsigned int rst_cnt_ma
 }
 
 template <typename T, int nX, int nY>
-void Sins_Kalman_LC<T, nX, nY>::init_RQmP(T R[9][1], T Qm[10][1], T P[10][1]){
-  set_RQ(R, Qm);
-  set_P(P);
+void Sins_Kalman_LC<T, nX, nY>::init_RQmP(T sigma_R[9][1], T sigma_Qm[10][1], T sigma_P[10][1]){
+  set_RQ(sigma_R, sigma_Qm);
+  set_P(sigma_P);
 }
 
 template <typename T, int nX, int nY>
@@ -342,7 +342,7 @@ void Sins_Kalman_LC<T, nX, nY>::update(T r_sns[3][1], T v_sns[3][1], T alt_b[1][
   T eu_sm_int[3][1];
   
   rst_control();
-  Calib.calibration(fb_c, wb_c, fb, wb); 
+  Calib.calibration(fb_c, wb_c, mb_c, fb, wb, mb); 
   
   //SINS 
   S.update(fb_c, wb_c);

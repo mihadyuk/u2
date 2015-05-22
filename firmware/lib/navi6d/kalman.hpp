@@ -1,10 +1,10 @@
 #ifndef KALMAN_HPP
 #define KALMAN_HPP
-#include "att.hpp"
-#include "matrix_math.hpp"
-#include "qmath.hpp"
-#include "wgs84.hpp"
 #include <math.h>
+#include "att.hpp"
+#include "qmath.hpp"
+#include "matrix_math.hpp"
+#include "wgs84.hpp"
 
 #define K_TYPE
 template <typename T, int nX, int nY, int nQm>

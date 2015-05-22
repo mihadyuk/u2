@@ -1,5 +1,6 @@
 #ifndef MATRIX_MATH_HPP
 #define MATRIX_MATH_HPP
+//#include <math.h>
 
 template <typename T, int m, int n>
 void m_copy(T Mres[m][n], T M[m][n]){
@@ -202,7 +203,7 @@ void m_plus_diag(T M[m][m], T D[m][1]){
 template <typename T, int m>
 void m_plus_eye(T M[m][m]){
   for (int i = 0; i<m; i++){
-    M[i][i] += 1;
+    M[i][i] += 1.0;
   }  
 }
 

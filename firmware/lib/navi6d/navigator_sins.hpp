@@ -1,21 +1,21 @@
 #ifndef NAVIGATOR_SINS_HPP
 #define NAVIGATOR_SINS_HPP
-
-#include "ahrs_simple.hpp"
 #include "sins_kalman_loose.hpp"
+#include "ahrs_simple.hpp"
+#include <stdint.h>
 
 #define LAT_DEFAULT 0.92f
 #define LON_DEFAULT 0.48f
 #define ALT_DEFAULT 255.0f
 
-#define DEFAULT_INIT_TIME 5.0f
-#define ACCEL_BIAS_SAT_DEFAULT 1.0f
-#define GYRO_BIAS_SAT_DEFAULT 10.0f*DEG2RAD
-#define BIAS_FILTER_ALPHA_DEFAULT 0.05f
-#define MAG_DEC_DEFAULT 7.0f*DEG2RAD
-#define MAG_INC_DEFAULT 69.0f*DEG2RAD
-#define FREQ_DEFAULT 40.0f
-#define DT_DEFAULT 1.0/FREQ_DEFAULT
+#define DEFAULT_INIT_TIME 15
+#define ACCEL_BIAS_SAT_DEFAULT 1
+#define GYRO_BIAS_SAT_DEFAULT 10*DEG2RAD
+#define BIAS_FILTER_ALPHA_DEFAULT 0.05
+#define MAG_DEC_DEFAULT 7*DEG2RAD
+#define MAG_INC_DEFAULT 69*DEG2RAD
+#define FREQ_DEFAULT 40
+#define DT_DEFAULT 1/FREQ_DEFAULT
 #define RST_CNT_DEFAULT 50
 #define AUTO_INIT_ALPHA_DEFAULT 0.5
 #define SNS_EXTRAPOLATION false
@@ -43,8 +43,17 @@ public:
   T sw_sat[3][1];
   T ga_sat;
   T gw_sat;
+  T bm[3][1];
+  T sm[3][3];
   T alpha;
+  CalibParams(void);
 };
+
+template <typename T>
+CalibParams<T>::CalibParams(void)
+{
+    
+}
 
 template <typename T>
 class RefParams{
@@ -60,26 +69,30 @@ public:
   T lever_arm_wheel[3][1];
   bool sns_extr_en;
   void update(void);
+  RefParams(void);
 };
 
 template <typename T>
-void RefParams<T>::update(void){
-  mn[0][0] = 1.0;
-  mn[1][0] = 0.0;
-  mn[2][0] = 0.0;
-  mag_ang[0][0] = 0.0;
-  mag_ang[1][0] = -mag_inc;
-  mag_ang[2][0] = mag_dec;
-  lever_arm_sns[0][0] = 0.0;
-  lever_arm_sns[1][0] = 0.0;
-  lever_arm_sns[2][0] = 0.0;
-  lever_arm_wheel[0][0] = 0.0;
-  lever_arm_wheel[1][0] = 0.0;
-  lever_arm_wheel[2][0] = 0.0;
+RefParams<T>::RefParams(void)
+{
+    
 }
 
-
-
+template <typename T>
+void RefParams<T>::update(void){
+  mn[0][0] = 1;
+  mn[1][0] = 0;
+  mn[2][0] = 0;
+  mag_ang[0][0] = 0;
+  mag_ang[1][0] = -mag_inc;
+  mag_ang[2][0] = mag_dec;
+  lever_arm_sns[0][0] = 0;
+  lever_arm_sns[1][0] = 0;
+  lever_arm_sns[2][0] = 0;
+  lever_arm_wheel[0][0] = 0;
+  lever_arm_wheel[1][0] = 0;
+  lever_arm_wheel[2][0] = 0;
+}
 
 template <typename T>
 class InitParams{
@@ -90,18 +103,39 @@ public:
   T eu_nv_init[3][1];
   
   T alpha;
-  T Pi[10][1];
+  T sigma_Pi[10][1];
   T dT;
   T init_time;
   unsigned long rst_cnt;
+  InitParams(void);
 };
+
+template <typename T>
+InitParams<T>::InitParams(void)
+{
+  for (size_t i = 0; i<10; i++){
+    sigma_Pi[i][0] = 0;
+  } 
+}
 
 template <typename T>
 class KalmanParams{
 public:
-  T R[9][1];
-  T Qm[10][1];
+  T sigma_R[9][1];
+  T sigma_Qm[10][1];
+  KalmanParams(void);
 };
+
+template <typename T>
+KalmanParams<T>::KalmanParams(void)
+{
+  for (size_t i = 0; i<9; i++){
+    sigma_R[i][0] = 1;
+  }
+  for (size_t i = 0; i<10; i++){
+    sigma_Qm[i][0] = 0;
+  }
+}
 
 
 template <typename T>
@@ -119,7 +153,22 @@ public:
   T a_b[3][1];
   T w_b[3][1];
   unsigned long status;
+  NaviData(void);
 };
+
+template <typename T>
+NaviData<T>::NaviData(void)
+{
+  qnv[0][0] = 1;
+  qnv[1][0] = 0;
+  qnv[2][0] = 0;
+  qnv[3][0] = 0;
+  
+  qnb[0][0] = 1;
+  qnb[1][0] = 0;
+  qnb[2][0] = 0;
+  qnb[3][0] = 0;
+}
 
 template <typename T>
 class AllParams{
@@ -198,11 +247,11 @@ void NavigatorSins<T, nX, nY>::get_navi_params(void){
    navi_data.qnv[i][0] = this->Sins_lc.qnv_out[i][0];
    navi_data.qnb[i][0] = this->Sins_lc.qnb_sm[i][0];
   }
-  if (navi_data.v[0][0] != 0.0){
+  if (navi_data.v[0][0] != 0){
     navi_data.course_v[0][0] = atan2(navi_data.v[1][0],navi_data.v[0][0]); //course
   }
   else{
-	navi_data.course_v[0][0] = 0.0; //course  
+	navi_data.course_v[0][0] = 0; //course  
   }
   navi_data.mag_head_v[0][0] = this->Ahrs_smpl.eu[2][0];
   
@@ -221,16 +270,16 @@ NavigatorSins<T, nX, nY>::NavigatorSins(void){
   params.init_params.r_init[0][0] = LAT_DEFAULT;
   params.init_params.r_init[1][0] = LON_DEFAULT;
   params.init_params.r_init[2][0] = ALT_DEFAULT;
-  params.init_params.qnv_init[0][0] = 1.0f;
+  params.init_params.qnv_init[0][0] = 1;
   params.init_params.init_time = DEFAULT_INIT_TIME;
   
-  qnv_init[0][0] = 1.0;
+  qnv_init[0][0] = 1;
   for(int i = 0; i<3; i++)
   {
-    params.init_params.v_init[i][0] = 0.0f;
-	  params.init_params.eu_nv_init[i][0] = 0.0f;
-    params.init_params.qnv_init[i+1][0] = 0.0f;
-	  qnv_init[i+1][0] = 0.0f;
+    params.init_params.v_init[i][0] = 0;
+	  params.init_params.eu_nv_init[i][0] = 0;
+    params.init_params.qnv_init[i+1][0] = 0;
+	  qnv_init[i+1][0] = 0;
   }
   
   params.ref_params.mag_dec = MAG_DEC_DEFAULT; 
@@ -246,6 +295,7 @@ NavigatorSins<T, nX, nY>::NavigatorSins(void){
 template <typename T, int nX, int nY>
 void NavigatorSins<T, nX, nY>::set_init_params(InitParams<T> init_params_in){
   params.init_params = init_params_in;
+  this->set_dT();
 }
 
 template <typename T, int nX, int nY>
@@ -308,7 +358,7 @@ void NavigatorSins<T, nX, nY>::set_dT(void){
 
 template <typename T, int nX, int nY>
 void NavigatorSins<T, nX, nY>::set_RQm(void){
-  Sins_lc.set_RQ(params.kalman_params.R,params.kalman_params.Qm);
+  Sins_lc.set_RQ(params.kalman_params.sigma_R,params.kalman_params.sigma_Qm);
 }
 
 template <typename T, int nX, int nY>
@@ -329,8 +379,8 @@ void NavigatorSins<T, nX, nY>::sns_extrapolator(T r_sns[3][1], T v_sns[3][1], bo
       m_plus<T,3,1>(v_sns_extr, v_sns, Sins_lc.S.dv_extr);
     }
     else{
-      m_set<T,3,1>(r_sns_extr, 0.0);
-      m_set<T,3,1>(v_sns_extr, 0.0);
+      m_set<T,3,1>(r_sns_extr, 0);
+      m_set<T,3,1>(v_sns_extr, 0);
     }
   }
   else{
@@ -343,7 +393,7 @@ template <typename T, int nX, int nY>
 void NavigatorSins<T, nX, nY>::update(T r_sns[3][1], T v_sns[3][1], T alt_b[1][1], T v_odo[3][1], T mb[3][1], T ang[3][1], T fb[3][1], T wb[3][1], T mn[3][1], bool pps){
   timer += params.init_params.dT;  
   T alpha = params.init_params.alpha;
-  T beta = 1.0-alpha;
+  T beta = 1-alpha;
   Ahrs_smpl.simple_update(fb, mb);
  
   this->sns_extrapolator(r_sns, v_sns, pps);
@@ -386,14 +436,14 @@ void NavigatorSins<T, nX, nY>::update(T r_sns[3][1], T v_sns[3][1], T alt_b[1][1
 	
 	  case NAV_SINS_INIT:
 	    Sins_lc.initialize(r_init, v_init, qnv_init,
-                         params.kalman_params.R, params.kalman_params.Qm,
-                         params.init_params.Pi, params.init_params.dT, params.init_params.rst_cnt);				 
+                         params.kalman_params.sigma_R, params.kalman_params.sigma_Qm,
+                         params.init_params.sigma_Pi, params.init_params.dT, params.init_params.rst_cnt);				 
       state = NAV_RUN;
 	  break;
 	
     case NAV_RUN:
-	    this->set_RQm();
-      this->set_dT();
+	    //this->set_RQm();
+      //this->set_dT();
       this->Sins_lc.update(r_sns_extr, v_sns_extr, alt_b, v_odo, mb, ang, fb, wb, mn, flg);
     break;
     
@@ -437,12 +487,12 @@ void NavigatorSins<T, nX, nY>::set_status(void){
 //////////////////////////////
 template <typename T, int nX, int nY>
 void NavigatorSins<T, nX, nY>::initialize(navigator_mode_t mode){
-   timer = 0.0;
+   timer = 0;
    this->state = mode;
    this->set_RQm();
    this->set_dT();
    this->Ahrs_smpl.mag_dec = params.ref_params.mag_dec;
-   Sins_lc.set_P(params.init_params.Pi);
+   Sins_lc.set_P(params.init_params.sigma_Pi);
 }
 
     
@@ -455,7 +505,7 @@ void NavigatorSins<T, nX, nY>::run(SensorData<T> data, KalmanFlags sensor_flags)
 
 template <typename T, int nX, int nY>
 void NavigatorSins<T, nX, nY>::command_executor(uint8_t cmd)
-{
+{                                         
   switch (cmd)
   {
     case 0:  
@@ -477,4 +527,4 @@ void NavigatorSins<T, nX, nY>::command_executor(uint8_t cmd)
   }
 };
 
-#endif //NAVIGATOR_HPP
+#endif //NAVIGATOR_SINS_HPP

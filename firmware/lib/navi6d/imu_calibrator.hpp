@@ -1,11 +1,11 @@
 #ifndef IMU_CALIBRATOR_HPP
 #define IMU_CALIBRATOR_HPP
-#include "matrix_math.hpp"
 #include <math.h>
+#include "matrix_math.hpp"
 
-#define PI_M 3.1415926535897932384626433832795028841971693993751f
-#define DEG2RAD PI_M/180.0
-#define RAD2DEG 180.0/PI_M
+#define PI_ 3.1415926535897932384626433832795028841971693993751
+#define DEG2RAD PI_/180.0
+#define RAD2DEG 180.0/PI_
 #define ALPHA_DEFAULT 0.05
 
 #define BA_SAT_DEFAULT 100000.0
@@ -21,11 +21,10 @@ class Imu_calibrator{
 public:
   Imu_calibrator(void);
   void update(T X[nX][1], bool upd_en);
-  void gyro_bias_est(T w_in[3][1], bool set);
-  
+  void gyro_bias_est(T w_in[3][1], bool set);  
   void get_bias(T ba_out[3][1], T bw_out[3][1]);
   void get_scale(T am_out[3][3], T wm_out[3][3]);
-  void calibration(T a_out[3][1], T w_out[3][1], T a_in[3][1], T w_in[3][1]);
+  void calibration(T a_out[3][1], T w_out[3][1], T m_out[3][1], T a_in[3][1], T w_in[3][1], T m_in[3][1]);
   void set_ba_sat(T ba_sat_in[3][1]);
   void set_sa_sat(T sa_sat_in[3][1]);
   void set_bw_sat(T bw_sat_in[3][1]);
@@ -45,6 +44,9 @@ private:
   T bw[3][1];
   T sw[3][1];
   T gw[6][1];
+  
+  T bm[3][1];
+  T mm[3][3];
   
   T ba_sat[3][1];
   T sa_sat[3][1];
@@ -260,10 +262,10 @@ void Imu_calibrator<T, nX>::get_scale(T am_out[3][3], T  wm_out[3][3]){
 }
 
 template <typename T, int nX>
-void Imu_calibrator<T, nX>::calibration(T a_out[3][1], T w_out[3][1], T a_in[3][1], T w_in[3][1]){
+void Imu_calibrator<T, nX>::calibration(T a_out[3][1], T w_out[3][1], T m_out[3][1], T a_in[3][1], T w_in[3][1], T m_in[3][1]){
   T ba[3][1], bw[3][1];
   T am[3][3], wm[3][3];
-  T a_c[3][1], w_c[3][1]; 
+  T a_c[3][1], w_c[3][1], m_c[3][1]; 
   
   get_bias(ba, bw); 
   get_scale(am, wm);
@@ -272,6 +274,9 @@ void Imu_calibrator<T, nX>::calibration(T a_out[3][1], T w_out[3][1], T a_in[3][
   m_minus<T,3,1>(w_c,w_in,bw);
   m_mul<T,3,3,1>(a_out,am,a_c);
   m_mul<T,3,3,1>(w_out,wm,w_c);
+  
+  m_minus<T,3,1>(m_c,m_in,bm);
+  m_mul<T,3,3,1>(m_out,mm,m_c);
 }
 
 

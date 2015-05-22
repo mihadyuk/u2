@@ -1,9 +1,8 @@
 #ifndef SINS_HPP
 #define SINS_HPP
 //#include <math.h>
-#include "sins_error_model.hpp"
-#include "att.hpp"
 #include "matrix_math.hpp"
+#include "att.hpp"
 #include "qmath.hpp"
 #include "wgs84.hpp"
 

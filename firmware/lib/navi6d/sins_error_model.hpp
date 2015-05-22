@@ -1,7 +1,7 @@
 #ifndef SINS_ERROR_HPP
 #define SINS_ERROR_HPP
-#include "att.hpp"
 #include "matrix_math.hpp"
+#include "att.hpp"
 #include "qmath.hpp"
 #include "wgs84.hpp"
 
@@ -267,9 +267,11 @@ void set_H(T H[nY][nX], KalmanFlags flg, T qnb[4][1], T qbv[4][1], T r[3][1], T 
   m_mul<T,3,3,3>(Cnb_l_skew, Cnb, l_sns_skew);
   
   //// 0-5
-  if (flg.sns_r_en == true){
-    set_sub<T,nY,nX,3,3>(H, I, 0, 0, 1.0);
-    set_sub<T,nY,nX,3,3>(H, Cnb_l_skew, 0, 6, 1.0);
+  set_sub<T,nY,nX,3,3>(H, I, 0, 0, 1.0);
+  set_sub<T,nY,nX,3,3>(H, Cnb_l_skew, 0, 6, 1.0);
+  if (flg.sns_r_en == false){
+    set_sub<T,nY,nX,1,nX>(H, Z1_nX, 0, 0, 1.0);
+    set_sub<T,nY,nX,1,nX>(H, Z1_nX, 1, 0, 1.0);
   }
   
   //disable sns altitude measurement

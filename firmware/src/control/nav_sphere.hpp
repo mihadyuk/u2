@@ -80,9 +80,9 @@ T course_cyrcle(T lat1, T lon1, T lat2, T lon2, T dist) {
 
   if (cos(lat1) < static_cast<T>(FLT_EPSILON)) {
     if(lat1 > 0)
-      return PI;        //  starting from N pole
+      return M_PI;      //  starting from N pole
     else
-      return PI2;       //  starting from S pole
+      return M_TWOPI;     //  starting from S pole
   }
 
   if (sin(lon1 - lon2) < 0) { /* For starting points other than the poles: */
@@ -93,10 +93,10 @@ T course_cyrcle(T lat1, T lon1, T lat2, T lon2, T dist) {
   else {
     crs = (sin(lat2)-sin(lat1)*cos(dist)) / (sin(dist)*cos(lat1));
     crs = putinrange(crs, -1, 1);
-    crs = static_cast<T>(PI2) - acos(crs);
+    crs = static_cast<T>(M_TWOPI) - acos(crs);
   }
 
-  if (isnan(crs) || isinf(crs))
+  if (std::isnan(crs) || std::isinf(crs))
     return 0;
   else
     return crs;
@@ -176,9 +176,9 @@ crosstrack_t<T> NavSphere<T>::crosstrack(T latD, T lonD) {
   }
 
   /* */
-  if (isnan(xtd) || isinf(xtd))
+  if (std::isnan(xtd) || std::isinf(xtd))
     xtd = 0;
-  if (isnan(atd) || isinf(atd))
+  if (std::isnan(atd) || std::isinf(atd))
     atd = 0;
 
   return crosstrack_t<T>(xtd, atd);

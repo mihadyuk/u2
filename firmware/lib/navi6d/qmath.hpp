@@ -1,7 +1,7 @@
 #ifndef QMATH_HPP
 #define QMATH_HPP
-#include "matrix_math.hpp"
 #include <math.h>
+#include "matrix_math.hpp"
 
 template<typename T>
 void cpm(T skew[3][3], T v[3][1]){
