@@ -4,6 +4,7 @@
 #include "stab_vm.hpp"
 #include "pid.hpp"
 #include "geometry.hpp"
+#include "putinrange.hpp"
 
 using namespace chibios_rt;
 using namespace control;
@@ -250,7 +251,7 @@ public:
 private:
   void update(float val) {
     vmDbgCheck((nullptr != next) &&(nullptr != impact));
-    *impact = val;
+    *impact = putinrange(val, -1, 1);
     next->update(val);
   }
 
