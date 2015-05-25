@@ -86,6 +86,8 @@ static mavMail highres_imu_mail;
 /**
  *
  */
+//#include "geometry.hpp"
+//mavlink_out_highres_imu_struct.zgyro = 3600 * rad2deg(sqrt(data.gyr[2] * data.gyr[2] + data.gyr[1] * data.gyr[1] + data.gyr[0] * data.gyr[0]));
 void marg2mavlink(const marg_data_t &data) {
 
   /**/
