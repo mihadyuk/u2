@@ -13,7 +13,7 @@
  */
 class Marg {
 public:
-  Marg(Adis &adis);
+  Marg(void);
   void stop(void);
   sensor_state_registry_t start(void);
   sensor_state_registry_t get_state(void);
@@ -21,7 +21,7 @@ public:
 private:
   void sleep_all(void);
   sensor_state_registry_t param_update(void);
-  Adis &adis;
+  Adis adis;
   MPU6050 mpu6050;
   AK8975 ak8975;
   LSM303_mag lsm303mag;

@@ -1,8 +1,9 @@
 #include "main.h"
+
 #include "acs.hpp"
 #include "param_registry.hpp"
 #include "mavlink_local.hpp"
-#include "mav_cmd_confirm.hpp"
+#include "mav_postman.hpp"
 
 using namespace control;
 
@@ -11,14 +12,6 @@ using namespace control;
  * DEFINES
  ******************************************************************************
  */
-
-#define ALCOI_MAX_PULSE_WIDTH     2 // seconds
-
-/* convenience defines */
-#define PARAM_PULSE_LEVEL         param4
-#define PARAM_PULSE_CHANNEL       param5
-#define PARAM_PULSE_WIDTH         param6
-#define PARAM_PULSE_STRENGTH      param7
 
 /*
  ******************************************************************************
@@ -38,7 +31,7 @@ using namespace control;
  ******************************************************************************
  */
 
-static const uint8_t auto_program[] = {
+static const uint8_t auto_bytecode[] = {
     INPUT,  ACS_INPUT_roll,
     OUTPUT, IMPACT_RUD,
     TERM,
@@ -50,9 +43,10 @@ static const uint8_t auto_program[] = {
     END
 };
 
-static const uint8_t semiauto_program[] = {
-    INPUT,  ACS_INPUT_wx,
+static const uint8_t semiauto_bytecode[] = {
+    INPUT,  ACS_INPUT_roll,
     OUTPUT, IMPACT_RUD,
+    SCALE, 0,
     TERM,
 
     INPUT,  ACS_INPUT_wy,
@@ -62,7 +56,44 @@ static const uint8_t semiauto_program[] = {
     END
 };
 
-static const uint8_t manual_program[] = {
+static const uint8_t manual_bytecode[] = {
+    INPUT,  ACS_INPUT_futaba_raw_00,
+    OUTPUT, IMPACT_RUD,
+    TERM,
+
+    INPUT,  ACS_INPUT_futaba_raw_01,
+    OUTPUT, IMPACT_THR,
+    TERM,
+
+    END
+};
+
+static const uint8_t emergency_bytecode[] = {
+    INPUT,  ACS_INPUT_futaba_raw_00,
+    OUTPUT, IMPACT_RUD,
+    TERM,
+
+    INPUT,  ACS_INPUT_futaba_raw_01,
+    OUTPUT, IMPACT_THR,
+    TERM,
+
+    END
+};
+
+static const uint8_t standby_bytecode[] = {
+    INPUT,  ACS_INPUT_roll,
+    SCALE,  0,
+    OUTPUT, IMPACT_RUD,
+    TERM,
+
+    INPUT,  ACS_INPUT_futaba_raw_01,
+    OUTPUT, IMPACT_THR,
+    TERM,
+
+    END
+};
+
+static const uint8_t loiter_bytecode[] = {
     INPUT,  ACS_INPUT_futaba_raw_00,
     OUTPUT, IMPACT_RUD,
     TERM,
@@ -81,83 +112,209 @@ static const uint8_t manual_program[] = {
  ******************************************************************************
  ******************************************************************************
  */
-/**
- *
- */
-const uint8_t* ACS::select_bytecode(MissionState mi_state) {
-
-  switch(mi_state) {
-  case MissionState::navigate:
-    return auto_program;
-    break;
-  default:
-    return manual_program;
-    break;
-  }
-}
 
 /**
  *
  */
-enum MAV_RESULT ACS::alcoi_command_handler(const mavlink_command_long_t *clp) {
-  AlcoiPulse pulse;
+FutabaResult ACS::analize_futaba(float dT) {
+  FutabaResult ret;
 
-  pulse.pid      = roundf(clp->PARAM_PULSE_CHANNEL);
-  pulse.width   = clp->PARAM_PULSE_WIDTH;
-  pulse.strength= clp->PARAM_PULSE_STRENGTH;
+  futaba.update(acs_in, dT);
 
-  if (pulse.width > ALCOI_MAX_PULSE_WIDTH)
-    return MAV_RESULT_FAILED;
-
-  if (OSAL_SUCCESS == stabilizer.alcoiPulse(pulse))
-    return MAV_RESULT_ACCEPTED;
-  else
-    return MAV_RESULT_FAILED;
-}
-
-/**
- *
- */
-void ACS::command_long_handler(const mavMail *recv_mail) {
-
-  enum MAV_RESULT result = MAV_RESULT_FAILED;
-  const mavlink_command_long_t *clp =
-      static_cast<const mavlink_command_long_t *>(recv_mail->mavmsg);
-
-  if (!mavlink_msg_for_me(clp))
-    return;
-
-  switch (clp->command) {
-  case MAV_CMD_DO_SET_SERVO:
-    result = this->alcoi_command_handler(clp);
-    break;
-  default:
-    break;
+  /* toggle ignore flag for futaba fail */
+  if (true == acs_in.futaba_good) {
+    if (ManualSwitch::fullauto == acs_in.futaba_man_switch)
+      ignore_futaba_fail = true;
+    else
+      ignore_futaba_fail = false;
   }
 
-  command_ack(result, clp->command, GLOBAL_COMPONENT_ID);
-}
-
-/**
- * TODO:
- */
-void ACS::failsafe(void) {
-
-  return;
-}
-
-/**
- *
- */
-void ACS::alcoi_handler(void) {
-
-  mavMail *recv_mail;
-
-  if (MSG_OK == command_mailbox.fetch(&recv_mail, TIME_IMMEDIATE)) {
-    if (MAVLINK_MSG_ID_COMMAND_LONG == recv_mail->msgid) {
-      command_long_handler(recv_mail);
+  /* futaba fail handling */
+  if (!acs_in.futaba_good && !ignore_futaba_fail) {
+    ret = FutabaResult::emergency;
+  }
+  else {
+    switch (acs_in.futaba_man_switch) {
+    case ManualSwitch::fullauto:
+      ret = FutabaResult::fullauto;
+      break;
+    case ManualSwitch::semiauto:
+      ret = FutabaResult::semiauto;
+      break;
+    case ManualSwitch::manual:
+      ret = FutabaResult::manual;
+      break;
+    default:
+      ret = FutabaResult::emergency;
+      break;
     }
   }
+
+  return ret;
+}
+
+/**
+ * @brief   Currently it does nothing.
+ */
+void ACS::loop_boot(float dT, FutabaResult fr) {
+  (void)dT;
+  (void)fr;
+
+  state = ACSState::standby;
+}
+
+/**
+ * @brief   Waits "take_off" command. Perform basic stabilization
+ *          for eye checks.
+ */
+void ACS::loop_standby(float dT, FutabaResult fr) {
+
+  /* */
+  switch (fr) {
+  case FutabaResult::fullauto:
+    stabilizer.update(dT, standby_bytecode);
+    mode = MAV_MODE_FLAG_AUTO_ENABLED;
+    break;
+
+  case FutabaResult::semiauto:
+  case FutabaResult::manual:
+    stabilizer.update(dT, manual_bytecode);
+    mode = MAV_MODE_FLAG_MANUAL_INPUT_ENABLED;
+    break;
+
+  case FutabaResult::emergency:
+    stabilizer.update(dT, emergency_bytecode);
+    mode = MAV_MODE_FLAG_AUTO_ENABLED;
+    break;
+  }
+}
+
+/**
+ * @brief   Currently it does nothing.
+ */
+void ACS::loop_takeoff(float dT, FutabaResult fr) {
+  (void)dT;
+  (void)fr;
+
+  if (OSAL_SUCCESS == mission.takeoff()) {
+    state = ACSState::navigate;
+  }
+}
+
+/**
+ *
+ */
+void ACS::reached_handler(void) {
+  bool load_status = OSAL_FAILED;
+
+  switch (mission.getTrgtCmd()) {
+  case MAV_CMD_NAV_WAYPOINT:
+    load_status = mission.loadNext();
+    if (OSAL_FAILED == load_status) {
+      osalSysHalt("");
+      this->state = ACSState::emergency;
+    }
+    break;
+
+  /**/
+  case MAV_CMD_NAV_LOITER_UNLIM:
+  case MAV_CMD_NAV_LOITER_TIME:
+  case MAV_CMD_NAV_LOITER_TURNS:
+    this->state = ACSState::loiter;
+    break;
+
+  /**/
+  default:
+    load_status = mission.loadNext();
+    if (OSAL_FAILED == load_status) {
+      osalSysHalt("");
+      this->state = ACSState::emergency;
+    }
+    break;
+  }
+}
+
+/**
+ * @brief   Execute mission.
+ */
+void ACS::loop_navigate(float dT) {
+
+  MissionState mi_status = mission.update();
+
+  stabilizer.update(dT, auto_bytecode);
+
+  switch (mi_status) {
+  case MissionState::reached:
+    reached_handler();
+    break;
+
+  /**/
+  case MissionState::completed:
+    this->state = ACSState::loiter;
+    break;
+
+  /**/
+  case MissionState::error:
+    osalSysHalt("");
+    this->state = ACSState::emergency;
+    break;
+
+  /**/
+  case MissionState::navigate:
+    break;
+
+  /**/
+  default:
+    osalSysHalt("Unhandled case");
+    break;
+  }
+}
+
+/**
+ * @brief   Something goes wrong. Pull hand break or eject 'chute.
+ */
+void ACS::loop_manual(float dT, FutabaResult fr) {
+  (void)dT;
+  (void)fr;
+
+  osalSysHalt("unrealized");
+  stabilizer.update(dT, emergency_bytecode);
+  mode = MAV_MODE_FLAG_AUTO_ENABLED;
+}
+
+/**
+ * @brief   Something goes wrong. Pull hand break or eject 'chute.
+ */
+void ACS::loop_semiauto(float dT, FutabaResult fr) {
+  (void)dT;
+  (void)fr;
+
+  osalSysHalt("unrealized");
+  stabilizer.update(dT, emergency_bytecode);
+  mode = MAV_MODE_FLAG_AUTO_ENABLED;
+}
+
+/**
+ * @brief   Something goes wrong. Pull hand break or eject 'chute.
+ */
+void ACS::loop_emergency(float dT, FutabaResult fr) {
+  (void)dT;
+  (void)fr;
+
+  stabilizer.update(dT, emergency_bytecode);
+  mode = MAV_MODE_FLAG_AUTO_ENABLED;
+}
+
+
+/**
+ * @brief   Something goes wrong. Pull hand break or eject 'chute.
+ */
+void ACS::loop_loiter(float dT, FutabaResult fr) {
+  (void)dT;
+  (void)fr;
+
+  stabilizer.update(dT, loiter_bytecode);
+  mode = MAV_MODE_FLAG_AUTO_ENABLED;
 }
 
 /*
@@ -171,8 +328,10 @@ void ACS::alcoi_handler(void) {
 ACS::ACS(Drivetrain &drivetrain, ACSInput &acs_in) :
 drivetrain(drivetrain),
 acs_in(acs_in),
+mission(acs_in),
 stabilizer(impact, acs_in),
-command_long_link(&command_mailbox)
+command_link(&command_mailbox),
+set_mode_link(&command_mailbox)
 {
   return;
 }
@@ -185,18 +344,20 @@ void ACS::start(void) {
   futaba.start();
   stabilizer.start();
   drivetrain.start();
-  mav_postman.subscribe(MAVLINK_MSG_ID_COMMAND_LONG, &command_long_link);
+  mav_postman.subscribe(MAVLINK_MSG_ID_COMMAND_LONG, &command_link);
+  mav_postman.subscribe(MAVLINK_MSG_ID_SET_MODE, &set_mode_link);
 
-  ready = true;
+  state = ACSState::standby;
 }
 
 /**
  *
  */
 void ACS::stop(void) {
-  ready = false;
+  state = ACSState::uninit;
 
-  mav_postman.unsubscribe(MAVLINK_MSG_ID_COMMAND_LONG, &command_long_link);
+  mav_postman.unsubscribe(MAVLINK_MSG_ID_SET_MODE, &set_mode_link);
+  mav_postman.unsubscribe(MAVLINK_MSG_ID_COMMAND_LONG, &command_link);
   command_mailbox.reset();
 
   drivetrain.stop();
@@ -207,47 +368,37 @@ void ACS::stop(void) {
 /**
  *
  */
-void ACS::update(float dT) {
+ACSState ACS::update(float dT) {
 
-  MissionState mi_state;
-  const uint8_t *auto_bytecode;
+  FutabaResult fr;
 
-  osalDbgCheck(ready);
+  /* first process received messages */
+  message_handler();
 
-  futaba.update(acs_in, dT);
+  /**/
+  fr = analize_futaba(dT);
 
-  /* toggle ignore flag for futaba fail */
-  if (true == acs_in.futaba_good) {
-    if (ManualSwitch::fullauto == acs_in.futaba_man)
-      ignore_futaba_fail = true;
-    else
-      ignore_futaba_fail = false;
-  }
-
-  /* futaba fail handling */
-  if (!ignore_futaba_fail && (false == acs_in.futaba_good))
-    return this->failsafe();
-
-  /* main code */
-  switch (acs_in.futaba_man) {
-  case ManualSwitch::fullauto:
-    mi_state = mission.update(dT);
-    auto_bytecode = select_bytecode(mi_state);
-    alcoi_handler();
-    stabilizer.update(dT, auto_bytecode);
+  /**/
+  switch (state) {
+  case ACSState::standby:
+    loop_standby(dT, fr);
     break;
-
-  case ManualSwitch::semiauto:
-    command_mailbox.reset(); // prevent spurious pulse execution when switch to full auto mode
-    stabilizer.update(dT, semiauto_program);
+  case ACSState::navigate:
+    loop_navigate(dT);
     break;
-
-  case ManualSwitch::manual:
-    command_mailbox.reset(); // prevent spurious pulse execution when switch to full auto mode
-    stabilizer.update(dT, manual_program);
+  case ACSState::loiter:
+    loop_loiter(dT, fr);
+    break;
+  case ACSState::emergency:
+    loop_emergency(dT, fr);
+    break;
+  default:
+    osalSysHalt("Unhandled case"); /* error trap */
     break;
   }
 
   drivetrain.update(this->impact);
+
+  return this->state;
 }
 

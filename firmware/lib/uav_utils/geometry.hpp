@@ -1,12 +1,11 @@
 #ifndef GEOMETRY_HPP_
 #define GEOMETRY_HPP_
 
-#define PI          3.14159265358979323846
-#define PI05        1.570796326794897
-#define PI2         6.28318530717958647693
+#include <cmath>
+
 #define DEG_TO_RAD  0.017453292519943296
 #define RAD_TO_DEG  57.295779513082321
-#define RAD_TO_M    6.366707019493707E6
+#define RAD_TO_M    6.366707019493707e6
 
 /**
  *
@@ -61,10 +60,10 @@ T wrap_360(T angle){
  */
 template <typename T>
 T wrap_pi(T error){
-  if (error > static_cast<T>(PI))
-    error -= 2 * static_cast<T>(PI);
-  else if (error < -static_cast<T>(PI))
-    error += 2 * static_cast<T>(PI);
+  if (error > static_cast<T>(M_PI))
+    error -= 2 * static_cast<T>(M_PI);
+  else if (error < -static_cast<T>(M_PI))
+    error += 2 * static_cast<T>(M_PI);
   return error;
 }
 
@@ -73,10 +72,10 @@ T wrap_pi(T error){
  */
 template <typename T>
 T wrap_2pi(T angle){
-  if (angle > 2 * static_cast<T>(PI))
-    angle -= 2 * static_cast<T>(PI);
+  if (angle > 2 * static_cast<T>(M_PI))
+    angle -= 2 * static_cast<T>(M_PI);
   else if (angle < 0)
-    angle += 2 * static_cast<T>(PI);
+    angle += 2 * static_cast<T>(M_PI);
   return angle;
 }
 

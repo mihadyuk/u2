@@ -84,7 +84,7 @@ static void scale(RecevierOutput const &recv, ACSInput &result) {
  */
 void Futaba::recevier2futaba(RecevierOutput const &recv, ACSInput &result) {
 
-  process_man_tumbler(recv, result.futaba_man);
+  process_man_tumbler(recv, result.futaba_man_switch);
 
   /* first check errors */
   if (recv.data_valid)

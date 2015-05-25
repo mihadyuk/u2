@@ -54,13 +54,13 @@ endif
 # Stack size to be allocated to the Cortex-M process stack. This stack is
 # the stack used by the main() thread.
 ifeq ($(USE_PROCESS_STACKSIZE),)
-  USE_PROCESS_STACKSIZE = 0x400
+  USE_PROCESS_STACKSIZE = 0x1200
 endif
 
 # Stack size to the allocated to the Cortex-M main/exceptions stack. This
 # stack is used for processing interrupts and exceptions.
 ifeq ($(USE_EXCEPTIONS_STACKSIZE),)
-  USE_EXCEPTIONS_STACKSIZE = 0x400
+  USE_EXCEPTIONS_STACKSIZE = 0x1200
 endif
 
 # Enables the use of FPU on Cortex-M4 (no, softfp, hard).
@@ -112,6 +112,7 @@ CSRC = $(STARTUPSRC) \
        $(CHIBIOS)/os/various/syscalls.c \
        $(CHIBIOS)/os/hal/lib/streams/chprintf.c \
        $(CHIBIOS)/os/hal/lib/streams/memstreams.c \
+       $(CHIBIOS)/community/os/various/bitmap.c \
        lib/uav_utils/endianness.c \
        lib/uav_utils/cpu_load.c \
        lib/uav_utils/crc.c \
@@ -136,9 +137,13 @@ CONTROLSRC =\
 		src/control/futaba/receiver_synth.cpp \
 		src/control/futaba/receiver_mavlink.cpp \
 		src/control/acs.cpp \
+		src/control/acs_input.cpp \
+		src/control/acs_commands.cpp \
 		src/control/mission_executor.cpp \
 		src/control/navigator.cpp \
-		src/control/stab_vm.cpp
+		src/control/stab_vm.cpp \
+		src/control/hil.cpp \
+		src/control/hil_cli.cpp \
 
 NVRAMSRC = src/nvram_local.cpp \
 		lib/24aa/src/mtd.cpp \
@@ -174,6 +179,7 @@ SENSORSRC = src/i2c_local.cpp \
 		src/sensors/lsm303_acc.cpp \
 		src/sensors/lsm303_mag.cpp \
 		src/sensors/eb500.cpp \
+		src/sensors/eb500_cli.cpp \
 		src/sensors/bmp085.cpp \
 		src/sensors/maxsonar.cpp \
 		src/sensors/speedometer.cpp \
@@ -181,6 +187,7 @@ SENSORSRC = src/i2c_local.cpp \
 		src/sensors/pwr_mgr.cpp \
 		src/sensors/mpxv.cpp \
 		src/sensors/pps.cpp \
+		src/sensors/calibrator.cpp \
           
 CLISRC = src/cli/cli.cpp \
 		src/cli/cli_cmd.cpp \
@@ -199,6 +206,7 @@ CPPSRC = $(CHCPPSRC) \
 		src/sanity.cpp \
 		src/time_keeper.cpp \
 		src/nmea.cpp \
+		src/navi6d_wrapper.cpp \
 		src/kinematic/ahrs.cpp \
 		lib/filters/fir_test.cpp \
 
@@ -232,6 +240,7 @@ INCDIR = $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
          $(CHIBIOS)/os/various \
          $(CHIBIOS)/os/hal/lib/streams \
          $(CHIBIOS)/os/various/cpp_wrappers \
+         $(CHIBIOS)/community/os/various \
          src/sensors \
          lib/microrl/src \
          lib/uav_utils \
@@ -243,7 +252,8 @@ INCDIR = $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
          src/mavlink_local \
          src/kinematic \
          src/cli \
-         src/control/ \
+         src/control \
+         lib/navi6d \
          lib/mavlink/C/lapwing \
          benchmark \
 

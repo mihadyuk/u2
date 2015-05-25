@@ -1,3 +1,5 @@
+#pragma GCC optimize "-O2"
+
 #include <cstring>
 
 #include "main.h"
@@ -91,7 +93,7 @@ static const uint8_t request[] = {
     0x6C, // pitch (c31)
     0x6E, // yaw (c32)
     0x70, // c33
-    0x70 /* special fake read for stupid adis logic */
+    0x70 /* special fake field for stupid adis logic */
 };
 
 static uint16_t rxbuf[ArrayLen(request)];
@@ -266,7 +268,7 @@ void Adis::acquire_data(void) {
   chTMStartMeasurementX(&tm);
 
   /* reading data */
-  read(request[0]); /* first read for warm up */
+  read(request[0]); /* first read for stupid adis warm up */
   for (size_t i=1; i<ArrayLen(request); i++) // NOTE: this loop must be start from #1
     rxbuf[i-1] = read(request[i]);
 
@@ -318,7 +320,7 @@ void Adis::param_update(void) {
 /**
  *
  */
-float Adis::dt(void) {
+float Adis::dT(void) {
   return smplrtdiv_current / static_cast<float>(ADIS_INTERNAL_SAMPLE_RATE);
 }
 
@@ -480,7 +482,7 @@ sensor_state_t Adis::get(ahrs_data_t &result) {
       memcpy(result.euler, &measurement.euler, sizeof(result.euler));
     if (1 == result.request.quat)
       memcpy(result.quat, &measurement.quat, sizeof(result.quat));
-    result.dt = this->dt();
+    result.dT = this->dT();
     release_lock();
   }
   return this->state;
@@ -506,8 +508,8 @@ sensor_state_t Adis::get(marg_data_t &result) {
       memcpy(result.gyr, &measurement.gyr, sizeof(result.gyr));
     if (1 == result.request.mag)
       memcpy(result.mag, &measurement.mag, sizeof(result.mag));
-    if (1 == result.request.dt)
-      result.dt = this->dt();
+    if (1 == result.request.dT)
+      result.dT = this->dT();
     release_lock();
   }
   return this->state;

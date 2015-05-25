@@ -370,7 +370,8 @@ bool ParamRegistry::loadToRam(void) {
        * 1) parameter "registry" has been changed.
        * 2) this is very first run with totally empty EEPROM
        * To correctly fix this situation we just need to
-       * save structure to EEPROM after loading of all parameters to RAM.
+       * save structure to EEPROM after loading of all hardcoded
+       * parameters to RAM.
        */
       if (OSAL_SUCCESS != load_extensive())
         goto FAIL;

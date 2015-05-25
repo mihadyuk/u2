@@ -15,6 +15,8 @@ namespace control {
 static inline uint16_t float2pwm(float a, int min, int mid, int max) {
   uint16_t ret;
 
+  a = putinrange(a, -1, 1);
+
   if (a > 0)
     ret = mid + (max - mid) * a;
   else

@@ -3,8 +3,6 @@
 #include "ahrs.hpp"
 #include "mavlink_local.hpp"
 #include "param_registry.hpp"
-#include "mav_mail.hpp"
-#include "mav_logger.hpp"
 #include "time_keeper.hpp"
 #include "geometry.hpp"
 
@@ -30,10 +28,6 @@ typedef enum {
  * EXTERNS
  ******************************************************************************
  */
-extern MavLogger mav_logger;
-
-extern mavlink_attitude_t               mavlink_out_attitude_struct;
-extern mavlink_attitude_quaternion_t    mavlink_out_attitude_quaternion_struct;
 
 /*
  ******************************************************************************
@@ -46,8 +40,6 @@ extern mavlink_attitude_quaternion_t    mavlink_out_attitude_quaternion_struct;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-static mavMail attitude_mail;
-static mavMail attitude_quaternion_mail;
 
 /*
  ******************************************************************************
@@ -56,52 +48,6 @@ static mavMail attitude_quaternion_mail;
  ******************************************************************************
  ******************************************************************************
  */
-/**
- *
- */
-static void attitude2mavlink(const ahrs_data_t &att) {
-
-  mavlink_out_attitude_struct.roll  = att.euler[0];
-  mavlink_out_attitude_struct.pitch = att.euler[1];
-  mavlink_out_attitude_struct.yaw   = att.euler[2];
-  mavlink_out_attitude_struct.time_boot_ms = TIME_BOOT_MS;
-
-  mavlink_out_attitude_quaternion_struct.q1 = att.quat[0];
-  mavlink_out_attitude_quaternion_struct.q2 = att.quat[1];
-  mavlink_out_attitude_quaternion_struct.q3 = att.quat[2];
-  mavlink_out_attitude_quaternion_struct.q4 = att.quat[3];
-  mavlink_out_attitude_quaternion_struct.time_boot_ms = TIME_BOOT_MS;
-}
-
-/**
- *
- */
-static void attitude2state_vector(const ahrs_data_t &att, ACSInput &acs_in) {
-  acs_in.ch[ACS_INPUT_roll]  = att.euler[0];
-  acs_in.ch[ACS_INPUT_pitch] = att.euler[1];
-  acs_in.ch[ACS_INPUT_yaw]   = att.euler[2];
-
-  acs_in.ch[ACS_INPUT_q0] = att.quat[0];
-  acs_in.ch[ACS_INPUT_q1] = att.quat[1];
-  acs_in.ch[ACS_INPUT_q2] = att.quat[2];
-  acs_in.ch[ACS_INPUT_q3] = att.quat[3];
-}
-
-/**
- *
- */
-static void log_append(void) {
-
-  if (attitude_mail.free()) {
-    attitude_mail.fill(&mavlink_out_attitude_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_ATTITUDE);
-    mav_logger.write(&attitude_mail);
-  }
-
-  if (attitude_quaternion_mail.free()) {
-    attitude_quaternion_mail.fill(&mavlink_out_attitude_quaternion_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_ATTITUDE_QUATERNION);
-    mav_logger.write(&attitude_quaternion_mail);
-  }
-}
 
 /**
  *
@@ -114,7 +60,7 @@ msg_t Ahrs::get_starlino(ahrs_data_t &result, systime_t timeout) {
 
   sem_status = this->marg.get(marg_data, timeout);
   if (MSG_OK == sem_status) {
-    result.dt = marg_data.dt;
+    result.dT = marg_data.dT;
     ; // TODO: process data here
   }
 
@@ -132,7 +78,7 @@ msg_t Ahrs::get_madgwick(ahrs_data_t &result, systime_t timeout) {
 
   sem_status = this->marg.get(marg_data, timeout);
   if (MSG_OK == sem_status) {
-    result.dt = marg_data.dt;
+    result.dT = marg_data.dT;
     ; // TODO: process data here
   }
 
@@ -150,7 +96,7 @@ msg_t Ahrs::get_kalman(ahrs_data_t &result, systime_t timeout) {
 
   sem_status = this->marg.get(marg_data, timeout);
   if (MSG_OK == sem_status) {
-    result.dt = marg_data.dt;
+    result.dT = marg_data.dT;
     ; // TODO: process data here
   }
 
@@ -206,9 +152,7 @@ void Ahrs::reschedule(void) {
 /**
  *
  */
-Ahrs::Ahrs(void) :
-marg(adis)
-{
+Ahrs::Ahrs(void) {
   state = AHRS_STATE_STOP;
   return;
 }
@@ -232,7 +176,7 @@ void Ahrs::start(void) {
 /**
  *
  */
-msg_t Ahrs::get(ahrs_data_t &result, ACSInput &acs_in, systime_t timeout) {
+msg_t Ahrs::get(ahrs_data_t &result, systime_t timeout) {
   msg_t sem_status = MSG_RESET;
 
   reschedule();
@@ -255,9 +199,6 @@ msg_t Ahrs::get(ahrs_data_t &result, ACSInput &acs_in, systime_t timeout) {
     break;
   }
 
-  attitude2mavlink(result);
-  attitude2state_vector(result, acs_in);
-  log_append();
   return sem_status;
 }
 

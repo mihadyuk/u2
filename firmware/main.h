@@ -9,7 +9,7 @@
 #endif
 
 #include "hal.h"
-//int snprintf(char *, size_t, const char *, ...);
+
 #define __CCM__ __attribute__((section(".ram4")))
 
 /* Heap size for dynamic thread creation */
@@ -31,22 +31,27 @@
  */
 #define MAVLINK_SENDBUF_SIZE      264
 
-/* приоритеты для потоков */
-#define I2CPRIO           (NORMALPRIO - 5)
-#define TIMEKEEPERPRIO    (I2CPRIO - 1)
-#define LINKPRIO          (NORMALPRIO - 5)
-#define CONTROLLERPRIO    (NORMALPRIO)
-#define CMDPRIO           (LINKPRIO - 2)
-#define GPSPRIO           (NORMALPRIO - 2)
-#define TELEMTRYPRIO      (LINKPRIO - 1)
-#define SHELLPRIO         (NORMALPRIO - 10)
+/*
+ * thread priorities
+ */
 #define ADISPRIO          (NORMALPRIO)
+#define CMDPRIO           (NORMALPRIO - 2)
+#define MISSIONRECVRPRIO  (NORMALPRIO)
+#define GPSPRIO           (NORMALPRIO)
+#define LINKPRIO          (NORMALPRIO + 5)
 #define MPU6050PRIO       (ADISPRIO + 1)
+#define TELEMTRYPRIO      (LINKPRIO - 1)
+#define TIMEKEEPERPRIO    (NORMALPRIO - 1)
+#define SHELLPRIO         (NORMALPRIO - 10)
 
-/* метка времени для пакетов */
+/*
+ * метка времени для пакетов
+ */
 #if (CH_CFG_ST_FREQUENCY) >= 1000
 #define TIME_BOOT_MS ((chVTGetSystemTimeX()) / ((CH_CFG_ST_FREQUENCY) / 1000))
 #endif
+
+#define ForbiddenDestructor() osalSysHalt("Destruction forbidden.")
 
 ///* stop watchdog timer in debugging mode */
 ///*unlock PR register*/

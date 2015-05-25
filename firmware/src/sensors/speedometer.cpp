@@ -1,5 +1,3 @@
-#pragma GCC optimize "-O0"
-
 #include "main.h"
 #include "pads.h"
 #include "speedometer.hpp"
@@ -112,18 +110,18 @@ bool Speedometer::check_sample(uint32_t &path_ret,
 
   /**/
   switch (sample_state) {
-  case SampleCosher::bad:
+  case SampleCosher::no:
     if ((capture_time < timeout) && (new_sample_seq >= FIRST_SAMPLES_DROP)) {
-      sample_state = SampleCosher::good;
+      sample_state = SampleCosher::yes;
       ret = OSAL_SUCCESS;
     }
     else
       ret = OSAL_FAILED;
     break;
 
-  case SampleCosher::good:
+  case SampleCosher::yes:
     if (capture_time > timeout) {
-      sample_state = SampleCosher::bad;
+      sample_state = SampleCosher::no;
       new_sample_seq = 0;
       ret = OSAL_FAILED;
     }
@@ -157,7 +155,7 @@ void Speedometer::start(void) {
   total_path_prev = 0;
   new_sample_seq = 0;
 
-  sample_state = SampleCosher::bad;
+  sample_state = SampleCosher::no;
 
   eicuStart(&EICUD11, &eicucfg);
   eicuEnable(&EICUD11);
@@ -179,14 +177,14 @@ void Speedometer::stop(void) {
 /**
  *
  */
-void Speedometer::update(float &speed, uint32_t &path, float dT) {
+void Speedometer::update(speedometer_data_t &result, float dT) {
   float pps; /* pulse per second */
   uint16_t last_pulse_period;
   bool status;
 
   osalDbgCheck(ready);
 
-  status = check_sample(path, last_pulse_period, dT);
+  status = check_sample(result.path, last_pulse_period, dT);
   if (OSAL_FAILED == status)
     pps = 0;
   else {
@@ -195,7 +193,7 @@ void Speedometer::update(float &speed, uint32_t &path, float dT) {
 
   /* now calculate speed */
   pps = filter_alphabeta(pps);
-  speed = *pulse2m * pps;
+  result.speed = *pulse2m * pps;
   //mavlink_out_debug_vect_struct.z = speed * 3.6;
 }
 

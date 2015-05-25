@@ -3,6 +3,7 @@
 
 #include "mavlink_local.hpp"
 #include "navigator.hpp"
+#include "acs_input.hpp"
 
 namespace control {
 
@@ -13,8 +14,9 @@ enum class MissionState {
   uninit,
   idle,
   navigate,
-  takeoff,
-  land
+  reached,
+  completed,
+  error
 };
 
 /**
@@ -22,26 +24,38 @@ enum class MissionState {
  */
 class MissionExecutor {
 public:
-  MissionExecutor(void);
+  MissionExecutor(ACSInput &acs_in);
   void start(void);
   void stop(void);
-  void takeoff(void);
-  MissionState update(float dT);
+  bool takeoff(void);
+  MissionState update(void);
+  bool loadNext(void);
   void setHome(void);
+  void setHome(float lat, float lon, float alt);
+  void goHome(void);
+  void returnToLaunch(void);
+  bool jumpTo(uint16_t seq);
+  uint16_t getTrgtCmd(void);
+
 private:
   void broadcast_mission_current(uint16_t seq);
   void broadcast_mission_item_reached(uint16_t seq);
-  void what_to_do_here(void);
-  uint16_t current_cmd(void);
-  uint16_t do_jump(void);
-  void fake_last_point(void);
-  void load_mission_item(void);
-  event_listener_t el_mission_updated;
-  Navigator navigator;
-  void maneuver(void);
+  bool wp_reached(const NavOut<double> &nav_out);
+  void artificial_takeoff_point(void);
+  bool load_next_mission_item(void);
   void navigate(void);
-  mavlink_mission_item_t segment[NAVIGATOR_SEGMENT_LEN];
+
   MissionState state;
+  ACSInput &acs_in;
+  Navigator navigator;
+
+  mavlink_mission_item_t prev;
+  mavlink_mission_item_t trgt;
+  mavlink_mission_item_t third;
+  mavlink_mission_item_t home;
+  mavlink_mission_item_t launch;
+
+  event_listener_t el_mission_updated;
 };
 
 } /* namespace */

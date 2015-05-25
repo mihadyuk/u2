@@ -46,7 +46,7 @@ public:
 
 private:
   friend THD_FUNCTION(Mpu6050Thread, arg);
-  float dt(void);
+  float dT(void);
   void acquire_data(void);
   msg_t soft_reset(void);
   msg_t acquire_simple(float *acc, float *gyr);

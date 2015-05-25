@@ -46,15 +46,15 @@ extern EvtSource event_mission_updated;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-static mavMail                        mission_count_mail    __CCM__;
-static mavMail                        mission_request_mail  __CCM__;
-static mavMail                        mission_ack_mail      __CCM__;
-static mavMail                        mission_item_mail     __CCM__;
+__CCM__ static mavMail                        mission_count_mail;
+__CCM__ static mavMail                        mission_request_mail;
+__CCM__ static mavMail                        mission_ack_mail;
+__CCM__ static mavMail                        mission_item_mail;
 
-static mavlink_mission_count_t        mavlink_out_mission_count_struct    __CCM__;
-static mavlink_mission_request_t      mavlink_out_mission_request_struct  __CCM__;
-static mavlink_mission_ack_t          mavlink_out_mission_ack_struct      __CCM__;
-static mavlink_mission_item_t         mavlink_out_mission_item_struct;
+__CCM__ static mavlink_mission_count_t        mavlink_out_mission_count_struct;
+__CCM__ static mavlink_mission_request_t      mavlink_out_mission_request_struct;
+__CCM__ static mavlink_mission_ack_t          mavlink_out_mission_ack_struct;
+        static mavlink_mission_item_t         mavlink_out_mission_item_struct;
 
 static mavlink_mission_item_t         mavlink_in_mission_item_struct;  /* temporal working copy */
 
@@ -66,7 +66,7 @@ static size_t drop_mission_item = 0;
  */
 static MAV_COMPONENT destCompID = MAV_COMP_ID_ALL;
 
-char dbg_str[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN] __CCM__;
+__CCM__ char dbg_str[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN];
 
 /*
  ******************************************************************************
@@ -115,21 +115,21 @@ static MAV_MISSION_RESULT check_wp(const mavlink_mission_item_t *wp, uint16_t se
     return MAV_MISSION_UNSUPPORTED_FRAME;
   }
 
-  /* first item must be take off */
-  if ((0 == seq) && (MAV_CMD_NAV_TAKEOFF != wp->command)){
-    chsnprintf(dbg_str, sizeof(dbg_str), "%s",
-                             "MISSION: 0-th item must be TAKEOFF");
-    mavlink_dbg_print(MAV_SEVERITY_ERROR, dbg_str, GLOBAL_COMPONENT_ID);
-    return MAV_MISSION_ERROR;
-  }
-
-  /* there must be one and only one takeoff point in mission */
-  if ((0 != seq) && (MAV_CMD_NAV_TAKEOFF == wp->command)){
-    chsnprintf(dbg_str, sizeof(dbg_str), "%s",
-                             "MISSION: Multiple TAKEOFF points forbidden");
-    mavlink_dbg_print(MAV_SEVERITY_ERROR, dbg_str, GLOBAL_COMPONENT_ID);
-    return MAV_MISSION_ERROR;
-  }
+//  /* first item must be take off */
+//  if ((0 == seq) && (MAV_CMD_NAV_TAKEOFF != wp->command)){
+//    chsnprintf(dbg_str, sizeof(dbg_str), "%s",
+//                             "MISSION: 0-th item must be TAKEOFF");
+//    mavlink_dbg_print(MAV_SEVERITY_ERROR, dbg_str, GLOBAL_COMPONENT_ID);
+//    return MAV_MISSION_ERROR;
+//  }
+//
+//  /* there must be one and only one takeoff point in mission */
+//  if ((0 != seq) && (MAV_CMD_NAV_TAKEOFF == wp->command)){
+//    chsnprintf(dbg_str, sizeof(dbg_str), "%s",
+//                             "MISSION: Multiple TAKEOFF points forbidden");
+//    mavlink_dbg_print(MAV_SEVERITY_ERROR, dbg_str, GLOBAL_COMPONENT_ID);
+//    return MAV_MISSION_ERROR;
+//  }
 
   /* check sequence intergrity */
   if (wp->seq != seq){

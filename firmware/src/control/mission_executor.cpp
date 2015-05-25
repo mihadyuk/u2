@@ -3,6 +3,7 @@
 #include "mission_executor.hpp"
 #include "waypoint_db.hpp"
 #include "mav_dbg.hpp"
+#include "navigator_types.hpp"
 
 using namespace chibios_rt;
 using namespace control;
@@ -12,6 +13,7 @@ using namespace control;
  * DEFINES
  ******************************************************************************
  */
+#define WP_RADIUS     param2
 
 /*
  ******************************************************************************
@@ -21,6 +23,7 @@ using namespace control;
 extern mavlink_system_t                 mavlink_system_struct;
 extern mavlink_mission_current_t        mavlink_out_mission_current_struct;
 extern mavlink_mission_item_reached_t   mavlink_out_mission_item_reached_struct;
+extern mavlink_nav_controller_output_t  mavlink_out_nav_controller_output_struct;
 
 /*
  ******************************************************************************
@@ -58,92 +61,90 @@ void MissionExecutor::broadcast_mission_item_reached(uint16_t seq) {
 /**
  *
  */
-uint16_t MissionExecutor::current_cmd(void) {
-  return segment[1].command;
-}
-
-/**
- *
- */
-void MissionExecutor::what_to_do_here(void) {
-
-  switch(current_cmd()) {
-  case (MAV_CMD_NAV_LOITER_UNLIM || MAV_CMD_NAV_LOITER_TURNS ||  MAV_CMD_NAV_LOITER_TIME):
-    /* we must loter here according to mission plan */
-    mavlink_dbg_print(MAV_SEVERITY_INFO, "ACS: start loitering", MAV_COMP_ID_SYSTEM_CONTROL);
-    navigator.start_loiter();
-    break;
-
-  case MAV_CMD_NAV_WAYPOINT:
-    /* this is regular waypoint. Just go to next item */
-    load_mission_item();
-    break;
-
-  default:
-    /* do not know hot to handle it. Just got to next one */
-    load_mission_item();
-    break;
-  }
-}
-
-/**
- *
- */
-uint16_t MissionExecutor::do_jump(void){
-  return 0;
-}
-
-/**
- *
- */
-void MissionExecutor::fake_last_point(void) {
-  segment[2] = segment[1];
-}
-
-/**
- *
- */
-void MissionExecutor::load_mission_item(void) {
+bool MissionExecutor::load_next_mission_item(void) {
 
   bool load_status = OSAL_FAILED;
   uint16_t next;
 
-  mavlink_mission_item_t *mi_next = &this->segment[2];
+  prev = trgt;
+  trgt = third;
 
-  segment[0] = segment[1];
-  segment[1] = segment[2];
-
-  if (wpdb.getCount() <= (mi_next->seq + 1)){ // no more items
+  if (wpdb.getCount() <= (third.seq + 1)){ // no more items
     /* if we fall here than last mission was not 'land'. System do not know
      * what to do so start unlimited loitering */
-    navigator.start_loiter();
+    third = trgt;
+    third.x += 0.0001; /* singularity prevention */
+    third.y += 0.0001; /* singularity prevention */
+    third.command = MAV_CMD_NAV_LOITER_UNLIM;
+    state = MissionState::completed;
+    load_status = OSAL_SUCCESS;
   }
   else {
-    next = mi_next->seq + 1;
-
-    /* try to load */
-    load_status = wpdb.read(mi_next, next);
-    if (OSAL_SUCCESS != load_status){
-      /* something goes wrong with waypoint loading */
-      navigator.start_loiter();
+    next = third.seq + 1;
+    load_status = wpdb.read(&third, next);
+    if (OSAL_SUCCESS == load_status) {
+      state = MissionState::navigate;
+      broadcast_mission_current(trgt.seq);
+    }
+    else {
+      osalSysHalt("");
+      state = MissionState::error;
     }
   }
 
-  broadcast_mission_current(segment[1].seq);
+  return load_status;
 }
 
 /**
  *
  */
-void MissionExecutor::maneuver(void) {
-  return;
+static void navout2acsin(const NavOut<double> &nav_out, ACSInput &acs_in) {
+  acs_in.ch[ACS_INPUT_dZ] = nav_out.xtd;
+}
+
+/**
+ *
+ */
+static void navout2mavlink(const NavOut<double> &nav_out) {
+
+  mavlink_out_nav_controller_output_struct.wp_dist = rad2m(nav_out.dist);
+  mavlink_out_nav_controller_output_struct.xtrack_error = rad2m(nav_out.xtd);
+  mavlink_out_nav_controller_output_struct.target_bearing = rad2deg(nav_out.crs);
+}
+
+/**
+ * @brief   Detects waypoint reachable status.
+ * @details Kind of hack. It increases effective radius if
+ *          crosstrack error more than R/1.5
+ */
+bool MissionExecutor::wp_reached(const NavOut<double> &nav_out) {
+
+  double Rmeters = rad2m(nav_out.xtd);
+  Rmeters = fabs(Rmeters * static_cast<double>(1.5));
+
+  if (Rmeters < static_cast<double>(trgt.WP_RADIUS))
+    Rmeters = trgt.WP_RADIUS;
+  /* else branch unneeded here because Rmeters already contains correct value */
+
+  return rad2m(nav_out.dist) < Rmeters;
 }
 
 /**
  *
  */
 void MissionExecutor::navigate(void) {
-  return;
+
+  NavIn<double> nav_in(acs_in.ch[ACS_INPUT_lat], acs_in.ch[ACS_INPUT_lon]);
+  NavOut<double> nav_out = navigator.update(nav_in);
+
+  navout2acsin(nav_out, this->acs_in);
+  navout2mavlink(nav_out);
+
+  if (wp_reached(nav_out)) {
+    load_next_mission_item();
+    NavLine<double> line(deg2rad(prev.x), deg2rad(prev.y), deg2rad(trgt.x), deg2rad(trgt.y));
+    navigator.loadLine(line);
+  }
 }
 
 /*
@@ -151,18 +152,26 @@ void MissionExecutor::navigate(void) {
  * EXPORTED FUNCTIONS
  ******************************************************************************
  */
+
+static time_measurement_t tmp_nav;
+
 /**
  *
  */
-MissionExecutor::MissionExecutor(void) {
-  state = MissionState::uninit;
-  memset(segment, 0, sizeof(segment));
+MissionExecutor::MissionExecutor(ACSInput &acs_in) :
+state(MissionState::uninit),
+acs_in(acs_in) {
+
+  /* fill home point with invalid data. This denotes it uninitialized. */
+  memset(&home, 0xFF, sizeof(home));
+  home.seq = -1;
 }
 
 /**
  *
  */
 void MissionExecutor::start(void) {
+  chTMObjectInit(&tmp_nav);
   state = MissionState::idle;
 }
 
@@ -171,39 +180,74 @@ void MissionExecutor::start(void) {
  */
 void MissionExecutor::stop(void) {
   state = MissionState::uninit;
-  memset(segment, 0, sizeof(segment));
 }
 
 /**
  *
  */
-void MissionExecutor::takeoff(void) {
+void MissionExecutor::artificial_takeoff_point(void) {
 
-  wpdb.read(&this->segment[0], 0);
-  wpdb.read(&this->segment[1], 1);
-  wpdb.read(&this->segment[2], 2);
+  memset(&prev, 0, sizeof(prev));
 
-  state = MissionState::navigate;
+  prev.x = rad2deg(acs_in.ch[ACS_INPUT_lat]);
+  prev.y = rad2deg(acs_in.ch[ACS_INPUT_lon]);
+  prev.z = acs_in.ch[ACS_INPUT_alt];
+  prev.command = MAV_CMD_NAV_TAKEOFF;
+  prev.frame = MAV_FRAME_GLOBAL;
+  prev.seq = -1;
+
+  /* store launch point */
+  launch = prev;
+
+  /* set launch point as home if it was not set yet from ground */
+  if (uint16_t(-1) == home.seq) {
+    home = launch;
+    home.command = MAV_CMD_NAV_WAYPOINT;
+  }
+}
+
+
+/**
+ * @brief   Samples current coordinates as prev WP than append
+ *          first 2 points from mission.
+ */
+bool MissionExecutor::takeoff(void) {
+  bool read_status1 = OSAL_FAILED;
+  bool read_status2 = OSAL_FAILED;
+
+  if (wpdb.getCount() < 2) {
+    mavlink_dbg_print(MAV_SEVERITY_INFO, "ACS: mission must be at least 2 WP long", MAV_COMP_ID_SYSTEM_CONTROL);
+    return OSAL_FAILED;
+  }
+  else {
+    artificial_takeoff_point();
+    read_status1 = wpdb.read(&this->trgt,  0);
+    read_status2 = wpdb.read(&this->third, 1);
+    if ((OSAL_SUCCESS != read_status1) || (OSAL_SUCCESS != read_status2))
+      return OSAL_FAILED;
+    else {
+      NavLine<double> line(deg2rad(prev.x), deg2rad(prev.y), deg2rad(trgt.x), deg2rad(trgt.y));
+      navigator.loadLine(line);
+      state = MissionState::navigate;
+      return OSAL_SUCCESS;
+    }
+  }
 }
 
 /**
  *
  */
-MissionState MissionExecutor::update(float dT) {
+MissionState MissionExecutor::update(void) {
 
   osalDbgCheck(MissionState::uninit != state);
 
-  (void)dT;
-
   switch (state) {
-  case MissionState::idle:
-    break;
-
   case MissionState::navigate:
+    chTMStartMeasurementX(&tmp_nav);
     this->navigate();
+    chTMStopMeasurementX(&tmp_nav);
     break;
 
-  /**/
   default:
     break;
   }
@@ -215,7 +259,58 @@ MissionState MissionExecutor::update(float dT) {
  *
  */
 void MissionExecutor::setHome(void) {
+
+  setHome(acs_in.ch[ACS_INPUT_lat], acs_in.ch[ACS_INPUT_lon], acs_in.ch[ACS_INPUT_alt]);
+}
+
+/**
+ * @brief   Accepts coordinates in radians
+ */
+void MissionExecutor::setHome(float lat, float lon, float alt) {
+
+  memset(&home, 0, sizeof(home));
+
+  home.x = rad2deg(lat);
+  home.y = rad2deg(lon);
+  home.z = alt;
+  home.command = MAV_CMD_NAV_WAYPOINT;
+  home.frame = MAV_FRAME_GLOBAL;
+  home.seq = -1;
+}
+
+/**
+ *
+ */
+bool MissionExecutor::loadNext(void) {
+  return this->load_next_mission_item();
+}
+
+/**
+ *
+ */
+void MissionExecutor::goHome(void) {
   return;
 }
 
+/**
+ *
+ */
+void MissionExecutor::returnToLaunch(void) {
+  return;
+}
 
+/**
+ *
+ */
+bool MissionExecutor::jumpTo(uint16_t seq) {
+  (void)seq;
+
+  return OSAL_FAILED;
+}
+
+/**
+ *
+ */
+uint16_t MissionExecutor::getTrgtCmd(void) {
+  return trgt.command;
+}

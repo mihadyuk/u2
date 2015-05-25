@@ -33,6 +33,7 @@ mavlink_heartbeat_t             mavlink_out_heartbeat_struct;
 mavlink_highres_imu_t           mavlink_out_highres_imu_struct;
 mavlink_hil_state_t             mavlink_out_hil_state_struct;
 mavlink_local_position_ned_t    mavlink_out_local_position_ned_struct;
+mavlink_mission_current_t       mavlink_out_mission_current_struct;
 mavlink_nav_controller_output_t mavlink_out_nav_controller_output_struct;
 mavlink_raw_imu_t               mavlink_out_raw_imu_struct;
 mavlink_raw_pressure_t          mavlink_out_raw_pressure_struct;
@@ -79,12 +80,15 @@ EvtSource event_parameters_updated;
 /**
  *
  */
-void MavlinkInit(void){
-  uint32_t *type = NULL;
+void MavlinkInit(void) {
+  uint32_t *type = nullptr;
+  uint32_t *id = nullptr;
+
   param_registry.valueSearch("SYS_mavtype", &type);
+  param_registry.valueSearch("SYS_id", &id);
 
   /* mavlink initial values */
-  mavlink_system_struct.sysid  = 20;
+  mavlink_system_struct.sysid  = *id;
   mavlink_system_struct.compid = MAV_COMP_ID_ALL;
 
   mavlink_system_info_struct.state  = MAV_STATE_BOOT;

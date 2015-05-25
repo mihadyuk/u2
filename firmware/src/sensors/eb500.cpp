@@ -5,6 +5,8 @@
 #include "eb500.hpp"
 #include "geometry.hpp"
 #include "time_keeper.hpp"
+#include "pads.h"
+#include "chprintf.h"
 
 using namespace gps;
 
@@ -18,8 +20,6 @@ using namespace gps;
 #define GPS_DEFAULT_BAUDRATE    9600
 #define GPS_HI_BAUDRATE         57600
 
-#define DEG_TO_MAVLINK          (10 * 1000 * 1000)
-
 /*
  ******************************************************************************
  * EXTERNS
@@ -28,7 +28,6 @@ using namespace gps;
 chibios_rt::EvtSource event_gps;
 
 extern mavlink_gps_raw_int_t           mavlink_out_gps_raw_int_struct;
-extern mavlink_global_position_int_t   mavlink_out_global_position_int_struct;
 
 /*
  ******************************************************************************
@@ -67,6 +66,8 @@ __CCM__ static gps_data_t cache;
 static chibios_rt::BinarySemaphore pps_sem(true);
 static chibios_rt::BinarySemaphore protect_sem(false);
 
+static SerialDriver *hook_sdp = nullptr;
+
 /*
  ******************************************************************************
  * PROTOTYPES
@@ -96,12 +97,18 @@ static void gps2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc) {
   mavlink_out_gps_raw_int_struct.satellites_visible = gga.satellites;
   mavlink_out_gps_raw_int_struct.cog = rmc.course * 100;
   mavlink_out_gps_raw_int_struct.vel = rmc.speed * 100;
+}
 
-  mavlink_out_global_position_int_struct.time_boot_ms = TIME_BOOT_MS;
-  mavlink_out_global_position_int_struct.alt = mavlink_out_gps_raw_int_struct.alt;
-  mavlink_out_global_position_int_struct.lat = mavlink_out_gps_raw_int_struct.lat;
-  mavlink_out_global_position_int_struct.lon = mavlink_out_gps_raw_int_struct.lon;
-  mavlink_out_global_position_int_struct.hdg = mavlink_out_gps_raw_int_struct.cog;
+/**
+ *
+ */
+static void gps2state_vector(ACSInput &acs_in, const gps_data_t gps) {
+
+  acs_in.ch[ACS_INPUT_lat] = deg2rad(gps.latitude);
+  acs_in.ch[ACS_INPUT_lon] = deg2rad(gps.longitude);
+  acs_in.ch[ACS_INPUT_alt] = gps.altitude;
+  acs_in.ch[ACS_INPUT_cog] = deg2rad(gps.course);
+  acs_in.ch[ACS_INPUT_yaw] = acs_in.ch[ACS_INPUT_cog];
 }
 
 /**
@@ -122,28 +129,35 @@ static void release(void) {
  *
  */
 static void gps_configure(void) {
-  /* запуск на дефолтной частоте */
+
+  /* start on default baudrate */
   gps_ser_cfg.speed = GPS_DEFAULT_BAUDRATE;
   sdStart(&GPSSD, &gps_ser_cfg);
 
-//  /* смена скорости ПРИЁМНИКА на повышенную */
-//  sdWrite(&GPSSD, gps_high_baudrate, sizeof(gps_high_baudrate));
-//  chThdSleepSeconds(1);
-//
-//  /* перезапуск порта контроллера на повышенной частоте */
-//  sdStop(&GPSSD);
-//  gps_ser_cfg.speed = GPS_HI_BAUDRATE;
-//  sdStart(&GPSSD, &gps_ser_cfg);
+  /* set only GGA, RMC output. We have to do this some times
+   * because serial port contains some garbage and this garbage will
+   * be flushed out during sending of some messages */
+  size_t i=3;
+  while (i--) {
+    sdWrite(&GPSSD, msg_gga_rmc_only, sizeof(msg_gga_rmc_only));
+    chThdSleepSeconds(1);
+  }
 
-  /* установка выдачи только GGA и RMC */
-  sdWrite(&GPSSD, msg_gga_rmc_only, sizeof(msg_gga_rmc_only));
-  chThdSleepSeconds(1);
-
-  /* установка частоты обновления */
+  /* set fix rate */
   sdWrite(&GPSSD, fix_period_5hz, sizeof(fix_period_5hz));
 //  sdWrite(&GPSSD, fix_period_4hz, sizeof(fix_period_4hz));
 //  sdWrite(&GPSSD, fix_period_2hz, sizeof(fix_period_2hz));
   chThdSleepSeconds(1);
+
+//  /* смена скорости _приемника_ на повышенную */
+//  sdWrite(&GPSSD, gps_high_baudrate, sizeof(gps_high_baudrate));
+//  chThdSleepSeconds(1);
+//
+//  /* перезапуск _порта_ на повышенной частоте */
+//  sdStop(&GPSSD);
+//  gps_ser_cfg.speed = GPS_HI_BAUDRATE;
+//  sdStart(&GPSSD, &gps_ser_cfg);
+//  chThdSleepSeconds(1);
 
   (void)fix_period_5hz;
   (void)fix_period_4hz;
@@ -162,6 +176,8 @@ THD_FUNCTION(gpsRxThread, arg) {
   collect_status_t status;
   bool gga_acquired = false;
   bool rmc_acquired = false;
+  systime_t prev = 0;
+  systime_t curr = 0;
 
   osalThreadSleepSeconds(5);
   gps_configure();
@@ -170,6 +186,8 @@ THD_FUNCTION(gpsRxThread, arg) {
     byte = sdGetTimeout(&GPSSD, MS2ST(100));
     if (MSG_TIMEOUT != byte) {
       status = nmea_parser.collect(byte);
+      if (nullptr != hook_sdp)
+        sdPut(hook_sdp, byte);
 
       switch(status) {
       case collect_status_t::GPGGA:
@@ -192,10 +210,6 @@ THD_FUNCTION(gpsRxThread, arg) {
         gps2mavlink(gga, rmc);
 
         acquire();
-        if (gga.fix > 0)
-          cache.fix_valid = true;
-        else
-          cache.fix_valid = false;
         cache.altitude   = gga.altitude;
         cache.latitude   = gga.latitude;
         cache.longitude  = gga.longitude;
@@ -203,9 +217,16 @@ THD_FUNCTION(gpsRxThread, arg) {
         cache.speed      = rmc.speed;
         cache.time       = rmc.time;
         cache.sec_round  = rmc.sec_round;
+        if (gga.fix == 1) {
+          event_gps.broadcastFlags(EVMSK_GPS_FRESH_VALID);
+          if (nullptr != hook_sdp) {
+            curr = chVTGetSystemTimeX();
+            systime_t out = ST2MS(curr - prev);
+            prev = curr;
+            chprintf((BaseSequentialStream *)hook_sdp, "%U\r\n", out);
+          }
+        }
         release();
-
-        event_gps.broadcastFlags(EVMSK_GPS_UPATED);
       }
     }
   }
@@ -230,11 +251,36 @@ void GPSInit(void){
 /**
  *
  */
-void GPSGetData(gps_data_t &result) {
+void GPSGet(ACSInput &acs_in) {
+
+  acquire();
+  gps2state_vector(acs_in, cache);
+  release();
+}
+
+/**
+ *
+ */
+void GPSSetDumpHook(SerialDriver *sdp) {
+
+  hook_sdp = sdp;
+}
+
+/**
+ *
+ */
+void GPSDeleteDumpHook(void) {
+
+  hook_sdp = nullptr;
+}
+
+/**
+ *
+ */
+void GPSGet(gps_data_t &result) {
 
   acquire();
   result = cache;
-  cache.fix_valid = false;
   release();
 }
 

@@ -1,3 +1,5 @@
+#pragma GCC optimize "-O2"
+
 #include <cmath>
 
 #include "main.h"
@@ -164,17 +166,17 @@ bool BMP085::acquire_p(void) {
  * Calculate height and climb from pressure value
  * @pval[in]    pressure in Pascals.
  */
-void BMP085::picle(abs_pressure_data_t &result) {
+void BMP085::picle(baro_data_t &result) {
 
   float altitude = press_to_height_f32(pressure_compensated);
 
-  result.altitude = altitude_filter(altitude, *flen_pres_stat);
+  result.alt = altitude_filter(altitude, *flen_pres_stat);
   //result.altitude = altitude;
-  result.climb = climb(result.altitude);
+  result.climb = climb(result.alt);
   result.p = pressure_compensated;
   result.p_msl_adjusted = press_to_msl(pressure_compensated, *above_msl);
 
-  mavlink_out_vfr_hud_struct.alt = result.altitude;
+  mavlink_out_vfr_hud_struct.alt = result.alt;
   mavlink_out_vfr_hud_struct.climb = result.climb;
   //mavlink_out_scaled_pressure_struct.press_abs = result.p_msl_adjusted / 100.0f;
   mavlink_out_scaled_pressure_struct.press_abs = pressure_compensated / 100.0f;
@@ -184,11 +186,11 @@ void BMP085::picle(abs_pressure_data_t &result) {
 /**
  *
  */
-static THD_WORKING_AREA(bmp085ThreadWA, 256) __CCM__;
+__CCM__ static THD_WORKING_AREA(bmp085ThreadWA, 256);
 THD_FUNCTION(bmp085Thread, arg) {
   chRegSetThreadName("bmp085");
   BMP085 *sensor = (BMP085 *)arg;
-  abs_pressure_data_t result;
+  baro_data_t result;
   systime_t starttime;
 
   while (!chThdShouldTerminateX()) {
@@ -263,7 +265,6 @@ void BMP085::stop(void) {
   chThdTerminate(worker);
   chThdWait(worker);
   Exti.bmp085(false);
-  measure_type = MEASURE_NONE;
 }
 
 /**
@@ -280,7 +281,7 @@ void BMP085::sleep(void) {
 /**
  *
  */
-sensor_state_t BMP085::get(abs_pressure_data_t &result) {
+sensor_state_t BMP085::get(baro_data_t &result) {
   result = cache;
   return this->state;
 }

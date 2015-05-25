@@ -15,6 +15,8 @@ public:
   Drivetrain(void);
   void start(void);
   void stop(void);
+  void arm(void);
+  void disarm(void);
   msg_t update(const DrivetrainImpact &impact);
   uint32_t capabilities(void);
 

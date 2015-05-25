@@ -98,6 +98,16 @@ uint32_t Drivetrain::capabilities(void) {
   return ret;
 }
 
+/**
+ *
+ */
+void Drivetrain::arm(void) {
+  engine.arm();
+}
 
-
-
+/**
+ *
+ */
+void Drivetrain::disarm(void) {
+  engine.disarm();
+}

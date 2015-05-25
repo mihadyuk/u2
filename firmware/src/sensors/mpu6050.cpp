@@ -1,3 +1,5 @@
+#pragma GCC optimize "-O2"
+
 #include "main.h"
 #include "pads.h"
 
@@ -42,7 +44,7 @@ using namespace filters;
 #define MPUREG_USER_CTRL        0x6A
   #define FIFO_EN               (1 << 6)
   #define I2C_MST_EN            (1 << 5) /* clear this bit to use I2C bypass mode */
-  #define FIFO_RST            (1 << 2)
+  #define FIFO_RST              (1 << 2)
 #define MPUREG_PWR_MGMT1        0x6B
   #define DEVICE_RESET          (1 << 7)
   #define DEVICE_SLEEP          (1 << 6)
@@ -100,10 +102,10 @@ static const float gyro_sens_array[4] = {
 };
 
 static const float acc_sens_array[4] = {
-    (2 * 9.81)  / 32768.0,
-    (4 * 9.81)  / 32768.0,
-    (8 * 9.81)  / 32768.0,
-    (16 * 9.81) / 32768.0
+    (2 * 9.81f)  / 32768.0f,
+    (4 * 9.81f)  / 32768.0f,
+    (8 * 9.81f)  / 32768.0f,
+    (16 * 9.81f) / 32768.0f
 };
 
 __CCM__ static MPU6050_fir_block<float, float, MPU6050_FIR_LEN> fir_block(taps, ArrayLen(taps));
@@ -687,8 +689,8 @@ sensor_state_t MPU6050::get(marg_data_t &result) {
       memcpy(result.gyr,     this->gyr_data,     sizeof(this->gyr_data));
       memcpy(result.gyr_raw, this->gyr_raw_data, sizeof(this->gyr_raw_data));
     }
-    if (1 == result.request.dt) {
-      result.dt = this->dt();
+    if (1 == result.request.dT) {
+      result.dT = this->dT();
     }
     release_lock();
   }
@@ -794,7 +796,7 @@ void MPU6050::extiISR(EXTDriver *extp, expchannel_t channel) {
 /**
  *
  */
-float MPU6050::dt(void) {
+float MPU6050::dT(void) {
   return smplrtdiv_current / static_cast<float>(1000);
 }
 

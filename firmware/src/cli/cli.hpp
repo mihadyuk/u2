@@ -1,5 +1,5 @@
-#ifndef CLI_H_
-#define CLI_H_
+#ifndef CLI_HPP_
+#define CLI_HPP_
 
 #include "microrl.h"
 
@@ -17,7 +17,7 @@ typedef thread_t* (*cmdfunction_t)(int argc, const char * const * argv, SerialDr
 /**
  *
  */
-struct ShellCmd_t{
+struct ShellCmd_t {
   /**
    * Printable command name. Must be zero terminated string without spaces
    */
@@ -32,8 +32,10 @@ struct ShellCmd_t{
   const char *help;
 };
 
-
 void cli_print(const char *str);
+void cli_print(int var);
+void cli_print(unsigned int var);
+void cli_print(double var);
 void cli_put(char chr);
 void cli_println(const char *str);
 char get_char (void);
@@ -43,4 +45,4 @@ void CliInit(void);
 void SpawnShellThreads(void *sdp);
 void KillShellThreads(void);
 
-#endif /* CLI_H_ */
+#endif /* CLI_HPP_ */

@@ -157,13 +157,12 @@ msg_t MavPostman::post(mavMail &mail) {
  *
  */
 msg_t MavPostman::postAhead(mavMail &mail) {
-  return this->post(mail);
-//  msg_t ret = MSG_RESET;
-//
-//  if (ready == true)
-//    ret = txmb.postAhead(&mail, TIME_IMMEDIATE);
-//
-//  return ret;
+  msg_t ret = MSG_RESET;
+
+  if (ready == true)
+    ret = txmb.postAhead(&mail, TIME_IMMEDIATE);
+
+  return ret;
 }
 
 /**

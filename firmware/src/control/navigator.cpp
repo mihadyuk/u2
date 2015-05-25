@@ -53,33 +53,22 @@ Navigator::Navigator(void) {
 /**
  *
  */
-NavigatorStatus Navigator::update(ACSInput &acs_in) {
+NavOut<double> Navigator::update(const NavIn<double> &in) {
+
   osalDbgCheck(ready);
 
-  sphere.crosstrack(acs_in.ch[ACS_INPUT_lat], acs_in.ch[ACS_INPUT_lon],
-                    &acs_in.ch[ACS_INPUT_dZ], nullptr);
+  auto crosstrack = sphere.crosstrack(in.lat, in.lon);
+  auto crs_dist = sphere.course_distance(in.lat, in.lon);
 
-  return NavigatorStatus::navigate;
+  return NavOut<double>(crosstrack.xtd, crosstrack.atd, crs_dist.dist, crs_dist.crs);
 }
 
 /**
  *
  */
-void Navigator::load_segment(const mavlink_mission_item_t *segment) {
-
-  for (size_t i=0; i<NAVIGATOR_SEGMENT_LEN; i++)
-    this->segment[i] = segment[i];
-
-  mavlink_mission_item_t *mi_prev = &this->segment[0];
-  mavlink_mission_item_t *mi      = &this->segment[1];
-  sphere.updatePoints(mi_prev->x, mi_prev->y, mi->x, mi->y);
-}
-
-/**
- *
- */
-void Navigator::start(void) {
+void Navigator::loadLine(const NavLine<double> &line) {
   ready = true;
+  sphere.updatePoints(line.latA, line.lonA, line.latB, line.lonB);
 }
 
 /**
@@ -88,13 +77,5 @@ void Navigator::start(void) {
 void Navigator::stop(void) {
   ready = false;
 }
-
-/**
- *
- */
-void Navigator::start_loiter(void) {
-  return;
-}
-
 
 } /* namespace */

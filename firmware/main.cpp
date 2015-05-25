@@ -48,9 +48,6 @@ Giovanni
 #include "bmp085.hpp"
 #include "tlm_sender.hpp"
 #include "link_mgr.hpp"
-//#include "controller.hpp"
-//#include "mav_dispatcher.hpp"
-//#include "cmd_executor.hpp"
 #include "blinker.hpp"
 #include "waypoint_db.hpp"
 #include "mission_receiver.hpp"
@@ -59,10 +56,11 @@ Giovanni
 #include "acs.hpp"
 #include "drivetrain/drivetrain.hpp"
 #include "exti_local.hpp"
-#include "ahrs.hpp"
+#include "marg.hpp"
 #include "mav_logger.hpp"
 #include "adc_local.hpp"
 #include "pwr_mgr.hpp"
+#include "fir_test.hpp"
 
 using namespace chibios_rt;
 
@@ -98,28 +96,36 @@ TimeKeeper time_keeper;
 TlmSender tlm_sender;
 static LinkMgr link_mgr;
 MavLogger mav_logger;
-Ahrs ahrs;
+Marg marg;
 BMP085 bmp_085(&I2CD_SLOW, BMP085_I2C_ADDR);
-
+__CCM__ static baro_data_t abs_press;
 
 
 #include "maxsonar.hpp"
 #include "pps.hpp"
 #include "speedometer.hpp"
 #include "mpxv.hpp"
+#include "calibrator.hpp"
+#include "hil.hpp"
+
 __CCM__ static MaxSonar maxsonar;
 
+__CCM__ static speedometer_data_t speed_data;
 __CCM__ static Speedometer speedometer;
-__CCM__ float speed;
-__CCM__ uint32_t path;
 
-__CCM__ static gps::gps_data_t gps_data;
-__CCM__ static ahrs_data_t ahrs_data;
+__CCM__ static gps_data_t gps_data;
+__CCM__ static marg_data_t marg_data;
 
 __CCM__ static PPS pps;
 __CCM__ static MPXV mpxv;
+__CCM__ static Calibrator calibrator;
 
+__CCM__ control::HIL hil;
 
+extern mavlink_system_info_t   mavlink_system_info_struct;
+
+#include "navi6d_wrapper.hpp"
+static Navi6dWrapper navi6d(acs_in);
 
 /*
  ******************************************************************************
@@ -134,7 +140,6 @@ __CCM__ static MPXV mpxv;
  *******************************************************************************
  *******************************************************************************
  */
-volatile uint8_t data[8];
 int main(void) {
 
   halInit();
@@ -164,6 +169,7 @@ int main(void) {
   Exti.start();
   time_keeper.start();
   I2CInitLocal();
+  NvramTest();
   NvramInit();
   ParametersInit();   /* read parameters from EEPROM via I2C */
   wpdb.start();
@@ -174,7 +180,7 @@ int main(void) {
     pwr5v_power_on();
 
   MavlinkInit();      /* mavlink constants initialization must be called after parameters init */
-  mission_receiver.start(CONTROLLERPRIO);
+  mission_receiver.start(MISSIONRECVRPRIO);
   link_mgr.start();      /* launch after controller to reduce memory fragmentation on thread creation */
   tlm_sender.start();
 
@@ -183,7 +189,8 @@ int main(void) {
   mav_logger.start(NORMALPRIO);
   osalThreadSleepMilliseconds(1);
 
-  ahrs.start();
+  marg.start();
+  calibrator.start();
   maxsonar.start();
   speedometer.start();
   acs.start();
@@ -192,36 +199,32 @@ int main(void) {
 
   blinker.start();
 
-  static const SPIConfig spicfg = {
-    NULL,
-    GPIOB,
-    GPIOB_SPI2_NSS_UEXT,
-    SPI_CR1_BR_1
-  };
+  /* ahrs fake run to acquire dT */
+  marg.get(marg_data, MS2ST(200));
+  navi6d.start(marg_data.dT);
 
-  spiStart(&UEXT_SPI, &spicfg);
-  palClearPad(GPIOB, GPIOB_SPI2_NSS_UEXT);
-  data[0] = spiPolledExchange(&UEXT_SPI, 0x05);
-  data[1] = spiPolledExchange(&UEXT_SPI, 0x00);
-  data[2] = spiPolledExchange(&UEXT_SPI, 0x00);
-  data[3] = spiPolledExchange(&UEXT_SPI, 0x00);
-
-  data[4] = spiPolledExchange(&UEXT_SPI, 0x00);
-  data[5] = spiPolledExchange(&UEXT_SPI, 0x00);
-  data[6] = spiPolledExchange(&UEXT_SPI, 0x00);
-  data[7] = spiPolledExchange(&UEXT_SPI, 0x00);
-
-  palSetPad(GPIOB, GPIOB_SPI2_NSS_UEXT);
-  spiStop(&UEXT_SPI);
-
+  mavlink_system_info_struct.state = MAV_STATE_STANDBY;
   while (true) {
-    ahrs.get(ahrs_data, acs_in, MS2ST(200));
-    GPSGetData(gps_data);
-    speedometer.update(speed, path, ahrs_data.dt);
-    acs.update(ahrs_data.dt);
+    marg.get(marg_data, MS2ST(200));
+    GPSGet(gps_data);
+    GPSGet(acs_in);
+    speedometer.update(speed_data, marg_data.dT);
     mpxv.get();
-
     PwrMgrUpdate();
+    bmp_085.get(abs_press);
+
+    if (MAV_STATE_CALIBRATING == mavlink_system_info_struct.state) {
+      CalibratorState cs = calibrator.update(marg_data);
+      if (CalibratorState::idle == cs)
+        mavlink_system_info_struct.state = MAV_STATE_STANDBY;
+    }
+    else {
+      hil.update(acs_in); /* must be called _before_ ACS */
+      acs.update(marg_data.dT);
+    }
+
+    navi6d.update(gps_data, abs_press, speed_data, marg_data);
+    acs_input2mavlink(acs_in);
   }
 
   return 0;

@@ -91,7 +91,7 @@ thread_t* loop_clicmd(int argc, const char * const * argv, SerialDriver *sdp){
 
   loop_clicmd_tp = chThdCreateFromHeap(&ThdHeap,
                                   sizeof(LoopCmdThreadWA),
-                                  CMDPRIO - 1,
+                                  NORMALPRIO + 5,
                                   LoopCmdThread,
                                   NULL);
 

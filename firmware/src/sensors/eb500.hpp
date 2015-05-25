@@ -1,30 +1,18 @@
 #ifndef EB500_HPP_
 #define EB500_HPP_
 
-#define EVMSK_GPS_UPATED       (1UL << 0)
+#include "acs_input.hpp"
+#include "gps_data.hpp"
 
-namespace gps {
-
-/**
- *
- */
-typedef struct {
-  double    latitude;   // deg
-  double    longitude;  // deg
-  float     altitude;   // m
-  float     speed;      // m/s
-  float     course;     // deg
-  struct tm time;
-  bool      sec_round;  /* there is no fractional part in seconds' field */
-  bool      fix_valid;  /* sets when fresh valid fix acquired, clears after any structure reading */
-} gps_data_t;
-
-} /* namespace */
+#define EVMSK_GPS_FRESH_VALID   (1UL << 0)
 
 extern chibios_rt::EvtSource event_gps;
 
 void GPSInit(void);
-void GPSGetData(gps::gps_data_t &result);
+void GPSGet(ACSInput &acs_in);
+void GPSGet(gps_data_t &result);
+void GPSSetDumpHook(SerialDriver *sdp);
+void GPSDeleteDumpHook(void);
 void GPS_PPS_ISR_I(void);
 
 #endif /* EB500_HPP_ */

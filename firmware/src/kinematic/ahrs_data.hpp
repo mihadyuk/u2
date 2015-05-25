@@ -19,7 +19,7 @@ typedef struct {
   float dcm[9];
   float euler[3];
   float quat[4];
-  float dt;
+  float dT;
 } ahrs_data_t;
 
 #endif /* AHRS_DATA_HPP_ */
