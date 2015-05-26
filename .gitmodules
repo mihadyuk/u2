@@ -10,3 +10,6 @@
 [submodule "firmware/lib/microrl"]
 	path = firmware/lib/microrl
 	url = git@github.com:barthess/microrl.git
+[submodule "firmware/lib/navi6d"]
+	path = firmware/lib/navi6d
+	url = git@10.37.61.248:muaddib/sins_cpp.git

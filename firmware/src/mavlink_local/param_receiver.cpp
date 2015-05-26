@@ -14,7 +14,7 @@ using namespace chibios_rt;
  ******************************************************************************
  */
 #define PARAM_POST_TIMEOUT    MS2ST(500)
-#define SEND_PAUSE            MS2ST(33)
+#define SEND_PAUSE            MS2ST(133)
 #define CHECK_FRESH_PERIOD    MS2ST(50)
 
 /*

@@ -1,4 +1,3 @@
-#pragma GCC optimize "-funroll-loops"
 #pragma GCC optimize "-O2"
 
 #include <math.h>
@@ -27,6 +26,7 @@
  * EXTERNS
  ******************************************************************************
  */
+extern mavlink_debug_t                 mavlink_out_debug_struct;
 
 /*
  ******************************************************************************
@@ -34,7 +34,7 @@
  ******************************************************************************
  */
 
-__CCM__ static NavigatorSins<double, 9, 6> nav_sins;
+__CCM__ static NavigatorSins<double, 9, 13> nav_sins;
 
 __CCM__ static InitParams<double> init_params;
 __CCM__ static CalibParams<double> calib_params;
@@ -43,6 +43,16 @@ __CCM__ static RefParams<double> ref_params;
 
 __CCM__ static SensorData<double> sensor_data;
 __CCM__ static KalmanFlags sensor_flags;
+
+//static NavigatorSins<double, 9, 6> nav_sins;
+
+//static InitParams<double> init_params;
+//static CalibParams<double> calib_params;
+//static KalmanParams<double> kalman_params;
+//static RefParams<double> ref_params;
+//
+//static SensorData<double> sensor_data;
+//static KalmanFlags sensor_flags;
 
 /*
  ******************************************************************************
@@ -73,6 +83,7 @@ void Navi6dWrapper::prepare_data(const gps_data_t &gps_data,
   sensor_flags.sns_v_e_en = false;
   sensor_flags.sns_v_d_en = false;
   sensor_flags.alt_b_en = false;
+  sensor_flags.mag_en = false;
 
   if ((el.getAndClearFlags() & EVMSK_GPS_FRESH_VALID) > 0) {
     osalDbgCheck((fabsf(gps_data.latitude) > 0.01) && (fabsf(gps_data.altitude) > 0.01));
@@ -88,8 +99,20 @@ void Navi6dWrapper::prepare_data(const gps_data_t &gps_data,
     sensor_flags.sns_v_n_en = true;
     sensor_flags.sns_v_e_en = true;
     sensor_flags.sns_v_d_en = false;
-    sensor_flags.alt_b_en = false;
   }
+  sensor_flags.alt_b_en = false;
+  /* stop detector */
+//  if (nav_sins.navi_data.status & (1UL << 5UL)){
+//    sensor_data.v_sns[0][0] = 0;
+//    sensor_data.v_sns[1][0] = 0;
+//    sensor_data.v_sns[2][0] = 0;
+//
+//    sensor_flags.sns_v_n_en = true;
+//    sensor_flags.sns_v_e_en = true;
+//    sensor_flags.sns_v_d_en = true;
+//
+//    sensor_flags.mag_en = true;
+//  }
 
   sensor_data.v_odo[0][0] = speed.speed;
   sensor_data.v_odo[1][0] = 0;
@@ -97,13 +120,17 @@ void Navi6dWrapper::prepare_data(const gps_data_t &gps_data,
   sensor_flags.odo_en = false;
 
   sensor_data.alt_b[0][0] = abs_press.alt;
-  sensor_flags.baro_fix_en = false;
+  sensor_flags.baro_fix_en = true;
 
   for(size_t i=0; i<3; i++) {
     sensor_data.fb[i][0] = marg.acc[i];
     sensor_data.wb[i][0] = marg.gyr[i];
     sensor_data.mb[i][0] = marg.mag[i];
   }
+
+//  sensor_data.mb[0][0] = static_cast<double>(0.34);
+//  sensor_data.mb[1][0] = static_cast<double>(0.0);
+//  sensor_data.mb[2][0] = -static_cast<double>(0.96);
 }
 
 /**
@@ -141,6 +168,8 @@ void Navi6dWrapper::navi2acs(void) {
   acs_in.ch[ACS_INPUT_free_ax] = data.free_acc[0][0];
   acs_in.ch[ACS_INPUT_free_ay] = data.free_acc[1][0];
   acs_in.ch[ACS_INPUT_free_az] = data.free_acc[2][0];
+
+  mavlink_out_debug_struct.value = data.status & (1UL << 5UL);
 }
 
 /*
@@ -170,18 +199,24 @@ void Navi6dWrapper::start(float dT) {
   ref_params.eu_vh_base[1][0] = 0;
   ref_params.eu_vh_base[2][0] = 0;
 
+  ref_params.gamma = 0.3;
+
   for (size_t i = 0; i<3; i++) {
     calib_params.ba_sat[i][0] = 0;
     calib_params.bw_sat[i][0] = 0;
   }
   calib_params.alpha = 0.02;
 
-  kalman_params.sigma_R[0][0] = 5;
-  kalman_params.sigma_R[1][0] = 7;
-  kalman_params.sigma_R[2][0] = 0.01;
+  kalman_params.sigma_R[0][0] = 5; //ne_sns
+  kalman_params.sigma_R[1][0] = 7; //d_sns
+  kalman_params.sigma_R[2][0] = 0.01; //v_n_sns
+  kalman_params.sigma_R[3][0] = 0.01; //odo
+  kalman_params.sigma_R[4][0] = 10; //nonhol
+  kalman_params.sigma_R[5][0] = 0.3; //baro
+  kalman_params.sigma_R[6][0] = 0.05; //mag
 
-  kalman_params.sigma_Qm[0][0] = 0.01;
-  kalman_params.sigma_Qm[1][0] = 0.01;
+  kalman_params.sigma_Qm[0][0] = 0.005;
+  kalman_params.sigma_Qm[1][0] = 0.005;
   kalman_params.sigma_Qm[2][0] = 0.000001;
   kalman_params.sigma_Qm[3][0] = 0.000001;
   kalman_params.sigma_Qm[4][0] = 0.000001;
