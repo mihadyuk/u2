@@ -44,16 +44,6 @@ __CCM__ static RefParams<double> ref_params;
 __CCM__ static SensorData<double> sensor_data;
 __CCM__ static KalmanFlags sensor_flags;
 
-//static NavigatorSins<double, 9, 6> nav_sins;
-
-//static InitParams<double> init_params;
-//static CalibParams<double> calib_params;
-//static KalmanParams<double> kalman_params;
-//static RefParams<double> ref_params;
-//
-//static SensorData<double> sensor_data;
-//static KalmanFlags sensor_flags;
-
 /*
  ******************************************************************************
  * PROTOTYPES
@@ -101,18 +91,19 @@ void Navi6dWrapper::prepare_data(const gps_data_t &gps_data,
     sensor_flags.sns_v_d_en = false;
   }
   sensor_flags.alt_b_en = false;
+
+  sensor_flags.mag_en = true;
+
   /* stop detector */
-//  if (nav_sins.navi_data.status & (1UL << 5UL)){
-//    sensor_data.v_sns[0][0] = 0;
-//    sensor_data.v_sns[1][0] = 0;
-//    sensor_data.v_sns[2][0] = 0;
-//
-//    sensor_flags.sns_v_n_en = true;
-//    sensor_flags.sns_v_e_en = true;
-//    sensor_flags.sns_v_d_en = true;
-//
-//    sensor_flags.mag_en = true;
-//  }
+  if (nav_sins.navi_data.status & (1UL << 5UL)){
+    sensor_data.v_sns[0][0] = 0;
+    sensor_data.v_sns[1][0] = 0;
+    sensor_data.v_sns[2][0] = 0;
+
+    sensor_flags.sns_v_n_en = true;
+    sensor_flags.sns_v_e_en = true;
+    sensor_flags.sns_v_d_en = true;
+  }
 
   sensor_data.v_odo[0][0] = speed.speed;
   sensor_data.v_odo[1][0] = 0;
@@ -169,7 +160,8 @@ void Navi6dWrapper::navi2acs(void) {
   acs_in.ch[ACS_INPUT_free_ay] = data.free_acc[1][0];
   acs_in.ch[ACS_INPUT_free_az] = data.free_acc[2][0];
 
-  mavlink_out_debug_struct.value = data.status & (1UL << 5UL);
+  //mavlink_out_debug_struct.value = data.status & (1UL << 5UL);
+  mavlink_out_debug_struct.value = data.mag_mod;
 }
 
 /*
@@ -206,6 +198,15 @@ void Navi6dWrapper::start(float dT) {
     calib_params.bw_sat[i][0] = 0;
   }
   calib_params.alpha = 0.02;
+
+
+  calib_params.bm[0][0] = 0.01197;
+  calib_params.bm[1][0] = -0.05355;
+  calib_params.bm[2][0] = -0.25312;
+
+  calib_params.mm[0][0] = 80.9983;  calib_params.mm[0][1] = 13.3535; calib_params.mm[0][2] = -11.1126;
+  calib_params.mm[1][0] = 13.3535;  calib_params.mm[1][1] = 58.2144; calib_params.mm[1][2] = 18.1254;
+  calib_params.mm[2][0] = -11.1126; calib_params.mm[2][1] = 18.1254; calib_params.mm[2][2] = 139.442;
 
   kalman_params.sigma_R[0][0] = 5; //ne_sns
   kalman_params.sigma_R[1][0] = 7; //d_sns
