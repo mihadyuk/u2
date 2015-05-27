@@ -3,6 +3,7 @@
 #include "nmea.hpp"
 #include "mavlink_local.hpp"
 #include "eb500.hpp"
+#include "mav_logger.hpp"
 #include "geometry.hpp"
 #include "time_keeper.hpp"
 #include "pads.h"
@@ -28,6 +29,8 @@ using namespace gps;
 chibios_rt::EvtSource event_gps;
 
 extern mavlink_gps_raw_int_t           mavlink_out_gps_raw_int_struct;
+
+extern MavLogger mav_logger;
 
 /*
  ******************************************************************************
@@ -68,6 +71,8 @@ static chibios_rt::BinarySemaphore protect_sem(false);
 
 static SerialDriver *hook_sdp = nullptr;
 
+static mavMail gps_raw_int_mail;
+
 /*
  ******************************************************************************
  * PROTOTYPES
@@ -81,6 +86,17 @@ static SerialDriver *hook_sdp = nullptr;
  *******************************************************************************
  *******************************************************************************
  */
+/**
+ *
+ */
+static void log_append(void) {
+
+  if (gps_raw_int_mail.free()) {
+    gps_raw_int_mail.fill(&mavlink_out_gps_raw_int_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_GPS_RAW_INT);
+    mav_logger.write(&gps_raw_int_mail);
+  }
+}
+
 
 /**
  *
@@ -97,6 +113,8 @@ static void gps2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc) {
   mavlink_out_gps_raw_int_struct.satellites_visible = gga.satellites;
   mavlink_out_gps_raw_int_struct.cog = rmc.course * 100;
   mavlink_out_gps_raw_int_struct.vel = rmc.speed * 100;
+
+  log_append();
 }
 
 /**
