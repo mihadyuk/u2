@@ -200,13 +200,13 @@ void Navi6dWrapper::start(float dT) {
   calib_params.alpha = 0.02;
 
 
-  calib_params.bm[0][0] = 0.01197;
-  calib_params.bm[1][0] = -0.05355;
-  calib_params.bm[2][0] = -0.25312;
+  calib_params.bm[0][0] = 0.0338;
+  calib_params.bm[1][0] = 0.03736;
+  calib_params.bm[2][0] = -0.2661;
 
-  calib_params.mm[0][0] = 80.9983;  calib_params.mm[0][1] = 13.3535; calib_params.mm[0][2] = -11.1126;
-  calib_params.mm[1][0] = 13.3535;  calib_params.mm[1][1] = 58.2144; calib_params.mm[1][2] = 18.1254;
-  calib_params.mm[2][0] = -11.1126; calib_params.mm[2][1] = 18.1254; calib_params.mm[2][2] = 139.442;
+  calib_params.mm[0][0] = 180.186; calib_params.mm[0][1] = -1.444; calib_params.mm[0][2] = -2.35684;
+  calib_params.mm[1][0] = -1.4440; calib_params.mm[1][1] =  178.2; calib_params.mm[1][2] = -0.291037;
+  calib_params.mm[2][0] = -2.3568; calib_params.mm[2][1] = -0.291; calib_params.mm[2][2] = 178.386;
 
   kalman_params.sigma_R[0][0] = 5; //ne_sns
   kalman_params.sigma_R[1][0] = 7; //d_sns
@@ -214,7 +214,7 @@ void Navi6dWrapper::start(float dT) {
   kalman_params.sigma_R[3][0] = 0.01; //odo
   kalman_params.sigma_R[4][0] = 10; //nonhol
   kalman_params.sigma_R[5][0] = 0.3; //baro
-  kalman_params.sigma_R[6][0] = 0.05; //mag
+  kalman_params.sigma_R[6][0] = 0.3; //mag
 
   kalman_params.sigma_Qm[0][0] = 0.005;
   kalman_params.sigma_Qm[1][0] = 0.005;
