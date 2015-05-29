@@ -27,6 +27,7 @@ public:
   void disarm(void);
   void update(const DrivetrainImpact &impact);
 private:
+  void thrust2mavlink(float thr);
   PWM &pwm;
   EngineState state;
   const uint32_t *thr_min = nullptr;

@@ -24,6 +24,7 @@ extern MavLogger mav_logger;
 extern mavlink_global_position_int_t  mavlink_out_global_position_int_struct;
 extern mavlink_attitude_t             mavlink_out_attitude_struct;
 extern mavlink_attitude_quaternion_t  mavlink_out_attitude_quaternion_struct;
+extern mavlink_vfr_hud_t              mavlink_out_vfr_hud_struct;
 
 /*
  ******************************************************************************
@@ -39,6 +40,8 @@ extern mavlink_attitude_quaternion_t  mavlink_out_attitude_quaternion_struct;
 
 static mavMail attitude_mail;
 static mavMail attitude_quaternion_mail;
+static mavMail global_position_int_mail;
+static mavMail vfr_hud_mail;
 
 /*
  ******************************************************************************
@@ -66,6 +69,18 @@ static void log_append(void) {
   if (attitude_quaternion_mail.free()) {
     attitude_quaternion_mail.fill(&mavlink_out_attitude_quaternion_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_ATTITUDE_QUATERNION);
     mav_logger.write(&attitude_quaternion_mail);
+  }
+
+  if (global_position_int_mail.free()) {
+    global_position_int_mail.fill(&mavlink_out_global_position_int_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_GLOBAL_POSITION_INT);
+    mav_logger.write(&global_position_int_mail);
+  }
+
+
+
+  if (vfr_hud_mail.free()) {
+    vfr_hud_mail.fill(&mavlink_out_vfr_hud_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_VFR_HUD);
+    mav_logger.write(&vfr_hud_mail);
   }
 }
 
@@ -98,6 +113,32 @@ void acs_input2mavlink(const ACSInput &acs_in) {
   mavlink_out_attitude_quaternion_struct.time_boot_ms = TIME_BOOT_MS;
 
   log_append();
+}
+
+/**
+ *
+ */
+void gps2acs_in(const gps_data_t &gps, ACSInput &acs_in) {
+  acs_in.ch[ACS_INPUT_lat] = deg2rad(gps.latitude);
+  acs_in.ch[ACS_INPUT_lon] = deg2rad(gps.longitude);
+  acs_in.ch[ACS_INPUT_alt] = gps.altitude;
+  acs_in.ch[ACS_INPUT_cog] = deg2rad(gps.course);
+  acs_in.ch[ACS_INPUT_yaw] = acs_in.ch[ACS_INPUT_cog];
+}
+
+/**
+ *
+ */
+void baro2acs_in(const baro_data_t &baro, ACSInput &acs_in) {
+  acs_in.ch[ACS_INPUT_alt_baro] = baro.alt;
+  acs_in.ch[ACS_INPUT_climb] = baro.climb;
+}
+
+/**
+ *
+ */
+void speedometer2acs_in(const speedometer_data_t &speed, ACSInput &acs_in) {
+  acs_in.ch[ACS_INPUT_odo_speed] = speed.speed;
 }
 
 

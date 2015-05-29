@@ -33,9 +33,9 @@
  * EXTERNS
  ******************************************************************************
  */
-extern mavlink_vfr_hud_t          mavlink_out_vfr_hud_struct;
 extern mavlink_scaled_pressure_t  mavlink_out_scaled_pressure_struct;
 extern mavlink_raw_pressure_t     mavlink_out_raw_pressure_struct;
+extern mavlink_vfr_hud_t          mavlink_out_vfr_hud_struct;
 
 /*
  ******************************************************************************
@@ -55,19 +55,19 @@ static chibios_rt::BinarySemaphore isr_sem(true);
 /**
  * Calculate height in meters using proved formulae
  */
-static float press_to_height_f32(uint32_t pval) {
-  const float p0 = 101325;
-  const float e = 0.1902949571836346; // 1/5.255;
+static double press2height(uint32_t pval) {
+  const double p0 = 101325;
+  const double e = 0.1902949571836346; /* 1/5.255 */
 
-  return 44330 * (1 - powf(pval/p0, e));
+  return 44330 * (1 - pow(pval/p0, e));
 }
 
 /**
  * Move pressure value to MSL as it done by meteo sites in iternet.
  */
-static float press_to_msl(uint32_t pval, int32_t height) {
-  float p = 1.0f - height / 44330.0f;
-  return pval / powf(p, 5.255f);
+static double press2msl(uint32_t pval, int32_t height) {
+  double p = 1.0 - height / 44330.0;
+  return pval / pow(p, 5.255);
 }
 
 /**
@@ -168,19 +168,24 @@ bool BMP085::acquire_p(void) {
  */
 void BMP085::picle(baro_data_t &result) {
 
-  float altitude = press_to_height_f32(pressure_compensated);
+  float altitude = press2height(pressure_compensated);
 
   result.alt = altitude_filter(altitude, *flen_pres_stat);
-  //result.altitude = altitude;
   result.climb = climb(result.alt);
   result.p = pressure_compensated;
-  result.p_msl_adjusted = press_to_msl(pressure_compensated, *above_msl);
+  result.p_msl_adjusted = press2msl(pressure_compensated, *above_msl);
 
-  mavlink_out_vfr_hud_struct.alt = result.alt;
-  mavlink_out_vfr_hud_struct.climb = result.climb;
-  //mavlink_out_scaled_pressure_struct.press_abs = result.p_msl_adjusted / 100.0f;
   mavlink_out_scaled_pressure_struct.press_abs = pressure_compensated / 100.0f;
   mavlink_out_raw_pressure_struct.press_abs = pressure_compensated / 100;
+}
+
+/**
+ *
+ */
+void BMP085::baro2mavlink(void) {
+
+  mavlink_out_vfr_hud_struct.alt = cache.alt;
+  mavlink_out_vfr_hud_struct.climb = cache.climb;
 }
 
 /**
@@ -210,6 +215,8 @@ THD_FUNCTION(bmp085Thread, arg) {
       osalSysLock();
       sensor->cache = result;
       osalSysUnlock();
+
+      sensor->baro2mavlink();
     }
     else {
       osalThreadSleepMilliseconds(TEMPERATURE_CONVERSION_TIME_MS + PRESSURE_CONVERSION_TIME_MS);
@@ -228,7 +235,7 @@ float BMP085::climb(float alt) {
 
   dt = TEMPERATURE_CONVERSION_TIME_MS + PRESSURE_CONVERSION_TIME_MS;
   dt /= 1000;
-  climb = climb_filter((altitude_prev - alt) / dt, *flen_climb);
+  climb = climb_filter((alt - altitude_prev) / dt, *flen_climb);
   altitude_prev = alt;
 
   return climb;
@@ -282,6 +289,7 @@ void BMP085::sleep(void) {
  *
  */
 sensor_state_t BMP085::get(baro_data_t &result) {
+
   result = cache;
   return this->state;
 }
@@ -355,7 +363,7 @@ sensor_state_t BMP085::start(void) {
       param_registry.valueSearch("FLEN_climb",      &flen_climb);
       param_registry.valueSearch("PMU_above_msl",   &above_msl);
       worker = chThdCreateStatic(bmp085ThreadWA, sizeof(bmp085ThreadWA),
-                                 NORMALPRIO, bmp085Thread, this);
+                                 BAROMETERPRIO, bmp085Thread, this);
       osalDbgCheck(nullptr != worker);
       Exti.bmp085(true);
       this->state = SENSOR_STATE_READY;

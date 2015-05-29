@@ -120,18 +120,6 @@ static void gps2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc) {
 /**
  *
  */
-static void gps2state_vector(ACSInput &acs_in, const gps_data_t gps) {
-
-  acs_in.ch[ACS_INPUT_lat] = deg2rad(gps.latitude);
-  acs_in.ch[ACS_INPUT_lon] = deg2rad(gps.longitude);
-  acs_in.ch[ACS_INPUT_alt] = gps.altitude;
-  acs_in.ch[ACS_INPUT_cog] = deg2rad(gps.course);
-  acs_in.ch[ACS_INPUT_yaw] = acs_in.ch[ACS_INPUT_cog];
-}
-
-/**
- *
- */
 static void acquire(void) {
   protect_sem.wait();
 }
@@ -264,16 +252,6 @@ void GPSInit(void){
 
   chThdCreateStatic(gpsRxThreadWA, sizeof(gpsRxThreadWA),
                     GPSPRIO, gpsRxThread, NULL);
-}
-
-/**
- *
- */
-void GPSGet(ACSInput &acs_in) {
-
-  acquire();
-  gps2state_vector(acs_in, cache);
-  release();
 }
 
 /**

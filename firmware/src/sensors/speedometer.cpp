@@ -21,7 +21,8 @@ using namespace chibios_rt;
  * EXTERNS
  ******************************************************************************
  */
-//extern mavlink_debug_vect_t  mavlink_out_debug_vect_struct;
+
+extern mavlink_vfr_hud_t              mavlink_out_vfr_hud_struct;
 
 /*
  ******************************************************************************
@@ -138,6 +139,15 @@ bool Speedometer::check_sample(uint32_t &path_ret,
   return ret;
 }
 
+/**
+ *
+ */
+void Speedometer::speed2mavlink(float speed) {
+
+  mavlink_out_vfr_hud_struct.groundspeed = speed * 100; // *100 for gps speed compare
+  //mavlink_out_vfr_hud_struct.groundspeed = speed;
+}
+
 /*
  ******************************************************************************
  * EXPORTED FUNCTIONS
@@ -193,7 +203,10 @@ void Speedometer::update(speedometer_data_t &result, float dT) {
 
   /* now calculate speed */
   pps = filter_alphabeta(pps);
+  //pps = filter_median(pps);
   result.speed = *pulse2m * pps;
   //mavlink_out_debug_vect_struct.z = speed * 3.6;
+
+  speed2mavlink(result.speed);
 }
 

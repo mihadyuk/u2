@@ -4,6 +4,10 @@
 #include "string.h" /* for memset() */
 #include "manual_switch_enum.hpp"
 
+#include "gps_data.hpp"
+#include "baro_data.hpp"
+#include "speedometer_data.hpp"
+
 /**
  *
  */
@@ -11,7 +15,8 @@ typedef enum {
   ACS_INPUT_lat,      // lattitude from GNSS (WGS-84, rad)
   ACS_INPUT_lon,      // longitude from GNSS (WGS-84, rad)
   ACS_INPUT_alt,      // altitude from GNSS (WGS-84, m)
-  ACS_INPUT_alt_baro, // barometric height
+  ACS_INPUT_alt_baro, // barometric height (m)
+  ACS_INPUT_climb,    // barometric climb rate (m/s)
 
   ACS_INPUT_roll,     // rad (-pi..pi)
   ACS_INPUT_pitch,    // rad (-pi/2..pi/2)
@@ -58,9 +63,9 @@ typedef enum {
   ACS_INPUT_wy,
   ACS_INPUT_wz,
 
-  ACS_INPUT_vgps,     // speed from GPS (m/s)
-  ACS_INPUT_vodo,     // speed from odometer (m/s)
-  ACS_INPUT_vair,     // air speed (m/s)
+//  ACS_INPUT_vgps,     // speed from GPS (m/s)
+//  ACS_INPUT_vodo,     // speed from odometer (m/s)
+//  ACS_INPUT_vair,     // air speed (m/s)
 
   ACS_INPUT_dZ,       // cross track error (rad)
   ACS_INPUT_dYaw,
@@ -129,6 +134,10 @@ struct ACSInput {
  *
  */
 void acs_input2mavlink(const ACSInput &acs_in);
+void gps2acs_in(const gps_data_t &gps, ACSInput &acs_in);
+void baro2acs_in(const baro_data_t &baro, ACSInput &acs_in);
+void speedometer2acs_in(const speedometer_data_t &speed, ACSInput &acs_in);
+
 
 #endif /* ACS_INPUT_HPP_ */
 

@@ -35,6 +35,7 @@
  * thread priorities
  */
 #define ADISPRIO          (NORMALPRIO)
+#define BAROMETERPRIO     (NORMALPRIO + 1)
 #define CMDPRIO           (NORMALPRIO - 2)
 #define MISSIONRECVRPRIO  (NORMALPRIO)
 #define GPSPRIO           (NORMALPRIO)
