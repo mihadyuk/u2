@@ -144,8 +144,8 @@ bool Speedometer::check_sample(uint32_t &path_ret,
  */
 void Speedometer::speed2mavlink(float speed) {
 
-  mavlink_out_vfr_hud_struct.groundspeed = speed * 100; // *100 for gps speed compare
-  //mavlink_out_vfr_hud_struct.groundspeed = speed;
+  //mavlink_out_vfr_hud_struct.groundspeed = speed * 100; // *100 for gps speed compare
+  mavlink_out_vfr_hud_struct.groundspeed = speed;
 }
 
 /*
