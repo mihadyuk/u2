@@ -142,10 +142,11 @@ bool Speedometer::check_sample(uint32_t &path_ret,
 /**
  *
  */
-void Speedometer::speed2mavlink(float speed) {
+void Speedometer::speed2mavlink(const speedometer_data_t &result) {
 
   //mavlink_out_vfr_hud_struct.groundspeed = speed * 100; // *100 for gps speed compare
-  mavlink_out_vfr_hud_struct.groundspeed = speed;
+  mavlink_out_vfr_hud_struct.groundspeed = result.speed;
+  mavlink_out_vfr_hud_struct.airspeed = result.path;
 }
 
 /*
@@ -207,6 +208,6 @@ void Speedometer::update(speedometer_data_t &result, float dT) {
   result.speed = *pulse2m * pps;
   //mavlink_out_debug_vect_struct.z = speed * 3.6;
 
-  speed2mavlink(result.speed);
+  speed2mavlink(result);
 }
 
