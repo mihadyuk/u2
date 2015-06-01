@@ -14,6 +14,7 @@
 #include "acs_input.hpp"
 #include "eb500.hpp"
 #include "geometry.hpp"
+#include "time_keeper.hpp"
 
 /*
  ******************************************************************************
@@ -27,6 +28,7 @@
  ******************************************************************************
  */
 extern mavlink_debug_t                 mavlink_out_debug_struct;
+extern mavlink_debug_vect_t            mavlink_out_debug_vect_struct;
 
 /*
  ******************************************************************************
@@ -75,6 +77,12 @@ void Navi6dWrapper::prepare_data(const gps_data_t &gps_data,
     nav_sins.sensor_data.v_sns[0][0] = gps_data.speed * cos(deg2rad(gps_data.course));
     nav_sins.sensor_data.v_sns[1][0] = gps_data.speed * sin(deg2rad(gps_data.course));
     nav_sins.sensor_data.v_sns[2][0] = 0;
+
+    mavlink_out_debug_vect_struct.time_usec = TimeKeeper::utc();
+    mavlink_out_debug_vect_struct.x = 100 * nav_sins.sensor_data.v_sns[0][0];
+    mavlink_out_debug_vect_struct.y = 100 * nav_sins.sensor_data.v_sns[1][0];
+    mavlink_out_debug_vect_struct.z = 100 * nav_sins.sensor_data.v_sns[2][0];
+
     nav_sins.sensor_flags.sns_v_n_en = false;
     nav_sins.sensor_flags.sns_v_e_en = false;
   }
@@ -82,7 +90,7 @@ void Navi6dWrapper::prepare_data(const gps_data_t &gps_data,
     nav_sins.sensor_data.v_odo[0][0] = speed.speed;
     nav_sins.sensor_data.v_odo[1][0] = 0;
     nav_sins.sensor_data.v_odo[2][0] = 0;
-    nav_sins.sensor_flags.odo_en = true;
+    nav_sins.sensor_flags.odo_en = false;
     nav_sins.sensor_flags.nonhol_y_en = false;
     nav_sins.sensor_flags.nonhol_z_en = false;
   }

@@ -167,7 +167,7 @@ void LinkMgr::start(void){
   sduObjectInit(&SDU1);
   sduStart(&SDU1, &serusbcfg); // workaround against stopping of non started driver
   this->worker = chThdCreateStatic(LinkMgrThreadWA, sizeof(LinkMgrThreadWA),
-                                    LINKPRIO, LinkMgrThread, NULL);
+      SHELLPRIO, LinkMgrThread, NULL);
   osalDbgAssert(NULL != this->worker, "can not allocate memory");
 }
 

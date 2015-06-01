@@ -1,7 +1,10 @@
 #ifndef NMEA_HPP_
 #define NMEA_HPP_
 
-/* From standard: A sentence may contain up to 80 characters plus "$" and CR/LF */
+#include "string.h" // for memset
+
+/* From standard: A sentence may contain up to 80 printable characters
+ * plus CR/LF plus 2 padding bytes for memory alignment */
 #define GPS_MSG_LEN           84
 #define GPS_TOKEN_MAP_LEN     24
 #define GPS_MAX_TOKEN_LEN     16
@@ -11,7 +14,10 @@ namespace gps {
 /**
  *
  */
-typedef struct {
+struct nmea_gga_t {
+  nmea_gga_t(void) {
+    memset(this, 0, sizeof(*this));
+  }
   double  latitude;     // deg
   double  longitude;    // deg
   float   altitude;     // m
@@ -19,22 +25,25 @@ typedef struct {
   float   geoid;
   uint8_t satellites;
   uint8_t fix;
-} nmea_gga_t;
+};
 
 /**
  *
  */
-typedef struct {
+struct nmea_rmc_t {
+  nmea_rmc_t(void) {
+    memset(this, 0, sizeof(*this));
+  }
   struct tm time;
   float     speed;    // m/s
   float     course;   // deg
   bool      sec_round; /* there is no fractional part in seconds' field */
-} nmea_rmc_t;
+};
 
 /**
  *
  */
-enum class collect_status_t {
+enum class sentence_type_t {
   EMPTY,
   GPGGA,
   GPRMC,
@@ -59,14 +68,14 @@ enum class collect_state_t {
 class NmeaParser {
 public:
   NmeaParser(void);
-  collect_status_t collect(uint8_t byte);
+  sentence_type_t collect(uint8_t byte);
   void unpack(nmea_rmc_t &result);
   void unpack(nmea_gga_t &result);
 private:
   void reset_collector(void);
   const char* token(char *result, size_t number);
-  collect_status_t validate_sentece(void);
-  collect_status_t get_name(const char *name);
+  sentence_type_t validate_sentence(void);
+  sentence_type_t get_name(const char *name);
   size_t tip;
   size_t maptip;
   collect_state_t state;

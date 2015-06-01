@@ -67,7 +67,7 @@ void TlmSender::start(void){
 
   this->worker = chThdCreateStatic(TlmSenderThreadWA,
                  sizeof(TlmSenderThreadWA),
-                 TELEMTRYPRIO,
+                 TELEMETRYDISPPRIO,
                  TlmSenderThread,
                  NULL);
   osalDbgCheck(NULL != this->worker);

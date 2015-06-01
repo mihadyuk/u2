@@ -176,10 +176,10 @@ static void gps_configure(void) {
  */
 static THD_WORKING_AREA(gpsRxThreadWA, 320) __CCM__;
 THD_FUNCTION(gpsRxThread, arg) {
-  chRegSetThreadName("gpsRx");
+  chRegSetThreadName("GNSS");
   (void)arg;
   msg_t byte;
-  collect_status_t status;
+  sentence_type_t status;
   bool gga_acquired = false;
   bool rmc_acquired = false;
   systime_t prev = 0;
@@ -196,11 +196,11 @@ THD_FUNCTION(gpsRxThread, arg) {
         sdPut(hook_sdp, byte);
 
       switch(status) {
-      case collect_status_t::GPGGA:
+      case sentence_type_t::GPGGA:
         nmea_parser.unpack(gga);
         gga_acquired = true;
         break;
-      case collect_status_t::GPRMC:
+      case sentence_type_t::GPRMC:
         nmea_parser.unpack(rmc);
         rmc_acquired = true;
         break;

@@ -396,7 +396,7 @@ void SpawnShellThreads(void *sdp) {
 
   shell_tp = chThdCreateStatic(ShellThreadWA,
                             sizeof(ShellThreadWA),
-                            LINKPRIO,
+                            SHELLPRIO,
                             ShellThread,
                             sdp);
   if (shell_tp == NULL)

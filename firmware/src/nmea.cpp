@@ -102,51 +102,51 @@ static uint8_t from_hex(uint8_t a){
 /**
  *
  */
-collect_status_t NmeaParser::get_name(const char *name) {
+sentence_type_t NmeaParser::get_name(const char *name) {
   if (0 == strncmp("GPGGA", name, 5))
-    return collect_status_t::GPGGA;
+    return sentence_type_t::GPGGA;
   else if (0 == strncmp("GPRMC", name, 5))
-    return collect_status_t::GPRMC;
+    return sentence_type_t::GPRMC;
   else
-    return collect_status_t::UNKNOWN;
+    return sentence_type_t::UNKNOWN;
 }
 
 /**
  *
  */
-collect_status_t NmeaParser::validate_sentece(void) {
+sentence_type_t NmeaParser::validate_sentence(void) {
   uint8_t sum = 0;
 
   if (tip < GPS_MIN_MSG_LEN)
-    return collect_status_t::EMPTY;
+    return sentence_type_t::EMPTY;
 
   if ('$' != buf[0])
-    return collect_status_t::EMPTY;
+    return sentence_type_t::EMPTY;
 
   for (size_t i=1; i<6; i++) {
     if ((buf[i] < 'A') || (buf[i] > 'Z'))   /* letters from 'A' to 'Z' */
-      return collect_status_t::EMPTY;
+      return sentence_type_t::EMPTY;
   }
 
   if (',' != buf[6])                        /* comma after GPGGA */
-    return collect_status_t::EMPTY;
+    return sentence_type_t::EMPTY;
 
   if ('\n' != buf[tip-1])
-    return collect_status_t::EMPTY;
+    return sentence_type_t::EMPTY;
 
   if ('\r' != buf[tip-2])
-    return collect_status_t::EMPTY;
+    return sentence_type_t::EMPTY;
 
   if ('*' != buf[tip-5])
-    return collect_status_t::EMPTY;
+    return sentence_type_t::EMPTY;
 
-  /* now calc checksum */
+  /* now calculate checksum */
   for (size_t i=1; i<tip-5; i++)
     sum ^= buf[i];
 
   uint8_t sum_from_hex = (from_hex(buf[tip-4]) << 4) | from_hex(buf[tip-3]);
   if (sum != sum_from_hex)
-    return collect_status_t::EMPTY;
+    return sentence_type_t::EMPTY;
   else
     return get_name((char *)&buf[1]);
 }
@@ -227,8 +227,8 @@ state(collect_state_t::START)
 /**
  *
  */
-collect_status_t NmeaParser::collect(uint8_t c) {
-  collect_status_t ret = collect_status_t::EMPTY;
+sentence_type_t NmeaParser::collect(uint8_t c) {
+  sentence_type_t ret = sentence_type_t::EMPTY;
 
   /* prevent overflow */
   if ((tip >= GPS_MSG_LEN) || (maptip >= GPS_TOKEN_MAP_LEN)) {
@@ -284,8 +284,8 @@ collect_status_t NmeaParser::collect(uint8_t c) {
     if ('\n' == c) {
       buf[tip] = c;
       tip++;
-      ret = validate_sentece();
-      if (collect_status_t::EMPTY == ret)
+      ret = validate_sentence();
+      if (sentence_type_t::EMPTY == ret)
         reset_collector();
       state = collect_state_t::START;
     }
