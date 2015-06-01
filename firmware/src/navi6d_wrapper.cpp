@@ -55,7 +55,6 @@ __CCM__ static RefParams<double> ref_params;
  *******************************************************************************
  *******************************************************************************
  */
-
 /*
  *
  */
@@ -76,14 +75,14 @@ void Navi6dWrapper::prepare_data(const gps_data_t &gps_data,
     nav_sins.sensor_data.v_sns[0][0] = gps_data.speed * cos(deg2rad(gps_data.course));
     nav_sins.sensor_data.v_sns[1][0] = gps_data.speed * sin(deg2rad(gps_data.course));
     nav_sins.sensor_data.v_sns[2][0] = 0;
-    nav_sins.sensor_flags.sns_v_n_en = true;
-    nav_sins.sensor_flags.sns_v_e_en = true;
+    nav_sins.sensor_flags.sns_v_n_en = false;
+    nav_sins.sensor_flags.sns_v_e_en = false;
   }
   else {
     nav_sins.sensor_data.v_odo[0][0] = speed.speed;
     nav_sins.sensor_data.v_odo[1][0] = 0;
     nav_sins.sensor_data.v_odo[2][0] = 0;
-    nav_sins.sensor_flags.odo_en = false;
+    nav_sins.sensor_flags.odo_en = true;
     nav_sins.sensor_flags.nonhol_y_en = false;
     nav_sins.sensor_flags.nonhol_z_en = false;
   }

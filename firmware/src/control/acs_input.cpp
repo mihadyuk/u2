@@ -76,8 +76,6 @@ static void log_append(void) {
     mav_logger.write(&global_position_int_mail);
   }
 
-
-
   if (vfr_hud_mail.free()) {
     vfr_hud_mail.fill(&mavlink_out_vfr_hud_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_VFR_HUD);
     mav_logger.write(&vfr_hud_mail);

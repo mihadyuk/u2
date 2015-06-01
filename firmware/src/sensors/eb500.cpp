@@ -115,7 +115,6 @@ static void gps2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc) {
   mavlink_out_gps_raw_int_struct.vel = rmc.speed * 100;
 
   log_append();
-
 }
 
 /**
