@@ -45,8 +45,8 @@ struct nmea_rmc_t {
  */
 enum class sentence_type_t {
   EMPTY,
-  GPGGA,
-  GPRMC,
+  GGA,
+  RMC,
   UNKNOWN
 };
 

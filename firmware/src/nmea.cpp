@@ -103,10 +103,10 @@ static uint8_t from_hex(uint8_t a){
  *
  */
 sentence_type_t NmeaParser::get_name(const char *name) {
-  if (0 == strncmp("GPGGA", name, 5))
-    return sentence_type_t::GPGGA;
-  else if (0 == strncmp("GPRMC", name, 5))
-    return sentence_type_t::GPRMC;
+  if ((0 == strncmp("GNGGA", name, 5)) || (0 == strncmp("GPGGA", name, 5)))
+    return sentence_type_t::GGA;
+  else if ((0 == strncmp("GNRMC", name, 5)) || (0 == strncmp("GPRMC", name, 5)))
+    return sentence_type_t::RMC;
   else
     return sentence_type_t::UNKNOWN;
 }

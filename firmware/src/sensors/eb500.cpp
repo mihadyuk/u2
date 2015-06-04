@@ -150,7 +150,7 @@ static void gps_configure(void) {
   }
 
   /* set fix rate */
-  sdWrite(&GPSSD, fix_period_5hz, sizeof(fix_period_5hz));
+//  sdWrite(&GPSSD, fix_period_5hz, sizeof(fix_period_5hz));
 //  sdWrite(&GPSSD, fix_period_4hz, sizeof(fix_period_4hz));
 //  sdWrite(&GPSSD, fix_period_2hz, sizeof(fix_period_2hz));
   chThdSleepSeconds(1);
@@ -196,11 +196,11 @@ THD_FUNCTION(gpsRxThread, arg) {
         sdPut(hook_sdp, byte);
 
       switch(status) {
-      case sentence_type_t::GPGGA:
+      case sentence_type_t::GGA:
         nmea_parser.unpack(gga);
         gga_acquired = true;
         break;
-      case sentence_type_t::GPRMC:
+      case sentence_type_t::RMC:
         nmea_parser.unpack(rmc);
         rmc_acquired = true;
         break;
