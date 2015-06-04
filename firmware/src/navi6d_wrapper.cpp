@@ -76,24 +76,24 @@ void Navi6dWrapper::prepare_data(const gps_data_t &gps_data,
 
     nav_sins.sensor_data.v_sns[0][0] = gps_data.speed * cos(deg2rad(gps_data.course));
     nav_sins.sensor_data.v_sns[1][0] = gps_data.speed * sin(deg2rad(gps_data.course));
-    nav_sins.sensor_data.v_sns[2][0] = 0;
+    nav_sins.sensor_data.v_sns[2][0] = gps_data.course;
 
     mavlink_out_debug_vect_struct.time_usec = TimeKeeper::utc();
     mavlink_out_debug_vect_struct.x = 100 * nav_sins.sensor_data.v_sns[0][0];
     mavlink_out_debug_vect_struct.y = 100 * nav_sins.sensor_data.v_sns[1][0];
     mavlink_out_debug_vect_struct.z = 100 * nav_sins.sensor_data.v_sns[2][0];
 
-    nav_sins.sensor_flags.sns_v_n_en = false;
-    nav_sins.sensor_flags.sns_v_e_en = false;
+    nav_sins.sensor_flags.sns_v_n_en = true;
+    nav_sins.sensor_flags.sns_v_e_en = true;
   }
   else {
     nav_sins.sensor_data.v_odo[0][0] = speed.speed;
     nav_sins.sensor_data.v_odo[1][0] = 0;
     nav_sins.sensor_data.v_odo[2][0] = 0;
-    nav_sins.sensor_flags.odo_en = false;
-    nav_sins.sensor_flags.nonhol_y_en = false;
-    nav_sins.sensor_flags.nonhol_z_en = false;
   }
+  nav_sins.sensor_flags.odo_en = true;
+  nav_sins.sensor_flags.nonhol_y_en = true;
+  nav_sins.sensor_flags.nonhol_z_en = true;
 
   nav_sins.sensor_flags.alt_b_en = false;
 
@@ -167,7 +167,7 @@ void Navi6dWrapper::start(float dT) {
   event_gps.registerMask(&el, EVMSK_GPS_FRESH_VALID);
 
 
-  ref_params.eu_vh_base[0][0] = 0;
+  ref_params.eu_vh_base[0][0] = M_PI;
   ref_params.eu_vh_base[1][0] = 0;
   ref_params.eu_vh_base[2][0] = 0;
 
@@ -183,15 +183,15 @@ void Navi6dWrapper::start(float dT) {
   calib_params.m_no[2][0] = -0.291037;
 
   kalman_params.sigma_R[0][0] = 5; //ne_sns
-  kalman_params.sigma_R[1][0] = 7; //d_sns
-  kalman_params.sigma_R[2][0] = 0.1; //v_n_sns
+  kalman_params.sigma_R[1][0] = 5; //d_sns
+  kalman_params.sigma_R[2][0] = 0.5; //v_n_sns
   kalman_params.sigma_R[3][0] = 0.5; //odo
-  kalman_params.sigma_R[4][0] = 0.1; //nonhol
+  kalman_params.sigma_R[4][0] = 0.2; //nonhol
   kalman_params.sigma_R[5][0] = 0.3; //baro
   kalman_params.sigma_R[6][0] = 0.3; //mag
 
-  kalman_params.sigma_Qm[0][0] = 0.005;
-  kalman_params.sigma_Qm[1][0] = 0.005;
+  kalman_params.sigma_Qm[0][0] = 0.001;
+  kalman_params.sigma_Qm[1][0] = 0.001;
   kalman_params.sigma_Qm[2][0] = 0.000001;
   kalman_params.sigma_Qm[3][0] = 0.000001;
   kalman_params.sigma_Qm[4][0] = 0.000001;
@@ -200,7 +200,7 @@ void Navi6dWrapper::start(float dT) {
 //  init_params.sigma_Pi[0][0] = 1; //r
 //  init_params.sigma_Pi[1][0] = 0.01; //v
 //  init_params.sigma_Pi[2][0] = 0.5; //tilt
-  init_params.sigma_Pi[3][0] = 50.0; //head
+//  init_params.sigma_Pi[3][0] = 50.0; //head
 //  init_params.sigma_Pi[4][0] = 0.0000000001; //ba
 //  init_params.sigma_Pi[5][0] = 0.0000000001; //bw
 
