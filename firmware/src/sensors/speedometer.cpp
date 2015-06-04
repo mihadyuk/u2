@@ -145,8 +145,8 @@ bool Speedometer::check_sample(uint32_t *path_ret,
  */
 void Speedometer::speed2mavlink(const speedometer_data_t &result) {
 
-  mavlink_out_vfr_hud_struct.groundspeed = result.speed * 100; // *100 for gps speed compare
-  //mavlink_out_vfr_hud_struct.groundspeed = result.speed;
+  //mavlink_out_vfr_hud_struct.groundspeed = result.speed * 100; // *100 for gps speed compare
+  mavlink_out_vfr_hud_struct.groundspeed = result.speed;
 }
 
 /*
@@ -207,7 +207,6 @@ void Speedometer::update(speedometer_data_t &result, float dT) {
   pps = filter_alphabeta(pps);
   //pps = filter_median(pps);
   result.speed = *pulse2m * pps;
-  result.speed *= 2; // TODO: I still have no ideas why this 2 needed
   speed2mavlink(result);
 }
 
