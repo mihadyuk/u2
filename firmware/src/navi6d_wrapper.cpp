@@ -184,8 +184,8 @@ void Navi6dWrapper::start(float dT) {
 
   kalman_params.sigma_R[0][0] = 5; //ne_sns
   kalman_params.sigma_R[1][0] = 5; //d_sns
-  kalman_params.sigma_R[2][0] = 0.5; //v_n_sns
-  kalman_params.sigma_R[3][0] = 0.5; //odo
+  kalman_params.sigma_R[2][0] = 0.1; //v_n_sns
+  kalman_params.sigma_R[3][0] = 0.1; //odo
   kalman_params.sigma_R[4][0] = 0.2; //nonhol
   kalman_params.sigma_R[5][0] = 0.3; //baro
   kalman_params.sigma_R[6][0] = 0.3; //mag
@@ -196,13 +196,6 @@ void Navi6dWrapper::start(float dT) {
   kalman_params.sigma_Qm[3][0] = 0.000001;
   kalman_params.sigma_Qm[4][0] = 0.000001;
   kalman_params.sigma_Qm[5][0] = 0.000001;
-
-//  init_params.sigma_Pi[0][0] = 1; //r
-//  init_params.sigma_Pi[1][0] = 0.01; //v
-//  init_params.sigma_Pi[2][0] = 0.5; //tilt
-//  init_params.sigma_Pi[3][0] = 50.0; //head
-//  init_params.sigma_Pi[4][0] = 0.0000000001; //ba
-//  init_params.sigma_Pi[5][0] = 0.0000000001; //bw
 
   init_params.dT = dT;
 
