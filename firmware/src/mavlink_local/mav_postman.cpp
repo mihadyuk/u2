@@ -81,7 +81,7 @@ static THD_FUNCTION(TxThread, arg) {
 
   while (!chThdShouldTerminateX()){
     if (MSG_OK == txmb.fetch(&mail, MS2ST(100))){
-      if (0 != mavlink_encode(mail->msgid, &tx_msg,  mail->mavmsg)){
+      if (0 != mavlink_encode(mail->msgid, mail->compid, &tx_msg,  mail->mavmsg)){
         len = mavlink_msg_to_send_buffer(sendbuf, &tx_msg);
         channel->write(sendbuf, len);
       }

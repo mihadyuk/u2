@@ -14,8 +14,12 @@ using namespace chibios_rt;
  ******************************************************************************
  */
 #define PARAM_POST_TIMEOUT    MS2ST(500)
-#define SEND_PAUSE            MS2ST(133)
 #define CHECK_FRESH_PERIOD    MS2ST(50)
+#if XBEE_USE_CTS_RTS
+#define SEND_PAUSE            MS2ST(133)
+#else
+#define SEND_PAUSE            MS2ST(33)
+#endif
 
 /*
  ******************************************************************************

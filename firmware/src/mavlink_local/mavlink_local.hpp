@@ -22,7 +22,7 @@
 
 /**
  * Global structure used to store system's state.
- * In earlier versions of mavlink this iformation was stored in "mavlink_system_t"
+ * In earlier versions of mavlink this information was stored in "mavlink_system_t"
  */
 typedef struct __mavlink_system_info {
     uint8_t  type;      ///< Stores the system's type (see MAV_TYPE enum)
@@ -37,18 +37,16 @@ typedef struct __mavlink_system_info {
 extern mavlink_system_t       mavlink_system_struct;
 
 /**
- * Decide if this packed addressed to us.
+ * Decide if this packed addressed for this vehicle.
  */
 template <typename T>
-static bool mavlink_msg_for_me(T *msg){
+static bool mavlink_msg_for_me(T *msg) {
   if (msg->target_system != mavlink_system_struct.sysid)
     return false;
-  if (mavlink_system_struct.compid == msg->target_component)
-    return true;
   else if (MAV_COMP_ID_ALL == msg->target_component)
     return true;
   else
-    return false;
+    return true;
 }
 
 void MavlinkInit(void);

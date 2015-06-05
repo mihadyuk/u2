@@ -145,6 +145,11 @@ param = [
 ("BAT_cap",         0,          3000,       11000,      "u", "default",     "Battery capacitance (mAh)"),
 ("BAT_fill",        0,          0,          100,        "u", "default",     "Start battery filling in percents"),
 
+# Fusion algorithm settings
+("SINS_gnss_block", 0,          0,          1,          "u", "default",     "Soft block GNSS"),
+("SINS_odo_block",  0,          0,          1,          "u", "default",     "Soft block odometer"),
+("SINS_baro_block", 0,          0,          1,          "u", "default",     "Soft block barometer"),
+
 #/**** Servos coefficients ****/
 ("SRV_ail_min",     SERVO_MIN,  1500,       SERVO_MAX,  "u", "default",     "NULL"),
 ("SRV_ail_max",     SERVO_MIN,  1500,       SERVO_MAX,  "u", "default",     "NULL"),
