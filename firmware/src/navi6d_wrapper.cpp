@@ -15,6 +15,7 @@
 #include "eb500.hpp"
 #include "geometry.hpp"
 #include "time_keeper.hpp"
+#include "param_registry.hpp"
 
 /*
  ******************************************************************************
@@ -66,7 +67,7 @@ void Navi6dWrapper::prepare_data(const gps_data_t &gps_data,
                                  const marg_data_t &marg)
 {
 
-  if ((el.getAndClearFlags() & EVMSK_GPS_FRESH_VALID) > 0) {
+  if ((*gnss_block == 0) && ((el.getAndClearFlags() & EVMSK_GPS_FRESH_VALID) > 0)) {
     osalDbgCheck((fabsf(gps_data.latitude) > 0.01) && (fabsf(gps_data.altitude) > 0.01));
     nav_sins.sensor_data.r_sns[0][0] = deg2rad(gps_data.latitude);
     nav_sins.sensor_data.r_sns[1][0] = deg2rad(gps_data.longitude);
@@ -91,14 +92,18 @@ void Navi6dWrapper::prepare_data(const gps_data_t &gps_data,
     nav_sins.sensor_data.v_odo[1][0] = 0;
     nav_sins.sensor_data.v_odo[2][0] = 0;
   }
-  nav_sins.sensor_flags.odo_en = true;
-  nav_sins.sensor_flags.nonhol_y_en = true;
-  nav_sins.sensor_flags.nonhol_z_en = true;
 
-  nav_sins.sensor_flags.alt_b_en = false;
+  if (*odo_block == 0) {
+    nav_sins.sensor_flags.odo_en = true;
+    nav_sins.sensor_flags.nonhol_y_en = true;
+    nav_sins.sensor_flags.nonhol_z_en = true;
+  }
 
-  nav_sins.sensor_data.alt_b[0][0] = abs_press.alt;
-  nav_sins.sensor_flags.baro_fix_en = false;
+  if (*baro_block == 0) {
+    nav_sins.sensor_flags.alt_b_en = true;
+    nav_sins.sensor_data.alt_b[0][0] = abs_press.alt;
+    nav_sins.sensor_flags.baro_fix_en = true;
+  }
 
   for(size_t i=0; i<3; i++) {
     nav_sins.sensor_data.fb[i][0] = marg.acc[i];
@@ -166,6 +171,9 @@ void Navi6dWrapper::start(float dT) {
 
   event_gps.registerMask(&el, EVMSK_GPS_FRESH_VALID);
 
+  param_registry.valueSearch("SINS_gnss_block", &gnss_block);
+  param_registry.valueSearch("SINS_odo_block",  &odo_block);
+  param_registry.valueSearch("SINS_baro_block", &baro_block);
 
   ref_params.eu_vh_base[0][0] = M_PI;
   ref_params.eu_vh_base[1][0] = 0;
@@ -175,9 +183,9 @@ void Navi6dWrapper::start(float dT) {
   calib_params.bm[1][0] = 0.03736;
   calib_params.bm[2][0] = -0.2661;
 
-  calib_params.m_s[0][0] = 180.186;
-  calib_params.m_s[1][0] =  178.2;
-  calib_params.m_s[2][0] = 178.386;
+  calib_params.m_s[0][0]  = 180.186;
+  calib_params.m_s[1][0]  = 178.2;
+  calib_params.m_s[2][0]  = 178.386;
   calib_params.m_no[0][0] = -1.444;
   calib_params.m_no[1][0] = -2.35684;
   calib_params.m_no[2][0] = -0.291037;
