@@ -201,7 +201,7 @@ void ubx_solution_period(uint16_t msec) {
   msg[2] = 0x06; // UBX-CFG
   msg[3] = 0x08; // RATE
   tmp = 6;
-  memcpy(&msg[4],  &tmp, 2); //len
+  memcpy(&msg[4],  &tmp, 2); //message length
   tmp = msec;
   memcpy(&msg[6],  &tmp, 2);
   tmp = 1;

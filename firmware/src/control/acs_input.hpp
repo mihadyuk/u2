@@ -93,14 +93,16 @@ typedef enum {
   ACS_INPUT_futaba_height,
   ACS_INPUT_futaba_yaw,
 
-  // some constants
-  ACS_INPUT_one_neg,
-  ACS_INPUT_half_neg,
-  ACS_INPUT_quarter_neg,
-  ACS_INPUT_zero,
-  ACS_INPUT_quarter,
-  ACS_INPUT_half,
-  ACS_INPUT_one,
+  // some constants for debug
+  ACS_INPUT_const_two_neg,
+  ACS_INPUT_const_one_neg,
+  ACS_INPUT_const_half_neg,
+  ACS_INPUT_const_quarter_neg,
+  ACS_INPUT_const_zero,
+  ACS_INPUT_const_quarter,
+  ACS_INPUT_const_half,
+  ACS_INPUT_const_one,
+  ACS_INPUT_const_two,
 
   ACS_INPUT_ENUM_END,
 } state_vector_enum;
@@ -116,13 +118,15 @@ struct ACSInput {
     memset(this, 0, sizeof(*this));
 
     /* fill special values */
-    ch[ACS_INPUT_one_neg]     = -1;
-    ch[ACS_INPUT_half_neg]    = -0.5f;
-    ch[ACS_INPUT_quarter_neg] = -0.25f;
-    ch[ACS_INPUT_zero]        = 0;
-    ch[ACS_INPUT_quarter]     = 0.25f;
-    ch[ACS_INPUT_half]        = 0.5f;
-    ch[ACS_INPUT_one]         = 1;
+    ch[ACS_INPUT_const_two_neg]     = -2;
+    ch[ACS_INPUT_const_one_neg]     = -1;
+    ch[ACS_INPUT_const_half_neg]    = -0.5f;
+    ch[ACS_INPUT_const_quarter_neg] = -0.25f;
+    ch[ACS_INPUT_const_zero]        = 0;
+    ch[ACS_INPUT_const_quarter]     = 0.25f;
+    ch[ACS_INPUT_const_half]        = 0.5f;
+    ch[ACS_INPUT_const_one]         = 1;
+    ch[ACS_INPUT_const_two]         = 2;
   }
 
   float ch[ACS_INPUT_ENUM_END];

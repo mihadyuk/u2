@@ -32,13 +32,14 @@ using namespace control;
  */
 
 static const uint8_t auto_bytecode[] = {
-    INPUT,  ACS_INPUT_roll,
+    INPUT,  ACS_INPUT_pitch,
     OUTPUT, IMPACT_RUD,
     TERM,
 
-    INPUT,  ACS_INPUT_pitch,
-    OUTPUT, IMPACT_THR,
-    TERM,
+//    INPUT, ACS_INPUT_odo_speed,
+//    PID, 15, ACS_INPUT_const_one,
+//    OUTPUT, IMPACT_THR,
+//    TERM,
 
     END
 };
@@ -69,11 +70,11 @@ static const uint8_t manual_bytecode[] = {
 };
 
 static const uint8_t emergency_bytecode[] = {
-    INPUT,  ACS_INPUT_zero,
+    INPUT,  ACS_INPUT_const_zero,
     OUTPUT, IMPACT_RUD,
     TERM,
 
-    INPUT,  ACS_INPUT_zero,
+    INPUT,  ACS_INPUT_const_zero,
     OUTPUT, IMPACT_THR,
     TERM,
 
