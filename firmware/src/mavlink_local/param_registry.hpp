@@ -3,6 +3,7 @@
 
 #include "global_flags.h"
 #include "nvram_local.hpp"
+#include "string.h"
 
 /* периодичность посылки данных телеметрии в милисекундах */
 #define TELEMETRY_SEND_OFF            0
@@ -49,6 +50,7 @@ typedef union{
  * Global parameter
  */
 struct GlobalParam_t {
+
   /**
    * Name of parameter
    */

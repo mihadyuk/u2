@@ -85,7 +85,6 @@ typedef enum {
  * EXTERNS
  ******************************************************************************
  */
-extern mavlink_debug_t  mavlink_out_debug_struct;
 extern MavLogger mav_logger;
 
 /*
@@ -124,16 +123,6 @@ static mavMail dbg_mail;
  *******************************************************************************
  *******************************************************************************
  */
-
-static void temp2dbg(float temp) {
-  mavlink_out_debug_struct.value = temp;
-  mavlink_out_debug_struct.time_boot_ms = TIME_BOOT_MS;
-
-  if (dbg_mail.free()) {
-    dbg_mail.fill(&mavlink_out_debug_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_DEBUG);
-    mav_logger.write(&dbg_mail);
-  }
-}
 
 /**
  *
@@ -695,7 +684,6 @@ sensor_state_t MPU6050::get(marg_data_t &result) {
     release_lock();
   }
 
-  temp2dbg(this->temperature);
   return this->state;
 }
 

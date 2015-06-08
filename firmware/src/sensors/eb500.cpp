@@ -3,6 +3,7 @@
 #include "nmea.hpp"
 #include "mavlink_local.hpp"
 #include "eb500.hpp"
+#include "mav_logger.hpp"
 #include "geometry.hpp"
 #include "time_keeper.hpp"
 #include "pads.h"
@@ -27,7 +28,9 @@ using namespace gps;
  */
 chibios_rt::EvtSource event_gps;
 
-extern mavlink_gps_raw_int_t           mavlink_out_gps_raw_int_struct;
+extern mavlink_gps_raw_int_t        mavlink_out_gps_raw_int_struct;
+
+extern MavLogger mav_logger;
 
 /*
  ******************************************************************************
@@ -68,6 +71,8 @@ static chibios_rt::BinarySemaphore protect_sem(false);
 
 static SerialDriver *hook_sdp = nullptr;
 
+static mavMail gps_raw_int_mail;
+
 /*
  ******************************************************************************
  * PROTOTYPES
@@ -81,6 +86,17 @@ static SerialDriver *hook_sdp = nullptr;
  *******************************************************************************
  *******************************************************************************
  */
+/**
+ *
+ */
+static void log_append(void) {
+
+  if (gps_raw_int_mail.free()) {
+    gps_raw_int_mail.fill(&mavlink_out_gps_raw_int_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_GPS_RAW_INT);
+    mav_logger.write(&gps_raw_int_mail);
+  }
+}
+
 
 /**
  *
@@ -97,18 +113,8 @@ static void gps2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc) {
   mavlink_out_gps_raw_int_struct.satellites_visible = gga.satellites;
   mavlink_out_gps_raw_int_struct.cog = rmc.course * 100;
   mavlink_out_gps_raw_int_struct.vel = rmc.speed * 100;
-}
 
-/**
- *
- */
-static void gps2state_vector(ACSInput &acs_in, const gps_data_t gps) {
-
-  acs_in.ch[ACS_INPUT_lat] = deg2rad(gps.latitude);
-  acs_in.ch[ACS_INPUT_lon] = deg2rad(gps.longitude);
-  acs_in.ch[ACS_INPUT_alt] = gps.altitude;
-  acs_in.ch[ACS_INPUT_cog] = deg2rad(gps.course);
-  acs_in.ch[ACS_INPUT_yaw] = acs_in.ch[ACS_INPUT_cog];
+  log_append();
 }
 
 /**
@@ -144,7 +150,7 @@ static void gps_configure(void) {
   }
 
   /* set fix rate */
-  sdWrite(&GPSSD, fix_period_5hz, sizeof(fix_period_5hz));
+//  sdWrite(&GPSSD, fix_period_5hz, sizeof(fix_period_5hz));
 //  sdWrite(&GPSSD, fix_period_4hz, sizeof(fix_period_4hz));
 //  sdWrite(&GPSSD, fix_period_2hz, sizeof(fix_period_2hz));
   chThdSleepSeconds(1);
@@ -170,10 +176,10 @@ static void gps_configure(void) {
  */
 static THD_WORKING_AREA(gpsRxThreadWA, 320) __CCM__;
 THD_FUNCTION(gpsRxThread, arg) {
-  chRegSetThreadName("gpsRx");
+  chRegSetThreadName("GNSS");
   (void)arg;
   msg_t byte;
-  collect_status_t status;
+  sentence_type_t status;
   bool gga_acquired = false;
   bool rmc_acquired = false;
   systime_t prev = 0;
@@ -190,11 +196,11 @@ THD_FUNCTION(gpsRxThread, arg) {
         sdPut(hook_sdp, byte);
 
       switch(status) {
-      case collect_status_t::GPGGA:
+      case sentence_type_t::GGA:
         nmea_parser.unpack(gga);
         gga_acquired = true;
         break;
-      case collect_status_t::GPRMC:
+      case sentence_type_t::RMC:
         nmea_parser.unpack(rmc);
         rmc_acquired = true;
         break;
@@ -246,16 +252,6 @@ void GPSInit(void){
 
   chThdCreateStatic(gpsRxThreadWA, sizeof(gpsRxThreadWA),
                     GPSPRIO, gpsRxThread, NULL);
-}
-
-/**
- *
- */
-void GPSGet(ACSInput &acs_in) {
-
-  acquire();
-  gps2state_vector(acs_in, cache);
-  release();
 }
 
 /**

@@ -207,11 +207,13 @@ int main(void) {
   while (true) {
     marg.get(marg_data, MS2ST(200));
     GPSGet(gps_data);
-    GPSGet(acs_in);
+    gps2acs_in(gps_data, acs_in);
     speedometer.update(speed_data, marg_data.dT);
+    speedometer2acs_in(speed_data, acs_in);
     mpxv.get();
     PwrMgrUpdate();
     bmp_085.get(abs_press);
+    baro2acs_in(abs_press, acs_in);
 
     if (MAV_STATE_CALIBRATING == mavlink_system_info_struct.state) {
       CalibratorState cs = calibrator.update(marg_data);

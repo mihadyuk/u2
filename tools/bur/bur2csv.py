@@ -18,7 +18,7 @@ parser.add_argument('-f', '--infile', type=str, required=True,
                    help='Input file')
 args = parser.parse_args()
 
-f = mavutil.mavlogfile(args.infile, robust_parsing=True, notimestamps=True, use_native=False)
+f = mavutil.mavlogfile(args.infile, robust_parsing=True, notimestamps=True)
 total_bytes = 0
 
 writerpool = writerpool.WriterPool()

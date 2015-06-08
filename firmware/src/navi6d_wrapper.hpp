@@ -29,6 +29,9 @@ private:
   bool ready = false;
   chibios_rt::EvtListener el;
   ACSInput &acs_in;
+  const uint32_t *gnss_block = nullptr;
+  const uint32_t *odo_block  = nullptr;
+  const uint32_t *baro_block = nullptr;
 };
 
 #endif /* NAVI6D_WRAPPER_HPP_ */

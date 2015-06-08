@@ -16,7 +16,6 @@ using namespace chibios_rt;
  * EXTERNS
  ******************************************************************************
  */
-//extern mavlink_debug_vect_t  mavlink_out_debug_vect_struct;
 
 /*
  ******************************************************************************
@@ -35,7 +34,6 @@ static void sonar_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint3
   (void)channel;
   (void)p;
 
-  //mavlink_out_debug_vect_struct.x = eicuGetWidth(eicup, channel) * 0.0001724137;
   (void)w;
 }
 

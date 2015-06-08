@@ -69,11 +69,11 @@ static const uint8_t manual_bytecode[] = {
 };
 
 static const uint8_t emergency_bytecode[] = {
-    INPUT,  ACS_INPUT_futaba_raw_00,
+    INPUT,  ACS_INPUT_zero,
     OUTPUT, IMPACT_RUD,
     TERM,
 
-    INPUT,  ACS_INPUT_futaba_raw_01,
+    INPUT,  ACS_INPUT_zero,
     OUTPUT, IMPACT_THR,
     TERM,
 

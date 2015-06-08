@@ -32,7 +32,7 @@ MavPostman mav_postman;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-static chibios_rt::Mailbox<mavMail*, 12> txmb;
+__CCM__ static chibios_rt::Mailbox<mavMail*, 12> txmb;
 MavSpamList MavPostman::spam_list;
 
 __CCM__ static mavlink_message_t rx_msg;
@@ -81,7 +81,7 @@ static THD_FUNCTION(TxThread, arg) {
 
   while (!chThdShouldTerminateX()){
     if (MSG_OK == txmb.fetch(&mail, MS2ST(100))){
-      if (0 != mavlink_encode(mail->msgid, &tx_msg,  mail->mavmsg)){
+      if (0 != mavlink_encode(mail->msgid, mail->compid, &tx_msg,  mail->mavmsg)){
         len = mavlink_msg_to_send_buffer(sendbuf, &tx_msg);
         channel->write(sendbuf, len);
       }
@@ -101,7 +101,9 @@ static THD_FUNCTION(TxThread, arg) {
  *
  */
 MavPostman::MavPostman(void){
-  return;
+  memset(&rx_msg, 0, sizeof(rx_msg));
+  memset(&rx_status, 0, sizeof(rx_status));
+  memset(&tx_msg, 0, sizeof(tx_msg));
 }
 
 /**
@@ -112,11 +114,11 @@ void MavPostman::start(mavChannel *chan){
   this->channel = chan;
 
   rxworker = chThdCreateStatic(RxThreadWA, sizeof(RxThreadWA),
-                               LINKPRIO, RxThread, channel);
+      MAVPOSTMANPRIO, RxThread, channel);
   osalDbgAssert(nullptr != rxworker, "Can not allocate memory");
 
   txworker = chThdCreateStatic(TxThreadWA, sizeof(TxThreadWA),
-                               LINKPRIO, TxThread, channel);
+      MAVPOSTMANPRIO, TxThread, channel);
   osalDbgAssert(nullptr != txworker, "Can not allocate memory");
 
   ready = true;

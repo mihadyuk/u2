@@ -1,3 +1,5 @@
+#pragma GCC optimize "-O2"
+
 #include "main.h"
 
 #include "param_registry.hpp"
@@ -15,6 +17,15 @@ using namespace control;
  ******************************************************************************
  */
 
+#define DEBUG_STAB_VM       TRUE
+#if DEBUG_STAB_VM
+  #define vmDbgCheck(c) osalDbgCheck(c)
+  #define vmDbgPanic(c) osalSysHalt(c)
+#else
+  #define vmDbgCheck(c)
+  #define vmDbgPanic(c)
+#endif
+
 #define TOTAL_PID_CNT         16
 #define TOTAL_CHAIN_CNT       4
 #define TOTAL_INPUT_CNT       4
@@ -23,9 +34,6 @@ using namespace control;
 #define TOTAL_SUM_CNT         4
 #define TOTAL_OUT_CNT         8
 #define TOTAL_INV_CNT         4
-
-#define vmDbgCheck(c) osalDbgCheck(c)
-#define vmDbgPanic(c) osalSysHalt(c)
 
 /* this variable needed only for PIDs */
 static float VM_dT = 0.01;

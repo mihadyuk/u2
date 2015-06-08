@@ -21,7 +21,8 @@ using namespace chibios_rt;
  * EXTERNS
  ******************************************************************************
  */
-//extern mavlink_debug_vect_t  mavlink_out_debug_vect_struct;
+
+extern mavlink_vfr_hud_t              mavlink_out_vfr_hud_struct;
 
 /*
  ******************************************************************************
@@ -73,9 +74,10 @@ void speedometer_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32
   (void)channel;
   (void)w;
 
+  osalSysLockFromISR();
   Speedometer::total_path++;
   Speedometer::period_cache = p;
-//  mavlink_out_debug_vect_struct.y = p;
+  osalSysUnlockFromISR();
 }
 
 /**
@@ -83,14 +85,14 @@ void speedometer_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32
  *
  * @retval  OSAL_SUCCESS if measurement considered good.
  */
-bool Speedometer::check_sample(uint32_t &path_ret,
-                               uint16_t &last_pulse_period, float dT) {
+bool Speedometer::check_sample(uint32_t *path_ret,
+                               uint16_t *last_pulse_period, float dT) {
   bool ret = OSAL_FAILED;
   uint32_t path; /* cache value for atomicity */
 
   osalSysLock();
   path = total_path;
-  last_pulse_period = period_cache;
+  *last_pulse_period = period_cache;
   osalSysUnlock();
 
   /* timeout handling */
@@ -134,8 +136,17 @@ bool Speedometer::check_sample(uint32_t &path_ret,
     break;
   }
 
-  path_ret = path;
+  *path_ret = path;
   return ret;
+}
+
+/**
+ *
+ */
+void Speedometer::speed2mavlink(const speedometer_data_t &result) {
+
+  //mavlink_out_vfr_hud_struct.groundspeed = result.speed * 100; // *100 for gps speed compare
+  mavlink_out_vfr_hud_struct.groundspeed = result.speed;
 }
 
 /*
@@ -184,16 +195,18 @@ void Speedometer::update(speedometer_data_t &result, float dT) {
 
   osalDbgCheck(ready);
 
-  status = check_sample(result.path, last_pulse_period, dT);
-  if (OSAL_FAILED == status)
+  status = check_sample(&result.path, &last_pulse_period, dT);
+  if (OSAL_FAILED == status) {
     pps = 0;
+  }
   else {
     pps = static_cast<float>(EICU_FREQ) / static_cast<float>(last_pulse_period);
   }
 
   /* now calculate speed */
   pps = filter_alphabeta(pps);
+  //pps = filter_median(pps);
   result.speed = *pulse2m * pps;
-  //mavlink_out_debug_vect_struct.z = speed * 3.6;
+  speed2mavlink(result);
 }
 

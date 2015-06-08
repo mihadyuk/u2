@@ -35,6 +35,7 @@ private:
   bool acquire_p(void);
   void picle(baro_data_t &result);
   void calc_pressure(void);
+  void baro2mavlink(void);
   uint8_t rxbuf[BMP085_RX_DEPTH];
   uint8_t txbuf[BMP085_TX_DEPTH];
   filters::AlphaBetaVariableLen<float> altitude_filter;

@@ -20,7 +20,6 @@ using namespace chibios_rt;
  * EXTERNS
  ******************************************************************************
  */
-extern mavlink_debug_vect_t  mavlink_out_debug_vect_struct;
 extern MavLogger mav_logger;
 
 /*
@@ -153,10 +152,6 @@ static float air_speed(uint16_t raw) {
  */
 void MPXV::start(void) {
   param_registry.valueSearch("ADC_mpxv_shift", &mpxv_shift);
-  memset(mavlink_out_debug_vect_struct.name, 0,
-          sizeof(mavlink_out_debug_vect_struct.name));
-  strncpy(mavlink_out_debug_vect_struct.name, "MPXV5010",
-          sizeof(mavlink_out_debug_vect_struct.name));
   ready = true;
 }
 
@@ -169,17 +164,6 @@ float MPXV::get(void) {
   (void)mpxv_temp;
 
   softspi_write(*mpxv_shift & 0xFF);
-
-  mavlink_out_debug_vect_struct.x = mpxv_temp(ADCgetMPXVtemp());
-//  mavlink_out_debug_vect_struct.x = air_speed(ADCgetMPXV());
-  mavlink_out_debug_vect_struct.y = ADCgetMPXV();
-  mavlink_out_debug_vect_struct.z = ADCgetMPXVtemp();
-  mavlink_out_debug_vect_struct.time_usec = TimeKeeper::utc();
-
-  if (dbg_mail.free()) {
-    dbg_mail.fill(&mavlink_out_debug_vect_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_DEBUG_VECT);
-    mav_logger.write(&dbg_mail);
-  }
 
   return mpxv_temp(ADCgetMPXVtemp());
 }

@@ -184,7 +184,7 @@ FRESULT MavLogger::append_log(mavMail *mail, bool *fresh_data) {
   uint8_t recordbuf[MAVLINK_SENDBUF_SIZE + sizeof(uint64_t)];
 
   /**/
-  mavlink_encode(mail->msgid, &log_msg, mail->mavmsg);
+  mavlink_encode(mail->msgid, mail->compid, &log_msg, mail->mavmsg);
   mail->release();
 
   memset(recordbuf, 0, sizeof(recordbuf));

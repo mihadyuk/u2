@@ -21,7 +21,8 @@ using namespace chibios_rt;
 __CCM__ mavlink_system_t        mavlink_system_struct;
 __CCM__ mavlink_system_info_t   mavlink_system_info_struct;
 
-/* mavlink messages containing telemetry data */
+/* mavlink messages containing telemetry data
+ * keep them alphabetically sorted for convenience */
 mavlink_attitude_t              mavlink_out_attitude_struct;
 mavlink_attitude_quaternion_t   mavlink_out_attitude_quaternion_struct;
 mavlink_command_ack_t           mavlink_out_command_ack_struct;

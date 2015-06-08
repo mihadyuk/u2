@@ -5,6 +5,9 @@
  *
  */
 struct gps_data_t {
+  gps_data_t(void) {
+    memset(this, 0, sizeof(*this));
+  }
   double    latitude;   // deg
   double    longitude;  // deg
   float     altitude;   // m

@@ -21,7 +21,7 @@ extern mavlink_system_info_t  mavlink_system_info_struct;
  * DEFINES
  ******************************************************************************
  */
-#define SECONDARY_VOLTAGE_GOOD    5200 // mV
+#define SECONDARY_VOLTAGE_GOOD    5400 // mV
 
 /*
  ******************************************************************************

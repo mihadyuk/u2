@@ -35,12 +35,13 @@
  * thread priorities
  */
 #define ADISPRIO          (NORMALPRIO)
+#define BAROMETERPRIO     (NORMALPRIO + 2)
 #define CMDPRIO           (NORMALPRIO - 2)
 #define MISSIONRECVRPRIO  (NORMALPRIO)
-#define GPSPRIO           (NORMALPRIO)
-#define LINKPRIO          (NORMALPRIO + 5)
+#define GPSPRIO           (NORMALPRIO + 1)
+#define MAVPOSTMANPRIO    (NORMALPRIO - 1)
+#define TELEMETRYDISPPRIO (NORMALPRIO + 5) // it must be high because it just schedule sending
 #define MPU6050PRIO       (ADISPRIO + 1)
-#define TELEMTRYPRIO      (LINKPRIO - 1)
 #define TIMEKEEPERPRIO    (NORMALPRIO - 1)
 #define SHELLPRIO         (NORMALPRIO - 10)
 

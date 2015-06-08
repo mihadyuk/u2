@@ -2,6 +2,7 @@
 #include "engine.hpp"
 #include "float2pwm.hpp"
 #include "param_registry.hpp"
+#include "mavlink_local.hpp"
 
 using namespace control;
 
@@ -16,6 +17,7 @@ using namespace control;
  * EXTERNS
  ******************************************************************************
  */
+extern mavlink_vfr_hud_t          mavlink_out_vfr_hud_struct;
 
 /*
  ******************************************************************************
@@ -37,6 +39,14 @@ const int16_t THRUST_DISARMED_VALUE = 1500;
  ******************************************************************************
  ******************************************************************************
  */
+
+/**
+ *
+ */
+void Engine::thrust2mavlink(float thr) {
+
+  mavlink_out_vfr_hud_struct.throttle = roundf(putinrange(thr * 100, 0, 100));
+}
 
 /*
  ******************************************************************************
@@ -81,6 +91,7 @@ void Engine::update(const DrivetrainImpact &impact) {
 
   osalDbgCheck(EngineState::uninit != state);
 
+  thrust2mavlink(impact.ch[IMPACT_THR]);
   thrust = float2pwm(impact.ch[IMPACT_THR], *thr_min, *thr_mid, *thr_max);
 
   if (EngineState::armed == state)
