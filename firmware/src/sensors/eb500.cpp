@@ -134,7 +134,7 @@ static void release(void) {
 /**
  *
  */
-static void gps_configure(void) {
+void gps_configure_mtk(void) {
 
   /* start on default baudrate */
   gps_ser_cfg.speed = GPS_DEFAULT_BAUDRATE;
@@ -174,6 +174,88 @@ static void gps_configure(void) {
 /**
  *
  */
+void ubx_fletcher(const uint8_t *data, size_t len, uint8_t *result) {
+  uint8_t ck_a = 0;
+  uint8_t ck_b = 0;
+
+  for (size_t i=0; i<len; i++) {
+    ck_a += data[i];
+    ck_b += ck_a;
+  }
+
+  result[0] = ck_a;
+  result[1] = ck_b;
+}
+
+/**
+ * @brief   set solution period
+ */
+void ubx_solution_period(uint16_t msec) {
+  uint8_t msg[84];
+  memset(msg, 0, sizeof(msg));
+  uint16_t tmp;
+  osalDbgCheck(msec >= 200);
+
+  msg[0] = 0xB5;
+  msg[1] = 0x62;
+  msg[2] = 0x06; // UBX-CFG
+  msg[3] = 0x08; // RATE
+  tmp = 6;
+  memcpy(&msg[4],  &tmp, 2); //len
+  tmp = msec;
+  memcpy(&msg[6],  &tmp, 2);
+  tmp = 1;
+  memcpy(&msg[8],  &tmp, 2);
+  tmp = 0;
+  memcpy(&msg[10], &tmp, 2);
+
+  ubx_fletcher(&msg[2], 10, &msg[12]);
+
+  sdWrite(&GPSSD, msg, 15);
+}
+
+/**
+ *
+ */
+void ubx_message_decimate(const char *type, uint8_t rate) {
+  char msg[84];
+  memset(msg, 0, sizeof(msg));
+
+  osalDbgCheck(3 == strlen(type));
+  osalDbgCheck(rate <= 5);
+
+  strcpy(msg, "$PUBX,40,---,0,0,0,0,0,0*");
+  msg[9]  = type[0];
+  msg[10] = type[1];
+  msg[11] = type[2];
+  msg[15] = rate + '0';
+
+  nmea_parser.seal(msg);
+
+  sdWrite(&GPSSD, (uint8_t*)msg, strlen(msg));
+}
+
+/**
+ *
+ */
+void gps_configure_ubx(void) {
+
+  /* start on default baudrate */
+  gps_ser_cfg.speed = GPS_DEFAULT_BAUDRATE;
+  sdStart(&GPSSD, &gps_ser_cfg);
+
+  ubx_message_decimate("GLL", 0);
+  ubx_message_decimate("GLL", 0);// hack: write message twice for port buffer cleaning
+  ubx_message_decimate("GSV", 0);
+  ubx_message_decimate("GSA", 0);
+  ubx_message_decimate("VTG", 0);
+
+  ubx_solution_period(200);
+}
+
+/**
+ *
+ */
 static THD_WORKING_AREA(gpsRxThreadWA, 320) __CCM__;
 THD_FUNCTION(gpsRxThread, arg) {
   chRegSetThreadName("GNSS");
@@ -186,7 +268,8 @@ THD_FUNCTION(gpsRxThread, arg) {
   systime_t curr = 0;
 
   osalThreadSleepSeconds(5);
-  gps_configure();
+  //gps_configure_mtk();
+  gps_configure_ubx();
 
   while (!chThdShouldTerminateX()) {
     byte = sdGetTimeout(&GPSSD, MS2ST(100));
