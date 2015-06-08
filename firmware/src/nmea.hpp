@@ -71,7 +71,13 @@ public:
   sentence_type_t collect(uint8_t byte);
   void unpack(nmea_rmc_t &result);
   void unpack(nmea_gga_t &result);
+  uint8_t checksum(const uint8_t *data, size_t len);
+  void checksum2str(uint8_t sum, char *str);
+  uint8_t checksumFromStr(const char *str);
+  void seal(char *msg);
 private:
+  bool checksum_autotest(void);
+  bool _autotest(const char *sentence);
   void reset_collector(void);
   const char* token(char *result, size_t number);
   sentence_type_t validate_sentence(void);

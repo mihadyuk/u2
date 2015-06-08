@@ -1,4 +1,4 @@
-#pragma GCC optimize "-O2"
+//#pragma GCC optimize "-O2"
 
 #include <ctime>
 #include <cmath>
@@ -8,6 +8,7 @@
 #include "main.h"
 #include "nmea.hpp"
 #include "pads.h"
+#include "array_len.hpp"
 
 using namespace gps;
 
@@ -29,6 +30,26 @@ using namespace gps;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
+/**
+ *
+ */
+static const char * const sentance_array[] = {
+    "$PMTK001,300,3*33",
+    "$PMTK251,57600*2C\r\n"
+    "$PMTK300,200,0,0,0,0*2F\r\n",
+    "$PMTK300,250,0,0,0,0*2A\r\n",
+    "$PMTK300,500,0,0,0,0*28\r\n",
+
+    "$GPRMC,162254.00,A,3723.02837,N,12159.39853,W,0.820,188.36,110706,,,A*74",
+    "$GPVTG,188.36,T,,M,0.820,N,1.519,K,A*3F",
+    "$GPGGA,162254.00,3723.02837,N,12159.39853,W,1,03,2.36,525.6,M,-25.6,M,,*65",
+    "$GPGSA,A,2,25,01,22,,,,,,,,,,2.56,2.36,1.00*02",
+    "$GPGSV,4,1,14,25,15,175,30,14,80,041,,19,38,259,14,01,52,223,18*76",
+    "$GPGSV,4,2,14,18,16,079,,11,19,312,,14,80,041,,21,04,135,25*7D",
+    "$GPGSV,4,3,14,15,27,134,18,03,25,222,,22,51,057,16,09,07,036,*79",
+    "$GPGSV,4,4,14,07,01,181,,15,25,135,*76",
+    "$GPGLL,3723.02837,N,12159.39853,W,162254.00,A,A*7C"
+};
 
 /*
  ******************************************************************************
@@ -43,14 +64,37 @@ using namespace gps;
  *******************************************************************************
  *******************************************************************************
  */
-/*
-$GPGGA,115436.000,5354.713670,N,02725.690517,E,1,5,2.01,266.711,M,26.294,M,,*5D
-$GPGGA,000103.037,,,,,0,0,,,M,,M,,*4E
+/**
+ *
+ */
+bool NmeaParser::_autotest(const char *sentence) {
+  const char *sump = strstr(sentence, "*");
+  size_t len = sump - sentence;
 
-$GPRMC,115436.000,A,5354.713670,N,02725.690517,E,0.20,210.43,010611,,,A*66
-$GPRMC,115436.000,,,,,,0.20,210.43,010611,,,A*66
-$GPRMC,115436.000,,,,,,,,,,,A*66
-*/
+  uint8_t ref_sum = checksumFromStr(sump + 1);
+  uint8_t sum = checksum((uint8_t *)sentence + 1, len - 1);
+  if (sum != ref_sum)
+    return OSAL_FAILED;
+
+  char str_sum[2];
+  checksum2str(sum, str_sum);
+  if (0 != memcmp(sump+1, str_sum, 2))
+    return OSAL_FAILED;
+
+  return OSAL_SUCCESS;
+}
+
+/**
+ *
+ */
+bool NmeaParser::checksum_autotest(void) {
+  for (size_t i=0; i<ArrayLen(sentance_array); i++) {
+    if (OSAL_FAILED == _autotest(sentance_array[i]))
+      return OSAL_FAILED;
+  }
+
+  return OSAL_SUCCESS;
+}
 
 /**
  * Выковыривает дату и время из RMC
@@ -90,13 +134,39 @@ static void get_date(struct tm *timp, const char *bufd) {
 /**
  *
  */
-static uint8_t from_hex(uint8_t a){
+static uint8_t _from_hex(uint8_t a){
   if (a >= 'A' && a <= 'F')
     return a - 'A' + 10;
   else if (a >= 'a' && a <= 'f')
     return a - 'a' + 10;
   else
     return a - '0';
+}
+
+/**
+ *
+ */
+uint8_t NmeaParser::checksumFromStr(const char *str) {
+  return (_from_hex(str[0]) << 4) | _from_hex(str[1]);
+}
+
+/**
+ *
+ */
+static uint8_t _to_hex(uint8_t u8) {
+  if (u8 < 10)
+    return u8 + '0';
+  else
+    return u8 - 10 + 'A';
+}
+
+/**
+ *
+ */
+void NmeaParser::checksum2str(uint8_t sum, char *str) {
+
+  str[0] = _to_hex(sum >> 4);
+  str[1] = _to_hex(sum & 0b1111);
 }
 
 /**
@@ -140,15 +210,25 @@ sentence_type_t NmeaParser::validate_sentence(void) {
   if ('*' != buf[tip-5])
     return sentence_type_t::EMPTY;
 
-  /* now calculate checksum */
-  for (size_t i=1; i<tip-5; i++)
-    sum ^= buf[i];
-
-  uint8_t sum_from_hex = (from_hex(buf[tip-4]) << 4) | from_hex(buf[tip-3]);
-  if (sum != sum_from_hex)
+  /* now verify checksum */
+  sum = checksum(&buf[1], tip-5-1);
+  if (sum != checksumFromStr((const char*)&buf[tip-4]))
     return sentence_type_t::EMPTY;
   else
     return get_name((char *)&buf[1]);
+}
+
+/**
+ *
+ */
+uint8_t NmeaParser::checksum(const uint8_t *data, size_t len) {
+  uint8_t sum = 0;
+
+  for (size_t i=0; i<len; i++) {
+    sum ^= data[i];
+  }
+
+  return sum;
 }
 
 /**
@@ -222,6 +302,9 @@ state(collect_state_t::START)
 {
   memset(this->buf, 0, sizeof(this->buf));
   memset(this->token_map, 0, sizeof(this->token_map));
+
+  if (OSAL_FAILED == checksum_autotest())
+    osalSysHalt("NMEA: checksum autotest failed");
 }
 
 /**
@@ -301,7 +384,6 @@ sentence_type_t NmeaParser::collect(uint8_t c) {
   return ret;
 }
 
-
 /**
  *
  */
@@ -331,3 +413,21 @@ void NmeaParser::unpack(nmea_gga_t &result) {
   result.altitude    = atof(token(tmp, 8));
   result.geoid       = atof(token(tmp, 10));
 }
+
+/**
+ * @brief   Fill checksum field and CR/LF
+ * @pre     Initial message must me ended with '*' sign
+ */
+void NmeaParser::seal(char *msg) {
+  char *sump = strstr(msg, "*");
+  osalDbgCheck(NULL != sump);
+  size_t len = sump - msg;
+  uint8_t sum = checksum((uint8_t *)msg + 1, len - 1);
+
+  checksum2str(sum, sump+1);
+  sump[3] = '\r';
+  sump[4] = '\n';
+}
+
+
+
