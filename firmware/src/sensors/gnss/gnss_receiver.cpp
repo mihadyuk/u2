@@ -22,6 +22,8 @@ using namespace gnss;
 #define GPS_DEFAULT_BAUDRATE    9600
 #define GPS_HI_BAUDRATE         57600
 
+#define FIRST_SAMPLES_DROP      4 /* set to 0 if unneded */
+
 /*
  ******************************************************************************
  * EXTERNS
@@ -117,20 +119,6 @@ static void gps2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc) {
   mavlink_out_gps_raw_int_struct.vel = rmc.speed * 100;
 
   log_append();
-}
-
-/**
- *
- */
-static void acquire(void) {
-  protect_sem.wait();
-}
-
-/**
- *
- */
-static void release(void) {
-  protect_sem.signal();
 }
 
 /**
@@ -245,8 +233,9 @@ THD_FUNCTION(gpsRxThread, arg) {
   bool rmc_acquired = false;
   systime_t prev = 0;
   systime_t curr = 0;
+  size_t drop = FIRST_SAMPLES_DROP;
 
-  osalThreadSleepSeconds(5);
+  osalThreadSleepSeconds(3);
   //gps_configure_mtk();
   gps_configure_ubx();
 
@@ -277,7 +266,7 @@ THD_FUNCTION(gpsRxThread, arg) {
 
         gps2mavlink(gga, rmc);
 
-        acquire();
+        osalSysLock();
         cache.altitude   = gga.altitude;
         cache.latitude   = gga.latitude;
         cache.longitude  = gga.longitude;
@@ -286,7 +275,12 @@ THD_FUNCTION(gpsRxThread, arg) {
         cache.speed_type = speed_t::SPEED_COURSE;
         cache.time       = rmc.time;
         cache.sec_round  = rmc.sec_round;
-        if (gga.fix == 1) {
+        osalSysUnlock();
+
+        if (drop > 0)
+          drop--;
+
+        if ((gga.fix == 1) && (0 == drop)) {
           event_gps.broadcastFlags(EVMSK_GNSS_FRESH_VALID);
           if (nullptr != hook_sdp) {
             curr = chVTGetSystemTimeX();
@@ -295,7 +289,6 @@ THD_FUNCTION(gpsRxThread, arg) {
             chprintf((BaseSequentialStream *)hook_sdp, "%U\r\n", out);
           }
         }
-        release();
       }
     }
   }
@@ -338,9 +331,9 @@ void GNSSDeleteSniffHook(void) {
  */
 void GNSSGet(gnss_data_t &result) {
 
-  acquire();
+  osalSysLock();
   result = cache;
-  release();
+  osalSysUnlock();
 }
 
 /**

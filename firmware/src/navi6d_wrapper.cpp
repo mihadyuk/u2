@@ -64,13 +64,14 @@ __CCM__ static RefParams<double> ref_params;
 /*
  *
  */
-void Navi6dWrapper::prepare_data(const gnss::gnss_data_t &gps_data,
-                                 const baro_data_t &abs_press,
+void Navi6dWrapper::prepare_data(const baro_data_t &abs_press,
                                  const speedometer_data_t &speed,
                                  const marg_data_t &marg)
 {
-
   if ((*gnss_block == 0) && ((el.getAndClearFlags() & EVMSK_GNSS_FRESH_VALID) > 0)) {
+    gnss::gnss_data_t gps_data;
+    GNSSGet(gps_data);
+
     osalDbgCheck((fabsf(gps_data.latitude) > 0.01) && (fabsf(gps_data.altitude) > 0.01));
     nav_sins.sensor_data.r_sns[0][0] = deg2rad(gps_data.latitude);
     nav_sins.sensor_data.r_sns[1][0] = deg2rad(gps_data.longitude);
@@ -241,12 +242,11 @@ void Navi6dWrapper::stop(void) {
 /**
  *
  */
-void Navi6dWrapper::update(const gnss::gnss_data_t &gps_data,
-                           const baro_data_t &abs_press,
+void Navi6dWrapper::update(const baro_data_t &abs_press,
                            const speedometer_data_t &speed,
                            const marg_data_t &marg)
 {
-  prepare_data(gps_data, abs_press, speed, marg);
+  prepare_data(abs_press, speed, marg);
   nav_sins.run();
   navi2acs();
 

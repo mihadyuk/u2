@@ -113,7 +113,6 @@ __CCM__ static MaxSonar maxsonar;
 __CCM__ static speedometer_data_t speed_data;
 __CCM__ static Speedometer speedometer;
 
-__CCM__ static gnss::gnss_data_t gps_data;
 __CCM__ static marg_data_t marg_data;
 
 __CCM__ static PPS pps;
@@ -206,8 +205,7 @@ int main(void) {
   mavlink_system_info_struct.state = MAV_STATE_STANDBY;
   while (true) {
     marg.get(marg_data, MS2ST(200));
-    GNSSGet(gps_data);
-    gps2acs_in(gps_data, acs_in);
+    gps2acs_in(acs_in);
     speedometer.update(speed_data, marg_data.dT);
     speedometer2acs_in(speed_data, acs_in);
     mpxv.get();
@@ -225,7 +223,7 @@ int main(void) {
       acs.update(marg_data.dT);
     }
 
-    navi6d.update(gps_data, abs_press, speed_data, marg_data);
+    navi6d.update(abs_press, speed_data, marg_data);
     acs_input2mavlink(acs_in);
   }
 

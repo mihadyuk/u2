@@ -5,6 +5,7 @@
 #include "geometry.hpp"
 #include "mav_mail.hpp"
 #include "mav_logger.hpp"
+#include "gnss_receiver.hpp"
 
 using namespace control;
 
@@ -116,7 +117,11 @@ void acs_input2mavlink(const ACSInput &acs_in) {
 /**
  *
  */
-void gps2acs_in(const gnss::gnss_data_t &gps, ACSInput &acs_in) {
+void gps2acs_in(ACSInput &acs_in) {
+  gnss::gnss_data_t gps;
+
+  GNSSGet(gps);
+
   acs_in.ch[ACS_INPUT_lat] = deg2rad(gps.latitude);
   acs_in.ch[ACS_INPUT_lon] = deg2rad(gps.longitude);
   acs_in.ch[ACS_INPUT_alt] = gps.altitude;

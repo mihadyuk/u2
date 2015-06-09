@@ -138,7 +138,7 @@ struct ACSInput {
  *
  */
 void acs_input2mavlink(const ACSInput &acs_in);
-void gps2acs_in(const gnss::gnss_data_t &gps, ACSInput &acs_in);
+void gps2acs_in(ACSInput &acs_in);
 void baro2acs_in(const baro_data_t &baro, ACSInput &acs_in);
 void speedometer2acs_in(const speedometer_data_t &speed, ACSInput &acs_in);
 

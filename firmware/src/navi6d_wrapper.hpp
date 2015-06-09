@@ -13,16 +13,14 @@
 class Navi6dWrapper {
 public:
   Navi6dWrapper(ACSInput &acs_in);
-  void update(const gnss::gnss_data_t &gps_data,
-              const baro_data_t &abs_press,
+  void update(const baro_data_t &abs_press,
               const speedometer_data_t &speed,
               const marg_data_t &marg);
   void start(float dT);
   void stop(void);
 private:
   void navi2acs(void);
-  void prepare_data(const gnss::gnss_data_t &gps_data,
-                    const baro_data_t &abs_press,
+  void prepare_data(const baro_data_t &abs_press,
                     const speedometer_data_t &speed,
                     const marg_data_t &marg);
   void reload_settings(void);

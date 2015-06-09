@@ -303,8 +303,8 @@ state(nmea_collect_state_t::START)
   memset(this->buf, 0, sizeof(this->buf));
   memset(this->token_map, 0, sizeof(this->token_map));
 
-  if (OSAL_FAILED == checksum_autotest())
-    osalSysHalt("NMEA: checksum autotest failed");
+  osalDbgAssert(OSAL_SUCCESS == checksum_autotest(),
+                "NMEA: checksum autotest failed");
 }
 
 /**
