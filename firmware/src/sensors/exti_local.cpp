@@ -67,7 +67,7 @@ static void pps_cb(EXTDriver *extp, expchannel_t channel){
 
   osalSysLockFromISR();
   TimeKeeper::PPS_ISR_I();
-  GNSS_PPS_ISR_I();
+  gnss::GNSSReceiver::GNSS_PPS_ISR_I();
   osalSysUnlockFromISR();
 }
 

@@ -117,10 +117,7 @@ void acs_input2mavlink(const ACSInput &acs_in) {
 /**
  *
  */
-void gps2acs_in(ACSInput &acs_in) {
-  gnss::gnss_data_t gps;
-
-  GNSSGet(gps);
+void gps2acs_in(const gnss::gnss_data_t &gps, ACSInput &acs_in) {
 
   acs_in.ch[ACS_INPUT_lat] = deg2rad(gps.latitude);
   acs_in.ch[ACS_INPUT_lon] = deg2rad(gps.longitude);

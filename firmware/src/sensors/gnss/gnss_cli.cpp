@@ -19,6 +19,7 @@ using namespace chibios_rt;
  ******************************************************************************
  */
 extern memory_heap_t ThdHeap;
+extern gnss::GNSSReceiver GNSS;
 
 /*
  ******************************************************************************
@@ -55,13 +56,13 @@ static THD_WORKING_AREA(LoopCmdThreadWA, 1024);
 static THD_FUNCTION(LoopCmdThread, arg) {
   chRegSetThreadName("LoopCmd");
 
-  GNSSSetSniffHook((SerialDriver *)arg);
+  GNSS.setSniffer((SerialDriver *)arg);
 
   while (!chThdShouldTerminateX()) {
     chThdSleepMilliseconds(100);
   }
 
-  GNSSDeleteSniffHook();
+  GNSS.deleteSniffer();
   chThdExit(MSG_OK);
 }
 

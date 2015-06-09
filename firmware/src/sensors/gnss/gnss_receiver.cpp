@@ -23,8 +23,6 @@ using namespace gnss;
 #define GPS_DEFAULT_BAUDRATE    9600
 #define GPS_HI_BAUDRATE         57600
 
-#define FIRST_SAMPLES_DROP      4 /* set to 0 if unneded */
-
 /*
  ******************************************************************************
  * EXTERNS
@@ -67,15 +65,7 @@ static const uint8_t gps_high_baudrate[] = "$PMTK251,57600*2C\r\n";
 __CCM__ static NmeaProto nmea_parser;
 __CCM__ static UbxProto  ubx_parser;
 
-__CCM__ static nmea_gga_t gga;
-__CCM__ static nmea_rmc_t rmc;
-__CCM__ static gnss_data_t cache;
-
-static gnss_data_t* subscribers[4];
 static chibios_rt::BinarySemaphore pps_sem(true);
-static chibios_rt::BinarySemaphore protect_sem(false);
-
-static SerialDriver *hook_sdp = nullptr;
 
 static mavMail gps_raw_int_mail;
 
@@ -225,17 +215,35 @@ void gps_configure_ubx(void) {
 /**
  *
  */
-static THD_WORKING_AREA(gpsRxThreadWA, 320) __CCM__;
-THD_FUNCTION(gpsRxThread, arg) {
-  chRegSetThreadName("GNSS");
-  (void)arg;
+static void gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
+                        gnss_data_t *result) {
+  if (false == result->fresh) {
+    result->altitude   = gga.altitude;
+    result->latitude   = gga.latitude;
+    result->longitude  = gga.longitude;
+    result->course     = rmc.course;
+    result->speed      = rmc.speed;
+    result->speed_type = speed_t::SPEED_COURSE;
+    result->time       = rmc.time;
+    result->sec_round  = rmc.sec_round;
+    result->fix        = gga.fix;
+    result->fresh      = true; // this line must be at the very end
+  }
+}
+
+/**
+ *
+ */
+static THD_WORKING_AREA(gnssRxThreadWA, 320) __CCM__;
+THD_FUNCTION(GNSSReceiver::nmeaRxThread, arg) {
+  chRegSetThreadName("GNSS_NMEA");
+  GNSSReceiver *self = static_cast<GNSSReceiver *>(arg);
   msg_t byte;
   sentence_type_t status;
   bool gga_acquired = false;
   bool rmc_acquired = false;
-  systime_t prev = 0;
-  systime_t curr = 0;
-  size_t drop = FIRST_SAMPLES_DROP;
+  nmea_gga_t gga;
+  nmea_rmc_t rmc;
 
   osalThreadSleepSeconds(3);
   //gps_configure_mtk();
@@ -245,8 +253,8 @@ THD_FUNCTION(gpsRxThread, arg) {
     byte = sdGetTimeout(&GPSSD, MS2ST(100));
     if (MSG_TIMEOUT != byte) {
       status = nmea_parser.collect(byte);
-      if (nullptr != hook_sdp)
-        sdPut(hook_sdp, byte);
+      if (nullptr != self->sniff_sdp)
+        sdPut(self->sniff_sdp, byte);
 
       switch(status) {
       case sentence_type_t::GGA:
@@ -268,45 +276,14 @@ THD_FUNCTION(gpsRxThread, arg) {
 
         gps2mavlink(gga, rmc);
 
-        for (size_t i=0; i<ArrayLen(subscribers); i++) {
-          osalSysLock();
-          if (nullptr != subscribers[i]) {
-            subscribers[i]->altitude   = gga.altitude;
-            subscribers[i]->latitude   = gga.latitude;
-            subscribers[i]->longitude  = gga.longitude;
-            subscribers[i]->course     = rmc.course;
-            subscribers[i]->speed      = rmc.speed;
-            subscribers[i]->speed_type = speed_t::SPEED_COURSE;
-            subscribers[i]->time       = rmc.time;
-            subscribers[i]->sec_round  = rmc.sec_round;
-            subscribers[i]->fix        = gga.fix;
+        for (size_t i=0; i<ArrayLen(self->spamlist); i++) {
+          if (nullptr != self->spamlist[i]) {
+            gnss_unpack(gga, rmc, self->spamlist[i]);
           }
-          osalSysUnlock();
         }
 
-        osalSysLock();
-        cache.altitude   = gga.altitude;
-        cache.latitude   = gga.latitude;
-        cache.longitude  = gga.longitude;
-        cache.course     = rmc.course;
-        cache.speed      = rmc.speed;
-        cache.speed_type = speed_t::SPEED_COURSE;
-        cache.time       = rmc.time;
-        cache.sec_round  = rmc.sec_round;
-        cache.fix        = gga.fix;
-        osalSysUnlock();
-
-        if (drop > 0)
-          drop--;
-
-        if ((gga.fix == 1) && (0 == drop)) {
+        if (gga.fix == 1) {
           event_gps.broadcastFlags(EVMSK_GNSS_FRESH_VALID);
-          if (nullptr != hook_sdp) {
-            curr = chVTGetSystemTimeX();
-            systime_t out = ST2MS(curr - prev);
-            prev = curr;
-            chprintf((BaseSequentialStream *)hook_sdp, "%U\r\n", out);
-          }
         }
       }
     }
@@ -323,30 +300,62 @@ THD_FUNCTION(gpsRxThread, arg) {
 /**
  *
  */
-void GNSSInit(void){
-  memset(&subscribers, 0, sizeof(subscribers));
-
-  chThdCreateStatic(gpsRxThreadWA, sizeof(gpsRxThreadWA),
-                    GPSPRIO, gpsRxThread, NULL);
+GNSSReceiver::GNSSReceiver(void) {
+  return;
 }
 
 /**
  *
  */
-void GNSSSetSniffHook(SerialDriver *sdp) {
+void GNSSReceiver::start(void) {
 
-  hook_sdp = sdp;
+  worker = chThdCreateStatic(gnssRxThreadWA, sizeof(gnssRxThreadWA),
+                    GPSPRIO, nmeaRxThread, this);
+  osalDbgCheck(nullptr != worker);
+  ready = true;
 }
 
 /**
  *
  */
-void GNSSSubscribe(gnss_data_t* result) {
+void GNSSReceiver::stop(void) {
+  ready = false;
+
+  chThdTerminate(worker);
+  chThdWait(worker);
+  worker = nullptr;
+}
+
+/**
+ *
+ */
+void GNSSReceiver::setSniffer(SerialDriver *sdp) {
+  osalDbgCheck(nullptr != sdp);
+  this->sniff_sdp = sdp;
+}
+
+/**
+ *
+ */
+void GNSSReceiver::deleteSniffer(void) {
+
+  this->sniff_sdp = nullptr;
+}
+
+/**
+ *
+ */
+void GNSSReceiver::subscribe(gnss_data_t* result) {
   osalDbgCheck(nullptr != result);
 
-  for (size_t i=0; i<ArrayLen(subscribers); i++) {
-    if (nullptr == subscribers[i]) {
-      subscribers[i] = result;
+  for (size_t i=0; i<ArrayLen(spamlist); i++) {
+    osalDbgAssert(result != spamlist[i],
+        "you can not subscribe single structure twice");
+  }
+
+  for (size_t i=0; i<ArrayLen(spamlist); i++) {
+    if (nullptr == spamlist[i]) {
+      spamlist[i] = result;
       return;
     }
   }
@@ -357,25 +366,35 @@ void GNSSSubscribe(gnss_data_t* result) {
 /**
  *
  */
-void GNSSDeleteSniffHook(void) {
+void GNSSReceiver::unsubscribe(gnss_data_t* result) {
+  osalDbgCheck(nullptr != result);
 
-  hook_sdp = nullptr;
+  for (size_t i=0; i<ArrayLen(spamlist); i++) {
+    if (result == spamlist[i]) {
+      spamlist[i] = nullptr;
+      return;
+    }
+  }
+
+  osalSysHalt("This message not subscribed");
 }
+
+
 
 /**
  *
  */
-void GNSSGet(gnss_data_t &result) {
+void GNSSReceiver::getCache(gnss_data_t &result) {
 
   osalSysLock();
-  result = cache;
+  result = this->cache;
   osalSysUnlock();
 }
 
 /**
  *
  */
-void GNSS_PPS_ISR_I(void) {
+void GNSSReceiver::GNSS_PPS_ISR_I(void) {
 
   pps_sem.signalI();
 }

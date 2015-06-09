@@ -2,6 +2,7 @@
 #define GPS_DATA_HPP_
 
 namespace gnss {
+
 /**
  *
  */
@@ -24,10 +25,13 @@ struct gnss_data_t {
   float     speed;      // m/s
   float     course;     // deg
   float     v[3];       // 3 components of speed (m/s, NED)
+  bool      sec_round;  /* there is no fractional part in seconds' field */
+  bool      fresh;      /* sync primitive. Receiver can only set it, consumer can only clear it */
   speed_t   speed_type;
   struct tm time;
-  bool      sec_round;  /* there is no fractional part in seconds' field */
-  uint8_t   fix;
+  uint8_t   fix;        /* GNSS fix type*/
 };
-}
+
+} // namespace
+
 #endif /* GPS_DATA_HPP_ */

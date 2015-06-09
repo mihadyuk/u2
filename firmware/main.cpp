@@ -118,6 +118,8 @@ __CCM__ static marg_data_t marg_data;
 __CCM__ static PPS pps;
 __CCM__ static MPXV mpxv;
 __CCM__ static Calibrator calibrator;
+__CCM__        gnss::GNSSReceiver GNSS;
+__CCM__ static gnss::gnss_data_t gnss_data;
 
 __CCM__ control::HIL hil;
 
@@ -184,7 +186,7 @@ int main(void) {
   tlm_sender.start();
 
   bmp_085.start();
-  GNSSInit();
+  GNSS.start();
   mav_logger.start(NORMALPRIO);
   osalThreadSleepMilliseconds(1);
 
@@ -205,7 +207,8 @@ int main(void) {
   mavlink_system_info_struct.state = MAV_STATE_STANDBY;
   while (true) {
     marg.get(marg_data, MS2ST(200));
-    gps2acs_in(acs_in);
+    GNSS.getCache(gnss_data);
+    gps2acs_in(gnss_data, acs_in);
     speedometer.update(speed_data, marg_data.dT);
     speedometer2acs_in(speed_data, acs_in);
     mpxv.get();

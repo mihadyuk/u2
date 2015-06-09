@@ -68,6 +68,7 @@ struct time_staticstic_t {
  * EXTERNS
  ******************************************************************************
  */
+extern gnss::GNSSReceiver GNSS;
 
 /*
  ******************************************************************************
@@ -198,6 +199,7 @@ THD_FUNCTION(TimekeeperThread, arg) {
   chibios_rt::EvtListener el;
   event_gps.registerMask(&el, EVMSK_GNSS_FRESH_VALID);
   eventmask_t gps_evt;
+  GNSS.subscribe(&gps);
 
   while (!chThdShouldTerminateX()) {
     sem_status = ppstimesync_sem.wait(MS2ST(1200));
@@ -206,10 +208,9 @@ THD_FUNCTION(TimekeeperThread, arg) {
 
       jitter_stats_update();
 
-      while (true) { /* wait first measurement with rounde seconds */
+      while (true) { /* wait first measurement with round seconds */
         gps_evt = chEvtWaitOneTimeout(EVMSK_GNSS_FRESH_VALID, MS2ST(1200));
         if (EVMSK_GNSS_FRESH_VALID == gps_evt) {
-          GNSSGet(gps);
           if (gps.sec_round) {
             int64_t tmp = 1000000;
             tmp *= mktime(&gps.time);
@@ -227,11 +228,14 @@ THD_FUNCTION(TimekeeperThread, arg) {
 
             break; // while(true)
           }
+          #warning "check how it works with new gps"
+          gps.fresh = false;
         }
       }
     }
   }
 
+  GNSS.unsubscribe(&gps);
   event_gps.unregister(&el);
   chThdExit(MSG_OK);
 }

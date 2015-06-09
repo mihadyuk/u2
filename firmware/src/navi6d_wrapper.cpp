@@ -1,13 +1,15 @@
 #pragma GCC optimize "-O2"
+#pragma GCC diagnostic ignored "-Wdouble-promotion"
+
+#define FAKE_SINS     TRUE
 
 #include <math.h>
 #include "main.h"
 #include "math_f.hpp"
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdouble-promotion"
+#if ! FAKE_SINS
 #include "navigator_sins.hpp"
-#pragma GCC diagnostic pop
+#endif
 
 #include "navi6d_wrapper.hpp"
 #include "mavlink_local.hpp"
@@ -40,6 +42,8 @@ extern mavlink_debug_vect_t            mavlink_out_debug_vect_struct;
  ******************************************************************************
  */
 
+#if ! FAKE_SINS
+
 __CCM__ static NavigatorSins<double, 9, 13> nav_sins;
 
 __CCM__ static InitParams<double> init_params;
@@ -47,6 +51,7 @@ __CCM__ static CalibParams<double> calib_params;
 __CCM__ static KalmanParams<double> kalman_params;
 __CCM__ static RefParams<double> ref_params;
 
+#endif
 
 /*
  ******************************************************************************
@@ -64,6 +69,7 @@ __CCM__ static RefParams<double> ref_params;
 /*
  *
  */
+#if ! FAKE_SINS
 void Navi6dWrapper::prepare_data(const baro_data_t &abs_press,
                                  const speedometer_data_t &speed,
                                  const marg_data_t &marg)
@@ -127,10 +133,20 @@ void Navi6dWrapper::prepare_data(const baro_data_t &abs_press,
     nav_sins.sensor_data.mb[i][0] = marg.mag[i];
   }
 }
+#else
+void Navi6dWrapper::prepare_data(const baro_data_t &abs_press,
+                                 const speedometer_data_t &speed,
+                                 const marg_data_t &marg) {
+  (void)abs_press;
+  (void)speed;
+  (void)marg;
+}
+#endif
 
 /**
  *
  */
+#if ! FAKE_SINS
 void Navi6dWrapper::navi2acs(void) {
 
   const NaviData<double> &data = nav_sins.navi_data;
@@ -167,6 +183,7 @@ void Navi6dWrapper::navi2acs(void) {
   //mavlink_out_debug_struct.value = data.status & (1UL << 5UL);
   mavlink_out_debug_struct.value = data.mag_mod;
 }
+#endif
 
 /*
  *******************************************************************************
@@ -184,7 +201,7 @@ Navi6dWrapper::Navi6dWrapper(ACSInput &acs_in) : acs_in(acs_in) {
  *
  */
 void Navi6dWrapper::start(float dT) {
-
+#if ! FAKE_SINS
   event_gps.registerMask(&el, EVMSK_GNSS_FRESH_VALID);
 
   param_registry.valueSearch("SINS_gnss_block", &gnss_block);
@@ -229,6 +246,9 @@ void Navi6dWrapper::start(float dT) {
   nav_sins.set_ref_params(ref_params);
 
   nav_sins.command_executor(1);
+#else
+  (void)dT;
+#endif
 }
 
 /**
@@ -246,12 +266,18 @@ void Navi6dWrapper::update(const baro_data_t &abs_press,
                            const speedometer_data_t &speed,
                            const marg_data_t &marg)
 {
+#if ! FAKE_SINS
   prepare_data(abs_press, speed, marg);
   nav_sins.run();
   navi2acs();
 
   mavlink_out_debug_vect_struct.time_usec = TimeKeeper::utc();
   //mavlink_out_debug_vect_struct.z = nav_sins.glrt_det.test_stat;
+#else
+  (void)abs_press;
+  (void)speed;
+  (void)marg;
+#endif
 }
 
 
