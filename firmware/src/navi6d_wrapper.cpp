@@ -17,6 +17,9 @@
 #include "time_keeper.hpp"
 #include "param_registry.hpp"
 
+/* dirty hack allowing to not write this file to Makefile */
+//#include "kalman_flags.cpp"
+
 /*
  ******************************************************************************
  * DEFINES
@@ -98,11 +101,6 @@ void Navi6dWrapper::prepare_data(const gnss::gnss_data_t &gps_data,
       nav_sins.sensor_flags.sns_v_d_en = false;
       break;
     }
-
-    mavlink_out_debug_vect_struct.time_usec = TimeKeeper::utc();
-    mavlink_out_debug_vect_struct.x = 100 * nav_sins.sensor_data.v_sns[0][0];
-    mavlink_out_debug_vect_struct.y = 100 * nav_sins.sensor_data.v_sns[1][0];
-    mavlink_out_debug_vect_struct.z = 100 * nav_sins.sensor_data.v_sns[2][0];
   }
   else {
     nav_sins.sensor_data.v_odo[0][0] = speed.speed;
@@ -251,6 +249,9 @@ void Navi6dWrapper::update(const gnss::gnss_data_t &gps_data,
   prepare_data(gps_data, abs_press, speed, marg);
   nav_sins.run();
   navi2acs();
+
+  mavlink_out_debug_vect_struct.time_usec = TimeKeeper::utc();
+  //mavlink_out_debug_vect_struct.z = nav_sins.glrt_det.test_stat;
 }
 
 

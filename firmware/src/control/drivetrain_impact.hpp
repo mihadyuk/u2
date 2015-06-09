@@ -48,6 +48,8 @@ typedef enum {
   IMPACT_ENUM_END,
 } impact_vector_enum;
 
+static_assert(IMPACT_ENUM_END < 32, "Flags can not be stored in capability bitmask");
+
 /**
  * @brief     Output data from ACS
  * @details   Normalized values -1..1.
