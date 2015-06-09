@@ -24,7 +24,7 @@ struct gnss_data_t {
   float     speed;      // m/s
   float     course;     // deg
   float     v[3];       // 3 components of speed (m/s, NED)
-  speed_t   spd;
+  speed_t   speed_type;
   struct tm time;
   bool      sec_round;  /* there is no fractional part in seconds' field */
 };

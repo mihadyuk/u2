@@ -283,6 +283,7 @@ THD_FUNCTION(gpsRxThread, arg) {
         cache.longitude  = gga.longitude;
         cache.course     = rmc.course;
         cache.speed      = rmc.speed;
+        cache.speed_type = speed_t::SPEED_COURSE;
         cache.time       = rmc.time;
         cache.sec_round  = rmc.sec_round;
         if (gga.fix == 1) {

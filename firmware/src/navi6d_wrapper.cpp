@@ -75,17 +75,34 @@ void Navi6dWrapper::prepare_data(const gnss::gnss_data_t &gps_data,
     nav_sins.sensor_flags.sns_r_en = true;
     nav_sins.sensor_flags.sns_h_en = true;
 
-    nav_sins.sensor_data.v_sns[0][0] = gps_data.speed * cos(deg2rad(gps_data.course));
-    nav_sins.sensor_data.v_sns[1][0] = gps_data.speed * sin(deg2rad(gps_data.course));
-    nav_sins.sensor_data.v_sns[2][0] = gps_data.course;
+    switch(gps_data.speed_type) {
+    case gnss::speed_t::SPEED_COURSE:
+      nav_sins.sensor_data.v_sns[0][0] = gps_data.speed * cos(deg2rad(gps_data.course));
+      nav_sins.sensor_data.v_sns[1][0] = gps_data.speed * sin(deg2rad(gps_data.course));
+      nav_sins.sensor_data.v_sns[2][0] = gps_data.course;
+      nav_sins.sensor_flags.sns_v_n_en = true;
+      nav_sins.sensor_flags.sns_v_e_en = true;
+      nav_sins.sensor_flags.sns_v_d_en = false;
+      break;
+    case gnss::speed_t::VECTOR_3D:
+      for (size_t i=0; i<3; i++) {
+        nav_sins.sensor_data.v_sns[0][0] = gps_data.v[0];
+      }
+      nav_sins.sensor_flags.sns_v_n_en = true;
+      nav_sins.sensor_flags.sns_v_e_en = true;
+      nav_sins.sensor_flags.sns_v_d_en = true;
+      break;
+    default:
+      nav_sins.sensor_flags.sns_v_n_en = false;
+      nav_sins.sensor_flags.sns_v_e_en = false;
+      nav_sins.sensor_flags.sns_v_d_en = false;
+      break;
+    }
 
     mavlink_out_debug_vect_struct.time_usec = TimeKeeper::utc();
     mavlink_out_debug_vect_struct.x = 100 * nav_sins.sensor_data.v_sns[0][0];
     mavlink_out_debug_vect_struct.y = 100 * nav_sins.sensor_data.v_sns[1][0];
     mavlink_out_debug_vect_struct.z = 100 * nav_sins.sensor_data.v_sns[2][0];
-
-    nav_sins.sensor_flags.sns_v_n_en = true;
-    nav_sins.sensor_flags.sns_v_e_en = true;
   }
   else {
     nav_sins.sensor_data.v_odo[0][0] = speed.speed;
