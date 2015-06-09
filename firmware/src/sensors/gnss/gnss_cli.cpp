@@ -2,7 +2,7 @@
 
 #include "main.h"
 
-#include "eb500.hpp"
+#include "gnss_receiver.hpp"
 #include "cli.hpp"
 
 using namespace chibios_rt;
@@ -40,12 +40,12 @@ extern memory_heap_t ThdHeap;
  ******************************************************************************
  */
 
-void eb500_set_1hz(void) {
-  ;
+void gnss_set_1hz(void) {
+  cli_println("Unrealized yet");
 }
 
-void eb500_set_5hz(void) {
-  ;
+void gnss_set_5hz(void) {
+  cli_println("Unrealized yet");
 }
 
 /**
@@ -55,20 +55,20 @@ static THD_WORKING_AREA(LoopCmdThreadWA, 1024);
 static THD_FUNCTION(LoopCmdThread, arg) {
   chRegSetThreadName("LoopCmd");
 
-  GPSSetDumpHook((SerialDriver *)arg);
+  GNSSSetSniffHook((SerialDriver *)arg);
 
   while (!chThdShouldTerminateX()) {
     chThdSleepMilliseconds(100);
   }
 
-  GPSDeleteDumpHook();
+  GNSSDeleteSniffHook();
   chThdExit(MSG_OK);
 }
 
 /**
  *
  */
-thread_t* loop_dump(SerialDriver *sdp) {
+thread_t* loop_sniff(SerialDriver *sdp) {
   thread_t *loop_clicmd_tp = nullptr;
 
   loop_clicmd_tp = chThdCreateFromHeap(&ThdHeap,
@@ -83,6 +83,16 @@ thread_t* loop_dump(SerialDriver *sdp) {
   return loop_clicmd_tp;
 }
 
+/**
+ *
+ */
+static void print_help(void) {
+  cli_println("Available commands:");
+  cli_println("    sniff");
+  cli_println("    1Hz");
+  cli_println("    5Hz");
+}
+
 /*
  ******************************************************************************
  * EXPORTED FUNCTIONS
@@ -92,7 +102,7 @@ thread_t* loop_dump(SerialDriver *sdp) {
 /**
  *
  */
-thread_t* eb500_clicmd(int argc, const char * const * argv, SerialDriver *sdp) {
+thread_t* gnss_clicmd(int argc, const char * const * argv, SerialDriver *sdp) {
   (void)sdp;
 
   if (0 == argc) {
@@ -101,17 +111,18 @@ thread_t* eb500_clicmd(int argc, const char * const * argv, SerialDriver *sdp) {
   }
 
   if (argc > 0) {
-    if (0 == strcmp(argv[0], "dump")) {
-      return loop_dump(sdp);
+    if (0 == strcmp(argv[0], "sniff")) {
+      return loop_sniff(sdp);
     }
     else if (0 == strcmp(argv[0], "1hz")) {
-      eb500_set_1hz();
+      gnss_set_1hz();
     }
     else if (0 == strcmp(argv[0], "5hz")) {
-      eb500_set_5hz();
+      gnss_set_5hz();
     }
     else {
       cli_println("Unknown option");
+      print_help();
     }
   }
 

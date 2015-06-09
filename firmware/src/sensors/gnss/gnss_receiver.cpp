@@ -3,7 +3,7 @@
 #include "nmea_proto.hpp"
 #include "ubx_proto.hpp"
 #include "mavlink_local.hpp"
-#include "eb500.hpp"
+#include "gnss_receiver.hpp"
 #include "mav_logger.hpp"
 #include "geometry.hpp"
 #include "time_keeper.hpp"
@@ -287,7 +287,7 @@ THD_FUNCTION(gpsRxThread, arg) {
         cache.time       = rmc.time;
         cache.sec_round  = rmc.sec_round;
         if (gga.fix == 1) {
-          event_gps.broadcastFlags(EVMSK_GPS_FRESH_VALID);
+          event_gps.broadcastFlags(EVMSK_GNSS_FRESH_VALID);
           if (nullptr != hook_sdp) {
             curr = chVTGetSystemTimeX();
             systime_t out = ST2MS(curr - prev);
@@ -311,7 +311,7 @@ THD_FUNCTION(gpsRxThread, arg) {
 /**
  *
  */
-void GPSInit(void){
+void GNSSInit(void){
 
   chThdCreateStatic(gpsRxThreadWA, sizeof(gpsRxThreadWA),
                     GPSPRIO, gpsRxThread, NULL);
@@ -320,7 +320,7 @@ void GPSInit(void){
 /**
  *
  */
-void GPSSetDumpHook(SerialDriver *sdp) {
+void GNSSSetSniffHook(SerialDriver *sdp) {
 
   hook_sdp = sdp;
 }
@@ -328,7 +328,7 @@ void GPSSetDumpHook(SerialDriver *sdp) {
 /**
  *
  */
-void GPSDeleteDumpHook(void) {
+void GNSSDeleteSniffHook(void) {
 
   hook_sdp = nullptr;
 }
@@ -336,7 +336,7 @@ void GPSDeleteDumpHook(void) {
 /**
  *
  */
-void GPSGet(gnss_data_t &result) {
+void GNSSGet(gnss_data_t &result) {
 
   acquire();
   result = cache;
@@ -346,7 +346,7 @@ void GPSGet(gnss_data_t &result) {
 /**
  *
  */
-void GPS_PPS_ISR_I(void) {
+void GNSS_PPS_ISR_I(void) {
 
   pps_sem.signalI();
 }

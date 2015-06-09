@@ -39,7 +39,7 @@ Giovanni
 #include "global_flags.h"
 #include "fault_handlers.h"
 #include "mavlink_local.hpp"
-#include "eb500.hpp"
+#include "gnss_receiver.hpp"
 #include "sanity.hpp"
 #include "i2c_local.hpp"
 #include "nvram_local.hpp"
@@ -185,7 +185,7 @@ int main(void) {
   tlm_sender.start();
 
   bmp_085.start();
-  GPSInit();
+  GNSSInit();
   mav_logger.start(NORMALPRIO);
   osalThreadSleepMilliseconds(1);
 
@@ -206,7 +206,7 @@ int main(void) {
   mavlink_system_info_struct.state = MAV_STATE_STANDBY;
   while (true) {
     marg.get(marg_data, MS2ST(200));
-    GPSGet(gps_data);
+    GNSSGet(gps_data);
     gps2acs_in(gps_data, acs_in);
     speedometer.update(speed_data, marg_data.dT);
     speedometer2acs_in(speed_data, acs_in);

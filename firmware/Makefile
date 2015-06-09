@@ -180,8 +180,8 @@ SENSORSRC = src/i2c_local.cpp \
 		src/sensors/lsm303_mag.cpp \
 		src/sensors/gnss/nmea_proto.cpp \
 		src/sensors/gnss/ubx_proto.cpp \
-		src/sensors/gnss/eb500.cpp \
-		src/sensors/gnss/eb500_cli.cpp \
+		src/sensors/gnss/gnss_receiver.cpp \
+		src/sensors/gnss/gnss_cli.cpp \
 		src/sensors/bmp085.cpp \
 		src/sensors/maxsonar.cpp \
 		src/sensors/speedometer.cpp \

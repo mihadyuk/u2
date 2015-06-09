@@ -5,7 +5,7 @@
 #include "mpu6050.hpp"
 #include "lsm303_mag.hpp"
 #include "time_keeper.hpp"
-#include "eb500.hpp"
+#include "gnss_receiver.hpp"
 #include "bmp085.hpp"
 
 /*
@@ -67,7 +67,7 @@ static void pps_cb(EXTDriver *extp, expchannel_t channel){
 
   osalSysLockFromISR();
   TimeKeeper::PPS_ISR_I();
-  GPS_PPS_ISR_I();
+  GNSS_PPS_ISR_I();
   osalSysUnlockFromISR();
 }
 

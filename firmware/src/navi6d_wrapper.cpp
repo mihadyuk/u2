@@ -12,7 +12,7 @@
 #include "navi6d_wrapper.hpp"
 #include "mavlink_local.hpp"
 #include "acs_input.hpp"
-#include "eb500.hpp"
+#include "gnss_receiver.hpp"
 #include "geometry.hpp"
 #include "time_keeper.hpp"
 #include "param_registry.hpp"
@@ -67,7 +67,7 @@ void Navi6dWrapper::prepare_data(const gnss::gnss_data_t &gps_data,
                                  const marg_data_t &marg)
 {
 
-  if ((*gnss_block == 0) && ((el.getAndClearFlags() & EVMSK_GPS_FRESH_VALID) > 0)) {
+  if ((*gnss_block == 0) && ((el.getAndClearFlags() & EVMSK_GNSS_FRESH_VALID) > 0)) {
     osalDbgCheck((fabsf(gps_data.latitude) > 0.01) && (fabsf(gps_data.altitude) > 0.01));
     nav_sins.sensor_data.r_sns[0][0] = deg2rad(gps_data.latitude);
     nav_sins.sensor_data.r_sns[1][0] = deg2rad(gps_data.longitude);
@@ -186,7 +186,7 @@ Navi6dWrapper::Navi6dWrapper(ACSInput &acs_in) : acs_in(acs_in) {
  */
 void Navi6dWrapper::start(float dT) {
 
-  event_gps.registerMask(&el, EVMSK_GPS_FRESH_VALID);
+  event_gps.registerMask(&el, EVMSK_GNSS_FRESH_VALID);
 
   param_registry.valueSearch("SINS_gnss_block", &gnss_block);
   param_registry.valueSearch("SINS_odo_block",  &odo_block);

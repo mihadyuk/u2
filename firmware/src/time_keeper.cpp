@@ -7,7 +7,7 @@
 #include "global_flags.h"
 #include "time_keeper.hpp"
 #include "exti_local.hpp"
-#include "eb500.hpp"
+#include "gnss_receiver.hpp"
 
 /*
  * Время работает следующим образом:
@@ -196,7 +196,7 @@ THD_FUNCTION(TimekeeperThread, arg) {
   (void)self;
   msg_t sem_status = MSG_RESET;
   chibios_rt::EvtListener el;
-  event_gps.registerMask(&el, EVMSK_GPS_FRESH_VALID);
+  event_gps.registerMask(&el, EVMSK_GNSS_FRESH_VALID);
   eventmask_t gps_evt;
 
   while (!chThdShouldTerminateX()) {
@@ -207,9 +207,9 @@ THD_FUNCTION(TimekeeperThread, arg) {
       jitter_stats_update();
 
       while (true) { /* wait first measurement with rounde seconds */
-        gps_evt = chEvtWaitOneTimeout(EVMSK_GPS_FRESH_VALID, MS2ST(1200));
-        if (EVMSK_GPS_FRESH_VALID == gps_evt) {
-          GPSGet(gps);
+        gps_evt = chEvtWaitOneTimeout(EVMSK_GNSS_FRESH_VALID, MS2ST(1200));
+        if (EVMSK_GNSS_FRESH_VALID == gps_evt) {
+          GNSSGet(gps);
           if (gps.sec_round) {
             int64_t tmp = 1000000;
             tmp *= mktime(&gps.time);
