@@ -1,6 +1,7 @@
 #include "main.h"
 
-#include "nmea.hpp"
+#include "nmea_proto.hpp"
+#include "ubx_proto.hpp"
 #include "mavlink_local.hpp"
 #include "eb500.hpp"
 #include "mav_logger.hpp"
@@ -9,7 +10,7 @@
 #include "pads.h"
 #include "chprintf.h"
 
-using namespace gps;
+using namespace gnss;
 
 /*
  ******************************************************************************
@@ -60,7 +61,8 @@ static const uint8_t fix_period_2hz[] = "$PMTK300,500,0,0,0,0*28\r\n";
 /* set serial port baudrate */
 static const uint8_t gps_high_baudrate[] = "$PMTK251,57600*2C\r\n";
 
-__CCM__ static NmeaParser nmea_parser;
+__CCM__ static NmeaProto nmea_parser;
+__CCM__ static UbxProto  ubx_parser;
 
 __CCM__ static nmea_gga_t gga;
 __CCM__ static nmea_rmc_t rmc;
@@ -172,52 +174,29 @@ void gps_configure_mtk(void) {
 }
 
 /**
- *
- */
-void ubx_fletcher(const uint8_t *data, size_t len, uint8_t *result) {
-  uint8_t ck_a = 0;
-  uint8_t ck_b = 0;
-
-  for (size_t i=0; i<len; i++) {
-    ck_a += data[i];
-    ck_b += ck_a;
-  }
-
-  result[0] = ck_a;
-  result[1] = ck_b;
-}
-
-/**
  * @brief   set solution period
  */
-void ubx_solution_period(uint16_t msec) {
-  uint8_t msg[84];
-  memset(msg, 0, sizeof(msg));
-  uint16_t tmp;
+static void ubx_solution_period(uint16_t msec) {
+  uint8_t buf[32];
+  ubx_cfg_rate msg;
+  size_t len;
+
   osalDbgCheck(msec >= 200);
 
-  msg[0] = 0xB5;
-  msg[1] = 0x62;
-  msg[2] = 0x06; // UBX-CFG
-  msg[3] = 0x08; // RATE
-  tmp = 6;
-  memcpy(&msg[4],  &tmp, 2); //message length
-  tmp = msec;
-  memcpy(&msg[6],  &tmp, 2);
-  tmp = 1;
-  memcpy(&msg[8],  &tmp, 2);
-  tmp = 0;
-  memcpy(&msg[10], &tmp, 2);
+  msg.measRate = msec;
+  msg.navRate = 1;
+  msg.timeRef = 0;
 
-  ubx_fletcher(&msg[2], 10, &msg[12]);
+  len = ubx_parser.pack(msg, buf, sizeof(buf));
+  osalDbgCheck(len > 0 && len <= sizeof(buf));
 
-  sdWrite(&GPSSD, msg, 15);
+  sdWrite(&GPSSD, buf, len);
 }
 
 /**
  *
  */
-void ubx_message_decimate(const char *type, uint8_t rate) {
+static void ubx_message_decimate(const char *type, uint8_t rate) {
   char msg[84];
   memset(msg, 0, sizeof(msg));
 

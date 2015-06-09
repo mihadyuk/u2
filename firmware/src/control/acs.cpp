@@ -36,10 +36,10 @@ static const uint8_t auto_bytecode[] = {
     OUTPUT, IMPACT_RUD,
     TERM,
 
-//    INPUT, ACS_INPUT_odo_speed,
-//    PID, 15, ACS_INPUT_const_one,
-//    OUTPUT, IMPACT_THR,
-//    TERM,
+    INPUT, ACS_INPUT_const_one,
+    PID, 15, ACS_INPUT_odo_speed,
+    OUTPUT, IMPACT_THR,
+    TERM,
 
     END
 };

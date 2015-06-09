@@ -22,13 +22,13 @@ struct AlcoiPulse {
 typedef enum {
   END,
   INPUT,
-  PID,
+  PID, // usage: PID, N, position. Target will be passed implicitly
   SUM,
   SCALE,
   FORK,
   FORK_RET,
   OUTPUT,
-  NEG,    /* value negation */
+  NEG,    /* value negation. It is simplier than scale */
   TERM    /* terminator */
 } vm_opcode_enum;
 

@@ -1,4 +1,4 @@
-#pragma GCC optimize "-O2"
+//#pragma GCC optimize "-O2"
 
 #include "main.h"
 
@@ -204,8 +204,9 @@ public:
       next->update(this->pid(*position, alcoi_target, VM_dT));
       alcoi_time_elapsed -= VM_dT;
     }
-    else
+    else {
       next->update(this->pid(*position, target, VM_dT));
+    }
   }
 
   void alcoi_pulse(float strength, float time) {

@@ -1,4 +1,4 @@
-//#pragma GCC optimize "-O2"
+#pragma GCC optimize "-O2"
 
 #include <ctime>
 #include <cmath>
@@ -6,11 +6,11 @@
 #include <cstdlib>
 
 #include "main.h"
-#include "nmea.hpp"
+#include "nmea_proto.hpp"
 #include "pads.h"
 #include "array_len.hpp"
 
-using namespace gps;
+using namespace gnss;
 
 /*
  ******************************************************************************
@@ -67,7 +67,7 @@ static const char * const sentance_array[] = {
 /**
  *
  */
-bool NmeaParser::_autotest(const char *sentence) {
+bool NmeaProto::_autotest(const char *sentence) {
   const char *sump = strstr(sentence, "*");
   size_t len = sump - sentence;
 
@@ -87,7 +87,7 @@ bool NmeaParser::_autotest(const char *sentence) {
 /**
  *
  */
-bool NmeaParser::checksum_autotest(void) {
+bool NmeaProto::checksum_autotest(void) {
   for (size_t i=0; i<ArrayLen(sentance_array); i++) {
     if (OSAL_FAILED == _autotest(sentance_array[i]))
       return OSAL_FAILED;
@@ -146,7 +146,7 @@ static uint8_t _from_hex(uint8_t a){
 /**
  *
  */
-uint8_t NmeaParser::checksumFromStr(const char *str) {
+uint8_t NmeaProto::checksumFromStr(const char *str) {
   return (_from_hex(str[0]) << 4) | _from_hex(str[1]);
 }
 
@@ -163,7 +163,7 @@ static uint8_t _to_hex(uint8_t u8) {
 /**
  *
  */
-void NmeaParser::checksum2str(uint8_t sum, char *str) {
+void NmeaProto::checksum2str(uint8_t sum, char *str) {
 
   str[0] = _to_hex(sum >> 4);
   str[1] = _to_hex(sum & 0b1111);
@@ -172,7 +172,7 @@ void NmeaParser::checksum2str(uint8_t sum, char *str) {
 /**
  *
  */
-sentence_type_t NmeaParser::get_name(const char *name) {
+sentence_type_t NmeaProto::get_name(const char *name) {
   if ((0 == strncmp("GNGGA", name, 5)) || (0 == strncmp("GPGGA", name, 5)))
     return sentence_type_t::GGA;
   else if ((0 == strncmp("GNRMC", name, 5)) || (0 == strncmp("GPRMC", name, 5)))
@@ -184,7 +184,7 @@ sentence_type_t NmeaParser::get_name(const char *name) {
 /**
  *
  */
-sentence_type_t NmeaParser::validate_sentence(void) {
+sentence_type_t NmeaProto::validate_sentence(void) {
   uint8_t sum = 0;
 
   if (tip < GPS_MIN_MSG_LEN)
@@ -221,7 +221,7 @@ sentence_type_t NmeaParser::validate_sentence(void) {
 /**
  *
  */
-uint8_t NmeaParser::checksum(const uint8_t *data, size_t len) {
+uint8_t NmeaProto::checksum(const uint8_t *data, size_t len) {
   uint8_t sum = 0;
 
   for (size_t i=0; i<len; i++) {
@@ -234,7 +234,7 @@ uint8_t NmeaParser::checksum(const uint8_t *data, size_t len) {
 /**
  *
  */
-const char* NmeaParser::token(char *result, size_t N) {
+const char* NmeaProto::token(char *result, size_t N) {
 
   const size_t len = token_map[N+1] - (1 + token_map[N]);
   memset(result, 0, GPS_MAX_TOKEN_LEN);
@@ -279,12 +279,12 @@ static float knots2mps(float knots) {
 /**
  *
  */
-void NmeaParser::reset_collector(void) {
+void NmeaProto::reset_collector(void) {
   tip = 0;
   maptip = 0;
   memset(this->buf, 0, sizeof(this->buf));
   memset(this->token_map, 0, sizeof(this->token_map));
-  state = collect_state_t::START;
+  state = nmea_collect_state_t::START;
 }
 
 /*
@@ -295,10 +295,10 @@ void NmeaParser::reset_collector(void) {
 /**
  *
  */
-NmeaParser::NmeaParser(void) :
+NmeaProto::NmeaProto(void) :
 tip(0),
 maptip(0),
-state(collect_state_t::START)
+state(nmea_collect_state_t::START)
 {
   memset(this->buf, 0, sizeof(this->buf));
   memset(this->token_map, 0, sizeof(this->token_map));
@@ -310,7 +310,7 @@ state(collect_state_t::START)
 /**
  *
  */
-sentence_type_t NmeaParser::collect(uint8_t c) {
+sentence_type_t NmeaProto::collect(uint8_t c) {
   sentence_type_t ret = sentence_type_t::EMPTY;
 
   /* prevent overflow */
@@ -319,16 +319,16 @@ sentence_type_t NmeaParser::collect(uint8_t c) {
   }
 
   switch (state) {
-  case collect_state_t::START:
+  case nmea_collect_state_t::START:
     if ('$' == c) {
       reset_collector();
       buf[0] = c;
       tip = 1;
-      state = collect_state_t::DATA;
+      state = nmea_collect_state_t::DATA;
     }
     break;
 
-  case collect_state_t::DATA:
+  case nmea_collect_state_t::DATA:
     buf[tip] = c;
     if ((',' == c) || ('*' == c)) {
       token_map[maptip] = tip;
@@ -338,39 +338,39 @@ sentence_type_t NmeaParser::collect(uint8_t c) {
     if (tip >= sizeof(buf) - 4)
       reset_collector();
     if ('*' == c)
-      state = collect_state_t::CHECKSUM1;
+      state = nmea_collect_state_t::CHECKSUM1;
     break;
 
-  case collect_state_t::CHECKSUM1:
+  case nmea_collect_state_t::CHECKSUM1:
     buf[tip] = c;
     tip++;
-    state = collect_state_t::CHECKSUM2;
+    state = nmea_collect_state_t::CHECKSUM2;
     break;
 
-  case collect_state_t::CHECKSUM2:
+  case nmea_collect_state_t::CHECKSUM2:
     buf[tip] = c;
     tip++;
-    state = collect_state_t::EOL_CR;
+    state = nmea_collect_state_t::EOL_CR;
     break;
 
-  case collect_state_t::EOL_CR:
+  case nmea_collect_state_t::EOL_CR:
     if ('\r' == c) {
       buf[tip] = c;
       tip++;
-      state = collect_state_t::EOL_LF;
+      state = nmea_collect_state_t::EOL_LF;
     }
     else
       reset_collector();
     break;
 
-  case collect_state_t::EOL_LF:
+  case nmea_collect_state_t::EOL_LF:
     if ('\n' == c) {
       buf[tip] = c;
       tip++;
       ret = validate_sentence();
       if (sentence_type_t::EMPTY == ret)
         reset_collector();
-      state = collect_state_t::START;
+      state = nmea_collect_state_t::START;
     }
     else
       reset_collector();
@@ -387,7 +387,7 @@ sentence_type_t NmeaParser::collect(uint8_t c) {
 /**
  *
  */
-void NmeaParser::unpack(nmea_rmc_t &result) {
+void NmeaProto::unpack(nmea_rmc_t &result) {
   char tmp[GPS_MAX_TOKEN_LEN];
 
   get_time(&result.time, &result.sec_round, token(tmp, 0));
@@ -399,7 +399,7 @@ void NmeaParser::unpack(nmea_rmc_t &result) {
 /**
  *
  */
-void NmeaParser::unpack(nmea_gga_t &result) {
+void NmeaProto::unpack(nmea_gga_t &result) {
   char tmp[GPS_MAX_TOKEN_LEN];
   double c;
 
@@ -415,10 +415,10 @@ void NmeaParser::unpack(nmea_gga_t &result) {
 }
 
 /**
- * @brief   Fill checksum field and CR/LF
+ * @brief   Fills checksum field and inserts CR/LF
  * @pre     Initial message must me ended with '*' sign
  */
-void NmeaParser::seal(char *msg) {
+void NmeaProto::seal(char *msg) {
   char *sump = strstr(msg, "*");
   osalDbgCheck(NULL != sump);
   size_t len = sump - msg;
@@ -428,6 +428,4 @@ void NmeaParser::seal(char *msg) {
   sump[3] = '\r';
   sump[4] = '\n';
 }
-
-
 

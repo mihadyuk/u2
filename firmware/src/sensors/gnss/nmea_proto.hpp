@@ -1,5 +1,5 @@
-#ifndef NMEA_HPP_
-#define NMEA_HPP_
+#ifndef NMEA_PROTO_HPP_
+#define NMEA_PROTO_HPP_
 
 #include "string.h" // for memset
 
@@ -9,7 +9,7 @@
 #define GPS_TOKEN_MAP_LEN     24
 #define GPS_MAX_TOKEN_LEN     16
 
-namespace gps {
+namespace gnss {
 
 /**
  *
@@ -53,7 +53,7 @@ enum class sentence_type_t {
 /**
  *
  */
-enum class collect_state_t {
+enum class nmea_collect_state_t {
   START,      /* wait '$' sign */
   DATA,       /* collect data until '*' sign */
   CHECKSUM1,  /* collect 1st byte of checksum */
@@ -65,9 +65,9 @@ enum class collect_state_t {
 /**
  *
  */
-class NmeaParser {
+class NmeaProto {
 public:
-  NmeaParser(void);
+  NmeaProto(void);
   sentence_type_t collect(uint8_t byte);
   void unpack(nmea_rmc_t &result);
   void unpack(nmea_gga_t &result);
@@ -84,12 +84,11 @@ private:
   sentence_type_t get_name(const char *name);
   size_t tip;
   size_t maptip;
-  collect_state_t state;
+  nmea_collect_state_t state;
   uint8_t buf[GPS_MSG_LEN];
   uint8_t token_map[GPS_TOKEN_MAP_LEN];
-  SerialDriver *dump_sdp = nullptr;
 };
 
 } /* namespace */
 
-#endif /* NMEA_HPP_ */
+#endif /* NMEA_PROTO_HPP_ */
