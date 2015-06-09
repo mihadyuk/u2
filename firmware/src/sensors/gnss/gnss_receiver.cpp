@@ -66,6 +66,7 @@ __CCM__ static NmeaProto nmea_parser;
 __CCM__ static UbxProto  ubx_parser;
 
 static chibios_rt::BinarySemaphore pps_sem(true);
+static chibios_rt::BinarySemaphore protect_sem(false);
 
 static mavMail gps_raw_int_mail;
 
@@ -82,6 +83,21 @@ static mavMail gps_raw_int_mail;
  *******************************************************************************
  *******************************************************************************
  */
+
+/**
+ *
+ */
+static void acquire(void) {
+  protect_sem.wait();
+}
+
+/**
+ *
+ */
+static void release(void) {
+  protect_sem.signal();
+}
+
 /**
  *
  */
@@ -217,6 +233,7 @@ void gps_configure_ubx(void) {
  */
 static void gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
                         gnss_data_t *result) {
+
   if (false == result->fresh) {
     result->altitude   = gga.altitude;
     result->latitude   = gga.latitude;
@@ -276,11 +293,13 @@ THD_FUNCTION(GNSSReceiver::nmeaRxThread, arg) {
 
         gps2mavlink(gga, rmc);
 
+        acquire();
         for (size_t i=0; i<ArrayLen(self->spamlist); i++) {
           if (nullptr != self->spamlist[i]) {
             gnss_unpack(gga, rmc, self->spamlist[i]);
           }
         }
+        release();
 
         if (gga.fix == 1) {
           event_gps.broadcastFlags(EVMSK_GNSS_FRESH_VALID);
@@ -348,6 +367,8 @@ void GNSSReceiver::deleteSniffer(void) {
 void GNSSReceiver::subscribe(gnss_data_t* result) {
   osalDbgCheck(nullptr != result);
 
+  acquire();
+
   for (size_t i=0; i<ArrayLen(spamlist); i++) {
     osalDbgAssert(result != spamlist[i],
         "you can not subscribe single structure twice");
@@ -356,10 +377,12 @@ void GNSSReceiver::subscribe(gnss_data_t* result) {
   for (size_t i=0; i<ArrayLen(spamlist); i++) {
     if (nullptr == spamlist[i]) {
       spamlist[i] = result;
+      release();
       return;
     }
   }
 
+  release();
   osalSysHalt("No free slots remain");
 }
 
@@ -369,13 +392,17 @@ void GNSSReceiver::subscribe(gnss_data_t* result) {
 void GNSSReceiver::unsubscribe(gnss_data_t* result) {
   osalDbgCheck(nullptr != result);
 
+  acquire();
+
   for (size_t i=0; i<ArrayLen(spamlist); i++) {
     if (result == spamlist[i]) {
       spamlist[i] = nullptr;
+      release();
       return;
     }
   }
 
+  release();
   osalSysHalt("This message not subscribed");
 }
 
