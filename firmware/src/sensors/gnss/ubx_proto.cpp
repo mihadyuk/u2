@@ -1,5 +1,3 @@
-#pragma GCC optimize "-O2"
-
 #include <ctime>
 #include <cmath>
 #include <cstring>
@@ -49,6 +47,7 @@ using namespace gnss;
  *******************************************************************************
  *******************************************************************************
  */
+
 /**
  *
  */
@@ -102,6 +101,16 @@ size_t UbxProto::pack(const ubx_cfg_rate &msg, uint8_t *buf, size_t buflen) {
     return 0; // not enough room in buffer
   else
     return actual_pack(buf, ubx_msg_t::CFG_RATE, datalen, &msg);
+}
+
+/**
+ *
+ */
+ubx_msg_t UbxProto::collect(uint8_t byte) {
+  (void)byte;
+  this->dbg_rx_bytes++;
+  osalSysHalt("unrealized");
+  return ubx_msg_t::EMPTY;
 }
 
 /**

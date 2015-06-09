@@ -61,7 +61,7 @@ __CCM__ static RefParams<double> ref_params;
 /*
  *
  */
-void Navi6dWrapper::prepare_data(const gps_data_t &gps_data,
+void Navi6dWrapper::prepare_data(const gnss::gnss_data_t &gps_data,
                                  const baro_data_t &abs_press,
                                  const speedometer_data_t &speed,
                                  const marg_data_t &marg)
@@ -226,7 +226,7 @@ void Navi6dWrapper::stop(void) {
 /**
  *
  */
-void Navi6dWrapper::update(const gps_data_t &gps_data,
+void Navi6dWrapper::update(const gnss::gnss_data_t &gps_data,
                            const baro_data_t &abs_press,
                            const speedometer_data_t &speed,
                            const marg_data_t &marg)

@@ -113,7 +113,7 @@ __CCM__ static MaxSonar maxsonar;
 __CCM__ static speedometer_data_t speed_data;
 __CCM__ static Speedometer speedometer;
 
-__CCM__ static gps_data_t gps_data;
+__CCM__ static gnss::gnss_data_t gps_data;
 __CCM__ static marg_data_t marg_data;
 
 __CCM__ static PPS pps;

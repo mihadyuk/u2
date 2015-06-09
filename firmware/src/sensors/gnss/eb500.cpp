@@ -66,7 +66,7 @@ __CCM__ static UbxProto  ubx_parser;
 
 __CCM__ static nmea_gga_t gga;
 __CCM__ static nmea_rmc_t rmc;
-__CCM__ static gps_data_t cache;
+__CCM__ static gnss_data_t cache;
 
 static chibios_rt::BinarySemaphore pps_sem(true);
 static chibios_rt::BinarySemaphore protect_sem(false);
@@ -335,7 +335,7 @@ void GPSDeleteDumpHook(void) {
 /**
  *
  */
-void GPSGet(gps_data_t &result) {
+void GPSGet(gnss_data_t &result) {
 
   acquire();
   result = cache;

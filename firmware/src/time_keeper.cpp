@@ -102,7 +102,7 @@ static const GPTConfig gptcfg = {
 
 static chibios_rt::BinarySemaphore ppstimesync_sem(true);
 
-__CCM__ static gps_data_t gps;
+__CCM__ static gnss::gnss_data_t gps;
 
 __CCM__ static time_staticstic_t time_stat;
 

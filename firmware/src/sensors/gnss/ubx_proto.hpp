@@ -5,7 +5,7 @@
 
 namespace gnss {
 
-#define UBX_MAX_MSG_LEN     256
+#define UBX_MAX_MSG_LEN       256
 
 /**
  *
@@ -23,14 +23,15 @@ enum class collect_state_t {
 };
 
 /**
- *
+ * @brief   combined class ID and message ID in single enum
+ * @note    class ID written in LSB for easier message packing using memcpy()
  */
 enum class ubx_msg_t : uint16_t {
-  CFG_MSG   = 0x0601,
-  CFG_NAV5  = 0x0624,
-  CFG_RATE  = 0x0608,
+  CFG_MSG   = 0x0106,
+  CFG_NAV5  = 0x2406,
+  CFG_RATE  = 0x0806,
   UNKNOWN,
-  RXBUF_OVERFLOW,
+  EMPTY
 };
 
 /**
@@ -40,7 +41,7 @@ struct ubx_cfg_rate {
   uint16_t measRate = 1000; /* milliseconds */
   uint16_t navRate = 1;     /* always 1 */
   uint16_t timeRef = 0;     /* 0: UTC time, 1: GPS time */
-}__attribute__((packed));
+} __attribute__((packed));
 
 /**
  *
@@ -57,6 +58,10 @@ private:
   void reset_collector(void);
   collect_state_t state = collect_state_t::START1;
   uint8_t rxbuf[UBX_MAX_MSG_LEN];
+  size_t dbg_rx_bytes = 0;
+  size_t dbg_message_bytes = 0;
+  uint16_t dbg_overflow_cnt = 0;
+  uint16_t dbg_unknown_msg_cnt = 0;
 };
 
 } /* namespace */
