@@ -9,6 +9,7 @@
 #include "time_keeper.hpp"
 #include "pads.h"
 #include "chprintf.h"
+#include "array_len.hpp"
 
 using namespace gnss;
 
@@ -70,6 +71,7 @@ __CCM__ static nmea_gga_t gga;
 __CCM__ static nmea_rmc_t rmc;
 __CCM__ static gnss_data_t cache;
 
+static gnss_data_t* subscribers[4];
 static chibios_rt::BinarySemaphore pps_sem(true);
 static chibios_rt::BinarySemaphore protect_sem(false);
 
@@ -266,6 +268,22 @@ THD_FUNCTION(gpsRxThread, arg) {
 
         gps2mavlink(gga, rmc);
 
+        for (size_t i=0; i<ArrayLen(subscribers); i++) {
+          osalSysLock();
+          if (nullptr != subscribers[i]) {
+            subscribers[i]->altitude   = gga.altitude;
+            subscribers[i]->latitude   = gga.latitude;
+            subscribers[i]->longitude  = gga.longitude;
+            subscribers[i]->course     = rmc.course;
+            subscribers[i]->speed      = rmc.speed;
+            subscribers[i]->speed_type = speed_t::SPEED_COURSE;
+            subscribers[i]->time       = rmc.time;
+            subscribers[i]->sec_round  = rmc.sec_round;
+            subscribers[i]->fix        = gga.fix;
+          }
+          osalSysUnlock();
+        }
+
         osalSysLock();
         cache.altitude   = gga.altitude;
         cache.latitude   = gga.latitude;
@@ -275,6 +293,7 @@ THD_FUNCTION(gpsRxThread, arg) {
         cache.speed_type = speed_t::SPEED_COURSE;
         cache.time       = rmc.time;
         cache.sec_round  = rmc.sec_round;
+        cache.fix        = gga.fix;
         osalSysUnlock();
 
         if (drop > 0)
@@ -305,6 +324,7 @@ THD_FUNCTION(gpsRxThread, arg) {
  *
  */
 void GNSSInit(void){
+  memset(&subscribers, 0, sizeof(subscribers));
 
   chThdCreateStatic(gpsRxThreadWA, sizeof(gpsRxThreadWA),
                     GPSPRIO, gpsRxThread, NULL);
@@ -316,6 +336,22 @@ void GNSSInit(void){
 void GNSSSetSniffHook(SerialDriver *sdp) {
 
   hook_sdp = sdp;
+}
+
+/**
+ *
+ */
+void GNSSSubscribe(gnss_data_t* result) {
+  osalDbgCheck(nullptr != result);
+
+  for (size_t i=0; i<ArrayLen(subscribers); i++) {
+    if (nullptr == subscribers[i]) {
+      subscribers[i] = result;
+      return;
+    }
+  }
+
+  osalSysHalt("No free slots remain");
 }
 
 /**

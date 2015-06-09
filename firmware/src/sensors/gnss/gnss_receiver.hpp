@@ -11,6 +11,7 @@ extern chibios_rt::EvtSource event_gps;
 void GNSSInit(void);
 void GNSSGet(gnss::gnss_data_t &result);
 void GNSSSetSniffHook(SerialDriver *sdp);
+void GNSSSubscribe(gnss::gnss_data_t* result);
 void GNSSDeleteSniffHook(void);
 void GNSS_PPS_ISR_I(void);
 

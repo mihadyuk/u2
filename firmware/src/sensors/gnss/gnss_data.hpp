@@ -27,6 +27,7 @@ struct gnss_data_t {
   speed_t   speed_type;
   struct tm time;
   bool      sec_round;  /* there is no fractional part in seconds' field */
+  uint8_t   fix;
 };
 }
 #endif /* GPS_DATA_HPP_ */
