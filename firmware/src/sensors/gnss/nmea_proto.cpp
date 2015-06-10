@@ -113,16 +113,21 @@ int tm_wday      days since Sunday [0-6]
 int tm_yday      days since January 1st [0-365]
 int tm_isdst     daylight savings indicator (1 = yes, 0 = no, -1 = unknown)
  */
-static void get_time(struct tm *timp, bool *round, const char *buft) {
-  timp->tm_hour = 10 * (buft[0] - '0') + (buft[1] - '0');
-  timp->tm_min  = 10 * (buft[2] - '0') + (buft[3] - '0');
-  timp->tm_sec  = 10 * (buft[4] - '0') + (buft[5] - '0');
+static uint16_t get_time(struct tm *timp, const char *buft) {
 
-  /* check fractional part */
-  if (('.' == buft[6]) && ('0' == buft[7]) && ('0' == buft[8]))
-    *round = true;
-  else
-    *round = false;
+  if (nullptr != timp) {
+    timp->tm_hour = 10 * (buft[0] - '0') + (buft[1] - '0');
+    timp->tm_min  = 10 * (buft[2] - '0') + (buft[3] - '0');
+    timp->tm_sec  = 10 * (buft[4] - '0') + (buft[5] - '0');
+  }
+
+  /* fractional part */
+  if ('.' == buft[6]) { // time stamp has decimal part
+    return atoi(&buft[7]);
+  }
+  else {
+    return 0;
+  }
 }
 
 static void get_date(struct tm *timp, const char *bufd) {
@@ -390,9 +395,9 @@ sentence_type_t NmeaProto::collect(uint8_t c) {
 void NmeaProto::unpack(nmea_rmc_t &result) {
   char tmp[GPS_MAX_TOKEN_LEN];
 
-  get_time(&result.time, &result.sec_round, token(tmp, 0));
-  result.speed   = knots2mps(atof(token(tmp, 6)));
-  result.course  = atof(token(tmp, 7));
+  result.msec   = get_time(&result.time, token(tmp, 0));
+  result.speed  = knots2mps(atof(token(tmp, 6)));
+  result.course = atof(token(tmp, 7));
   get_date(&result.time, token(tmp, 8));
 }
 
@@ -403,6 +408,7 @@ void NmeaProto::unpack(nmea_gga_t &result) {
   char tmp[GPS_MAX_TOKEN_LEN];
   double c;
 
+  result.msec        = get_time(nullptr, token(tmp, 0));
   c = copysign(atof(token(tmp, 1)), degrees_sign(token(tmp, 2)));
   result.latitude    = gps2deg(c);
   c = copysign(atof(token(tmp, 3)), degrees_sign(token(tmp, 4)));

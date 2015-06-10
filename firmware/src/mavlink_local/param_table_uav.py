@@ -150,6 +150,11 @@ param = [
 ("SINS_odo_block",  0,          0,          1,          "u", "default",     "Soft block odometer"),
 ("SINS_baro_block", 0,          0,          1,          "u", "default",     "Soft block barometer"),
 
+("GLRT_acc_sigma",  0.0001,     0.01,       1,          "f", "default",     "NULL"),
+("GLRT_gyr_sigma",  0.00001,    0.01,       0.5,        "f", "default",     "NULL"),
+("GLRT_gamma",      0,          1,          100,        "f", "default",     "NULL"),
+("GLRT_samples",    1,          5,          30,         "u", "default",     "NULL"),
+
 #/**** Servos coefficients ****/
 ("SRV_ail_min",     SERVO_MIN,  1500,       SERVO_MAX,  "u", "default",     "NULL"),
 ("SRV_ail_max",     SERVO_MIN,  1500,       SERVO_MAX,  "u", "default",     "NULL"),

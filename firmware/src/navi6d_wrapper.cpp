@@ -9,6 +9,7 @@
 
 #if ! FAKE_SINS
 #include "navigator_sins.hpp"
+//#include "kalman_flags.cpp" // dirty hack allowing to not add this file to the Makefile
 #endif
 
 #include "navi6d_wrapper.hpp"
@@ -18,15 +19,15 @@
 #include "geometry.hpp"
 #include "time_keeper.hpp"
 #include "param_registry.hpp"
-
-/* dirty hack allowing to not write this file to Makefile */
-//#include "kalman_flags.cpp"
+#include "pads.h"
 
 /*
  ******************************************************************************
  * DEFINES
  ******************************************************************************
  */
+
+#define MAIN_SENSOR_ADIS    TRUE
 
 /*
  ******************************************************************************
@@ -42,16 +43,12 @@ extern gnss::GNSSReceiver GNSS;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-
 #if ! FAKE_SINS
-
 __CCM__ static NavigatorSins<double, 9, 13> nav_sins;
-
 __CCM__ static InitParams<double> init_params;
 __CCM__ static CalibParams<double> calib_params;
 __CCM__ static KalmanParams<double> kalman_params;
 __CCM__ static RefParams<double> ref_params;
-
 #endif
 
 /*
@@ -128,8 +125,8 @@ void Navi6dWrapper::prepare_data(const baro_data_t &abs_press,
 
   if (*odo_block == 0) {
     nav_sins.sensor_flags.odo_en = true;
-    nav_sins.sensor_flags.nonhol_y_en = true;
-    nav_sins.sensor_flags.nonhol_z_en = true;
+    nav_sins.sensor_flags.nonhol_y_en = false;
+    nav_sins.sensor_flags.nonhol_z_en = false;
   }
 
   if (*baro_block == 0) {
@@ -220,9 +217,20 @@ void Navi6dWrapper::start(float dT) {
   param_registry.valueSearch("SINS_odo_block",  &odo_block);
   param_registry.valueSearch("SINS_baro_block", &baro_block);
 
+  param_registry.valueSearch("GLRT_acc_sigma",  &acc_sigma);
+  param_registry.valueSearch("GLRT_gyr_sigma",  &gyr_sigma);
+  param_registry.valueSearch("GLRT_gamma",      &gamma);
+  param_registry.valueSearch("GLRT_samples",    &samples);
+
+#if MAIN_SENSOR_ADIS
   ref_params.eu_vh_base[0][0] = M_PI;
   ref_params.eu_vh_base[1][0] = 0;
   ref_params.eu_vh_base[2][0] = 0;
+#else
+  ref_params.eu_vh_base[0][0] = 0;
+  ref_params.eu_vh_base[1][0] = 0;
+  ref_params.eu_vh_base[2][0] = M_PI_2;
+#endif
 
   calib_params.bm[0][0] = 0.0338;
   calib_params.bm[1][0] = 0.03736;
@@ -235,20 +243,33 @@ void Navi6dWrapper::start(float dT) {
   calib_params.m_no[1][0] = -2.35684;
   calib_params.m_no[2][0] = -0.291037;
 
-  kalman_params.sigma_R[0][0] = 5; //ne_sns
+  calib_params.bw_sat[0][0] = deg2rad(25.0);
+  calib_params.bw_sat[1][0] = deg2rad(25.0);
+  calib_params.bw_sat[2][0] = deg2rad(25.0);
+
+  kalman_params.sigma_R[0][0] = 2.5; //ne_sns
   kalman_params.sigma_R[1][0] = 5; //d_sns
   kalman_params.sigma_R[2][0] = 0.1; //v_n_sns
   kalman_params.sigma_R[3][0] = 0.1; //odo
-  kalman_params.sigma_R[4][0] = 0.2; //nonhol
+  kalman_params.sigma_R[4][0] = 0.1; //nonhol
   kalman_params.sigma_R[5][0] = 0.3; //baro
   kalman_params.sigma_R[6][0] = 0.3; //mag
 
-  kalman_params.sigma_Qm[0][0] = 0.001;
-  kalman_params.sigma_Qm[1][0] = 0.001;
-  kalman_params.sigma_Qm[2][0] = 0.000001;
-  kalman_params.sigma_Qm[3][0] = 0.000001;
-  kalman_params.sigma_Qm[4][0] = 0.000001;
-  kalman_params.sigma_Qm[5][0] = 0.000001;
+#if MAIN_SENSOR_ADIS
+  kalman_params.sigma_Qm[0][0] = 0.001; //acc
+  kalman_params.sigma_Qm[1][0] = 0.001; //gyr
+  kalman_params.sigma_Qm[2][0] = 0.000001; //acc_x
+  kalman_params.sigma_Qm[3][0] = 0.000001; //acc_y
+  kalman_params.sigma_Qm[4][0] = 0.000001; //acc_z
+  kalman_params.sigma_Qm[5][0] = 0.001; //gyr_bias
+#else // MPU6050
+  kalman_params.sigma_Qm[0][0] = 0.01; //acc
+  kalman_params.sigma_Qm[1][0] = 0.01; //gyr
+  kalman_params.sigma_Qm[2][0] = 0.0001; //acc_x
+  kalman_params.sigma_Qm[3][0] = 0.0001; //acc_y
+  kalman_params.sigma_Qm[4][0] = 0.0001; //acc_z
+  kalman_params.sigma_Qm[5][0] = 0.0005; //gyr_bias
+#endif
 
   init_params.dT = dT;
 
@@ -279,12 +300,31 @@ void Navi6dWrapper::update(const baro_data_t &abs_press,
                            const marg_data_t &marg)
 {
 #if ! FAKE_SINS
+
+
+//  ref_params.glrt_acc_sigma = *acc_sigma;
+//  ref_params.glrt_gyr_sigma = *gyr_sigma;
+//  ref_params.glrt_n = *samples;
+//  ref_params.glrt_gamma = *gamma;
+  nav_sins.set_ref_params(ref_params);
+
   prepare_data(abs_press, speed, marg);
   nav_sins.run();
   navi2acs();
 
   mavlink_out_debug_vect_struct.time_usec = TimeKeeper::utc();
-  //mavlink_out_debug_vect_struct.z = nav_sins.glrt_det.test_stat;
+//  mavlink_out_debug_vect_struct.x = nav_sins.navi_data.wb_c[0][0];
+//  mavlink_out_debug_vect_struct.y = nav_sins.navi_data.wb_c[1][0];
+//  mavlink_out_debug_vect_struct.z = nav_sins.navi_data.wb_c[2][0];
+  mavlink_out_debug_vect_struct.x = nav_sins.navi_data.a_bias[0][0];
+  mavlink_out_debug_vect_struct.y = nav_sins.navi_data.a_bias[1][0];
+  mavlink_out_debug_vect_struct.z = nav_sins.navi_data.a_bias[2][0];
+
+//  if (nav_sins.glrt_det.status)
+//    red_led_on();
+//  else
+//    red_led_off();
+
 #else
   (void)abs_press;
   (void)speed;

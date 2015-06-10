@@ -31,6 +31,11 @@ private:
   const uint32_t *gnss_block = nullptr;
   const uint32_t *odo_block  = nullptr;
   const uint32_t *baro_block = nullptr;
+
+  const float *acc_sigma = nullptr;
+  const float *gyr_sigma = nullptr;
+  const float *gamma = nullptr;
+  const uint32_t *samples = nullptr;
 };
 
 #endif /* NAVI6D_WRAPPER_HPP_ */

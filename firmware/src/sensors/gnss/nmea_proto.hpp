@@ -18,13 +18,14 @@ struct nmea_gga_t {
   nmea_gga_t(void) {
     memset(this, 0, sizeof(*this));
   }
-  double  latitude;     // deg
-  double  longitude;    // deg
-  float   altitude;     // m
-  float   hdop;
-  float   geoid;
-  uint8_t satellites;
-  uint8_t fix;
+  double    latitude;     // deg
+  double    longitude;    // deg
+  float     altitude;     // m
+  float     hdop;
+  float     geoid;
+  uint16_t  msec;         // milliseconds from message timestamp
+  uint8_t   satellites;
+  uint8_t   fix;
 };
 
 /**
@@ -34,10 +35,10 @@ struct nmea_rmc_t {
   nmea_rmc_t(void) {
     memset(this, 0, sizeof(*this));
   }
-  struct tm time;
   float     speed;    // m/s
   float     course;   // deg
-  bool      sec_round; /* there is no fractional part in seconds' field */
+  struct tm time;
+  uint16_t  msec;     // milliseconds from message timestamp
 };
 
 /**

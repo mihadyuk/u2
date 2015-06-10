@@ -242,7 +242,7 @@ static void gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
     result->speed      = rmc.speed;
     result->speed_type = speed_t::SPEED_COURSE;
     result->time       = rmc.time;
-    result->sec_round  = rmc.sec_round;
+    result->sec_round  = rmc.msec == 0;
     result->fix        = gga.fix;
     result->fresh      = true; // this line must be at the very end
   }
@@ -251,16 +251,19 @@ static void gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
 /**
  *
  */
+#define GGA_VOID    0xFFFF
+#define RMC_VOID    (0xFFFF - 1)
+
 static THD_WORKING_AREA(gnssRxThreadWA, 320) __CCM__;
 THD_FUNCTION(GNSSReceiver::nmeaRxThread, arg) {
   chRegSetThreadName("GNSS_NMEA");
   GNSSReceiver *self = static_cast<GNSSReceiver *>(arg);
   msg_t byte;
   sentence_type_t status;
-  bool gga_acquired = false;
-  bool rmc_acquired = false;
   nmea_gga_t gga;
   nmea_rmc_t rmc;
+  uint16_t gga_msec = GGA_VOID;
+  uint16_t rmc_msec = RMC_VOID;
 
   osalThreadSleepSeconds(3);
   //gps_configure_mtk();
@@ -276,20 +279,22 @@ THD_FUNCTION(GNSSReceiver::nmeaRxThread, arg) {
       switch(status) {
       case sentence_type_t::GGA:
         nmea_parser.unpack(gga);
-        gga_acquired = true;
+        gga_msec = gga.msec;
         break;
       case sentence_type_t::RMC:
         nmea_parser.unpack(rmc);
-        rmc_acquired = true;
+        rmc_msec = rmc.msec;
         break;
       default:
         break;
       }
 
       /* */
-      if (gga_acquired && rmc_acquired) {
-        gga_acquired = false;
-        rmc_acquired = false;
+      //if ((gga_msec != rmc_msec) && (gga_msec != GGA_VOID) && (rmc_msec != RMC_VOID)) { // test string
+      if (gga_msec == rmc_msec) { // correct string
+
+        gga_msec = GGA_VOID;
+        rmc_msec = RMC_VOID;
 
         gps2mavlink(gga, rmc);
 
@@ -303,6 +308,10 @@ THD_FUNCTION(GNSSReceiver::nmeaRxThread, arg) {
 
         if (gga.fix == 1) {
           event_gps.broadcastFlags(EVMSK_GNSS_FRESH_VALID);
+        }
+
+        if (nullptr != self->sniff_sdp) {
+          chprintf((BaseSequentialStream *)self->sniff_sdp, "ggs = %u; rmc = %u\n", gga.msec, rmc.msec);
         }
       }
     }

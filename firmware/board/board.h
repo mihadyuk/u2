@@ -30,7 +30,7 @@
 #define UEXT_SPI                SPID2
 
 #define XBEE_BAUDRATE           115200
-#define XBEE_USE_CTS_RTS        FALSE
+#define XBEE_USE_CTS_RTS        TRUE//FALSE
 
 /*
  * Board identifier.
