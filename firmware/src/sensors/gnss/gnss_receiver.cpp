@@ -279,11 +279,17 @@ THD_FUNCTION(GNSSReceiver::nmeaRxThread, arg) {
       switch(status) {
       case sentence_type_t::GGA:
         nmea_parser.unpack(gga);
-        gga_msec = gga.msec;
+        gga_msec = gga.msec + gga.time.tm_sec * 1000;
+        if (nullptr != self->sniff_sdp) {
+          chprintf((BaseSequentialStream *)self->sniff_sdp, "gga_parsed = %u", gga.msec);
+        }
         break;
       case sentence_type_t::RMC:
         nmea_parser.unpack(rmc);
-        rmc_msec = rmc.msec;
+        rmc_msec = rmc.msec + rmc.time.tm_sec * 1000;
+        if (nullptr != self->sniff_sdp) {
+          chprintf((BaseSequentialStream *)self->sniff_sdp, "rmc_parsed = %u", rmc.msec);
+        }
         break;
       default:
         break;
@@ -292,7 +298,6 @@ THD_FUNCTION(GNSSReceiver::nmeaRxThread, arg) {
       /* */
       //if ((gga_msec != rmc_msec) && (gga_msec != GGA_VOID) && (rmc_msec != RMC_VOID)) { // test string
       if (gga_msec == rmc_msec) { // correct string
-
         gga_msec = GGA_VOID;
         rmc_msec = RMC_VOID;
 
@@ -311,7 +316,7 @@ THD_FUNCTION(GNSSReceiver::nmeaRxThread, arg) {
         }
 
         if (nullptr != self->sniff_sdp) {
-          chprintf((BaseSequentialStream *)self->sniff_sdp, "ggs = %u; rmc = %u\n", gga.msec, rmc.msec);
+          chprintf((BaseSequentialStream *)self->sniff_sdp, "gga = %u; rmc = %u\n", gga_msec, rmc_msec);
         }
       }
     }

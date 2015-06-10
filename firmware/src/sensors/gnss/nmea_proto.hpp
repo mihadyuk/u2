@@ -23,6 +23,7 @@ struct nmea_gga_t {
   float     altitude;     // m
   float     hdop;
   float     geoid;
+  struct tm time;
   uint16_t  msec;         // milliseconds from message timestamp
   uint8_t   satellites;
   uint8_t   fix;

@@ -123,7 +123,12 @@ static uint16_t get_time(struct tm *timp, const char *buft) {
 
   /* fractional part */
   if ('.' == buft[6]) { // time stamp has decimal part
-    return atoi(&buft[7]);
+    size_t L = strlen(&buft[7]);
+    uint32_t mul = 1000;
+    for (size_t i=0; i<L; i++) {
+      mul /= 10;
+    }
+    return atoi(&buft[7]) * mul;
   }
   else {
     return 0;
@@ -408,7 +413,7 @@ void NmeaProto::unpack(nmea_gga_t &result) {
   char tmp[GPS_MAX_TOKEN_LEN];
   double c;
 
-  result.msec        = get_time(nullptr, token(tmp, 0));
+  result.msec        = get_time(&result.time, token(tmp, 0));
   c = copysign(atof(token(tmp, 1)), degrees_sign(token(tmp, 2)));
   result.latitude    = gps2deg(c);
   c = copysign(atof(token(tmp, 3)), degrees_sign(token(tmp, 4)));
