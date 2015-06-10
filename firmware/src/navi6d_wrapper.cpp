@@ -1,7 +1,7 @@
 #pragma GCC optimize "-O2"
 #pragma GCC diagnostic ignored "-Wdouble-promotion"
 
-#define FAKE_SINS     FALSE
+#define FAKE_SINS     TRUE
 
 #include <math.h>
 #include "main.h"
