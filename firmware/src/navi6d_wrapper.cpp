@@ -1,7 +1,7 @@
 #pragma GCC optimize "-O2"
 #pragma GCC diagnostic ignored "-Wdouble-promotion"
 
-#define FAKE_SINS     TRUE
+#define FAKE_SINS     FALSE
 
 #include <math.h>
 #include "main.h"
@@ -35,6 +35,7 @@
  */
 extern mavlink_debug_t                 mavlink_out_debug_struct;
 extern mavlink_debug_vect_t            mavlink_out_debug_vect_struct;
+extern gnss::GNSSReceiver GNSS;
 
 /*
  ******************************************************************************
@@ -66,37 +67,30 @@ __CCM__ static RefParams<double> ref_params;
  *******************************************************************************
  *******************************************************************************
  */
-/*
+/**
  *
  */
+void Navi6dWrapper::prepare_gnss(const speedometer_data_t &speed) {
 #if ! FAKE_SINS
-void Navi6dWrapper::prepare_data(const baro_data_t &abs_press,
-                                 const speedometer_data_t &speed,
-                                 const marg_data_t &marg)
-{
-  if ((*gnss_block == 0) && ((el.getAndClearFlags() & EVMSK_GNSS_FRESH_VALID) > 0)) {
-    gnss::gnss_data_t gps_data;
-    GNSSGet(gps_data);
-
-    osalDbgCheck((fabsf(gps_data.latitude) > 0.01) && (fabsf(gps_data.altitude) > 0.01));
-    nav_sins.sensor_data.r_sns[0][0] = deg2rad(gps_data.latitude);
-    nav_sins.sensor_data.r_sns[1][0] = deg2rad(gps_data.longitude);
-    nav_sins.sensor_data.r_sns[2][0] = gps_data.altitude;
+  if ((*gnss_block == 0) && (gnss_data.fresh) && (1 == gnss_data.fix)) {
+    nav_sins.sensor_data.r_sns[0][0] = deg2rad(gnss_data.latitude);
+    nav_sins.sensor_data.r_sns[1][0] = deg2rad(gnss_data.longitude);
+    nav_sins.sensor_data.r_sns[2][0] = gnss_data.altitude;
     nav_sins.sensor_flags.sns_r_en = true;
     nav_sins.sensor_flags.sns_h_en = true;
 
-    switch(gps_data.speed_type) {
+    switch(gnss_data.speed_type) {
     case gnss::speed_t::SPEED_COURSE:
-      nav_sins.sensor_data.v_sns[0][0] = gps_data.speed * cos(deg2rad(gps_data.course));
-      nav_sins.sensor_data.v_sns[1][0] = gps_data.speed * sin(deg2rad(gps_data.course));
-      nav_sins.sensor_data.v_sns[2][0] = gps_data.course;
+      nav_sins.sensor_data.v_sns[0][0] = gnss_data.speed * cos(deg2rad(gnss_data.course));
+      nav_sins.sensor_data.v_sns[1][0] = gnss_data.speed * sin(deg2rad(gnss_data.course));
+      nav_sins.sensor_data.v_sns[2][0] = gnss_data.course;
       nav_sins.sensor_flags.sns_v_n_en = true;
       nav_sins.sensor_flags.sns_v_e_en = true;
       nav_sins.sensor_flags.sns_v_d_en = false;
       break;
     case gnss::speed_t::VECTOR_3D:
       for (size_t i=0; i<3; i++) {
-        nav_sins.sensor_data.v_sns[0][0] = gps_data.v[0];
+        nav_sins.sensor_data.v_sns[i][0] = gnss_data.v[i];
       }
       nav_sins.sensor_flags.sns_v_n_en = true;
       nav_sins.sensor_flags.sns_v_e_en = true;
@@ -114,6 +108,23 @@ void Navi6dWrapper::prepare_data(const baro_data_t &abs_press,
     nav_sins.sensor_data.v_odo[1][0] = 0;
     nav_sins.sensor_data.v_odo[2][0] = 0;
   }
+
+  gnss_data.fresh = false; // Important! Must be set to false after data processing
+
+#else
+  (void)speed;
+#endif
+}
+
+/*
+ *
+ */
+#if ! FAKE_SINS
+void Navi6dWrapper::prepare_data(const baro_data_t &abs_press,
+                                 const speedometer_data_t &speed,
+                                 const marg_data_t &marg)
+{
+  prepare_gnss(speed);
 
   if (*odo_block == 0) {
     nav_sins.sensor_flags.odo_en = true;
@@ -202,7 +213,8 @@ Navi6dWrapper::Navi6dWrapper(ACSInput &acs_in) : acs_in(acs_in) {
  */
 void Navi6dWrapper::start(float dT) {
 #if ! FAKE_SINS
-  event_gps.registerMask(&el, EVMSK_GNSS_FRESH_VALID);
+  gnss_data.fresh = false;
+  GNSS.subscribe(&gnss_data);
 
   param_registry.valueSearch("SINS_gnss_block", &gnss_block);
   param_registry.valueSearch("SINS_odo_block",  &odo_block);
@@ -256,7 +268,7 @@ void Navi6dWrapper::start(float dT) {
  */
 void Navi6dWrapper::stop(void) {
 
-  event_gps.unregister(&el);
+  GNSS.unsubscribe(&gnss_data);
 }
 
 /**

@@ -126,7 +126,7 @@ __CCM__ control::HIL hil;
 extern mavlink_system_info_t   mavlink_system_info_struct;
 
 #include "navi6d_wrapper.hpp"
-static Navi6dWrapper navi6d(acs_in);
+__CCM__ static Navi6dWrapper navi6d(acs_in);
 
 /*
  ******************************************************************************

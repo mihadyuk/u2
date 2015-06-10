@@ -23,10 +23,11 @@ private:
   void prepare_data(const baro_data_t &abs_press,
                     const speedometer_data_t &speed,
                     const marg_data_t &marg);
+  void prepare_gnss(const speedometer_data_t &speed);
   void reload_settings(void);
   bool ready = false;
-  chibios_rt::EvtListener el;
   ACSInput &acs_in;
+  gnss::gnss_data_t gnss_data;
   const uint32_t *gnss_block = nullptr;
   const uint32_t *odo_block  = nullptr;
   const uint32_t *baro_block = nullptr;

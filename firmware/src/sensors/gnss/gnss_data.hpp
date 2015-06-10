@@ -25,11 +25,11 @@ struct gnss_data_t {
   float     speed;      // m/s
   float     course;     // deg
   float     v[3];       // 3 components of speed (m/s, NED)
-  bool      sec_round;  /* there is no fractional part in seconds' field */
-  bool      fresh;      /* sync primitive. Receiver can only set it, consumer can only clear it */
+  bool      sec_round;  // there is no fractional part in seconds' field
+  bool      fresh;      // sync primitive. Receiver can only set it, consumer can only clear it
   speed_t   speed_type;
   struct tm time;
-  uint8_t   fix;        /* GNSS fix type*/
+  uint8_t   fix;        // GNSS fix type
 };
 
 } // namespace
