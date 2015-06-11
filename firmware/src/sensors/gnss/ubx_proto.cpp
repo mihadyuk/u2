@@ -244,6 +244,6 @@ void UbxProto::unpack(ubx_cfg_rate &msg) {
 /**
  *
  */
-void UbxProto::dropMessage(void) {
+void UbxProto::drop(void) {
   this->reset();
 }

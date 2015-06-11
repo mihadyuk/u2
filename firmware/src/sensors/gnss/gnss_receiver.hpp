@@ -28,6 +28,7 @@ public:
   static void GNSS_PPS_ISR_I(void);
 private:
   static THD_FUNCTION(nmeaRxThread, arg);
+  static THD_FUNCTION(ubxRxThread, arg);
   gnss_data_t* spamlist[GNSS_MAX_SUBSCRIBERS] = {};
   bool ready = false;
   thread_t *worker = nullptr;

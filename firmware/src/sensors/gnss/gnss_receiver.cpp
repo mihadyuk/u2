@@ -70,6 +70,10 @@ static chibios_rt::BinarySemaphore protect_sem(false);
 
 static mavMail gps_raw_int_mail;
 
+/* constants for NMEA parser needs */
+static const uint16_t GGA_VOID = 0xFFFF;
+static const uint16_t RMC_VOID = (0xFFFF - 1);
+
 /*
  ******************************************************************************
  * PROTOTYPES
@@ -251,9 +255,6 @@ static void gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
 /**
  *
  */
-#define GGA_VOID    0xFFFF
-#define RMC_VOID    (0xFFFF - 1)
-
 static THD_WORKING_AREA(gnssRxThreadWA, 320) __CCM__;
 THD_FUNCTION(GNSSReceiver::nmeaRxThread, arg) {
   chRegSetThreadName("GNSS_NMEA");
@@ -265,7 +266,7 @@ THD_FUNCTION(GNSSReceiver::nmeaRxThread, arg) {
   uint16_t gga_msec = GGA_VOID;
   uint16_t rmc_msec = RMC_VOID;
 
-  osalThreadSleepSeconds(3);
+  osalThreadSleepSeconds(5);
   //gps_configure_mtk();
   gps_configure_ubx();
 
@@ -318,6 +319,44 @@ THD_FUNCTION(GNSSReceiver::nmeaRxThread, arg) {
         if (nullptr != self->sniff_sdp) {
           chprintf((BaseSequentialStream *)self->sniff_sdp, "gga = %u; rmc = %u\n", gga_msec, rmc_msec);
         }
+      }
+    }
+  }
+
+  chThdExit(MSG_OK);
+}
+
+/**
+ *
+ */
+THD_FUNCTION(GNSSReceiver::ubxRxThread, arg) {
+  chRegSetThreadName("GNSS_UBX");
+  GNSSReceiver *self = static_cast<GNSSReceiver *>(arg);
+  msg_t byte;
+  ubx_msg_t status;
+  ubx_nav_posllh posllh;
+  ubx_nav_velned velned;
+
+  osalThreadSleepSeconds(3);
+  gps_configure_ubx();
+
+  while (!chThdShouldTerminateX()) {
+    byte = sdGetTimeout(&GPSSD, MS2ST(100));
+    if (MSG_TIMEOUT != byte) {
+      status = ubx_parser.collect(byte);
+
+      switch(status) {
+      case ubx_msg_t::EMPTY:
+        break;
+      case ubx_msg_t::NAV_POSLLH:
+        ubx_parser.unpack(posllh);
+        break;
+      case ubx_msg_t::NAV_VELNED:
+        ubx_parser.unpack(velned);
+        break;
+      default:
+        ubx_parser.drop(); // it is essential to drop unneded message
+        break;
       }
     }
   }

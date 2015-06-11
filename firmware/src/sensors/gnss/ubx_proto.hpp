@@ -28,10 +28,13 @@ enum class collect_state_t {
  * @note    class ID written in LSB for easier message packing using memcpy()
  */
 enum class ubx_msg_t : uint16_t {
-  CFG_MSG   = 0x0106,
-  CFG_NAV5  = 0x2406,
-  CFG_RATE  = 0x0806,
-  EMPTY     = 0xFFFF
+  EMPTY       = 0x0000,
+  NAV_POSLLH  = 0x0201,
+  NAV_VELNED  = 0x1201,
+  NAV_TIMEUTC = 0x2101,
+  CFG_MSG     = 0x0106,
+  CFG_NAV5    = 0x2406,
+  CFG_RATE    = 0x0806
 };
 
 /**
@@ -42,6 +45,55 @@ struct ubx_cfg_rate {
   uint16_t navRate = 1;     /* always 1 */
   uint16_t timeRef = 0;     /* 0: UTC time, 1: GPS time */
 } __attribute__((packed));
+
+/**
+ *
+ */
+struct ubx_nav_posllh {
+  uint32_t iTOW;// ms GPS time of week
+  int32_t  lon; // deg 10e-7
+  int32_t  lat; // deg 10e-7
+  int32_t  h;   // mm Height above ellipsoid
+  int32_t  hMSL;// mm
+  uint32_t hAcc;// mm Horizontal accuracy estimate
+  uint32_t vAcc;// mm Vertical accuracy estimate
+} __attribute__((packed));
+
+/**
+ *
+ */
+struct ubx_nav_velned {
+  uint32_t iTOW;  // ms GPS time of week
+  int32_t  velN;  // cm/s
+  int32_t  velE;  // cm/s
+  int32_t  velD;  // cm/s
+  uint32_t speed; // cm/s Speed module (3D)
+  uint32_t gSpeed;// cm/s Speed module (2D)
+  int32_t  hdg;   // deg * 1e-5
+  uint32_t sAcc;  // cm/s Speed accuracy estimate
+  uint32_t cAcc;  // deg Coarse/heading accuracy estimate
+} __attribute__((packed));
+
+/**
+ *
+ */
+struct ubx_nav_timeutc {
+  uint32_t iTOW;  // ms GPS time of week
+  uint32_t tAcc;  // ns Time accuracy estimate
+  int32_t  nano;  // ns Fraction of second -1e9..1e9
+  uint16_t year;  // 1999..2099
+  uint8_t  month; // 1..12
+  uint8_t  day;   // 1..31
+  uint8_t  hour;  // 0..23
+  uint8_t  min;   // 0..59
+  uint8_t  sec;   // 0..60
+  uint8_t  valid; // Validity  flags
+} __attribute__((packed));
+
+#error "USE NAV PVT message instead of all previouse"
+#error "CFG_NAV5 to set needed math model"
+#error "CFG_MSG to set output rate"
+#error "CFG_TP5 time pulse param"
 
 /**
  *
@@ -70,7 +122,9 @@ public:
   ubx_msg_t collect(uint8_t byte);
   size_t pack(const ubx_cfg_rate &msg, uint8_t *buf, size_t buflen);
   void unpack(ubx_cfg_rate &msg);
-  void dropMessage(void);
+  void unpack(ubx_nav_posllh &msg);
+  void unpack(ubx_nav_velned &msg);
+  void drop(void);
 private:
   void checksum(const uint8_t *data, size_t len, uint8_t *result);
   bool checksum_ok(void);
