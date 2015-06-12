@@ -19,8 +19,7 @@ using namespace gnss;
  * DEFINES
  ******************************************************************************
  */
-#define PAYLOAD_OFFSET        6U
-#define OVERHEAD_TOTAL        8U
+
 
 /*
  ******************************************************************************
@@ -59,10 +58,10 @@ size_t UbxProto::pack_impl(uint8_t *buf, ubx_msg_t type,
   buf[1] = UBX_SYNC_2;
   memcpy(&buf[2], &type, 2);
   memcpy(&buf[4], &N, 2);
-  memcpy(&buf[PAYLOAD_OFFSET], data, N);
-  checksum(&buf[2], 4+N, &buf[PAYLOAD_OFFSET+N]);
+  memcpy(&buf[UBX_PAYLOAD_OFFSET], data, N);
+  checksum(&buf[2], 4+N, &buf[UBX_PAYLOAD_OFFSET+N]);
 
-  return OVERHEAD_TOTAL + N;
+  return UBX_OVERHEAD_TOTAL + N;
 }
 
 /**
@@ -113,18 +112,6 @@ bool UbxProto::checksum_ok(void) {
  */
 UbxProto::UbxProto(void) {
   return;
-}
-
-/**
- *
- */
-size_t UbxProto::pack(const ubx_cfg_rate &msg, uint8_t *buf, size_t buflen) {
-  uint16_t datalen = sizeof(msg);
-
-  if (buflen < (OVERHEAD_TOTAL + datalen))
-    return 0; // not enough room in buffer
-  else
-    return pack_impl(buf, ubx_msg_t::CFG_RATE, datalen, &msg);
 }
 
 /**
@@ -185,12 +172,16 @@ ubx_msg_t UbxProto::collect(uint8_t b) {
   case collect_state_t::LEN2:
     buf.push(b);
     current_len |= b << 8;
-    if (current_len > UBX_MAX_MSG_LEN - OVERHEAD_TOTAL) {
+    if (current_len > UBX_MAX_MSG_LEN - UBX_OVERHEAD_TOTAL) {
       this->dbg_overflow_cnt++;
       reset();
     }
-    else
-      state = collect_state_t::PAYLOAD;
+    else {
+      if (current_len > 0)
+        state = collect_state_t::PAYLOAD;
+      else
+        state = collect_state_t::CHECKSUM1;
+    }
     break;
 
   /**/
@@ -198,9 +189,8 @@ ubx_msg_t UbxProto::collect(uint8_t b) {
     if (current_len > 0) {
       buf.push(b);
       current_len--;
-    }
-    else {
-      state = collect_state_t::CHECKSUM1;
+      if (0 == current_len)
+        state = collect_state_t::CHECKSUM1;
     }
     break;
 
@@ -214,7 +204,7 @@ ubx_msg_t UbxProto::collect(uint8_t b) {
   case collect_state_t::CHECKSUM2:
     buf.push(b);
     if (checksum_ok()) {
-      memcpy(&ret, buf.data, 2);
+      memcpy(&ret, &buf.data[2], 2);
       state = collect_state_t::WAIT_HARVEST;
     }
     else {
@@ -231,14 +221,6 @@ ubx_msg_t UbxProto::collect(uint8_t b) {
   }
 
   return ret;
-}
-
-/**
- *
- */
-void UbxProto::unpack(ubx_cfg_rate &msg) {
-  memcpy(&msg, &this->buf.data[PAYLOAD_OFFSET], sizeof(msg));
-  this->reset();
 }
 
 /**

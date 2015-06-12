@@ -23,6 +23,15 @@ using namespace gnss;
 #define GPS_DEFAULT_BAUDRATE    9600
 #define GPS_HI_BAUDRATE         57600
 
+/**
+ *
+ */
+enum class ubx_ack_t {
+  NACK  = 0,
+  ACK   = 1,
+  NONE  = 2
+};
+
 /*
  ******************************************************************************
  * EXTERNS
@@ -174,23 +183,130 @@ void gps_configure_mtk(void) {
 }
 
 /**
+ *
+ */
+//void gps_configure_ubx(void) {
+//
+//  /* start on default baudrate */
+//  gps_ser_cfg.speed = GPS_DEFAULT_BAUDRATE;
+//  sdStart(&GPSSD, &gps_ser_cfg);
+//
+//  ubx_message_decimate("GLL", 0);
+//  ubx_message_decimate("GLL", 0);// hack: write message twice for port buffer cleaning
+//  ubx_message_decimate("GSV", 0);
+//  ubx_message_decimate("GSA", 0);
+//  ubx_message_decimate("VTG", 0);
+//
+//  ubx_solution_period(200);
+//}
+
+/**
+ *
+ */
+static void gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
+                        gnss_data_t *result) {
+
+  if (false == result->fresh) {
+    result->altitude   = gga.altitude;
+    result->latitude   = gga.latitude;
+    result->longitude  = gga.longitude;
+    result->course     = rmc.course;
+    result->speed      = rmc.speed;
+    result->speed_type = speed_t::SPEED_COURSE;
+    result->time       = rmc.time;
+    result->sec_round  = rmc.msec == 0;
+    result->fix        = gga.fix;
+    result->fresh      = true; // this line must be at the very end
+  }
+}
+
+/**
+ *
+ */
+static ubx_ack_t ubx_wait_ack(SerialDriver *ubx_sd, ubx_msg_t type, systime_t timeout) {
+  msg_t byte;
+  systime_t start = chVTGetSystemTimeX();
+  systime_t end = start + timeout;
+  ubx_msg_t status;
+  ubx_ack_nack ack_nack;
+  ubx_ack_ack ack_ack;
+  ubx_ack_t ret = ubx_ack_t::NONE;
+
+  while (chVTIsSystemTimeWithinX(start, end)) {
+    byte = sdGetTimeout(ubx_sd, MS2ST(100));
+    if (MSG_TIMEOUT != byte) {
+      status = ubx_parser.collect(byte);
+
+      switch(status) {
+      case ubx_msg_t::EMPTY:
+        break;
+      case ubx_msg_t::ACK_ACK:
+        ubx_parser.unpack(ack_ack);
+        if (ack_ack.msg_type == type) {
+          ret = ubx_ack_t::ACK;
+          goto EXIT;
+        }
+        break;
+      case ubx_msg_t::ACK_NACK:
+        ubx_parser.unpack(ack_nack);
+        if (ack_nack.msg_type == type) {
+          ret = ubx_ack_t::NACK;
+          goto EXIT;
+        }
+        break;
+      default:
+        ubx_parser.drop(); // it is essential to drop unneded message
+        break;
+      }
+    }
+  }
+
+EXIT:
+  return ret;
+}
+
+/**
  * @brief   set solution period
  */
 static void ubx_solution_period(uint16_t msec) {
   uint8_t buf[32];
   ubx_cfg_rate msg;
   size_t len;
-
-  osalDbgCheck(msec >= 200);
+  ubx_ack_t ack;
 
   msg.measRate = msec;
   msg.navRate = 1;
   msg.timeRef = 0;
 
-  len = ubx_parser.pack(msg, buf, sizeof(buf));
+  len = ubx_parser.pack(msg, ubx_msg_t::CFG_RATE, buf, sizeof(buf));
   osalDbgCheck(len > 0 && len <= sizeof(buf));
-
   sdWrite(&GPSSD, buf, len);
+  ack = ubx_wait_ack(&GPSSD, ubx_msg_t::CFG_RATE, S2ST(3));
+  osalDbgCheck(ack == ubx_ack_t::ACK);
+}
+
+/**
+ * @brief   set solution period
+ */
+static void switch_to_binary(void) {
+  uint8_t buf[48];
+  ubx_cfg_prt msg;
+  size_t len;
+  ubx_ack_t ack;
+
+  msg.portID = 1;
+  msg.txready = 0;
+  msg.mode = (0b11 << 6) | (0b100 << 9);
+  msg.baudrate = 9600;
+  msg.inProtoMask = 1;
+  msg.outProtoMask = 1;
+  msg.flags = 0;
+
+  len = ubx_parser.pack(msg, ubx_msg_t::CFG_RATE, buf, sizeof(buf));
+  osalDbgCheck(len > 0 && len <= sizeof(buf));
+  sdWrite(&GPSSD, buf, len);
+  ack = ubx_wait_ack(&GPSSD, ubx_msg_t::CFG_RATE, S2ST(1));
+  osalDbgCheck(ack == ubx_ack_t::ACK);
 }
 
 /**
@@ -217,7 +333,7 @@ static void ubx_message_decimate(const char *type, uint8_t rate) {
 /**
  *
  */
-void gps_configure_ubx(void) {
+void gps_configure_ubx2(void) {
 
   /* start on default baudrate */
   gps_ser_cfg.speed = GPS_DEFAULT_BAUDRATE;
@@ -228,28 +344,11 @@ void gps_configure_ubx(void) {
   ubx_message_decimate("GSV", 0);
   ubx_message_decimate("GSA", 0);
   ubx_message_decimate("VTG", 0);
-
+  //ubx_message_decimate("RMC", 0);
+  //ubx_message_decimate("GGA", 0);
   ubx_solution_period(200);
-}
 
-/**
- *
- */
-static void gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
-                        gnss_data_t *result) {
-
-  if (false == result->fresh) {
-    result->altitude   = gga.altitude;
-    result->latitude   = gga.latitude;
-    result->longitude  = gga.longitude;
-    result->course     = rmc.course;
-    result->speed      = rmc.speed;
-    result->speed_type = speed_t::SPEED_COURSE;
-    result->time       = rmc.time;
-    result->sec_round  = rmc.msec == 0;
-    result->fix        = gga.fix;
-    result->fresh      = true; // this line must be at the very end
-  }
+//  switch_to_binary();
 }
 
 /**
@@ -268,7 +367,7 @@ THD_FUNCTION(GNSSReceiver::nmeaRxThread, arg) {
 
   osalThreadSleepSeconds(5);
   //gps_configure_mtk();
-  gps_configure_ubx();
+  gps_configure_ubx2();
 
   while (!chThdShouldTerminateX()) {
     byte = sdGetTimeout(&GPSSD, MS2ST(100));
@@ -327,6 +426,21 @@ THD_FUNCTION(GNSSReceiver::nmeaRxThread, arg) {
   chThdExit(MSG_OK);
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /**
  *
  */
@@ -340,7 +454,7 @@ THD_FUNCTION(GNSSReceiver::ubxRxThread, arg) {
   ubx_nav_velned velned;
 
   osalThreadSleepSeconds(3);
-  gps_configure_ubx();
+  gps_configure_ubx2();
 
   while (!chThdShouldTerminateX()) {
     byte = sdGetTimeout(&GPSSD, MS2ST(100));

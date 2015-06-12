@@ -5,7 +5,9 @@
 
 namespace gnss {
 
-#define UBX_MAX_MSG_LEN       256
+#define UBX_MAX_MSG_LEN           256
+#define UBX_PAYLOAD_OFFSET        6U
+#define UBX_OVERHEAD_TOTAL        8U
 
 /**
  *
@@ -29,13 +31,32 @@ enum class collect_state_t {
  */
 enum class ubx_msg_t : uint16_t {
   EMPTY       = 0x0000,
+
   NAV_POSLLH  = 0x0201,
   NAV_VELNED  = 0x1201,
   NAV_TIMEUTC = 0x2101,
+
   CFG_MSG     = 0x0106,
   CFG_NAV5    = 0x2406,
-  CFG_RATE    = 0x0806
+  CFG_RATE    = 0x0806,
+
+  ACK_ACK     = 0x0105,
+  ACK_NACK    = 0x0005,
 };
+
+/**
+ *
+ */
+struct ubx_ack_ack {
+  ubx_msg_t msg_type = ubx_msg_t::EMPTY;
+} __attribute__((packed));
+
+/**
+ *
+ */
+struct ubx_ack_nack {
+  ubx_msg_t msg_type = ubx_msg_t::EMPTY;
+} __attribute__((packed));
 
 /**
  *
@@ -44,6 +65,22 @@ struct ubx_cfg_rate {
   uint16_t measRate = 1000; /* milliseconds */
   uint16_t navRate = 1;     /* always 1 */
   uint16_t timeRef = 0;     /* 0: UTC time, 1: GPS time */
+} __attribute__((packed));
+
+/**
+ *
+ */
+struct ubx_cfg_prt {
+  ubx_cfg_prt(void) {memset(this, 0, sizeof(*this));}
+  uint8_t  portID;
+  uint8_t  reserved1;
+  uint16_t txready;
+  uint32_t mode;
+  uint32_t baudrate;
+  uint16_t inProtoMask;
+  uint16_t outProtoMask;
+  uint16_t flags;
+  uint8_t  reserved2[2];
 } __attribute__((packed));
 
 /**
@@ -94,6 +131,7 @@ struct ubx_nav_timeutc {
 //#error "CFG_NAV5 to set needed math model"
 //#error "CFG_MSG to set output rate"
 //#error "CFG_TP5 time pulse param"
+//#error "CFG_PRT for protocols on port"
 
 /**
  *
@@ -120,10 +158,8 @@ class UbxProto {
 public:
   UbxProto(void);
   ubx_msg_t collect(uint8_t byte);
-  size_t pack(const ubx_cfg_rate &msg, uint8_t *buf, size_t buflen);
-  void unpack(ubx_cfg_rate &msg);
-  void unpack(ubx_nav_posllh &msg);
-  void unpack(ubx_nav_velned &msg);
+  template <typename T> size_t pack(const T &msg, ubx_msg_t type, uint8_t *buf, size_t buflen);
+  template <typename T> void unpack(T &msg);
   void drop(void);
 private:
   void checksum(const uint8_t *data, size_t len, uint8_t *result);
@@ -138,6 +174,28 @@ private:
   uint16_t dbg_overflow_cnt = 0;
   uint16_t dbg_unknown_msg_cnt = 0;
 };
+
+/**
+ *
+ */
+template <typename T>
+void UbxProto::unpack(T &msg) {
+  memcpy(&msg, &this->buf.data[UBX_PAYLOAD_OFFSET], sizeof(msg));
+  this->reset();
+}
+
+/**
+ *
+ */
+template <typename T>
+size_t UbxProto::pack(const T &msg, ubx_msg_t type, uint8_t *buf, size_t buflen) {
+  uint16_t datalen = sizeof(msg);
+
+  if (buflen < (UBX_OVERHEAD_TOTAL + datalen))
+    return 0; // not enough room in buffer
+  else
+    return this->pack_impl(buf, type, datalen, &msg);
+}
 
 } /* namespace */
 
