@@ -90,10 +90,10 @@ struct ubx_nav_timeutc {
   uint8_t  valid; // Validity  flags
 } __attribute__((packed));
 
-#error "USE NAV PVT message instead of all previouse"
-#error "CFG_NAV5 to set needed math model"
-#error "CFG_MSG to set output rate"
-#error "CFG_TP5 time pulse param"
+//#error "USE NAV PVT message instead of all previouse"
+//#error "CFG_NAV5 to set needed math model"
+//#error "CFG_MSG to set output rate"
+//#error "CFG_TP5 time pulse param"
 
 /**
  *

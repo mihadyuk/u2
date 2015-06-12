@@ -255,7 +255,7 @@ static void gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
 /**
  *
  */
-static THD_WORKING_AREA(gnssRxThreadWA, 320) __CCM__;
+static THD_WORKING_AREA(gnssRxThreadWA, 400) __CCM__;
 THD_FUNCTION(GNSSReceiver::nmeaRxThread, arg) {
   chRegSetThreadName("GNSS_NMEA");
   GNSSReceiver *self = static_cast<GNSSReceiver *>(arg);
@@ -282,14 +282,14 @@ THD_FUNCTION(GNSSReceiver::nmeaRxThread, arg) {
         nmea_parser.unpack(gga);
         gga_msec = gga.msec + gga.time.tm_sec * 1000;
         if (nullptr != self->sniff_sdp) {
-          chprintf((BaseSequentialStream *)self->sniff_sdp, "gga_parsed = %u", gga.msec);
+          chprintf((BaseSequentialStream *)self->sniff_sdp, "gga_parsed = %u\n", gga.msec);
         }
         break;
       case sentence_type_t::RMC:
         nmea_parser.unpack(rmc);
         rmc_msec = rmc.msec + rmc.time.tm_sec * 1000;
         if (nullptr != self->sniff_sdp) {
-          chprintf((BaseSequentialStream *)self->sniff_sdp, "rmc_parsed = %u", rmc.msec);
+          chprintf((BaseSequentialStream *)self->sniff_sdp, "rmc_parsed = %u\n", rmc.msec);
         }
         break;
       default:
@@ -299,8 +299,6 @@ THD_FUNCTION(GNSSReceiver::nmeaRxThread, arg) {
       /* */
       //if ((gga_msec != rmc_msec) && (gga_msec != GGA_VOID) && (rmc_msec != RMC_VOID)) { // test string
       if (gga_msec == rmc_msec) { // correct string
-        gga_msec = GGA_VOID;
-        rmc_msec = RMC_VOID;
 
         gps2mavlink(gga, rmc);
 
@@ -317,8 +315,11 @@ THD_FUNCTION(GNSSReceiver::nmeaRxThread, arg) {
         }
 
         if (nullptr != self->sniff_sdp) {
-          chprintf((BaseSequentialStream *)self->sniff_sdp, "gga = %u; rmc = %u\n", gga_msec, rmc_msec);
+          chprintf((BaseSequentialStream *)self->sniff_sdp, "---- gga = %u; rmc = %u\n", gga_msec, rmc_msec);
         }
+
+        gga_msec = GGA_VOID;
+        rmc_msec = RMC_VOID;
       }
     }
   }
@@ -332,6 +333,7 @@ THD_FUNCTION(GNSSReceiver::nmeaRxThread, arg) {
 THD_FUNCTION(GNSSReceiver::ubxRxThread, arg) {
   chRegSetThreadName("GNSS_UBX");
   GNSSReceiver *self = static_cast<GNSSReceiver *>(arg);
+  (void)self;
   msg_t byte;
   ubx_msg_t status;
   ubx_nav_posllh posllh;

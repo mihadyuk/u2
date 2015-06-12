@@ -1,7 +1,7 @@
 #pragma GCC optimize "-O2"
 #pragma GCC diagnostic ignored "-Wdouble-promotion"
 
-#define FAKE_SINS     TRUE
+#define FAKE_SINS     FALSE
 
 #include <math.h>
 #include "main.h"
@@ -69,7 +69,7 @@ __CCM__ static RefParams<double> ref_params;
  */
 void Navi6dWrapper::prepare_gnss(const speedometer_data_t &speed) {
 #if ! FAKE_SINS
-  if ((*gnss_block == 0) && (gnss_data.fresh) && (1 == gnss_data.fix)) {
+  if ((*gnss_enable == 1) && (gnss_data.fresh) && (1 == gnss_data.fix)) {
     nav_sins.sensor_data.r_sns[0][0] = deg2rad(gnss_data.latitude);
     nav_sins.sensor_data.r_sns[1][0] = deg2rad(gnss_data.longitude);
     nav_sins.sensor_data.r_sns[2][0] = gnss_data.altitude;
@@ -123,13 +123,13 @@ void Navi6dWrapper::prepare_data(const baro_data_t &abs_press,
 {
   prepare_gnss(speed);
 
-  if (*odo_block == 0) {
+  if (*odo_enable == 1) {
     nav_sins.sensor_flags.odo_en = true;
-    nav_sins.sensor_flags.nonhol_y_en = false;
-    nav_sins.sensor_flags.nonhol_z_en = false;
+    nav_sins.sensor_flags.nonhol_y_en = true;
+    nav_sins.sensor_flags.nonhol_z_en = true;
   }
 
-  if (*baro_block == 0) {
+  if (*baro_enable == 1) {
     nav_sins.sensor_flags.alt_b_en = true;
     nav_sins.sensor_data.alt_b[0][0] = abs_press.alt;
     nav_sins.sensor_flags.baro_fix_en = true;
@@ -213,9 +213,9 @@ void Navi6dWrapper::start(float dT) {
   gnss_data.fresh = false;
   GNSS.subscribe(&gnss_data);
 
-  param_registry.valueSearch("SINS_gnss_block", &gnss_block);
-  param_registry.valueSearch("SINS_odo_block",  &odo_block);
-  param_registry.valueSearch("SINS_baro_block", &baro_block);
+  param_registry.valueSearch("SINS_gnss_enable",&gnss_enable);
+  param_registry.valueSearch("SINS_odo_enable", &odo_enable);
+  param_registry.valueSearch("SINS_baro_enable",&baro_enable);
 
   param_registry.valueSearch("GLRT_acc_sigma",  &acc_sigma);
   param_registry.valueSearch("GLRT_gyr_sigma",  &gyr_sigma);

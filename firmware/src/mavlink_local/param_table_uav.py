@@ -146,9 +146,9 @@ param = [
 ("BAT_fill",        0,          0,          100,        "u", "default",     "Start battery filling in percents"),
 
 # Fusion algorithm settings
-("SINS_gnss_block", 0,          0,          1,          "u", "default",     "Soft block GNSS"),
-("SINS_odo_block",  0,          0,          1,          "u", "default",     "Soft block odometer"),
-("SINS_baro_block", 0,          0,          1,          "u", "default",     "Soft block barometer"),
+("SINS_gnss_enable",0,          1,          1,          "u", "default",     "NULL"),
+("SINS_odo_enable", 0,          1,          1,          "u", "default",     "NULL"),
+("SINS_baro_enable",0,          1,          1,          "u", "default",     "NULL"),
 
 ("GLRT_acc_sigma",  0.0001,     0.01,       1,          "f", "default",     "NULL"),
 ("GLRT_gyr_sigma",  0.00001,    0.01,       0.5,        "f", "default",     "NULL"),

@@ -228,7 +228,6 @@ THD_FUNCTION(TimekeeperThread, arg) {
 
             break; // while(true)
           }
-          #warning "check how it works with new gps"
           gps.fresh = false;
         }
       }

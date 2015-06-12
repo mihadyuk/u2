@@ -28,9 +28,9 @@ private:
   bool ready = false;
   ACSInput &acs_in;
   gnss::gnss_data_t gnss_data;
-  const uint32_t *gnss_block = nullptr;
-  const uint32_t *odo_block  = nullptr;
-  const uint32_t *baro_block = nullptr;
+  const uint32_t *gnss_enable = nullptr;
+  const uint32_t *odo_enable  = nullptr;
+  const uint32_t *baro_enable = nullptr;
 
   const float *acc_sigma = nullptr;
   const float *gyr_sigma = nullptr;
