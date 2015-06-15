@@ -2,7 +2,7 @@
 
 #include "main.h"
 
-#include "gnss_receiver.hpp"
+#include "ublox.hpp"
 #include "cli.hpp"
 
 using namespace chibios_rt;
@@ -19,7 +19,7 @@ using namespace chibios_rt;
  ******************************************************************************
  */
 extern memory_heap_t ThdHeap;
-extern gnss::GNSSReceiver GNSS;
+extern gnss::uBlox GNSS;
 
 /*
  ******************************************************************************

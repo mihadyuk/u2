@@ -180,6 +180,7 @@ SENSORSRC = src/i2c_local.cpp \
 		src/sensors/lsm303_mag.cpp \
 		src/sensors/gnss/nmea_proto.cpp \
 		src/sensors/gnss/ubx_proto.cpp \
+		src/sensors/gnss/ublox.cpp \
 		src/sensors/gnss/gnss_receiver.cpp \
 		src/sensors/gnss/gnss_cli.cpp \
 		src/sensors/bmp085.cpp \

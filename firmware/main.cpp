@@ -39,7 +39,7 @@ Giovanni
 #include "global_flags.h"
 #include "fault_handlers.h"
 #include "mavlink_local.hpp"
-#include "gnss_receiver.hpp"
+#include "ublox.hpp"
 #include "sanity.hpp"
 #include "i2c_local.hpp"
 #include "nvram_local.hpp"
@@ -118,7 +118,7 @@ __CCM__ static marg_data_t marg_data;
 __CCM__ static PPS pps;
 __CCM__ static MPXV mpxv;
 __CCM__ static Calibrator calibrator;
-__CCM__        gnss::GNSSReceiver GNSS;
+__CCM__        gnss::uBlox GNSS(&GPSSD);
 __CCM__ static gnss::gnss_data_t gnss_data;
 
 __CCM__ control::HIL hil;

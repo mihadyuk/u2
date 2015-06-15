@@ -7,7 +7,7 @@
 #include "global_flags.h"
 #include "time_keeper.hpp"
 #include "exti_local.hpp"
-#include "gnss_receiver.hpp"
+#include "ublox.hpp"
 
 /*
  * Время работает следующим образом:
@@ -68,7 +68,7 @@ struct time_staticstic_t {
  * EXTERNS
  ******************************************************************************
  */
-extern gnss::GNSSReceiver GNSS;
+extern gnss::uBlox GNSS;
 
 /*
  ******************************************************************************
@@ -197,7 +197,7 @@ THD_FUNCTION(TimekeeperThread, arg) {
   (void)self;
   msg_t sem_status = MSG_RESET;
   chibios_rt::EvtListener el;
-  event_gps.registerMask(&el, EVMSK_GNSS_FRESH_VALID);
+  event_gnss.registerMask(&el, EVMSK_GNSS_FRESH_VALID);
   eventmask_t gps_evt;
   GNSS.subscribe(&gps);
 
@@ -235,7 +235,7 @@ THD_FUNCTION(TimekeeperThread, arg) {
   }
 
   GNSS.unsubscribe(&gps);
-  event_gps.unregister(&el);
+  event_gnss.unregister(&el);
   chThdExit(MSG_OK);
 }
 

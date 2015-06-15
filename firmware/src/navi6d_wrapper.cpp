@@ -15,7 +15,7 @@
 #include "navi6d_wrapper.hpp"
 #include "mavlink_local.hpp"
 #include "acs_input.hpp"
-#include "gnss_receiver.hpp"
+#include "ublox.hpp"
 #include "geometry.hpp"
 #include "time_keeper.hpp"
 #include "param_registry.hpp"
@@ -36,7 +36,7 @@
  */
 extern mavlink_debug_t                 mavlink_out_debug_struct;
 extern mavlink_debug_vect_t            mavlink_out_debug_vect_struct;
-extern gnss::GNSSReceiver GNSS;
+extern gnss::uBlox GNSS;
 
 /*
  ******************************************************************************
@@ -99,14 +99,14 @@ void Navi6dWrapper::prepare_gnss(const speedometer_data_t &speed) {
       nav_sins.sensor_flags.sns_v_d_en = false;
       break;
     }
+
+    gnss_data.fresh = false; // Important! Must be set to false after data processing
   }
   else {
     nav_sins.sensor_data.v_odo[0][0] = speed.speed;
     nav_sins.sensor_data.v_odo[1][0] = 0;
     nav_sins.sensor_data.v_odo[2][0] = 0;
   }
-
-  gnss_data.fresh = false; // Important! Must be set to false after data processing
 
 #else
   (void)speed;

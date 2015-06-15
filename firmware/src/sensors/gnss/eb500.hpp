@@ -3,17 +3,12 @@
 
 #include "acs_input.hpp"
 #include "gnss_data.hpp"
-#include "mavlink_local.hpp"
-#include "mav_mail.hpp"
 
 #define EVMSK_GNSS_FRESH_VALID    (1UL << 0)
 
-extern chibios_rt::EvtSource event_gnss;
+extern chibios_rt::EvtSource event_gps;
 
 #define GNSS_MAX_SUBSCRIBERS      4
-#define GNSS_HDG_UNKNOWN          65535
-#define GNSS_DEFAULT_BAUDRATE     9600
-#define GNSS_HI_BAUDRATE          57600
 
 namespace gnss {
 
@@ -22,8 +17,8 @@ namespace gnss {
  */
 class GNSSReceiver {
 public:
-  GNSSReceiver(SerialDriver *sdp);
-  virtual void start(void) = 0;
+  GNSSReceiver(void);
+  void start(void);
   void stop(void);
   void getCache(gnss::gnss_data_t &result);
   void subscribe(gnss::gnss_data_t* result);
@@ -31,19 +26,19 @@ public:
   void setSniffer(SerialDriver *sdp);
   void deleteSniffer(void);
   static void GNSS_PPS_ISR_I(void);
-protected:
-  void log_append(const mavlink_gps_raw_int_t *msg);
-  void acquire(void);
-  void release(void);
+private:
+  static THD_FUNCTION(nmeaRxThread, arg);
+  static THD_FUNCTION(ubxRxThread, arg);
+  void update_settings(void);
   gnss_data_t* spamlist[GNSS_MAX_SUBSCRIBERS] = {};
   bool ready = false;
   thread_t *worker = nullptr;
   SerialDriver *sniff_sdp = nullptr;
-  SerialDriver *sdp = nullptr;
+  const uint32_t *dyn_model = nullptr;
+  const uint32_t *fix_period = nullptr;
+  uint32_t dyn_model_cache = 8;
+  uint32_t fix_period_cache = 200;
   gnss_data_t cache;
-  mavMail gps_raw_int_mail;
-  static chibios_rt::BinarySemaphore pps_sem;
-  static chibios_rt::BinarySemaphore protect_sem;
 };
 
 } // namespace
