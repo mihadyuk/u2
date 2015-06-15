@@ -10,6 +10,7 @@
 #include "pads.h"
 #include "chprintf.h"
 #include "array_len.hpp"
+#include "param_registry.hpp"
 
 using namespace gnss;
 
@@ -20,8 +21,8 @@ using namespace gnss;
  */
 #define HDG_UNKNOWN             65535
 
-#define GPS_DEFAULT_BAUDRATE    9600
-#define GPS_HI_BAUDRATE         57600
+#define GNSS_DEFAULT_BAUDRATE    9600
+#define GNSS_HI_BAUDRATE         57600
 
 /**
  *
@@ -52,7 +53,7 @@ extern MavLogger mav_logger;
  *
  */
 static SerialConfig gps_ser_cfg = {
-    GPS_DEFAULT_BAUDRATE,
+    GNSS_DEFAULT_BAUDRATE,
     0,
     0,
     0,
@@ -145,10 +146,32 @@ static void gps2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc) {
 /**
  *
  */
+static void gps2mavlink(const ubx_nav_pvt &pvt) {
+
+  mavlink_out_gps_raw_int_struct.time_usec = TimeKeeper::utc();
+  mavlink_out_gps_raw_int_struct.lat = pvt.lat;
+  mavlink_out_gps_raw_int_struct.lon = pvt.lon;
+  mavlink_out_gps_raw_int_struct.alt = pvt.h;
+  mavlink_out_gps_raw_int_struct.eph = pvt.pDOP;
+  mavlink_out_gps_raw_int_struct.epv = UINT16_MAX;
+  if (pvt.fixFlags & 1)
+    mavlink_out_gps_raw_int_struct.fix_type = pvt.fixType;
+  else
+    mavlink_out_gps_raw_int_struct.fix_type = 0;
+  mavlink_out_gps_raw_int_struct.satellites_visible = pvt.numSV;
+  mavlink_out_gps_raw_int_struct.cog = pvt.hdg / 1000;
+  mavlink_out_gps_raw_int_struct.vel = pvt.gSpeed;
+
+  log_append();
+}
+
+/**
+ *
+ */
 void gps_configure_mtk(void) {
 
   /* start on default baudrate */
-  gps_ser_cfg.speed = GPS_DEFAULT_BAUDRATE;
+  gps_ser_cfg.speed = GNSS_DEFAULT_BAUDRATE;
   sdStart(&GPSSD, &gps_ser_cfg);
 
   /* set only GGA, RMC output. We have to do this some times
@@ -214,10 +237,78 @@ static void gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
     result->speed      = rmc.speed;
     result->speed_type = speed_t::SPEED_COURSE;
     result->time       = rmc.time;
-    result->sec_round  = rmc.msec == 0;
+    result->msec       = rmc.msec;
     result->fix        = gga.fix;
     result->fresh      = true; // this line must be at the very end
   }
+}
+
+/**
+int tm_sec       seconds after minute [0-61] (61 allows for 2 leap-seconds)
+int tm_min       minutes after hour [0-59]
+int tm_hour      hours after midnight [0-23]
+int tm_mday      day of the month [1-31]
+int tm_mon       month of year [0-11]
+int tm_year      current year-1900
+int tm_wday      days since Sunday [0-6]
+int tm_yday      days since January 1st [0-365]
+int tm_isdst     daylight savings indicator (1 = yes, 0 = no, -1 = unknown)
+ */
+static void pvt2time(const ubx_nav_pvt &pvt, struct tm *time) {
+  memset(time, 0, sizeof(struct tm));
+
+  time->tm_year = pvt.year - 1900;
+  time->tm_mon  = pvt.month - 1;
+  time->tm_mday = pvt.day;
+  time->tm_hour = pvt.hour;
+  time->tm_min  = pvt.min;
+  time->tm_sec  = pvt.sec;
+}
+
+/**
+ *
+ */
+static void gnss_unpack(const ubx_nav_pvt &pvt, gnss_data_t *result) {
+
+  if (false == result->fresh) {
+    result->altitude   = pvt.h / 1000.0;
+    result->latitude   = pvt.lat;
+    result->latitude   /= DEG_TO_MAVLINK;
+    result->longitude  = pvt.lon;
+    result->longitude  /= DEG_TO_MAVLINK;
+    result->v[0] = pvt.velN / 100.0;
+    result->v[1] = pvt.velE / 100.0;
+    result->v[2] = pvt.velD / 100.0;
+    result->speed_type = speed_t::VECTOR_3D;
+    pvt2time(pvt, &result->time);
+    result->msec       = pvt.nano / 1000000;
+    if (pvt.fixFlags & 1)
+      result->fix      = pvt.fixType;
+    else
+      result->fix      = 0;
+    result->fresh      = true; // this line must be at the very end
+  }
+}
+
+/**
+ *
+ */
+void ubx_message_decimate(const char *type, uint8_t rate) {
+  char msg[84];
+  memset(msg, 0, sizeof(msg));
+
+  osalDbgCheck(3 == strlen(type));
+  osalDbgCheck(rate <= 5);
+
+  strcpy(msg, "$PUBX,40,---,0,0,0,0,0,0*");
+  msg[9]  = type[0];
+  msg[10] = type[1];
+  msg[11] = type[2];
+  msg[15] = rate + '0';
+
+  nmea_parser.seal(msg);
+
+  sdWrite(&GPSSD, (uint8_t*)msg, strlen(msg));
 }
 
 /**
@@ -268,9 +359,9 @@ EXIT:
 /**
  * @brief   set solution period
  */
-static void ubx_solution_period(uint16_t msec) {
-  uint8_t buf[32];
+static void ubx_fix_period(uint16_t msec) {
   ubx_cfg_rate msg;
+  uint8_t buf[sizeof(msg) + UBX_OVERHEAD_TOTAL];
   size_t len;
   ubx_ack_t ack;
 
@@ -288,73 +379,108 @@ static void ubx_solution_period(uint16_t msec) {
 /**
  * @brief   set solution period
  */
-static void switch_to_binary(void) {
-  uint8_t buf[48];
+static void ubx_port_settings(void) {
   ubx_cfg_prt msg;
+  uint8_t buf[sizeof(msg) + UBX_OVERHEAD_TOTAL];
   size_t len;
-  ubx_ack_t ack;
 
   msg.portID = 1;
   msg.txready = 0;
   msg.mode = (0b11 << 6) | (0b100 << 9);
-  msg.baudrate = 9600;
+  msg.baudrate = GNSS_HI_BAUDRATE;
   msg.inProtoMask = 1;
-  msg.outProtoMask = 1;
+  //msg.outProtoMask = 0b11; // nmea + ubx
+  msg.outProtoMask = 0b1; // ubx only
   msg.flags = 0;
 
-  len = ubx_parser.pack(msg, ubx_msg_t::CFG_RATE, buf, sizeof(buf));
+  len = ubx_parser.pack(msg, ubx_msg_t::CFG_PRT, buf, sizeof(buf));
   osalDbgCheck(len > 0 && len <= sizeof(buf));
   sdWrite(&GPSSD, buf, len);
-  ack = ubx_wait_ack(&GPSSD, ubx_msg_t::CFG_RATE, S2ST(1));
+  osalThreadSleepMilliseconds(100);
+}
+
+/**
+ * @brief   set solution period
+ */
+static void ubx_filter_profile(uint32_t dyn_model) {
+  ubx_ack_t ack;
+  ubx_cfg_nav5 msg;
+  uint8_t buf[sizeof(msg) + UBX_OVERHEAD_TOTAL];
+  size_t len;
+
+  /* protect from setting of reserved value */
+  if (dyn_model == 1)
+    dyn_model = 0;
+
+  msg.dynModel = dyn_model;
+  msg.fixMode = 2;
+  msg.mask = 0b101;
+
+  len = ubx_parser.pack(msg, ubx_msg_t::CFG_NAV5, buf, sizeof(buf));
+  osalDbgCheck(len > 0 && len <= sizeof(buf));
+  sdWrite(&GPSSD, buf, len);
+  ack = ubx_wait_ack(&GPSSD, ubx_msg_t::CFG_NAV5, S2ST(1));
+  osalDbgCheck(ack == ubx_ack_t::ACK);
+}
+
+/**
+ * @brief   set solution period
+ */
+static void ubx_message_rate(void) {
+  ubx_ack_t ack;
+  ubx_cfg_msg msg;
+  uint8_t buf[sizeof(msg) + UBX_OVERHEAD_TOTAL];
+  size_t len;
+
+  msg.rate = 1;
+  msg.msg_type = ubx_msg_t::NAV_PVT;
+
+  len = ubx_parser.pack(msg, ubx_msg_t::CFG_MSG, buf, sizeof(buf));
+  osalDbgCheck(len > 0 && len <= sizeof(buf));
+  sdWrite(&GPSSD, buf, len);
+  ack = ubx_wait_ack(&GPSSD, ubx_msg_t::CFG_MSG, S2ST(1));
   osalDbgCheck(ack == ubx_ack_t::ACK);
 }
 
 /**
  *
  */
-static void ubx_message_decimate(const char *type, uint8_t rate) {
-  char msg[84];
-  memset(msg, 0, sizeof(msg));
-
-  osalDbgCheck(3 == strlen(type));
-  osalDbgCheck(rate <= 5);
-
-  strcpy(msg, "$PUBX,40,---,0,0,0,0,0,0*");
-  msg[9]  = type[0];
-  msg[10] = type[1];
-  msg[11] = type[2];
-  msg[15] = rate + '0';
-
-  nmea_parser.seal(msg);
-
-  sdWrite(&GPSSD, (uint8_t*)msg, strlen(msg));
-}
-
-/**
- *
- */
-void gps_configure_ubx2(void) {
+void ubx_configure(uint32_t dyn_model, uint32_t fix_period) {
 
   /* start on default baudrate */
-  gps_ser_cfg.speed = GPS_DEFAULT_BAUDRATE;
+  gps_ser_cfg.speed = GNSS_DEFAULT_BAUDRATE;
   sdStart(&GPSSD, &gps_ser_cfg);
 
-  ubx_message_decimate("GLL", 0);
-  ubx_message_decimate("GLL", 0);// hack: write message twice for port buffer cleaning
-  ubx_message_decimate("GSV", 0);
-  ubx_message_decimate("GSA", 0);
-  ubx_message_decimate("VTG", 0);
-  //ubx_message_decimate("RMC", 0);
-  //ubx_message_decimate("GGA", 0);
-  ubx_solution_period(200);
+  ubx_port_settings();
+  sdStop(&GPSSD);
+  gps_ser_cfg.speed = GNSS_HI_BAUDRATE;
+  sdStart(&GPSSD, &gps_ser_cfg);
 
-//  switch_to_binary();
+  ubx_fix_period(fix_period);
+  ubx_filter_profile(dyn_model);
+  ubx_message_rate();
 }
 
 /**
  *
  */
-static THD_WORKING_AREA(gnssRxThreadWA, 400) __CCM__;
+void GNSSReceiver::update_settings(void) {
+
+  if (dyn_model_cache != *dyn_model) {
+    dyn_model_cache = *dyn_model;
+    ubx_filter_profile(dyn_model_cache);
+  }
+
+  if (fix_period_cache != *fix_period) {
+    fix_period_cache = *fix_period;
+    ubx_fix_period(fix_period_cache);
+  }
+}
+
+/**
+ *
+ */
+__CCM__ static THD_WORKING_AREA(gnssRxThreadWA, 400);
 THD_FUNCTION(GNSSReceiver::nmeaRxThread, arg) {
   chRegSetThreadName("GNSS_NMEA");
   GNSSReceiver *self = static_cast<GNSSReceiver *>(arg);
@@ -365,11 +491,17 @@ THD_FUNCTION(GNSSReceiver::nmeaRxThread, arg) {
   uint16_t gga_msec = GGA_VOID;
   uint16_t rmc_msec = RMC_VOID;
 
-  osalThreadSleepSeconds(5);
+  osalThreadSleepSeconds(2);
   //gps_configure_mtk();
-  gps_configure_ubx2();
+  osalSysLock();
+  self->dyn_model_cache = *self->dyn_model;
+  self->fix_period_cache = *self->fix_period;
+  osalSysUnlock();
+  ubx_configure(self->dyn_model_cache, self->fix_period_cache);
 
   while (!chThdShouldTerminateX()) {
+    self->update_settings();
+
     byte = sdGetTimeout(&GPSSD, MS2ST(100));
     if (MSG_TIMEOUT != byte) {
       status = nmea_parser.collect(byte);
@@ -426,20 +558,22 @@ THD_FUNCTION(GNSSReceiver::nmeaRxThread, arg) {
   chThdExit(MSG_OK);
 }
 
+/**
+ *
+ */
+void GNSSReceiver::pvtdispatch(const ubx_nav_pvt &pvt) {
+  acquire();
+  for (size_t i=0; i<ArrayLen(this->spamlist); i++) {
+    if (nullptr != this->spamlist[i]) {
+      gnss_unpack(pvt, this->spamlist[i]);
+    }
+  }
+  release();
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+  if (((pvt.fixType == 3) || (pvt.fixType == 4)) && (pvt.fixFlags & 1)) {
+    event_gps.broadcastFlags(EVMSK_GNSS_FRESH_VALID);
+  }
+}
 
 /**
  *
@@ -450,13 +584,18 @@ THD_FUNCTION(GNSSReceiver::ubxRxThread, arg) {
   (void)self;
   msg_t byte;
   ubx_msg_t status;
-  ubx_nav_posllh posllh;
-  ubx_nav_velned velned;
+  ubx_nav_pvt pvt;
 
-  osalThreadSleepSeconds(3);
-  gps_configure_ubx2();
+  osalThreadSleepSeconds(2);
+
+  osalSysLock();
+  self->dyn_model_cache  = *self->dyn_model;
+  self->fix_period_cache = *self->fix_period;
+  osalSysUnlock();
+  ubx_configure(self->dyn_model_cache, self->fix_period_cache);
 
   while (!chThdShouldTerminateX()) {
+    self->update_settings();
     byte = sdGetTimeout(&GPSSD, MS2ST(100));
     if (MSG_TIMEOUT != byte) {
       status = ubx_parser.collect(byte);
@@ -464,11 +603,10 @@ THD_FUNCTION(GNSSReceiver::ubxRxThread, arg) {
       switch(status) {
       case ubx_msg_t::EMPTY:
         break;
-      case ubx_msg_t::NAV_POSLLH:
-        ubx_parser.unpack(posllh);
-        break;
-      case ubx_msg_t::NAV_VELNED:
-        ubx_parser.unpack(velned);
+      case ubx_msg_t::NAV_PVT:
+        ubx_parser.unpack(pvt);
+        gps2mavlink(pvt);
+        self->pvtdispatch(pvt);
         break;
       default:
         ubx_parser.drop(); // it is essential to drop unneded message
@@ -497,8 +635,11 @@ GNSSReceiver::GNSSReceiver(void) {
  */
 void GNSSReceiver::start(void) {
 
+  param_registry.valueSearch("GNSS_dyn_model",  &dyn_model);
+  param_registry.valueSearch("GNSS_fix_period", &fix_period);
+
   worker = chThdCreateStatic(gnssRxThreadWA, sizeof(gnssRxThreadWA),
-                    GPSPRIO, nmeaRxThread, this);
+                      GPSPRIO, ubxRxThread, this);
   osalDbgCheck(nullptr != worker);
   ready = true;
 }

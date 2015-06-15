@@ -1,3 +1,5 @@
+#pragma GCC optimize "-O2"
+
 #include <ctime>
 #include <cmath>
 #include <cstring>
@@ -172,7 +174,7 @@ ubx_msg_t UbxProto::collect(uint8_t b) {
   case collect_state_t::LEN2:
     buf.push(b);
     current_len |= b << 8;
-    if (current_len > UBX_MAX_MSG_LEN - UBX_OVERHEAD_TOTAL) {
+    if (current_len > UBX_MSG_BUF_LEN - UBX_OVERHEAD_TOTAL) {
       this->dbg_overflow_cnt++;
       reset();
     }
@@ -208,6 +210,7 @@ ubx_msg_t UbxProto::collect(uint8_t b) {
       state = collect_state_t::WAIT_HARVEST;
     }
     else {
+      this->dbg_bad_crc++;
       reset();
     }
     break;
@@ -227,5 +230,6 @@ ubx_msg_t UbxProto::collect(uint8_t b) {
  *
  */
 void UbxProto::drop(void) {
+  this->dbg_drop_msg++;
   this->reset();
 }

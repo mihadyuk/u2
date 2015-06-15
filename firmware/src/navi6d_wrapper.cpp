@@ -69,7 +69,7 @@ __CCM__ static RefParams<double> ref_params;
  */
 void Navi6dWrapper::prepare_gnss(const speedometer_data_t &speed) {
 #if ! FAKE_SINS
-  if ((*gnss_enable == 1) && (gnss_data.fresh) && (1 == gnss_data.fix)) {
+  if ((*gnss_enable == 1) && (gnss_data.fresh) && (gnss_data.fix > 0)) {
     nav_sins.sensor_data.r_sns[0][0] = deg2rad(gnss_data.latitude);
     nav_sins.sensor_data.r_sns[1][0] = deg2rad(gnss_data.longitude);
     nav_sins.sensor_data.r_sns[2][0] = gnss_data.altitude;
@@ -159,9 +159,9 @@ void Navi6dWrapper::navi2acs(void) {
 
   const NaviData<double> &data = nav_sins.navi_data;
 
-  acs_in.ch[ACS_INPUT_roll]   = data.eu_nv[0][0];
-  acs_in.ch[ACS_INPUT_pitch]  = data.eu_nv[1][0];
-  acs_in.ch[ACS_INPUT_yaw]    = data.eu_nv[2][0];
+  acs_in.ch[ACS_INPUT_roll] = data.eu_nv[0][0];
+  acs_in.ch[ACS_INPUT_pitch]= data.eu_nv[1][0];
+  acs_in.ch[ACS_INPUT_yaw]  = data.eu_nv[2][0];
 
   acs_in.ch[ACS_INPUT_lat] = data.r[0][0];
   acs_in.ch[ACS_INPUT_lon] = data.r[1][0];
@@ -247,9 +247,9 @@ void Navi6dWrapper::start(float dT) {
   calib_params.bw_sat[1][0] = deg2rad(25.0);
   calib_params.bw_sat[2][0] = deg2rad(25.0);
 
-  kalman_params.sigma_R[0][0] = 2.5; //ne_sns
-  kalman_params.sigma_R[1][0] = 5; //d_sns
-  kalman_params.sigma_R[2][0] = 0.1; //v_n_sns
+  kalman_params.sigma_R[0][0] = 5; //ne_sns
+  kalman_params.sigma_R[1][0] = 10; //d_sns
+  kalman_params.sigma_R[2][0] = 0.2; //v_n_sns
   kalman_params.sigma_R[3][0] = 0.1; //odo
   kalman_params.sigma_R[4][0] = 0.1; //nonhol
   kalman_params.sigma_R[5][0] = 0.3; //baro

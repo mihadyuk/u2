@@ -211,7 +211,7 @@ THD_FUNCTION(TimekeeperThread, arg) {
       while (true) { /* wait first measurement with round seconds */
         gps_evt = chEvtWaitOneTimeout(EVMSK_GNSS_FRESH_VALID, MS2ST(1200));
         if (EVMSK_GNSS_FRESH_VALID == gps_evt) {
-          if (gps.sec_round) {
+          if (0 == gps.msec) {
             int64_t tmp = 1000000;
             tmp *= mktime(&gps.time);
             osalSysLock();

@@ -429,6 +429,10 @@ param = [
 ("SPD_speed",       0.0,    0,      60.0,   "f", "default",    "NULL"),
 ("SPD_speed_max",   0.0,    0,      60.0,   "f", "default",    "NULL"),
 
+# GNSS settings
+("GNSS_dyn_model",  0,      8,      8,      "u", "default",    "NULL"),
+("GNSS_fix_period", 100,    200,    1000,   "u", "default",    "NULL"),
+
 #/**** Variables for debugging purpose ****/
 ("DBG_lat",         -360,   0,      360,    "f", "default",    "NULL"),
 ("DBG_lon",         -360,   0,      360,    "f", "default",    "NULL"),

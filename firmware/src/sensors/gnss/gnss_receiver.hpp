@@ -3,6 +3,7 @@
 
 #include "acs_input.hpp"
 #include "gnss_data.hpp"
+#include "ubx_proto.hpp"
 
 #define EVMSK_GNSS_FRESH_VALID    (1UL << 0)
 
@@ -29,10 +30,16 @@ public:
 private:
   static THD_FUNCTION(nmeaRxThread, arg);
   static THD_FUNCTION(ubxRxThread, arg);
+  void update_settings(void);
+  void pvtdispatch(const ubx_nav_pvt &pvt);
   gnss_data_t* spamlist[GNSS_MAX_SUBSCRIBERS] = {};
   bool ready = false;
   thread_t *worker = nullptr;
   SerialDriver *sniff_sdp = nullptr;
+  const uint32_t *dyn_model = nullptr;
+  const uint32_t *fix_period = nullptr;
+  uint32_t dyn_model_cache = 8;
+  uint32_t fix_period_cache = 200;
   gnss_data_t cache;
 };
 
