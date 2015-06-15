@@ -59,7 +59,7 @@ __CCM__ static UbxProto ubx_parser;
 /**
  *
  */
-void uBlox::gnss2mavlink(const ubx_nav_pvt &pvt) {
+void uBlox::gnss2mavlink(const ubx_nav_pvt_payload &pvt) {
 
   mavlink_out_gps_raw_int_struct.time_usec = TimeKeeper::utc();
   mavlink_out_gps_raw_int_struct.lat = pvt.lat;
@@ -89,7 +89,7 @@ int tm_wday      days since Sunday [0-6]
 int tm_yday      days since January 1st [0-365]
 int tm_isdst     daylight savings indicator (1 = yes, 0 = no, -1 = unknown)
  */
-static void pvt2time(const ubx_nav_pvt &pvt, struct tm *time) {
+static void pvt2time(const ubx_nav_pvt_payload &pvt, struct tm *time) {
   memset(time, 0, sizeof(struct tm));
 
   time->tm_year = pvt.year - 1900;
@@ -103,14 +103,14 @@ static void pvt2time(const ubx_nav_pvt &pvt, struct tm *time) {
 /**
  *
  */
-ubx_ack_t uBlox::wait_ack(ubx_msg_t type, systime_t timeout) {
+ublox_ack_t uBlox::wait_ack(ubx_msg_t type, systime_t timeout) {
   msg_t byte;
   systime_t start = chVTGetSystemTimeX();
   systime_t end = start + timeout;
   ubx_msg_t status;
   ubx_ack_nack ack_nack;
   ubx_ack_ack ack_ack;
-  ubx_ack_t ret = ubx_ack_t::NONE;
+  ublox_ack_t ret = ublox_ack_t::NONE;
 
   while (chVTIsSystemTimeWithinX(start, end)) {
     byte = sdGetTimeout(this->sdp, MS2ST(100));
@@ -122,20 +122,20 @@ ubx_ack_t uBlox::wait_ack(ubx_msg_t type, systime_t timeout) {
         break;
       case ubx_msg_t::ACK_ACK:
         ubx_parser.unpack(ack_ack);
-        if (ack_ack.msg_type == type) {
-          ret = ubx_ack_t::ACK;
+        if (ack_ack.data.acked_msg == type) {
+          ret = ublox_ack_t::ACK;
           goto EXIT;
         }
         break;
       case ubx_msg_t::ACK_NACK:
         ubx_parser.unpack(ack_nack);
-        if (ack_nack.msg_type == type) {
-          ret = ubx_ack_t::NACK;
+        if (ack_nack.data.nacked_msg == type) {
+          ret = ublox_ack_t::NACK;
           goto EXIT;
         }
         break;
       default:
-        ubx_parser.drop(); // it is essential to drop unneded message
+        ubx_parser.drop(); // it is very important to drop unneeded message
         break;
       }
     }
@@ -150,18 +150,18 @@ EXIT:
  * @note      Set timeout to 0 if confirm not needed
  */
 template <typename T>
-void uBlox::write_with_confirm(T msg, ubx_msg_t type, systime_t timeout) {
+void uBlox::write_with_confirm(const T &msg, systime_t timeout) {
 
   uint8_t buf[sizeof(msg) + UBX_OVERHEAD_TOTAL];
   size_t len;
-  ubx_ack_t ack;
+  ublox_ack_t ack;
 
-  len = ubx_parser.pack(msg, type, buf, sizeof(buf));
+  len = ubx_parser.pack(msg, buf, sizeof(buf));
   osalDbgCheck(len > 0 && len <= sizeof(buf));
   sdWrite(this->sdp, buf, len);
   if (0 != timeout) {
-    ack = wait_ack(type, timeout);
-    osalDbgCheck(ack == ubx_ack_t::ACK);
+    ack = wait_ack(msg.rtti, timeout);
+    osalDbgCheck(ack == ublox_ack_t::ACK);
   }
   else {
     osalThreadSleepMilliseconds(100);
@@ -174,11 +174,11 @@ void uBlox::write_with_confirm(T msg, ubx_msg_t type, systime_t timeout) {
 void uBlox::set_fix_period(uint16_t msec) {
   ubx_cfg_rate msg;
 
-  msg.measRate = msec;
-  msg.navRate = 1;
-  msg.timeRef = 0;
+  msg.data.measRate = msec;
+  msg.data.navRate = 1;
+  msg.data.timeRef = 0;
 
-  this->write_with_confirm(msg, ubx_msg_t::CFG_RATE, S2ST(1));
+  this->write_with_confirm(msg, S2ST(1));
 }
 
 /**
@@ -187,16 +187,16 @@ void uBlox::set_fix_period(uint16_t msec) {
 void uBlox::set_port(void) {
   ubx_cfg_prt msg;
 
-  msg.portID = 1;
-  msg.txready = 0;
-  msg.mode = (0b11 << 6) | (0b100 << 9);
-  msg.baudrate = GNSS_HI_BAUDRATE;
-  msg.inProtoMask = 1;
+  msg.data.portID = 1;
+  msg.data.txready = 0;
+  msg.data.mode = (0b11 << 6) | (0b100 << 9);
+  msg.data.baudrate = GNSS_HI_BAUDRATE;
+  msg.data.inProtoMask = 1;
   //msg.outProtoMask = 0b11; // nmea + ubx
-  msg.outProtoMask = 0b1; // ubx only
-  msg.flags = 0;
+  msg.data.outProtoMask = 0b1; // ubx only
+  msg.data.flags = 0;
 
-  write_with_confirm(msg, ubx_msg_t::CFG_PRT, 0);
+  write_with_confirm(msg, 0);
 }
 
 /**
@@ -209,11 +209,11 @@ void uBlox::set_dyn_model(uint32_t dyn_model) {
   if (dyn_model == 1)
     dyn_model = 0;
 
-  msg.dynModel = dyn_model;
-  msg.fixMode = 2;
-  msg.mask = 0b101;
+  msg.data.dynModel = dyn_model;
+  msg.data.fixMode = 2;
+  msg.data.mask = 0b101;
 
-  write_with_confirm(msg, ubx_msg_t::CFG_NAV5, S2ST(1));
+  write_with_confirm(msg, S2ST(1));
 }
 
 /**
@@ -222,10 +222,10 @@ void uBlox::set_dyn_model(uint32_t dyn_model) {
 void uBlox::set_message_rate(void) {
   ubx_cfg_msg msg;
 
-  msg.rate = 1;
-  msg.msg_type = ubx_msg_t::NAV_PVT;
+  msg.data.rate = 1;
+  msg.data.msg_wanted = ubx_msg_t::NAV_PVT;
 
-  write_with_confirm(msg, ubx_msg_t::CFG_MSG, S2ST(1));
+  write_with_confirm(msg, S2ST(1));
 }
 
 /**
@@ -265,40 +265,42 @@ void uBlox::update_settings(void) {
 /**
  *
  */
-static void gnss_unpack(const ubx_nav_pvt &pvt, gnss_data_t *result) {
+static void pvt2gnss(const ubx_nav_pvt_payload &pvt, gnss_data_t *result) {
 
-  if (false == result->fresh) {
-    result->altitude   = pvt.h / 1000.0;
-    result->latitude   = pvt.lat;
-    result->latitude   /= DEG_TO_MAVLINK;
-    result->longitude  = pvt.lon;
-    result->longitude  /= DEG_TO_MAVLINK;
-    result->v[0] = pvt.velN / 100.0;
-    result->v[1] = pvt.velE / 100.0;
-    result->v[2] = pvt.velD / 100.0;
-    result->speed_type = speed_t::VECTOR_3D;
-    pvt2time(pvt, &result->time);
-    result->msec       = pvt.nano / 1000000;
-    if (pvt.fixFlags & 1)
-      result->fix      = pvt.fixType;
-    else
-      result->fix      = 0;
-    result->fresh      = true; // this line must be at the very end
-  }
+  result->altitude   = pvt.h / 1000.0;
+  result->latitude   = pvt.lat;
+  result->latitude   /= DEG_TO_MAVLINK;
+  result->longitude  = pvt.lon;
+  result->longitude  /= DEG_TO_MAVLINK;
+  result->v[0] = pvt.velN / 100.0;
+  result->v[1] = pvt.velE / 100.0;
+  result->v[2] = pvt.velD / 100.0;
+  result->speed_type = speed_t::VECTOR_3D;
+  pvt2time(pvt, &result->time);
+  result->msec       = pvt.nano / 1000000;
+  if (pvt.fixFlags & 1)
+    result->fix      = pvt.fixType;
+  else
+    result->fix      = 0;
+  result->fresh      = true;
 }
 
 /**
  *
  */
-void uBlox::pvtdispatch(const ubx_nav_pvt &pvt) {
+void uBlox::pvtdispatch(const ubx_nav_pvt_payload &pvt) {
 
   acquire();
-  gnss_unpack(pvt, &this->cache);
+  pvt2gnss(pvt, &this->cache);
+  cache.fresh = false;
+
   for (size_t i=0; i<ArrayLen(this->spamlist); i++) {
-    if (nullptr != this->spamlist[i]) {
-//      gnss_unpack(pvt, this->spamlist[i]);
-      memcpy(this->spamlist[i], &this->cache, sizeof(this->cache));
-#warning "this does not work because of no check of 'fresh' flag"
+    gnss_data_t *p = this->spamlist[i];
+    if (nullptr != p) {
+      if (p->fresh == false) {
+        memcpy(p, &this->cache, sizeof(this->cache));
+        p->fresh = true; // this line must be at the very end for atomicity
+      }
     }
   }
   release();
@@ -338,11 +340,11 @@ THD_FUNCTION(uBlox::ubxRxThread, arg) {
         break;
       case ubx_msg_t::NAV_PVT:
         ubx_parser.unpack(pvt);
-        self->gnss2mavlink(pvt);
-        self->pvtdispatch(pvt);
+        self->gnss2mavlink(pvt.data);
+        self->pvtdispatch(pvt.data);
         break;
       default:
-        ubx_parser.drop(); // it is essential to drop unneded message
+        ubx_parser.drop(); // it is essential to drop unneeded message
         break;
       }
     }

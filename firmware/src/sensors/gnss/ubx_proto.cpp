@@ -55,7 +55,7 @@ static const uint8_t UBX_SYNC_2 = 0x62;
  *
  */
 size_t UbxProto::pack_impl(uint8_t *buf, ubx_msg_t type,
-                             uint16_t N, const void *data) {
+                           uint16_t N, const void *data) {
   buf[0] = UBX_SYNC_1;
   buf[1] = UBX_SYNC_2;
   memcpy(&buf[2], &type, 2);
@@ -102,6 +102,15 @@ bool UbxProto::checksum_ok(void) {
   size_t L = buf.get_len() - 4;
   this->checksum(&buf.data[2], L, sum);
   return 0 == memcmp(sum, &buf.data[L+2], 2);
+}
+
+/**
+ *
+ */
+ubx_msg_t UbxProto::extract_rtti(uint8_t *data) {
+  ubx_msg_t ret;
+  memcpy(&ret, &data[2], sizeof(ret));
+  return ret;
 }
 
 /*
@@ -219,7 +228,7 @@ ubx_msg_t UbxProto::collect(uint8_t b) {
     /* You can not call parser until collected data pending in buffer.
        You have to call unpack() or dropMessage() method to correctly
        exit from this state */
-    osalSysHalt("Eror trap");
+    osalSysHalt("Error trap");
     break;
   }
 
