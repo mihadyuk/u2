@@ -264,24 +264,24 @@ void uBlox::update_settings(void) {
  */
 static void pvt2gnss(const ubx_nav_pvt_payload &pvt, gnss_data_t *result) {
 
-  result->altitude  = pvt.h / 1000.0;
-  result->latitude  = pvt.lat;
-  result->latitude  /= DEG_TO_MAVLINK;
-  result->longitude = pvt.lon;
-  result->longitude /= DEG_TO_MAVLINK;
-  result->v[0]      = pvt.velN / 100.0;
-  result->v[1]      = pvt.velE / 100.0;
-  result->v[2]      = pvt.velD / 100.0;
-  result->speed     = pvt.gSpeed / 100.0;
-  result->course    = pvt.hdg * 1e-5;
-  result->speed_type= GNSS_SPEED_TYPE_SPEED_COURSE | GNSS_SPEED_TYPE_VECTOR_3D;
+  result->altitude    = pvt.h / 1000.0;
+  result->latitude    = pvt.lat;
+  result->latitude    /= DEG_TO_MAVLINK;
+  result->longitude   = pvt.lon;
+  result->longitude   /= DEG_TO_MAVLINK;
+  result->v[0]        = pvt.velN / 100.0;
+  result->v[1]        = pvt.velE / 100.0;
+  result->v[2]        = pvt.velD / 100.0;
+  result->speed       = pvt.gSpeed / 100.0;
+  result->course      = pvt.hdg * 1e-5;
+  result->speed_type  = speed_t::BOTH;
   pvt2time(pvt, &result->time);
-  result->msec      = pvt.nano / 1000000;
+  result->msec        = pvt.nano / 1000000;
   if (pvt.fixFlags & 1)
-    result->fix     = pvt.fixType;
+    result->fix       = pvt.fixType;
   else
-    result->fix     = 0;
-  result->fresh     = true;
+    result->fix       = 0;
+  result->fresh       = true;
 }
 
 /**

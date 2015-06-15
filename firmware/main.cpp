@@ -62,6 +62,13 @@ Giovanni
 #include "adc_local.hpp"
 #include "pwr_mgr.hpp"
 #include "fir_test.hpp"
+#include "maxsonar.hpp"
+#include "pps.hpp"
+#include "speedometer.hpp"
+#include "mpxv.hpp"
+#include "calibrator.hpp"
+#include "hil.hpp"
+#include "navi6d_wrapper.hpp"
 
 using namespace chibios_rt;
 
@@ -74,6 +81,7 @@ using namespace chibios_rt;
  * EXTERNS
  ******************************************************************************
  */
+extern mavlink_system_info_t   mavlink_system_info_struct;
 
 /* reset all global flags */
 GlobalFlags_t GlobalFlags = {0,0,0,0,0,0,0,0,
@@ -90,7 +98,6 @@ __CCM__ static ACSInput acs_in;
 __CCM__ static control::Drivetrain drivetrain;
 static control::ACS acs(drivetrain, acs_in);
 
-
 MissionReceiver mission_receiver;
 sensor_state_registry_t SensorStateRegistry;
 TimeKeeper time_keeper;
@@ -100,35 +107,18 @@ MavLogger mav_logger;
 Marg marg;
 BMP085 bmp_085(&I2CD_SLOW, BMP085_I2C_ADDR);
 __CCM__ static baro_data_t abs_press;
-
-
-#include "maxsonar.hpp"
-#include "pps.hpp"
-#include "speedometer.hpp"
-#include "mpxv.hpp"
-#include "calibrator.hpp"
-#include "hil.hpp"
-
 __CCM__ static MaxSonar maxsonar;
-
 __CCM__ static speedometer_data_t speed_data;
 __CCM__ static Speedometer speedometer;
-
 __CCM__ static marg_data_t marg_data;
-
 __CCM__ static PPS pps;
 __CCM__ static MPXV mpxv;
 __CCM__ static Calibrator calibrator;
 //__CCM__        gnss::mtkgps GNSS(&GPSSD);
 __CCM__        gnss::uBlox GNSS(&GPSSD);
 __CCM__ static gnss::gnss_data_t gnss_data;
-
 __CCM__ control::HIL hil;
-
-extern mavlink_system_info_t   mavlink_system_info_struct;
-
-#include "navi6d_wrapper.hpp"
-__CCM__ static Navi6dWrapper navi6d(acs_in);
+__CCM__ static Navi6dWrapper navi6d(acs_in, GNSS);
 
 /*
  ******************************************************************************

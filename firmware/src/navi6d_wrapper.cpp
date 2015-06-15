@@ -1,7 +1,7 @@
 #pragma GCC optimize "-O2"
 #pragma GCC diagnostic ignored "-Wdouble-promotion"
 
-#define FAKE_SINS     FALSE
+#define FAKE_SINS     TRUE
 
 #include <math.h>
 #include "main.h"
@@ -36,7 +36,6 @@
  */
 extern mavlink_debug_t                 mavlink_out_debug_struct;
 extern mavlink_debug_vect_t            mavlink_out_debug_vect_struct;
-extern gnss::uBlox GNSS;
 
 /*
  ******************************************************************************
@@ -86,6 +85,7 @@ void Navi6dWrapper::prepare_gnss(const speedometer_data_t &speed) {
       nav_sins.sensor_flags.sns_v_d_en = false;
       break;
     case gnss::speed_t::VECTOR_3D:
+    case gnss::speed_t::BOTH:
       for (size_t i=0; i<3; i++) {
         nav_sins.sensor_data.v_sns[i][0] = gnss_data.v[i];
       }
@@ -201,7 +201,10 @@ void Navi6dWrapper::navi2acs(void) {
 /**
  *
  */
-Navi6dWrapper::Navi6dWrapper(ACSInput &acs_in) : acs_in(acs_in) {
+Navi6dWrapper::Navi6dWrapper(ACSInput &acs_in, gnss::GNSSReceiver &GNSS) :
+acs_in(acs_in),
+GNSS(GNSS)
+{
   return;
 }
 

@@ -142,7 +142,7 @@ static void gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
     result->longitude  = gga.longitude;
     result->course     = rmc.course;
     result->speed      = rmc.speed;
-    result->speed_type = GNSS_SPEED_TYPE_SPEED_COURSE;
+    result->speed_type = speed_t::SPEED_COURSE;
     result->time       = rmc.time;
     result->msec       = rmc.msec;
     result->fix        = gga.fix;
