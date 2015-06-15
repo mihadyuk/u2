@@ -39,6 +39,8 @@ chibios_rt::BinarySemaphore GNSSReceiver::protect_sem(false);
 
 chibios_rt::EvtSource event_gnss;
 
+__CCM__ THD_WORKING_AREA(GNSSReceiver::gnssRxThreadWA, 400);
+
 /*
  ******************************************************************************
  * PROTOTYPES

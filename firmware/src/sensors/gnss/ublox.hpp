@@ -23,8 +23,9 @@ public:
   uBlox(SerialDriver *sdp);
   void start(void);
 private:
+  UbxProto ubx_parser;
   static THD_FUNCTION(ubxRxThread, arg);
-  void gnss2mavlink(const ubx_nav_pvt_payload &pvt);
+  void pvt2mavlink(const ubx_nav_pvt_payload &pvt);
   void set_fix_period(uint16_t msec);
   void set_port(void);
   void set_dyn_model(uint32_t dyn_model);

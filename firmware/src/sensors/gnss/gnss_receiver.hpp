@@ -32,6 +32,7 @@ public:
   void deleteSniffer(void);
   static void GNSS_PPS_ISR_I(void);
 protected:
+  static THD_WORKING_AREA(gnssRxThreadWA, 400);
   void log_append(const mavlink_gps_raw_int_t *msg);
   void acquire(void);
   void release(void);

@@ -1,3 +1,5 @@
+#pragma GCC optimize "-O2"
+
 #include "main.h"
 
 #include "ubx_proto.hpp"
@@ -40,8 +42,6 @@ static SerialConfig gps_ser_cfg = {
     0,
 };
 
-__CCM__ static UbxProto ubx_parser;
-
 /*
  ******************************************************************************
  * PROTOTYPES
@@ -59,7 +59,7 @@ __CCM__ static UbxProto ubx_parser;
 /**
  *
  */
-void uBlox::gnss2mavlink(const ubx_nav_pvt_payload &pvt) {
+void uBlox::pvt2mavlink(const ubx_nav_pvt_payload &pvt) {
 
   mavlink_out_gps_raw_int_struct.time_usec = TimeKeeper::utc();
   mavlink_out_gps_raw_int_struct.lat = pvt.lat;
@@ -163,9 +163,6 @@ void uBlox::write_with_confirm(const T &msg, systime_t timeout) {
     ack = wait_ack(msg.rtti, timeout);
     osalDbgCheck(ack == ublox_ack_t::ACK);
   }
-  else {
-    osalThreadSleepMilliseconds(100);
-  }
 }
 
 /**
@@ -197,6 +194,7 @@ void uBlox::set_port(void) {
   msg.data.flags = 0;
 
   write_with_confirm(msg, 0);
+  osalThreadSleepMilliseconds(100);
 }
 
 /**
@@ -233,7 +231,6 @@ void uBlox::set_message_rate(void) {
  */
 void uBlox::configure(uint32_t dyn_model, uint32_t fix_period) {
 
-  /* start on default baudrate */
   gps_ser_cfg.speed = GNSS_DEFAULT_BAUDRATE;
   sdStart(this->sdp, &gps_ser_cfg);
   set_port();
@@ -267,22 +264,24 @@ void uBlox::update_settings(void) {
  */
 static void pvt2gnss(const ubx_nav_pvt_payload &pvt, gnss_data_t *result) {
 
-  result->altitude   = pvt.h / 1000.0;
-  result->latitude   = pvt.lat;
-  result->latitude   /= DEG_TO_MAVLINK;
-  result->longitude  = pvt.lon;
-  result->longitude  /= DEG_TO_MAVLINK;
-  result->v[0] = pvt.velN / 100.0;
-  result->v[1] = pvt.velE / 100.0;
-  result->v[2] = pvt.velD / 100.0;
-  result->speed_type = speed_t::VECTOR_3D;
+  result->altitude  = pvt.h / 1000.0;
+  result->latitude  = pvt.lat;
+  result->latitude  /= DEG_TO_MAVLINK;
+  result->longitude = pvt.lon;
+  result->longitude /= DEG_TO_MAVLINK;
+  result->v[0]      = pvt.velN / 100.0;
+  result->v[1]      = pvt.velE / 100.0;
+  result->v[2]      = pvt.velD / 100.0;
+  result->speed     = pvt.gSpeed / 100.0;
+  result->course    = pvt.hdg * 1e-5;
+  result->speed_type= GNSS_SPEED_TYPE_SPEED_COURSE | GNSS_SPEED_TYPE_VECTOR_3D;
   pvt2time(pvt, &result->time);
-  result->msec       = pvt.nano / 1000000;
+  result->msec      = pvt.nano / 1000000;
   if (pvt.fixFlags & 1)
-    result->fix      = pvt.fixType;
+    result->fix     = pvt.fixType;
   else
-    result->fix      = 0;
-  result->fresh      = true;
+    result->fix     = 0;
+  result->fresh     = true;
 }
 
 /**
@@ -313,7 +312,6 @@ void uBlox::pvtdispatch(const ubx_nav_pvt_payload &pvt) {
 /**
  *
  */
-__CCM__ static THD_WORKING_AREA(gnssRxThreadWA, 400);
 THD_FUNCTION(uBlox::ubxRxThread, arg) {
   chRegSetThreadName("GNSS_UBX");
   uBlox *self = static_cast<uBlox *>(arg);
@@ -333,18 +331,18 @@ THD_FUNCTION(uBlox::ubxRxThread, arg) {
     self->update_settings();
     byte = sdGetTimeout(self->sdp, MS2ST(100));
     if (MSG_TIMEOUT != byte) {
-      status = ubx_parser.collect(byte);
+      status = self->ubx_parser.collect(byte);
 
       switch(status) {
       case ubx_msg_t::EMPTY:
         break;
       case ubx_msg_t::NAV_PVT:
-        ubx_parser.unpack(pvt);
-        self->gnss2mavlink(pvt.data);
+        self->ubx_parser.unpack(pvt);
+        self->pvt2mavlink(pvt.data);
         self->pvtdispatch(pvt.data);
         break;
       default:
-        ubx_parser.drop(); // it is essential to drop unneeded message
+        self->ubx_parser.drop(); // it is essential to drop unneeded message
         break;
       }
     }
