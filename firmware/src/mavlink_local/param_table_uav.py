@@ -149,6 +149,19 @@ param = [
 ("SINS_gnss_enable",0,          1,          1,          "u", "default",     "NULL"),
 ("SINS_odo_enable", 0,          1,          1,          "u", "default",     "NULL"),
 ("SINS_baro_enable",0,          1,          1,          "u", "default",     "NULL"),
+("SINS_sigma_R0",   0.01,       5,          20,         "f", "default",     "NULL"),
+("SINS_sigma_R1",   0.01,       10,         20,         "f", "default",     "NULL"),
+("SINS_sigma_R2",   0.01,       0.2,        20,         "f", "default",     "NULL"),
+("SINS_sigma_R3",   0.01,       0.1,        20,         "f", "default",     "NULL"),
+("SINS_sigma_R4",   0.01,       0.1,        20,         "f", "default",     "NULL"),
+("SINS_sigma_R5",   0.01,       0.3,        20,         "f", "default",     "NULL"),
+("SINS_sigma_R6",   0.01,       0.3,        20,         "f", "default",     "NULL"),
+("SINS_sigma_Qm0",  0.0000001,  0.001,      1,          "f", "default",     "NULL"),
+("SINS_sigma_Qm1",  0.0000001,  0.001,      1,          "f", "default",     "NULL"),
+("SINS_sigma_Qm2",  0.0000001,  0.000001,   1,          "f", "default",     "NULL"),
+("SINS_sigma_Qm3",  0.0000001,  0.000001,   1,          "f", "default",     "NULL"),
+("SINS_sigma_Qm4",  0.0000001,  0.000001,   1,          "f", "default",     "NULL"),
+("SINS_sigma_Qm5",  0.0000001,  0.001,      1,          "f", "default",     "NULL"),
 
 ("GLRT_acc_sigma",  0.0001,     0.01,       1,          "f", "default",     "NULL"),
 ("GLRT_gyr_sigma",  0.00001,    0.01,       0.5,        "f", "default",     "NULL"),
@@ -412,31 +425,26 @@ param = [
 ("T_rc_scaled",     SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 
 #/* Timezone. */
-("TIME_zone",       -24,    0,      24,     "i", "default",    "Simple offset in hours."),
+("TIME_zone",       -24,        0,          24,         "i", "default",    "Simple offset in hours."),
 
 #/* Length of filters for different systems. */
-("FLEN_adc",        1,      16,     32768,  "i", "default",    "NULL"),
-("FLEN_pres_dyn",   1,      16,     32768,  "i", "default",    "NULL"),
-("FLEN_pres_stat",  1,      16,     32768,  "i", "default",    "NULL"),
-("FLEN_climb",      1,      16,     32768,  "i", "default",    "NULL"),
-("FLEN_gnd_speed",  1,      16,     32768,  "i", "default",    "NULL"),
-("FLEN_reserved2",  1,      16,     32768,  "i", "default",    "NULL"),
-("FLEN_reserved3",  1,      16,     32768,  "i", "default",    "NULL"),
-("FLEN_reserved4",  1,      16,     32768,  "i", "default",    "NULL"),
+("FLEN_adc",        1,          16,         32768,      "i", "default",    "NULL"),
+("FLEN_pres_dyn",   1,          16,         32768,      "i", "default",    "NULL"),
+("FLEN_pres_stat",  1,          16,         32768,      "i", "default",    "NULL"),
+("FLEN_climb",      1,          16,         32768,      "i", "default",    "NULL"),
+("FLEN_gnd_speed",  1,          16,         32768,      "i", "default",    "NULL"),
+("FLEN_reserved2",  1,          16,         32768,      "i", "default",    "NULL"),
+("FLEN_reserved3",  1,          16,         32768,      "i", "default",    "NULL"),
+("FLEN_reserved4",  1,          16,         32768,      "i", "default",    "NULL"),
 
 #/*  */
-("SPD_pulse2m",     0.0,    0.0555555, 1.0, "f", "default",    "Multiply odometer pulses count by this coefficient to get\\ntrip in meters. Coarse value is 0.05555555"),
-("SPD_speed",       0.0,    0,      60.0,   "f", "default",    "NULL"),
-("SPD_speed_max",   0.0,    0,      60.0,   "f", "default",    "NULL"),
+("SPD_pulse2m",     0.0,        0.0555555,  1.0,        "f", "default",    "Multiply odometer pulses count by this coefficient to get\\ntrip in meters. Coarse value is 0.05555555"),
+("SPD_speed",       0.0,        0,          60.0,       "f", "default",    "NULL"),
+("SPD_speed_max",   0.0,        0,          60.0,       "f", "default",    "NULL"),
 
 # GNSS settings
-("GNSS_dyn_model",  0,      8,      8,      "u", "default",    "NULL"),
-("GNSS_fix_period", 100,    200,    1000,   "u", "default",    "NULL"),
-
-#/**** Variables for debugging purpose ****/
-("DBG_lat",         -360,   0,      360,    "f", "default",    "NULL"),
-("DBG_lon",         -360,   0,      360,    "f", "default",    "NULL"),
-("DBG_reserved2",   0,      0,      10000,  "f", "default",    "NULL"),
+("GNSS_dyn_model",  0,          8,          8,          "u", "default",    "NULL"),
+("GNSS_fix_period", 100,        200,        1000,       "u", "default",    "NULL"),
 
 #/**** fake field with 14 symbols name ****/
 ("param_end_mark__",0,      0,      1224,   "u", "default",    "Fake parameter with maximum allowable name length"),

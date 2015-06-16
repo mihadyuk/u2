@@ -36,6 +36,19 @@ private:
   const float *acc_sigma = nullptr;
   const float *gyr_sigma = nullptr;
   const float *gamma = nullptr;
+  const float *sigma_R0 = nullptr;
+  const float *sigma_R1 = nullptr;
+  const float *sigma_R2 = nullptr;
+  const float *sigma_R3 = nullptr;
+  const float *sigma_R4 = nullptr;
+  const float *sigma_R5 = nullptr;
+  const float *sigma_R6 = nullptr;
+  const float *sigma_Qm0 = nullptr;
+  const float *sigma_Qm1 = nullptr;
+  const float *sigma_Qm2 = nullptr;
+  const float *sigma_Qm3 = nullptr;
+  const float *sigma_Qm4 = nullptr;
+  const float *sigma_Qm5 = nullptr;
   const uint32_t *samples = nullptr;
 };
 

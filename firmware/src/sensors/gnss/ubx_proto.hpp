@@ -176,12 +176,12 @@ struct ubx_nav_pvt_payload {
   uint32_t hAcc;    // mm Horizontal accuracy estimate
   uint32_t vAcc;    // mm Vertical accuracy estimate
 
-  int32_t  velN;    // cm/s
-  int32_t  velE;    // cm/s
-  int32_t  velD;    // cm/s
-  uint32_t gSpeed;  // cm/s Speed module (2D)
+  int32_t  velN;    // mm/s
+  int32_t  velE;    // mm/s
+  int32_t  velD;    // mm/s
+  uint32_t gSpeed;  // mm/s Speed module (2D)
   int32_t  hdg;     // deg * 1e-5 Heading of motion
-  uint32_t speedAcc;// cm/s Speed accuracy estimate
+  uint32_t speedAcc;// mm/s Speed accuracy estimate
   uint32_t hdgAcc;  // deg * 1e-5 Coarse/heading accuracy estimate
 
   uint16_t pDOP;    // 0.01

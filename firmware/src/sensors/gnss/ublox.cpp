@@ -73,7 +73,7 @@ void uBlox::pvt2mavlink(const ubx_nav_pvt_payload &pvt) {
     mavlink_out_gps_raw_int_struct.fix_type = 0;
   mavlink_out_gps_raw_int_struct.satellites_visible = pvt.numSV;
   mavlink_out_gps_raw_int_struct.cog = pvt.hdg / 1000;
-  mavlink_out_gps_raw_int_struct.vel = pvt.gSpeed;
+  mavlink_out_gps_raw_int_struct.vel = pvt.gSpeed / 10;
 
   log_append(&mavlink_out_gps_raw_int_struct);
 }
@@ -269,10 +269,10 @@ static void pvt2gnss(const ubx_nav_pvt_payload &pvt, gnss_data_t *result) {
   result->latitude    /= DEG_TO_MAVLINK;
   result->longitude   = pvt.lon;
   result->longitude   /= DEG_TO_MAVLINK;
-  result->v[0]        = pvt.velN / 100.0;
-  result->v[1]        = pvt.velE / 100.0;
-  result->v[2]        = pvt.velD / 100.0;
-  result->speed       = pvt.gSpeed / 100.0;
+  result->v[0]        = pvt.velN / 1000.0;
+  result->v[1]        = pvt.velE / 1000.0;
+  result->v[2]        = pvt.velD / 1000.0;
+  result->speed       = pvt.gSpeed / 1000.0;
   result->course      = pvt.hdg * 1e-5;
   result->speed_type  = speed_t::BOTH;
   pvt2time(pvt, &result->time);
@@ -295,11 +295,9 @@ void uBlox::pvtdispatch(const ubx_nav_pvt_payload &pvt) {
 
   for (size_t i=0; i<ArrayLen(this->spamlist); i++) {
     gnss_data_t *p = this->spamlist[i];
-    if (nullptr != p) {
-      if (p->fresh == false) {
-        memcpy(p, &this->cache, sizeof(this->cache));
-        p->fresh = true; // this line must be at the very end for atomicity
-      }
+    if ((nullptr != p) && (false == p->fresh)) {
+      memcpy(p, &this->cache, sizeof(this->cache));
+      p->fresh = true; // this line must be at the very end for atomicity
     }
   }
   release();

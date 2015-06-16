@@ -220,6 +220,21 @@ void Navi6dWrapper::start(float dT) {
   param_registry.valueSearch("SINS_odo_enable", &odo_enable);
   param_registry.valueSearch("SINS_baro_enable",&baro_enable);
 
+  param_registry.valueSearch("SINS_sigma_R0",   &sigma_R0);
+  param_registry.valueSearch("SINS_sigma_R1",   &sigma_R1);
+  param_registry.valueSearch("SINS_sigma_R2",   &sigma_R2);
+  param_registry.valueSearch("SINS_sigma_R3",   &sigma_R3);
+  param_registry.valueSearch("SINS_sigma_R4",   &sigma_R4);
+  param_registry.valueSearch("SINS_sigma_R5",   &sigma_R5);
+  param_registry.valueSearch("SINS_sigma_R6",   &sigma_R6);
+
+  param_registry.valueSearch("SINS_sigma_Qm0",  &sigma_Qm0);
+  param_registry.valueSearch("SINS_sigma_Qm1",  &sigma_Qm1);
+  param_registry.valueSearch("SINS_sigma_Qm2",  &sigma_Qm2);
+  param_registry.valueSearch("SINS_sigma_Qm3",  &sigma_Qm3);
+  param_registry.valueSearch("SINS_sigma_Qm4",  &sigma_Qm4);
+  param_registry.valueSearch("SINS_sigma_Qm5",  &sigma_Qm5);
+
   param_registry.valueSearch("GLRT_acc_sigma",  &acc_sigma);
   param_registry.valueSearch("GLRT_gyr_sigma",  &gyr_sigma);
   param_registry.valueSearch("GLRT_gamma",      &gamma);
@@ -250,21 +265,34 @@ void Navi6dWrapper::start(float dT) {
   calib_params.bw_sat[1][0] = deg2rad(25.0);
   calib_params.bw_sat[2][0] = deg2rad(25.0);
 
-  kalman_params.sigma_R[0][0] = 5; //ne_sns
-  kalman_params.sigma_R[1][0] = 10; //d_sns
-  kalman_params.sigma_R[2][0] = 0.2; //v_n_sns
-  kalman_params.sigma_R[3][0] = 0.1; //odo
-  kalman_params.sigma_R[4][0] = 0.1; //nonhol
-  kalman_params.sigma_R[5][0] = 0.3; //baro
-  kalman_params.sigma_R[6][0] = 0.3; //mag
+//  kalman_params.sigma_R[0][0] = 5; //ne_sns
+//  kalman_params.sigma_R[1][0] = 10; //d_sns
+//  kalman_params.sigma_R[2][0] = 0.2; //v_n_sns
+//  kalman_params.sigma_R[3][0] = 0.1; //odo
+//  kalman_params.sigma_R[4][0] = 0.1; //nonhol
+//  kalman_params.sigma_R[5][0] = 0.3; //baro
+//  kalman_params.sigma_R[6][0] = 0.3; //mag
+  kalman_params.sigma_R[0][0] = *sigma_R0; //ne_sns
+  kalman_params.sigma_R[1][0] = *sigma_R1; //d_sns
+  kalman_params.sigma_R[2][0] = *sigma_R2; //v_n_sns
+  kalman_params.sigma_R[3][0] = *sigma_R3; //odo
+  kalman_params.sigma_R[4][0] = *sigma_R4; //nonhol
+  kalman_params.sigma_R[5][0] = *sigma_R5; //baro
+  kalman_params.sigma_R[6][0] = *sigma_R6; //mag
 
 #if MAIN_SENSOR_ADIS
-  kalman_params.sigma_Qm[0][0] = 0.001; //acc
-  kalman_params.sigma_Qm[1][0] = 0.001; //gyr
-  kalman_params.sigma_Qm[2][0] = 0.000001; //acc_x
-  kalman_params.sigma_Qm[3][0] = 0.000001; //acc_y
-  kalman_params.sigma_Qm[4][0] = 0.000001; //acc_z
-  kalman_params.sigma_Qm[5][0] = 0.001; //gyr_bias
+//  kalman_params.sigma_Qm[0][0] = 0.001; //acc
+//  kalman_params.sigma_Qm[1][0] = 0.001; //gyr
+//  kalman_params.sigma_Qm[2][0] = 0.000001; //acc_x
+//  kalman_params.sigma_Qm[3][0] = 0.000001; //acc_y
+//  kalman_params.sigma_Qm[4][0] = 0.000001; //acc_z
+//  kalman_params.sigma_Qm[5][0] = 0.001; //gyr_bias
+  kalman_params.sigma_Qm[0][0] = *sigma_Qm0; //acc
+  kalman_params.sigma_Qm[1][0] = *sigma_Qm1; //gyr
+  kalman_params.sigma_Qm[2][0] = *sigma_Qm2; //acc_x
+  kalman_params.sigma_Qm[3][0] = *sigma_Qm3; //acc_y
+  kalman_params.sigma_Qm[4][0] = *sigma_Qm4; //acc_z
+  kalman_params.sigma_Qm[5][0] = *sigma_Qm5; //gyr_bias
 #else // MPU6050
   kalman_params.sigma_Qm[0][0] = 0.01; //acc
   kalman_params.sigma_Qm[1][0] = 0.01; //gyr
