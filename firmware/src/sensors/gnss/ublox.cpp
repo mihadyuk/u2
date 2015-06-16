@@ -122,14 +122,14 @@ ublox_ack_t uBlox::wait_ack(ubx_msg_t type, systime_t timeout) {
         break;
       case ubx_msg_t::ACK_ACK:
         ubx_parser.unpack(ack_ack);
-        if (ack_ack.data.acked_msg == type) {
+        if (ack_ack.payload.acked_msg == type) {
           ret = ublox_ack_t::ACK;
           goto EXIT;
         }
         break;
       case ubx_msg_t::ACK_NACK:
         ubx_parser.unpack(ack_nack);
-        if (ack_nack.data.nacked_msg == type) {
+        if (ack_nack.payload.nacked_msg == type) {
           ret = ublox_ack_t::NACK;
           goto EXIT;
         }
@@ -171,9 +171,9 @@ void uBlox::write_with_confirm(const T &msg, systime_t timeout) {
 void uBlox::set_fix_period(uint16_t msec) {
   ubx_cfg_rate msg;
 
-  msg.data.measRate = msec;
-  msg.data.navRate = 1;
-  msg.data.timeRef = 0;
+  msg.payload.measRate = msec;
+  msg.payload.navRate = 1;
+  msg.payload.timeRef = 0;
 
   this->write_with_confirm(msg, S2ST(1));
 }
@@ -184,14 +184,14 @@ void uBlox::set_fix_period(uint16_t msec) {
 void uBlox::set_port(void) {
   ubx_cfg_prt msg;
 
-  msg.data.portID = 1;
-  msg.data.txready = 0;
-  msg.data.mode = (0b11 << 6) | (0b100 << 9);
-  msg.data.baudrate = GNSS_HI_BAUDRATE;
-  msg.data.inProtoMask = 1;
+  msg.payload.portID = 1;
+  msg.payload.txready = 0;
+  msg.payload.mode = (0b11 << 6) | (0b100 << 9);
+  msg.payload.baudrate = GNSS_HI_BAUDRATE;
+  msg.payload.inProtoMask = 1;
   //msg.outProtoMask = 0b11; // nmea + ubx
-  msg.data.outProtoMask = 0b1; // ubx only
-  msg.data.flags = 0;
+  msg.payload.outProtoMask = 0b1; // ubx only
+  msg.payload.flags = 0;
 
   write_with_confirm(msg, 0);
   osalThreadSleepMilliseconds(100);
@@ -207,9 +207,9 @@ void uBlox::set_dyn_model(uint32_t dyn_model) {
   if (dyn_model == 1)
     dyn_model = 0;
 
-  msg.data.dynModel = dyn_model;
-  msg.data.fixMode = 2;
-  msg.data.mask = 0b101;
+  msg.payload.dynModel = dyn_model;
+  msg.payload.fixMode = 2;
+  msg.payload.mask = 0b101;
 
   write_with_confirm(msg, S2ST(1));
 }
@@ -220,8 +220,8 @@ void uBlox::set_dyn_model(uint32_t dyn_model) {
 void uBlox::set_message_rate(void) {
   ubx_cfg_msg msg;
 
-  msg.data.rate = 1;
-  msg.data.msg_wanted = ubx_msg_t::NAV_PVT;
+  msg.payload.rate = 1;
+  msg.payload.msg_wanted = ubx_msg_t::NAV_PVT;
 
   write_with_confirm(msg, S2ST(1));
 }
@@ -338,8 +338,8 @@ THD_FUNCTION(uBlox::ubxRxThread, arg) {
         break;
       case ubx_msg_t::NAV_PVT:
         self->ubx_parser.unpack(pvt);
-        self->pvt2mavlink(pvt.data);
-        self->pvtdispatch(pvt.data);
+        self->pvt2mavlink(pvt.payload);
+        self->pvtdispatch(pvt.payload);
         break;
       default:
         self->ubx_parser.drop(); // it is essential to drop unneeded message
