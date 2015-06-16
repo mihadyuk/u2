@@ -248,6 +248,7 @@ template <typename T>
 void UbxProto::unpack(T &result) {
 
   osalDbgCheck(result.rtti == extract_rtti(this->buf.data));
+  osalDbgCheck(this->state == collect_state_t::WAIT_HARVEST);
 
   memcpy(&result.data, &this->buf.data[UBX_PAYLOAD_OFFSET], sizeof(result.data));
   this->dbg_message_bytes += sizeof(result.data) + UBX_OVERHEAD_TOTAL;

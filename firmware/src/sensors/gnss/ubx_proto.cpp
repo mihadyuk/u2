@@ -239,6 +239,8 @@ ubx_msg_t UbxProto::collect(uint8_t b) {
  *
  */
 void UbxProto::drop(void) {
+
+  osalDbgCheck(this->state == collect_state_t::WAIT_HARVEST);
   this->dbg_drop_msg++;
   this->reset();
 }
