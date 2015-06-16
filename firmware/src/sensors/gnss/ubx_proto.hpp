@@ -5,7 +5,7 @@
 
 namespace gnss {
 
-#define UBX_MSG_BUF_LEN           256U
+#define UBX_MSG_BUF_LEN           512U
 #define UBX_PAYLOAD_OFFSET        6U
 #define UBX_OVERHEAD_TOTAL        8U
 
@@ -36,6 +36,7 @@ enum class ubx_msg_t : uint16_t {
   NAV_VELNED  = 0x1201,
   NAV_TIMEUTC = 0x2101,
   NAV_PVT     = 0x0701,
+  NAV_SAT     = 0x3501,
 
   CFG_MSG     = 0x0106,
   CFG_NAV5    = 0x2406,
@@ -54,8 +55,9 @@ struct ubx_ack_ack_payload {
 } __attribute__((packed));
 
 struct ubx_ack_ack {
-  ubx_ack_ack_payload data;
+  ubx_ack_ack_payload payload;
   const ubx_msg_t rtti = ubx_msg_t::ACK_ACK;
+  uint16_t recvd_bytes;
 };
 
 /**
@@ -66,8 +68,9 @@ struct ubx_ack_nack_payload {
 } __attribute__((packed));
 
 struct ubx_ack_nack {
-  ubx_ack_nack_payload data;
+  ubx_ack_nack_payload payload;
   const ubx_msg_t rtti = ubx_msg_t::ACK_NACK;
+  uint16_t recvd_bytes;
 };
 
 /**
@@ -80,8 +83,9 @@ struct ubx_cfg_rate_payload {
 } __attribute__((packed));
 
 struct ubx_cfg_rate {
-  ubx_cfg_rate_payload data;
+  ubx_cfg_rate_payload payload;
   const ubx_msg_t rtti = ubx_msg_t::CFG_RATE;
+  uint16_t recvd_bytes;
 };
 
 /**
@@ -93,8 +97,9 @@ struct ubx_cfg_msg_payload {
 } __attribute__((packed));
 
 struct ubx_cfg_msg {
-  ubx_cfg_msg_payload data;
+  ubx_cfg_msg_payload payload;
   const ubx_msg_t rtti = ubx_msg_t::CFG_MSG;
+  uint16_t recvd_bytes;
 };
 
 /**
@@ -114,8 +119,9 @@ struct ubx_cfg_prt_payload {
 } __attribute__((packed));
 
 struct ubx_cfg_prt {
-  ubx_cfg_prt_payload data;
+  ubx_cfg_prt_payload payload;
   const ubx_msg_t rtti = ubx_msg_t::CFG_PRT;
+  uint16_t recvd_bytes;
 };
 
 /**
@@ -145,8 +151,9 @@ struct ubx_cfg_nav5_payload {
 } __attribute__((packed));
 
 struct ubx_cfg_nav5 {
-  ubx_cfg_nav5_payload data;
+  ubx_cfg_nav5_payload payload;
   const ubx_msg_t rtti = ubx_msg_t::CFG_NAV5;
+  uint16_t recvd_bytes;
 };
 
 /**
@@ -191,8 +198,36 @@ struct ubx_nav_pvt_payload {
 } __attribute__((packed));
 
 struct ubx_nav_pvt {
-  ubx_nav_pvt_payload data;
+  ubx_nav_pvt_payload payload;
   const ubx_msg_t rtti = ubx_msg_t::NAV_PVT;
+  uint16_t recvd_bytes;
+};
+
+/**
+ *
+ */
+struct __svs {
+  uint8_t  gnssID;
+  uint8_t  svID;
+  uint8_t  cno;   // dBHz. Carrier to noise ratio.
+  int8_t   elev;  // deg. Elevation -90..+90. Unknown if out of range.
+  int16_t  azim;  // deg. Azimuth -180..+180. Unknown if out of range.
+  int16_t  prRes; // m/10. Pseudo range residual.
+  uint32_t flags;
+} __attribute__((packed));
+
+struct ubx_nav_sat_payload {
+  uint32_t iTOW;    // ms GPS time of week
+  uint8_t  version;
+  uint8_t  numSvs;
+  uint8_t  reserved[2];
+  __svs    svs[20];
+} __attribute__((packed));
+
+struct ubx_nav_sat {
+  ubx_nav_sat_payload payload;
+  const ubx_msg_t rtti = ubx_msg_t::NAV_SAT;
+  uint16_t recvd_bytes;
 };
 
 //TODO: CFG_TP5 time pulse param
@@ -227,6 +262,7 @@ public:
   void drop(void);
 private:
   ubx_msg_t extract_rtti(uint8_t *data);
+  uint16_t extract_len(uint8_t *data);
   void checksum(const uint8_t *data, size_t len, uint8_t *result);
   bool checksum_ok(void);
   size_t pack_impl(uint8_t *buf, ubx_msg_t type, uint16_t N, const void *data);
@@ -246,12 +282,20 @@ private:
  */
 template <typename T>
 void UbxProto::unpack(T &result) {
+  size_t N;
+  uint16_t recvd = extract_len(this->buf.data);
 
   osalDbgCheck(result.rtti == extract_rtti(this->buf.data));
   osalDbgCheck(this->state == collect_state_t::WAIT_HARVEST);
 
-  memcpy(&result.data, &this->buf.data[UBX_PAYLOAD_OFFSET], sizeof(result.data));
-  this->dbg_message_bytes += sizeof(result.data) + UBX_OVERHEAD_TOTAL;
+  if (sizeof(result.payload) >= recvd)
+    N = recvd;
+  else
+    N = sizeof(result.payload);
+  memcpy(&result.payload, &this->buf.data[UBX_PAYLOAD_OFFSET], N);
+  result.recvd_bytes = recvd;
+
+  this->dbg_message_bytes += N + UBX_OVERHEAD_TOTAL;
   this->reset();
 }
 
@@ -260,12 +304,12 @@ void UbxProto::unpack(T &result) {
  */
 template <typename T>
 size_t UbxProto::pack(const T &msg, uint8_t *buf, size_t buflen) {
-  uint16_t datalen = sizeof(msg.data);
+  uint16_t datalen = sizeof(msg.payload);
 
   if (buflen < (UBX_OVERHEAD_TOTAL + datalen))
     return 0; // not enough room in buffer
   else
-    return this->pack_impl(buf, msg.rtti, datalen, &msg.data);
+    return this->pack_impl(buf, msg.rtti, datalen, &msg.payload);
 }
 
 } /* namespace */

@@ -113,6 +113,15 @@ ubx_msg_t UbxProto::extract_rtti(uint8_t *data) {
   return ret;
 }
 
+/**
+ *
+ */
+uint16_t UbxProto::extract_len(uint8_t *data) {
+  uint16_t ret;
+  memcpy(&ret, &data[4], sizeof(ret));
+  return ret;
+}
+
 /*
  *******************************************************************************
  * EXPORTED FUNCTIONS
