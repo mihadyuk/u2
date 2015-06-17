@@ -18,6 +18,7 @@ using namespace control;
  * EXTERNS
  ******************************************************************************
  */
+extern mavlink_system_info_t   mavlink_system_info_struct;
 
 /*
  ******************************************************************************
@@ -31,44 +32,6 @@ using namespace control;
  ******************************************************************************
  */
 
-static const uint8_t auto_bytecode[] = {
-    INPUT,  ACS_INPUT_pitch,
-    OUTPUT, IMPACT_RUD,
-    TERM,
-
-    INPUT, ACS_INPUT_const_one,
-    PID, 15, ACS_INPUT_odo_speed,
-    OUTPUT, IMPACT_THR,
-    TERM,
-
-    END
-};
-
-static const uint8_t semiauto_bytecode[] = {
-    INPUT,  ACS_INPUT_roll,
-    OUTPUT, IMPACT_RUD,
-    SCALE, 0,
-    TERM,
-
-    INPUT,  ACS_INPUT_wy,
-    OUTPUT, IMPACT_THR,
-    TERM,
-
-    END
-};
-
-static const uint8_t manual_bytecode[] = {
-    INPUT,  ACS_INPUT_futaba_raw_00,
-    OUTPUT, IMPACT_RUD,
-    TERM,
-
-    INPUT,  ACS_INPUT_futaba_raw_01,
-    OUTPUT, IMPACT_THR,
-    TERM,
-
-    END
-};
-
 static const uint8_t emergency_bytecode[] = {
     INPUT,  ACS_INPUT_const_zero,
     OUTPUT, IMPACT_RUD,
@@ -81,20 +44,19 @@ static const uint8_t emergency_bytecode[] = {
     END
 };
 
-static const uint8_t standby_bytecode[] = {
-    INPUT,  ACS_INPUT_roll,
-    SCALE,  0,
+static const uint8_t critical_bytecode[] = {
+    INPUT,  ACS_INPUT_const_zero,
     OUTPUT, IMPACT_RUD,
     TERM,
 
-    INPUT,  ACS_INPUT_futaba_raw_01,
+    INPUT,  ACS_INPUT_const_zero,
     OUTPUT, IMPACT_THR,
     TERM,
 
     END
 };
 
-static const uint8_t loiter_bytecode[] = {
+static const uint8_t standby_bytecode[] = {
     INPUT,  ACS_INPUT_futaba_raw_00,
     OUTPUT, IMPACT_RUD,
     TERM,
@@ -160,8 +122,6 @@ FutabaResult ACS::analize_futaba(float dT) {
 void ACS::loop_boot(float dT, FutabaResult fr) {
   (void)dT;
   (void)fr;
-
-  state = ACSState::standby;
 }
 
 /**
@@ -179,120 +139,15 @@ void ACS::loop_standby(float dT, FutabaResult fr) {
 
   case FutabaResult::semiauto:
   case FutabaResult::manual:
-    stabilizer.update(dT, manual_bytecode);
+    stabilizer.update(dT, standby_bytecode);
     mode = MAV_MODE_FLAG_MANUAL_INPUT_ENABLED;
     break;
 
   case FutabaResult::emergency:
-    stabilizer.update(dT, emergency_bytecode);
+    stabilizer.update(dT, standby_bytecode);
     mode = MAV_MODE_FLAG_AUTO_ENABLED;
     break;
   }
-}
-
-/**
- * @brief   Currently it does nothing.
- */
-void ACS::loop_takeoff(float dT, FutabaResult fr) {
-  (void)dT;
-  (void)fr;
-
-  if (OSAL_SUCCESS == mission.takeoff()) {
-    state = ACSState::navigate;
-  }
-}
-
-/**
- *
- */
-void ACS::reached_handler(void) {
-  bool load_status = OSAL_FAILED;
-
-  switch (mission.getTrgtCmd()) {
-  case MAV_CMD_NAV_WAYPOINT:
-    load_status = mission.loadNext();
-    if (OSAL_FAILED == load_status) {
-      osalSysHalt("");
-      this->state = ACSState::emergency;
-    }
-    break;
-
-  /**/
-  case MAV_CMD_NAV_LOITER_UNLIM:
-  case MAV_CMD_NAV_LOITER_TIME:
-  case MAV_CMD_NAV_LOITER_TURNS:
-    this->state = ACSState::loiter;
-    break;
-
-  /**/
-  default:
-    load_status = mission.loadNext();
-    if (OSAL_FAILED == load_status) {
-      osalSysHalt("");
-      this->state = ACSState::emergency;
-    }
-    break;
-  }
-}
-
-/**
- * @brief   Execute mission.
- */
-void ACS::loop_navigate(float dT) {
-
-  MissionState mi_status = mission.update();
-
-  stabilizer.update(dT, auto_bytecode);
-
-  switch (mi_status) {
-  case MissionState::reached:
-    reached_handler();
-    break;
-
-  /**/
-  case MissionState::completed:
-    this->state = ACSState::loiter;
-    break;
-
-  /**/
-  case MissionState::error:
-    osalSysHalt("");
-    this->state = ACSState::emergency;
-    break;
-
-  /**/
-  case MissionState::navigate:
-    break;
-
-  /**/
-  default:
-    osalSysHalt("Unhandled case");
-    break;
-  }
-}
-
-/**
- * @brief   Something goes wrong. Pull hand break or eject 'chute.
- */
-void ACS::loop_manual(float dT, FutabaResult fr) {
-  (void)dT;
-  (void)fr;
-
-  osalSysHalt("unrealized");
-  stabilizer.update(dT, emergency_bytecode);
-  mode = MAV_MODE_FLAG_AUTO_ENABLED;
-}
-
-/**
- * @brief   Something goes wrong. Pull hand break or eject 'chute.
- */
-void ACS::loop_semiauto(float dT, FutabaResult fr) {
-  (void)dT;
-  (void)fr;
-
-  osalSysHalt("unrealized");
-  stabilizer.update(dT, emergency_bytecode);
-  mode = MAV_MODE_FLAG_AUTO_ENABLED;
 }
 
 /**
@@ -306,15 +161,14 @@ void ACS::loop_emergency(float dT, FutabaResult fr) {
   mode = MAV_MODE_FLAG_AUTO_ENABLED;
 }
 
-
 /**
  * @brief   Something goes wrong. Pull hand break or eject 'chute.
  */
-void ACS::loop_loiter(float dT, FutabaResult fr) {
+void ACS::loop_critical(float dT, FutabaResult fr) {
   (void)dT;
   (void)fr;
 
-  stabilizer.update(dT, loiter_bytecode);
+  stabilizer.update(dT, critical_bytecode);
   mode = MAV_MODE_FLAG_AUTO_ENABLED;
 }
 
@@ -348,14 +202,14 @@ void ACS::start(void) {
   mav_postman.subscribe(MAVLINK_MSG_ID_COMMAND_LONG, &command_link);
   mav_postman.subscribe(MAVLINK_MSG_ID_SET_MODE, &set_mode_link);
 
-  state = ACSState::standby;
+  ready = true;
 }
 
 /**
  *
  */
 void ACS::stop(void) {
-  state = ACSState::uninit;
+  ready = false;
 
   mav_postman.unsubscribe(MAVLINK_MSG_ID_SET_MODE, &set_mode_link);
   mav_postman.unsubscribe(MAVLINK_MSG_ID_COMMAND_LONG, &command_link);
@@ -369,7 +223,9 @@ void ACS::stop(void) {
 /**
  *
  */
-ACSState ACS::update(float dT) {
+void ACS::update(float dT) {
+
+  osalDbgCheck(ready);
 
   FutabaResult fr;
 
@@ -379,27 +235,23 @@ ACSState ACS::update(float dT) {
   /**/
   fr = analize_futaba(dT);
 
-  /**/
-  switch (state) {
-  case ACSState::standby:
+  switch (mavlink_system_info_struct.state) {
+  case MAV_STATE_STANDBY:
     loop_standby(dT, fr);
     break;
-  case ACSState::navigate:
-    loop_navigate(dT);
+  case MAV_STATE_ACTIVE:
+    loop_active(dT, fr);
     break;
-  case ACSState::loiter:
-    loop_loiter(dT, fr);
+  case MAV_STATE_CRITICAL:
+    loop_critical(dT, fr);
     break;
-  case ACSState::emergency:
+  case MAV_STATE_EMERGENCY:
     loop_emergency(dT, fr);
     break;
   default:
-    osalSysHalt("Unhandled case"); /* error trap */
     break;
   }
 
   drivetrain.update(this->impact);
-
-  return this->state;
 }
 

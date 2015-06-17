@@ -18,24 +18,22 @@ enum class FutabaResult {
   fullauto,
   semiauto,
   manual,
-  emergency /* generally, when futaba drops in manual/semiauto mode */
+  emergency /* general failure when futaba drops in manual/semiauto mode */
 };
 
 /**
  *
  */
-enum class ACSState {
-  uninit,
-  standby,
-  //calibrate,
-  //take_off,
+enum class ActiveSubstate {
   navigate,
-  //land,
-  //go_home,
-  //manual,
-  //semiauto, // stabilize
+  semiauto,
+  manual,
+};
+
+enum class NavigateSubstate {
+  mission,
   loiter,
-  emergency
+  land
 };
 
 /**
@@ -45,17 +43,24 @@ class ACS {
 public:
   ACS(Drivetrain &drivetrain, ACSInput &acs_in);
   void start(void);
-  ACSState update(float dT);
+  void update(float dT);
   void stop(void);
 private:
+  void loop_active(float dT, FutabaResult fr);
+  void loop_active_manual(float dT);
+  void loop_active_semiauto(float dT);
+  void loop_active_navigate(float dT);
+  void loop_active_navigate_mission(float dT);
+  void loop_active_navigate_loiter(float dT);
+  void loop_active_navigate_land(float dT);
+
   void loop_boot(float dT, FutabaResult fr);
   void loop_standby(float dT, FutabaResult fr);
-  void loop_takeoff(float dT, FutabaResult fr);
-  void loop_navigate(float dT);
   void loop_emergency(float dT, FutabaResult fr);
   void loop_loiter(float dT, FutabaResult fr);
   void loop_manual(float dT, FutabaResult fr);
   void loop_semiauto(float dT, FutabaResult fr);
+  void loop_critical(float dT, FutabaResult fr);
   void reached_handler(void);
   FutabaResult analize_futaba(float dT);
   void message_handler(void);
@@ -64,6 +69,7 @@ private:
   enum MAV_RESULT alcoi_command_handler(const mavlink_command_long_t *clp);
   enum MAV_RESULT calibrate_command_handler(const mavlink_command_long_t *clp);
   enum MAV_RESULT take_off_handler(const mavlink_command_long_t *clp);
+  enum MAV_RESULT land_handler(const mavlink_command_long_t *clp);
   Drivetrain &drivetrain;
   ACSInput &acs_in;
   DrivetrainImpact impact;
@@ -73,8 +79,10 @@ private:
   StabVM stabilizer;
   chibios_rt::Mailbox<mavMail*, 3> command_mailbox;
   SubscribeLink command_link, set_mode_link;
+  ActiveSubstate active_substate = ActiveSubstate::navigate;
+  NavigateSubstate nav_substate = NavigateSubstate::mission;
   bool ignore_futaba_fail = true;
-  ACSState state = ACSState::uninit;
+  bool ready = false;
   bool armed = false;
   uint8_t mode = 0;
 };

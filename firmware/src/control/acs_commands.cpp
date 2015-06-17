@@ -101,7 +101,6 @@ enum MAV_RESULT ACS::take_off_handler(const mavlink_command_long_t *clp) {
   /* mode may changed only in standby state */
   if (MAV_STATE_STANDBY == mavlink_system_info_struct.state) {
     if (OSAL_SUCCESS == mission.takeoff()) {
-      this->state = ACSState::navigate;
       mavlink_system_info_struct.state = MAV_STATE_ACTIVE;
       result = MAV_RESULT_ACCEPTED;
     }
@@ -119,14 +118,27 @@ enum MAV_RESULT ACS::take_off_handler(const mavlink_command_long_t *clp) {
 /**
  *
  */
+enum MAV_RESULT ACS::land_handler(const mavlink_command_long_t *clp) {
+  (void)clp;
+  enum MAV_RESULT result = MAV_RESULT_FAILED;
+
+  nav_substate = NavigateSubstate::land;
+  result = MAV_RESULT_ACCEPTED;
+
+  return result;
+}
+
+/**
+ *
+ */
 void ACS::command_long_handler(const mavMail *recv_mail) {
 
   enum MAV_RESULT result = MAV_RESULT_FAILED;
   const mavlink_command_long_t *clp =
       static_cast<const mavlink_command_long_t *>(recv_mail->mavmsg);
 
-  if (!mavlink_msg_for_me(clp))
-    return;
+  if (! mavlink_msg_for_me(clp))
+    goto SILENT_EXIT;
 
   switch (clp->command) {
   case MAV_CMD_DO_SET_SERVO:
@@ -137,6 +149,10 @@ void ACS::command_long_handler(const mavMail *recv_mail) {
     result = this->take_off_handler(clp);
     break;
 
+  case MAV_CMD_NAV_LAND:
+    result = this->land_handler(clp);
+    break;
+
   case MAV_CMD_PREFLIGHT_CALIBRATION:
     result = this->calibrate_command_handler(clp);
     break;
@@ -145,6 +161,7 @@ void ACS::command_long_handler(const mavMail *recv_mail) {
     goto SILENT_EXIT;
     break;
   }
+
   command_ack(result, clp->command, GLOBAL_COMPONENT_ID);
 
 SILENT_EXIT:
