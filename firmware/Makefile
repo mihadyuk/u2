@@ -137,6 +137,7 @@ CONTROLSRC =\
 		src/control/futaba/receiver_synth.cpp \
 		src/control/futaba/receiver_mavlink.cpp \
 		src/control/acs.cpp \
+		src/control/acs_loop_active.cpp \
 		src/control/acs_input.cpp \
 		src/control/acs_commands.cpp \
 		src/control/mission_executor.cpp \
@@ -211,6 +212,7 @@ CPPSRC = $(CHCPPSRC) \
 		src/time_keeper.cpp \
 		src/navi6d_wrapper.cpp \
 		src/kinematic/ahrs.cpp \
+		src/kinematic/ahrs_starlino.cpp \
 		lib/filters/fir_test.cpp \
 
 
