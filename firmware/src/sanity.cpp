@@ -32,8 +32,9 @@ extern mavlink_sys_status_t   mavlink_out_sys_status_struct;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-static const int16_t normal_seq[]      = {50,  -100, 0};
-static const int16_t panic_seq[]       = {50,  -100, 50, -100, 50, -100, 50, -100, 0};
+static const int16_t standby_seq[]     = {50,  -100, 0};
+static const int16_t active_seq[]      = {50,  -100, 50, -100, 50, -100, 0};
+static const int16_t panic_seq[]       = {500, -100, 0};
 static const int16_t calibrating_seq[] = {800, -200, 0};
 
 static mavMail hearbeat_mail;
@@ -54,14 +55,24 @@ thread_t *worker = nullptr;
  * Heartbeat blinker logic
  */
 static void heartbeat_blinker(void){
-  if (was_softreset()){
+  if (was_softreset()) {
     blinker.normal_post(&panic_seq[0]);
   }
-  else{
-    if (MAV_STATE_CALIBRATING == mavlink_system_info_struct.state)
+  else {
+    switch (mavlink_system_info_struct.state) {
+    case MAV_STATE_CALIBRATING:
       blinker.normal_post(calibrating_seq);
-    else
-      blinker.normal_post(normal_seq);
+      break;
+    case MAV_STATE_STANDBY:
+      blinker.normal_post(standby_seq);
+      break;
+    case MAV_STATE_ACTIVE:
+      blinker.normal_post(active_seq);
+      break;
+    default:
+      blinker.error_post(panic_seq);
+      break;
+    }
   }
 }
 
