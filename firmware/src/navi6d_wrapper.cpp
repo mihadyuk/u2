@@ -99,8 +99,6 @@ void Navi6dWrapper::prepare_gnss(const speedometer_data_t &speed) {
       nav_sins.sensor_flags.sns_v_d_en = false;
       break;
     }
-
-    gnss_data.fresh = false; // Important! Must be set to false after data processing
   }
   else {
     nav_sins.sensor_data.v_odo[0][0] = speed.speed;
@@ -108,6 +106,10 @@ void Navi6dWrapper::prepare_gnss(const speedometer_data_t &speed) {
     nav_sins.sensor_data.v_odo[2][0] = 0;
   }
 
+  // Important! Must be set to false after data processing
+  if (gnss_data.fresh) {
+    gnss_data.fresh = false;
+  }
 #else
   (void)speed;
 #endif
@@ -310,6 +312,9 @@ void Navi6dWrapper::start(float dT) {
   nav_sins.set_ref_params(ref_params);
 
   nav_sins.command_executor(1);
+
+  ready = true;
+
 #else
   (void)dT;
 #endif
@@ -319,7 +324,7 @@ void Navi6dWrapper::start(float dT) {
  *
  */
 void Navi6dWrapper::stop(void) {
-
+  ready = false;
   GNSS.unsubscribe(&gnss_data);
 }
 
@@ -331,7 +336,7 @@ void Navi6dWrapper::update(const baro_data_t &abs_press,
                            const marg_data_t &marg)
 {
 #if ! FAKE_SINS
-
+  osalDbgCheck(ready);
 
 //  ref_params.glrt_acc_sigma = *acc_sigma;
 //  ref_params.glrt_gyr_sigma = *gyr_sigma;
