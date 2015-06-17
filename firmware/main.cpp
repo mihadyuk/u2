@@ -69,12 +69,15 @@ Giovanni
 #include "calibrator.hpp"
 #include "hil.hpp"
 #include "navi6d_wrapper.hpp"
+#include "ahrs_starlino.hpp"
 
 using namespace chibios_rt;
 
 /* cheat sheet for use in other files */
 #pragma GCC optimize "-funroll-loops"
 #pragma GCC optimize "-O2"
+
+#define USE_STARLINO_AHRS     FALSE
 
 /*
  ******************************************************************************
@@ -118,7 +121,11 @@ __CCM__ static Calibrator calibrator;
 __CCM__        gnss::uBlox GNSS(&GPSSD);
 __CCM__ static gnss::gnss_data_t gnss_data;
 __CCM__ control::HIL hil;
+#if USE_STARLINO_AHRS
+__CCM__ static AHRSStarlino ahrs_starlino;
+#else
 __CCM__ static Navi6dWrapper navi6d(acs_in, GNSS);
+#endif
 
 /*
  ******************************************************************************
@@ -194,7 +201,11 @@ int main(void) {
 
   /* ahrs fake run to acquire dT */
   marg.get(marg_data, MS2ST(200));
+#if USE_STARLINO_AHRS
+  ahrs_starlino.start();
+#else
   navi6d.start(marg_data.dT);
+#endif
 
   mavlink_system_info_struct.state = MAV_STATE_STANDBY;
   while (true) {
@@ -218,10 +229,17 @@ int main(void) {
       acs.update(marg_data.dT);
     }
 
+#if USE_STARLINO_AHRS
+    float euler[3];
+    ahrs_starlino.update(euler, marg_data.acc, marg_data.gyr, marg_data.mag, marg_data.dT);
+    acs_in.ch[ACS_INPUT_roll] = euler[0];
+    acs_in.ch[ACS_INPUT_pitch]= euler[1];
+    acs_in.ch[ACS_INPUT_yaw]  = euler[2];
+#else
     navi6d.update(abs_press, speed_data, marg_data);
+#endif
     acs_input2mavlink(acs_in);
   }
-
   return 0;
 }
 
