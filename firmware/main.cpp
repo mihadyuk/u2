@@ -103,7 +103,6 @@ static control::ACS acs(drivetrain, acs_in);
 
 MissionReceiver mission_receiver;
 sensor_state_registry_t SensorStateRegistry;
-TimeKeeper time_keeper;
 TlmSender tlm_sender;
 static LinkMgr link_mgr;
 MavLogger mav_logger;
@@ -126,6 +125,7 @@ __CCM__ static AHRSStarlino ahrs_starlino;
 #else
 __CCM__ static Navi6dWrapper navi6d(acs_in, GNSS);
 #endif
+TimeKeeper time_keeper(GNSS);
 
 /*
  ******************************************************************************

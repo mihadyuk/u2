@@ -123,7 +123,6 @@ void gps2acs_in(const gnss::gnss_data_t &gps, ACSInput &acs_in) {
   acs_in.ch[ACS_INPUT_lon] = deg2rad(gps.longitude);
   acs_in.ch[ACS_INPUT_alt] = gps.altitude;
   acs_in.ch[ACS_INPUT_cog] = deg2rad(gps.course);
-  acs_in.ch[ACS_INPUT_yaw] = acs_in.ch[ACS_INPUT_cog];
 }
 
 /**

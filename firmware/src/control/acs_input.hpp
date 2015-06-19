@@ -63,13 +63,11 @@ typedef enum {
   ACS_INPUT_wy,
   ACS_INPUT_wz,
 
-//  ACS_INPUT_vgps,     // speed from GPS (m/s)
-//  ACS_INPUT_vodo,     // speed from odometer (m/s)
-//  ACS_INPUT_vair,     // air speed (m/s)
-
-  ACS_INPUT_dZ,       // cross track error (rad)
-  ACS_INPUT_dYaw,
-  ACS_INPUT_trgt_crs, // course to target point (rad)
+  ACS_INPUT_dZrad,      // cross track error (rad)
+  ACS_INPUT_dZm,        // cross track error (m)
+  ACS_INPUT_dYaw,       // (rad)
+  ACS_INPUT_trgt_crs,   // course to target point (rad)
+  ACS_INPUT_trgt_speed, // m/s
 
   // raw futaba values (normalized -1..1)
   ACS_INPUT_futaba_raw_00,

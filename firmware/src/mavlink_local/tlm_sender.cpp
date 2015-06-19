@@ -28,6 +28,7 @@ extern const mavlink_debug_vect_t mavlink_out_debug_vect_struct;
 extern const mavlink_global_position_int_t mavlink_out_global_position_int_struct;
 extern const mavlink_gps_raw_int_t mavlink_out_gps_raw_int_struct;
 extern const mavlink_highres_imu_t mavlink_out_highres_imu_struct;
+extern const mavlink_mission_current_t mavlink_out_mission_current_struct;
 extern const mavlink_nav_controller_output_t mavlink_out_nav_controller_output_struct;
 extern const mavlink_local_position_ned_t mavlink_out_local_position_ned_struct;
 extern const mavlink_raw_imu_t mavlink_out_raw_imu_struct;
@@ -65,6 +66,7 @@ static void send_debug_vect(void);
 static void send_global_pos(void);
 static void send_gps_raw_int(void);
 static void send_highres_imu(void);
+static void send_mission_curr(void);
 static void send_nav_output(void);
 static void send_position_ned(void);
 static void send_raw_imu(void);
@@ -91,6 +93,7 @@ static mavMail debug_vect_mail __CCM__;
 static mavMail global_position_int_mail __CCM__;
 static mavMail gps_raw_int_mail __CCM__;
 static mavMail highres_imu_mail __CCM__;
+static mavMail mission_current_mail __CCM__;
 static mavMail nav_controller_output_mail __CCM__;
 static mavMail local_position_ned_mail __CCM__;
 static mavMail raw_imu_mail __CCM__;
@@ -109,15 +112,16 @@ __CCM__ static tlm_registry_t Registry[] = {
     {14, nullptr, send_global_pos},
     {15, nullptr, send_gps_raw_int},
     {16, nullptr, send_highres_imu},
-    {17, nullptr, send_nav_output},
-    {18, nullptr, send_position_ned},
-    {19, nullptr, send_raw_imu},
-    {20, nullptr, send_raw_press},
-    {21, nullptr, send_rc},
-    {22, nullptr, send_rc_scaled},
-    {23, nullptr, send_scal_press},
-    {24, nullptr, send_sys_status},
-    {25, nullptr, send_vfr_hud},
+    {17, nullptr, send_mission_curr},
+    {18, nullptr, send_nav_output},
+    {19, nullptr, send_position_ned},
+    {20, nullptr, send_raw_imu},
+    {21, nullptr, send_raw_press},
+    {22, nullptr, send_rc},
+    {23, nullptr, send_rc_scaled},
+    {24, nullptr, send_scal_press},
+    {25, nullptr, send_sys_status},
+    {26, nullptr, send_vfr_hud},
 };
 
 /*
@@ -205,6 +209,20 @@ static void send_highres_imu(void){
     if (status != MSG_OK){
       mailbox_overflow++;
       highres_imu_mail.release();
+    }
+  }
+  else
+    mail_undelivered++;
+}
+
+static void send_mission_curr(void){
+  msg_t status = MSG_RESET;
+  if (mission_current_mail.free()){
+    mission_current_mail.fill(&mavlink_out_mission_current_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_MISSION_CURRENT);
+    status = mav_postman.post(mission_current_mail);
+    if (status != MSG_OK){
+      mailbox_overflow++;
+      mission_current_mail.release();
     }
   }
   else
@@ -408,15 +426,16 @@ static void load_parameters(void) {
   param_registry.valueSearch("T_global_pos", &(Registry[3].sleepperiod));
   param_registry.valueSearch("T_gps_raw_int", &(Registry[4].sleepperiod));
   param_registry.valueSearch("T_highres_imu", &(Registry[5].sleepperiod));
-  param_registry.valueSearch("T_nav_output", &(Registry[6].sleepperiod));
-  param_registry.valueSearch("T_position_ned", &(Registry[7].sleepperiod));
-  param_registry.valueSearch("T_raw_imu", &(Registry[8].sleepperiod));
-  param_registry.valueSearch("T_raw_press", &(Registry[9].sleepperiod));
-  param_registry.valueSearch("T_rc", &(Registry[10].sleepperiod));
-  param_registry.valueSearch("T_rc_scaled", &(Registry[11].sleepperiod));
-  param_registry.valueSearch("T_scal_press", &(Registry[12].sleepperiod));
-  param_registry.valueSearch("T_sys_status", &(Registry[13].sleepperiod));
-  param_registry.valueSearch("T_vfr_hud", &(Registry[14].sleepperiod));
+  param_registry.valueSearch("T_mission_curr", &(Registry[6].sleepperiod));
+  param_registry.valueSearch("T_nav_output", &(Registry[7].sleepperiod));
+  param_registry.valueSearch("T_position_ned", &(Registry[8].sleepperiod));
+  param_registry.valueSearch("T_raw_imu", &(Registry[9].sleepperiod));
+  param_registry.valueSearch("T_raw_press", &(Registry[10].sleepperiod));
+  param_registry.valueSearch("T_rc", &(Registry[11].sleepperiod));
+  param_registry.valueSearch("T_rc_scaled", &(Registry[12].sleepperiod));
+  param_registry.valueSearch("T_scal_press", &(Registry[13].sleepperiod));
+  param_registry.valueSearch("T_sys_status", &(Registry[14].sleepperiod));
+  param_registry.valueSearch("T_vfr_hud", &(Registry[15].sleepperiod));
 }
 
 /*

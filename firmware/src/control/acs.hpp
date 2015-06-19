@@ -84,6 +84,8 @@ private:
   bool ignore_futaba_fail = true;
   bool ready = false;
   bool armed = false;
+  const float *trgt_speed = nullptr;
+  const float *speed_max = nullptr;
   uint8_t mode = 0;
 };
 

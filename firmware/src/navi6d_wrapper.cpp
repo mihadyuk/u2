@@ -9,7 +9,7 @@
 
 #if ! FAKE_SINS
 #include "navigator_sins.hpp"
-//#include "kalman_flags.cpp" // dirty hack allowing to not add this file to the Makefile
+#include "kalman_flags.cpp" // dirty hack allowing to not add this file to the Makefile
 #endif
 
 #include "navi6d_wrapper.hpp"
@@ -27,7 +27,7 @@
  ******************************************************************************
  */
 
-#define MAIN_SENSOR_ADIS    TRUE
+#define MAIN_SENSOR_ADIS    FALSE
 
 /*
  ******************************************************************************
@@ -43,7 +43,7 @@ extern mavlink_debug_vect_t            mavlink_out_debug_vect_struct;
  ******************************************************************************
  */
 #if ! FAKE_SINS
-__CCM__ static NavigatorSins<double, 9, 13> nav_sins;
+__CCM__ static NavigatorSins<double, 15, 13> nav_sins;
 __CCM__ static InitParams<double> init_params;
 __CCM__ static CalibParams<double> calib_params;
 __CCM__ static KalmanParams<double> kalman_params;
@@ -237,43 +237,28 @@ void Navi6dWrapper::start(float dT) {
   param_registry.valueSearch("SINS_sigma_Qm4",  &sigma_Qm4);
   param_registry.valueSearch("SINS_sigma_Qm5",  &sigma_Qm5);
 
+  param_registry.valueSearch("SINS_eu_vh_roll", &eu_vh_roll);
+  param_registry.valueSearch("SINS_eu_vh_pitch",&eu_vh_pitch);
+  param_registry.valueSearch("SINS_eu_vh_yaw",  &eu_vh_yaw);
+
   param_registry.valueSearch("GLRT_acc_sigma",  &acc_sigma);
   param_registry.valueSearch("GLRT_gyr_sigma",  &gyr_sigma);
   param_registry.valueSearch("GLRT_gamma",      &gamma);
   param_registry.valueSearch("GLRT_samples",    &samples);
 
+  ref_params.eu_vh_base[0][0] = deg2rad(*eu_vh_roll);
+  ref_params.eu_vh_base[1][0] = deg2rad(*eu_vh_pitch);
+  ref_params.eu_vh_base[2][0] = deg2rad(*eu_vh_yaw);
+
 #if MAIN_SENSOR_ADIS
-  ref_params.eu_vh_base[0][0] = M_PI;
-  ref_params.eu_vh_base[1][0] = 0;
-  ref_params.eu_vh_base[2][0] = 0;
+  init_params.est_gyro_bias = false;
 #else
-  ref_params.eu_vh_base[0][0] = 0;
-  ref_params.eu_vh_base[1][0] = 0;
-  ref_params.eu_vh_base[2][0] = M_PI_2;
+  init_params.est_gyro_bias = true;
 #endif
 
-  calib_params.bm[0][0] = 0.0338;
-  calib_params.bm[1][0] = 0.03736;
-  calib_params.bm[2][0] = -0.2661;
+  init_params.sigma_Pi[0][0] = 200; //initial position STD (m)
+  init_params.sigma_Pi[3][0] = M_PI; //initial heading STD (rad)
 
-  calib_params.m_s[0][0]  = 180.186;
-  calib_params.m_s[1][0]  = 178.2;
-  calib_params.m_s[2][0]  = 178.386;
-  calib_params.m_no[0][0] = -1.444;
-  calib_params.m_no[1][0] = -2.35684;
-  calib_params.m_no[2][0] = -0.291037;
-
-  calib_params.bw_sat[0][0] = deg2rad(25.0);
-  calib_params.bw_sat[1][0] = deg2rad(25.0);
-  calib_params.bw_sat[2][0] = deg2rad(25.0);
-
-//  kalman_params.sigma_R[0][0] = 5; //ne_sns
-//  kalman_params.sigma_R[1][0] = 10; //d_sns
-//  kalman_params.sigma_R[2][0] = 0.2; //v_n_sns
-//  kalman_params.sigma_R[3][0] = 0.1; //odo
-//  kalman_params.sigma_R[4][0] = 0.1; //nonhol
-//  kalman_params.sigma_R[5][0] = 0.3; //baro
-//  kalman_params.sigma_R[6][0] = 0.3; //mag
   kalman_params.sigma_R[0][0] = *sigma_R0; //ne_sns
   kalman_params.sigma_R[1][0] = *sigma_R1; //d_sns
   kalman_params.sigma_R[2][0] = *sigma_R2; //v_n_sns
@@ -283,12 +268,6 @@ void Navi6dWrapper::start(float dT) {
   kalman_params.sigma_R[6][0] = *sigma_R6; //mag
 
 #if MAIN_SENSOR_ADIS
-//  kalman_params.sigma_Qm[0][0] = 0.001; //acc
-//  kalman_params.sigma_Qm[1][0] = 0.001; //gyr
-//  kalman_params.sigma_Qm[2][0] = 0.000001; //acc_x
-//  kalman_params.sigma_Qm[3][0] = 0.000001; //acc_y
-//  kalman_params.sigma_Qm[4][0] = 0.000001; //acc_z
-//  kalman_params.sigma_Qm[5][0] = 0.001; //gyr_bias
   kalman_params.sigma_Qm[0][0] = *sigma_Qm0; //acc
   kalman_params.sigma_Qm[1][0] = *sigma_Qm1; //gyr
   kalman_params.sigma_Qm[2][0] = *sigma_Qm2; //acc_x

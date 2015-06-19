@@ -196,6 +196,9 @@ set_mode_link(&command_mailbox)
  */
 void ACS::start(void) {
 
+  param_registry.valueSearch("SPD_trgt_speed",&trgt_speed);
+  param_registry.valueSearch("SPD_speed_max", &speed_max);
+
   futaba.start();
   stabilizer.start();
   drivetrain.start();
@@ -224,6 +227,8 @@ void ACS::stop(void) {
  *
  */
 void ACS::update(float dT) {
+
+  acs_in.ch[ACS_INPUT_trgt_speed] = *this->trgt_speed;
 
   osalDbgCheck(ready);
 

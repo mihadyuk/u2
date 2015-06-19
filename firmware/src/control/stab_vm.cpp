@@ -397,6 +397,9 @@ static PIDInit<float> get_pid_init(uint8_t pidnum) {
     ret.postproc = nullptr;
     break;
   case 1:
+    ret.postproc = wrap_pi;
+    break;
+  case 2:
     ret.postproc = wrap_2pi;
     break;
   default:

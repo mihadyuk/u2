@@ -301,9 +301,9 @@ void Adis::set_sample_rate(void) {
  */
 void Adis::set_kalman(void) {
   select_page(3);
-  //write(EKF_CNFG, (1 << 3) | (1 << 12) | (1 << 9) | (1 << 1));
+  write(EKF_CNFG, (1 << 3) | (1 << 12) | (1 << 9) | (1 << 8) | (1 << 1));
   //write(EKF_CNFG, (1 << 3) | (1 << 8) | (1 << 9) | (1 << 12) | (1 << 1));
-  write(EKF_CNFG, 1 << 3);
+  //write(EKF_CNFG, 1 << 3);
   select_page(0);
 }
 

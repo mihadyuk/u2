@@ -37,6 +37,9 @@ extern mavlink_nav_controller_output_t  mavlink_out_nav_controller_output_struct
  ******************************************************************************
  */
 
+static mavMail mission_current_mail;
+static mavMail mission_item_reached_mail;
+
 /*
  ******************************************************************************
  ******************************************************************************
@@ -48,6 +51,7 @@ extern mavlink_nav_controller_output_t  mavlink_out_nav_controller_output_struct
  *
  */
 void MissionExecutor::broadcast_mission_current(uint16_t seq) {
+
   mavlink_out_mission_current_struct.seq = seq;
 }
 
@@ -55,6 +59,7 @@ void MissionExecutor::broadcast_mission_current(uint16_t seq) {
  *
  */
 void MissionExecutor::broadcast_mission_item_reached(uint16_t seq) {
+
   mavlink_out_mission_item_reached_struct.seq = seq;
 }
 
@@ -69,13 +74,16 @@ bool MissionExecutor::load_next_mission_item(void) {
   prev = trgt;
   trgt = third;
 
-  if (wpdb.getCount() <= (third.seq + 1)){ // no more items
+  if (wpdb.getCount() == (third.seq + 1)) {
     /* if we fall here than last mission was not 'land'. System do not know
      * what to do so start unlimited loitering */
     third = trgt;
     third.x += 0.0001; /* singularity prevention */
     third.y += 0.0001; /* singularity prevention */
     third.command = MAV_CMD_NAV_LOITER_UNLIM;
+    broadcast_mission_current(trgt.seq);
+  }
+  else if (wpdb.getCount() < (third.seq + 1)) {
     state = MissionState::completed;
     load_status = OSAL_SUCCESS;
   }
@@ -87,7 +95,6 @@ bool MissionExecutor::load_next_mission_item(void) {
       broadcast_mission_current(trgt.seq);
     }
     else {
-      osalSysHalt("");
       state = MissionState::error;
     }
   }
@@ -98,18 +105,23 @@ bool MissionExecutor::load_next_mission_item(void) {
 /**
  *
  */
-static void navout2acsin(const NavOut<double> &nav_out, ACSInput &acs_in) {
-  acs_in.ch[ACS_INPUT_dZ] = nav_out.xtd;
+void MissionExecutor::navout2acsin(const NavOut<double> &nav_out, ACSInput &acs_in) {
+  acs_in.ch[ACS_INPUT_dZrad] = nav_out.xtd;
+  acs_in.ch[ACS_INPUT_dZm]   = rad2m(nav_out.xtd);
+
+  float dYaw = acs_in.ch[ACS_INPUT_yaw] - static_cast<float>(navigator.get_crsAB());
+  acs_in.ch[ACS_INPUT_dYaw] = wrap_pi(dYaw);
 }
 
 /**
  *
  */
-static void navout2mavlink(const NavOut<double> &nav_out) {
+void MissionExecutor::navout2mavlink(const NavOut<double> &nav_out) {
 
   mavlink_out_nav_controller_output_struct.wp_dist = rad2m(nav_out.dist);
   mavlink_out_nav_controller_output_struct.xtrack_error = rad2m(nav_out.xtd);
   mavlink_out_nav_controller_output_struct.target_bearing = rad2deg(nav_out.crs);
+  mavlink_out_nav_controller_output_struct.nav_bearing = rad2deg(acs_in.ch[ACS_INPUT_dYaw]);
 }
 
 /**

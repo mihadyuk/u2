@@ -16,6 +16,7 @@ names_uav = [
     ["global_pos",  "global_position_int"],
     ["gps_raw_int", "gps_raw_int"],
     ["highres_imu", "highres_imu"],
+    ["mission_curr","mission_current"],
     ["nav_output",  "nav_controller_output"],
     ["position_ned","local_position_ned"],
     ["raw_imu",     "raw_imu"],

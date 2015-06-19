@@ -34,11 +34,13 @@ extern mavlink_system_info_t   mavlink_system_info_struct;
  */
 
 static const uint8_t auto_bytecode[] = {
-    INPUT,  ACS_INPUT_pitch,
+    INPUT,  ACS_INPUT_const_zero,
+    PID, 0, ACS_INPUT_dZm,
+    PID, 1, ACS_INPUT_dYaw,
     OUTPUT, IMPACT_RUD,
     TERM,
 
-    INPUT, ACS_INPUT_const_two,
+    INPUT, ACS_INPUT_trgt_speed,
     PID, 15, ACS_INPUT_odo_speed,
     OUTPUT, IMPACT_THR,
     TERM,

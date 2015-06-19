@@ -49,6 +49,9 @@ private:
   const float *sigma_Qm3 = nullptr;
   const float *sigma_Qm4 = nullptr;
   const float *sigma_Qm5 = nullptr;
+  const float *eu_vh_roll = nullptr;
+  const float *eu_vh_pitch = nullptr;
+  const float *eu_vh_yaw = nullptr;
   const uint32_t *samples = nullptr;
 };
 
