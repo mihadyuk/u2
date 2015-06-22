@@ -58,6 +58,16 @@ static uint16_t comp_secondary_voltage(uint16_t raw) {
   return uV / 1000;
 }
 
+/*
+ * пересчет из условных единиц АЦП в mV
+ */
+static uint16_t comp_main_voltage(uint16_t raw) {
+  uint32_t uV = raw;
+
+  uV *= *adc_mv_gain;
+  return uV / 1000;
+}
+
 /* STUB */
 //static uint16_t get_comp_main_voltage(uint16_t raw){
 //  return (uint16_t)(((uint32_t)raw * *adc_mv_gain) / 1000);
@@ -91,9 +101,10 @@ static uint32_t get_comp_main_current(uint16_t raw){
  */
 void PwrMgrUpdate(void) {
   uint32_t main_current = get_comp_main_current(ADCgetCurrent());
+  (void)main_current;
 
-  mavlink_out_sys_status_struct.current_battery   = (uint16_t)(main_current / 10);
-  mavlink_out_sys_status_struct.voltage_battery   = comp_secondary_voltage(ADCget6v());
+  mavlink_out_sys_status_struct.current_battery = -1;
+  mavlink_out_sys_status_struct.voltage_battery = comp_main_voltage(ADCgetMainVoltage());
 }
 
 /*
