@@ -27,7 +27,7 @@
  ******************************************************************************
  */
 
-#define MAIN_SENSOR_ADIS    FALSE
+#define MAIN_SENSOR_ADIS    TRUE
 
 /*
  ******************************************************************************
@@ -222,20 +222,20 @@ void Navi6dWrapper::start(float dT) {
   param_registry.valueSearch("SINS_odo_enable", &odo_enable);
   param_registry.valueSearch("SINS_baro_enable",&baro_enable);
 
-  param_registry.valueSearch("SINS_sigma_R0",   &sigma_R0);
-  param_registry.valueSearch("SINS_sigma_R1",   &sigma_R1);
-  param_registry.valueSearch("SINS_sigma_R2",   &sigma_R2);
-  param_registry.valueSearch("SINS_sigma_R3",   &sigma_R3);
-  param_registry.valueSearch("SINS_sigma_R4",   &sigma_R4);
-  param_registry.valueSearch("SINS_sigma_R5",   &sigma_R5);
-  param_registry.valueSearch("SINS_sigma_R6",   &sigma_R6);
+  param_registry.valueSearch("SINS_R_ne_sns",   &R_ne_sns);
+  param_registry.valueSearch("SINS_R_d_sns",    &R_d_sns);
+  param_registry.valueSearch("SINS_R_v_n_sns",  &R_v_n_sns);
+  param_registry.valueSearch("SINS_R_odo",      &R_odo);
+  param_registry.valueSearch("SINS_R_nonhol",   &R_nonhol);
+  param_registry.valueSearch("SINS_R_baro",     &R_baro);
+  param_registry.valueSearch("SINS_R_mag",      &R_mag);
 
-  param_registry.valueSearch("SINS_sigma_Qm0",  &sigma_Qm0);
-  param_registry.valueSearch("SINS_sigma_Qm1",  &sigma_Qm1);
-  param_registry.valueSearch("SINS_sigma_Qm2",  &sigma_Qm2);
-  param_registry.valueSearch("SINS_sigma_Qm3",  &sigma_Qm3);
-  param_registry.valueSearch("SINS_sigma_Qm4",  &sigma_Qm4);
-  param_registry.valueSearch("SINS_sigma_Qm5",  &sigma_Qm5);
+  param_registry.valueSearch("SINS_Qm_acc",     &Qm_acc);
+  param_registry.valueSearch("SINS_Qm_gyr",     &Qm_gyr);
+  param_registry.valueSearch("SINS_Qm_acc_x",   &Qm_acc_x);
+  param_registry.valueSearch("SINS_Qm_acc_y",   &Qm_acc_y);
+  param_registry.valueSearch("SINS_Qm_acc_z",   &Qm_acc_z);
+  param_registry.valueSearch("SINS_Qm_gyr_bias",&Qm_gyr_bias);
 
   param_registry.valueSearch("SINS_eu_vh_roll", &eu_vh_roll);
   param_registry.valueSearch("SINS_eu_vh_pitch",&eu_vh_pitch);
@@ -259,21 +259,21 @@ void Navi6dWrapper::start(float dT) {
   init_params.sigma_Pi[0][0] = 200; //initial position STD (m)
   init_params.sigma_Pi[3][0] = M_PI; //initial heading STD (rad)
 
-  kalman_params.sigma_R[0][0] = *sigma_R0; //ne_sns
-  kalman_params.sigma_R[1][0] = *sigma_R1; //d_sns
-  kalman_params.sigma_R[2][0] = *sigma_R2; //v_n_sns
-  kalman_params.sigma_R[3][0] = *sigma_R3; //odo
-  kalman_params.sigma_R[4][0] = *sigma_R4; //nonhol
-  kalman_params.sigma_R[5][0] = *sigma_R5; //baro
-  kalman_params.sigma_R[6][0] = *sigma_R6; //mag
+  kalman_params.sigma_R[0][0] = *R_ne_sns; //ne_sns
+  kalman_params.sigma_R[1][0] = *R_d_sns; //d_sns
+  kalman_params.sigma_R[2][0] = *R_v_n_sns; //v_n_sns
+  kalman_params.sigma_R[3][0] = *R_odo; //odo
+  kalman_params.sigma_R[4][0] = *R_nonhol; //nonhol
+  kalman_params.sigma_R[5][0] = *R_baro; //baro
+  kalman_params.sigma_R[6][0] = *R_mag; //mag
 
 #if MAIN_SENSOR_ADIS
-  kalman_params.sigma_Qm[0][0] = *sigma_Qm0; //acc
-  kalman_params.sigma_Qm[1][0] = *sigma_Qm1; //gyr
-  kalman_params.sigma_Qm[2][0] = *sigma_Qm2; //acc_x
-  kalman_params.sigma_Qm[3][0] = *sigma_Qm3; //acc_y
-  kalman_params.sigma_Qm[4][0] = *sigma_Qm4; //acc_z
-  kalman_params.sigma_Qm[5][0] = *sigma_Qm5; //gyr_bias
+  kalman_params.sigma_Qm[0][0] = *Qm_acc; //acc
+  kalman_params.sigma_Qm[1][0] = *Qm_gyr; //gyr
+  kalman_params.sigma_Qm[2][0] = *Qm_acc_x; //acc_x
+  kalman_params.sigma_Qm[3][0] = *Qm_acc_y; //acc_y
+  kalman_params.sigma_Qm[4][0] = *Qm_acc_z; //acc_z
+  kalman_params.sigma_Qm[5][0] = *Qm_gyr_bias; //gyr_bias
 #else // MPU6050
   kalman_params.sigma_Qm[0][0] = 0.01; //acc
   kalman_params.sigma_Qm[1][0] = 0.01; //gyr
