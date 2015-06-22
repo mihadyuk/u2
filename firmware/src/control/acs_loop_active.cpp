@@ -140,6 +140,7 @@ void ACS::loop_active_navigate_mission(float dT) {
   /**/
   case MissionState::completed:
     this->nav_substate = NavigateSubstate::loiter;
+    blue_led_off();
     break;
 
   /**/

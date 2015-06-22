@@ -81,6 +81,7 @@ bool MissionExecutor::load_next_mission_item(void) {
     third.x += 0.0001; /* singularity prevention */
     third.y += 0.0001; /* singularity prevention */
     third.command = MAV_CMD_NAV_LOITER_UNLIM;
+    third.seq += 1;
     broadcast_mission_current(trgt.seq);
   }
   else if (wpdb.getCount() < (third.seq + 1)) {
