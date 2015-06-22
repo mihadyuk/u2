@@ -20,7 +20,8 @@ enum class ublox_ack_t {
  */
 class uBlox : public GNSSReceiver {
 public:
-  uBlox(SerialDriver *sdp);
+  uBlox(SerialDriver *sdp, uint32_t start_baudrate,
+                           uint32_t working_baudrate);
   void start(void);
 private:
   UbxProto ubx_parser;
@@ -30,7 +31,11 @@ private:
   void set_port(void);
   void set_dyn_model(uint32_t dyn_model);
   void set_message_rate(void);
+  ubx_msg_t wait_any_timeout(const ubx_msg_t *type_list,
+                            size_t list_len, systime_t timeout);
+  ubx_msg_t wait_one_timeout(ubx_msg_t type, systime_t timeout);
   ublox_ack_t wait_ack(ubx_msg_t type, systime_t timeout);
+  bool device_alive(systime_t timeout);
   template <typename T> void write_with_confirm(const T &msg, systime_t timeout);
   void configure(uint32_t dyn_model, uint32_t fix_period);
   void update_settings(void);

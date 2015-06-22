@@ -39,8 +39,6 @@ chibios_rt::BinarySemaphore GNSSReceiver::protect_sem(false);
 
 chibios_rt::EvtSource event_gnss;
 
-__CCM__ THD_WORKING_AREA(GNSSReceiver::gnssRxThreadWA, 400);
-
 /*
  ******************************************************************************
  * PROTOTYPES
@@ -87,7 +85,12 @@ void GNSSReceiver::release(void) {
 /**
  *
  */
-GNSSReceiver::GNSSReceiver(SerialDriver *sdp) : sdp(sdp) {
+GNSSReceiver::GNSSReceiver(SerialDriver *sdp, uint32_t start_baudrate,
+                                              uint32_t working_baudrate) :
+    sdp(sdp),
+    start_baudrate(start_baudrate),
+    working_baudrate(working_baudrate)
+{
   return;
 }
 
@@ -106,7 +109,10 @@ void GNSSReceiver::stop(void) {
  *
  */
 void GNSSReceiver::setSniffer(SerialDriver *sdp) {
+
   osalDbgCheck(nullptr != sdp);
+  osalDbgCheck(ready);
+
   this->sniff_sdp = sdp;
 }
 
@@ -115,6 +121,8 @@ void GNSSReceiver::setSniffer(SerialDriver *sdp) {
  */
 void GNSSReceiver::deleteSniffer(void) {
 
+  osalDbgCheck(ready);
+
   this->sniff_sdp = nullptr;
 }
 
@@ -122,7 +130,9 @@ void GNSSReceiver::deleteSniffer(void) {
  *
  */
 void GNSSReceiver::subscribe(gnss_data_t* result) {
+
   osalDbgCheck(nullptr != result);
+  osalDbgCheck(ready);
 
   acquire();
 
@@ -147,7 +157,9 @@ void GNSSReceiver::subscribe(gnss_data_t* result) {
  *
  */
 void GNSSReceiver::unsubscribe(gnss_data_t* result) {
+
   osalDbgCheck(nullptr != result);
+  osalDbgCheck(ready);
 
   acquire();
 
@@ -169,6 +181,8 @@ void GNSSReceiver::unsubscribe(gnss_data_t* result) {
  *
  */
 void GNSSReceiver::getCache(gnss_data_t &result) {
+
+  osalDbgCheck(ready);
 
   osalSysLock();
   result = this->cache;

@@ -11,9 +11,8 @@
 extern chibios_rt::EvtSource event_gnss;
 
 #define GNSS_MAX_SUBSCRIBERS      4
-#define GNSS_HDG_UNKNOWN          65535
-#define GNSS_DEFAULT_BAUDRATE     9600
-#define GNSS_HI_BAUDRATE          57600
+
+#define GNSS_MAVLINK_HDG_UNKNOWN  65535
 
 namespace gnss {
 
@@ -22,7 +21,8 @@ namespace gnss {
  */
 class GNSSReceiver {
 public:
-  GNSSReceiver(SerialDriver *sdp);
+  GNSSReceiver(SerialDriver *sdp, uint32_t start_baudrate,
+                                  uint32_t working_baudrate);
   virtual void start(void) = 0;
   void stop(void);
   void getCache(gnss::gnss_data_t &result);
@@ -32,7 +32,7 @@ public:
   void deleteSniffer(void);
   static void GNSS_PPS_ISR_I(void);
 protected:
-  static THD_WORKING_AREA(gnssRxThreadWA, 400);
+  THD_WORKING_AREA(gnssRxThreadWA, 400);
   void log_append(const mavlink_gps_raw_int_t *msg);
   void acquire(void);
   void release(void);
@@ -41,6 +41,8 @@ protected:
   thread_t *worker = nullptr;
   SerialDriver *sniff_sdp = nullptr;
   SerialDriver *sdp = nullptr;
+  const uint32_t start_baudrate;
+  const uint32_t working_baudrate;
   gnss_data_t cache;
   mavMail gps_raw_int_mail;
   static chibios_rt::BinarySemaphore pps_sem;

@@ -60,7 +60,9 @@ size_t UbxProto::pack_impl(uint8_t *buf, ubx_msg_t type,
   buf[1] = UBX_SYNC_2;
   memcpy(&buf[2], &type, 2);
   memcpy(&buf[4], &N, 2);
-  memcpy(&buf[UBX_PAYLOAD_OFFSET], data, N);
+  if (0 != N) {
+    memcpy(&buf[UBX_PAYLOAD_OFFSET], data, N);
+  }
   checksum(&buf[2], 4+N, &buf[UBX_PAYLOAD_OFFSET+N]);
 
   return UBX_OVERHEAD_TOTAL + N;
@@ -253,3 +255,18 @@ void UbxProto::drop(void) {
   this->dbg_drop_msg++;
   this->reset();
 }
+
+/**
+ *
+ */
+size_t UbxProto::packPollRequest(ubx_msg_t type, uint8_t *buf, size_t buflen) {
+  uint16_t datalen = 0;
+
+  if (buflen < (UBX_OVERHEAD_TOTAL + datalen))
+    return 0; // not enough room in buffer
+  else
+    return this->pack_impl(buf, type, datalen, nullptr);
+}
+
+
+

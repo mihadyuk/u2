@@ -19,6 +19,7 @@ using namespace gnss;
  * DEFINES
  ******************************************************************************
  */
+#define DEG_TO_UBX    (10 * 1000 * 1000)
 
 /*
  ******************************************************************************
@@ -32,15 +33,6 @@ extern mavlink_gps_raw_int_t    mavlink_out_gps_raw_int_struct;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-/**
- *
- */
-static SerialConfig gps_ser_cfg = {
-    GNSS_DEFAULT_BAUDRATE,
-    0,
-    0,
-    0,
-};
 
 /*
  ******************************************************************************
@@ -101,44 +93,79 @@ static void pvt2time(const ubx_nav_pvt_payload &pvt, struct tm *time) {
 }
 
 /**
- *
+ * @note    Do NOT forget to drop received message if any.
  */
-ublox_ack_t uBlox::wait_ack(ubx_msg_t type, systime_t timeout) {
+ubx_msg_t uBlox::wait_any_timeout(const ubx_msg_t *type_list,
+                            size_t list_len, systime_t timeout) {
   msg_t byte;
   systime_t start = chVTGetSystemTimeX();
   systime_t end = start + timeout;
-  ubx_msg_t status;
-  ubx_ack_nack ack_nack;
-  ubx_ack_ack ack_ack;
-  ublox_ack_t ret = ublox_ack_t::NONE;
+  ubx_msg_t status = ubx_msg_t::EMPTY;
+
+  for (size_t i=0; i<list_len; i++) {
+    osalDbgAssert(type_list[i] != ubx_msg_t::EMPTY, "Empty type forbidden");
+  }
 
   while (chVTIsSystemTimeWithinX(start, end)) {
     byte = sdGetTimeout(this->sdp, MS2ST(100));
     if (MSG_TIMEOUT != byte) {
       status = ubx_parser.collect(byte);
-
-      switch(status) {
-      case ubx_msg_t::EMPTY:
-        break;
-      case ubx_msg_t::ACK_ACK:
-        ubx_parser.unpack(ack_ack);
-        if (ack_ack.payload.acked_msg == type) {
-          ret = ublox_ack_t::ACK;
-          goto EXIT;
+      if (ubx_msg_t::EMPTY != status) {
+        for (size_t i=0; i<list_len; i++) {
+          if (type_list[i] == status) {
+            return status;
+          }
         }
-        break;
-      case ubx_msg_t::ACK_NACK:
-        ubx_parser.unpack(ack_nack);
-        if (ack_nack.payload.nacked_msg == type) {
-          ret = ublox_ack_t::NACK;
-          goto EXIT;
-        }
-        break;
-      default:
         ubx_parser.drop(); // it is very important to drop unneeded message
-        break;
       }
     }
+  }
+
+  return ubx_msg_t::EMPTY;
+}
+
+/**
+ *
+ */
+ubx_msg_t uBlox::wait_one_timeout(ubx_msg_t type, systime_t timeout) {
+  return wait_any_timeout(&type, 1, timeout);
+}
+
+/**
+ *
+ */
+ublox_ack_t uBlox::wait_ack(ubx_msg_t type, systime_t timeout) {
+
+  ubx_msg_t status = ubx_msg_t::EMPTY;
+  ubx_ack_nack ack_nack;
+  ubx_ack_ack ack_ack;
+  ublox_ack_t ret = ublox_ack_t::NONE;
+
+  ubx_msg_t list[2] = {ubx_msg_t::ACK_ACK, ubx_msg_t::ACK_NACK};
+  status = wait_any_timeout(list, 2, timeout);
+
+  switch(status) {
+  case ubx_msg_t::EMPTY:
+    ret = ublox_ack_t::NONE;
+    goto EXIT;
+    break;
+  case ubx_msg_t::ACK_ACK:
+    ubx_parser.unpack(ack_ack);
+    if (ack_ack.payload.acked_msg == type) {
+      ret = ublox_ack_t::ACK;
+      goto EXIT;
+    }
+    break;
+  case ubx_msg_t::ACK_NACK:
+    ubx_parser.unpack(ack_nack);
+    if (ack_nack.payload.nacked_msg == type) {
+      ret = ublox_ack_t::NACK;
+      goto EXIT;
+    }
+    break;
+  default:
+    osalSysHalt("Logic broken. This message unexpected here.");
+    break;
   }
 
 EXIT:
@@ -187,7 +214,7 @@ void uBlox::set_port(void) {
   msg.payload.portID = 1;
   msg.payload.txready = 0;
   msg.payload.mode = (0b11 << 6) | (0b100 << 9);
-  msg.payload.baudrate = GNSS_HI_BAUDRATE;
+  msg.payload.baudrate = this->working_baudrate;
   msg.payload.inProtoMask = 1;
   //msg.outProtoMask = 0b11; // nmea + ubx
   msg.payload.outProtoMask = 0b1; // ubx only
@@ -229,13 +256,47 @@ void uBlox::set_message_rate(void) {
 /**
  *
  */
+bool uBlox::device_alive(systime_t timeout) {
+
+  SerialConfig gps_ser_cfg = {this->start_baudrate,0,0,0};
+  uint8_t buf[UBX_OVERHEAD_TOTAL];
+  size_t len;
+  ubx_mon_ver version;
+  ubx_msg_t recvd = ubx_msg_t::EMPTY;
+  bool ret = false;
+
+  sdStart(this->sdp, &gps_ser_cfg);
+
+  len = ubx_parser.packPollRequest(ubx_msg_t::MON_VER, buf, sizeof(buf));
+  osalDbgCheck(len > 0 && len <= sizeof(buf));
+
+  sdWrite(this->sdp, buf, len);
+  recvd = wait_one_timeout(ubx_msg_t::MON_VER, timeout);
+  if (ubx_msg_t::MON_VER == recvd) {
+    this->ubx_parser.unpack(version);
+    osalSysHalt("Manually check version struct and delete unneeded extended fields");
+    ret = true;
+  }
+  else {
+    ret = false;
+  }
+
+  sdStop(this->sdp);
+  return ret;
+}
+
+/**
+ *
+ */
 void uBlox::configure(uint32_t dyn_model, uint32_t fix_period) {
 
-  gps_ser_cfg.speed = GNSS_DEFAULT_BAUDRATE;
+  SerialConfig gps_ser_cfg = {0,0,0,0};
+
+  gps_ser_cfg.speed = this->start_baudrate;
   sdStart(this->sdp, &gps_ser_cfg);
   set_port();
   sdStop(this->sdp);
-  gps_ser_cfg.speed = GNSS_HI_BAUDRATE;
+  gps_ser_cfg.speed = this->working_baudrate;
   sdStart(this->sdp, &gps_ser_cfg);
 
   set_fix_period(fix_period);
@@ -266,9 +327,9 @@ static void pvt2gnss(const ubx_nav_pvt_payload &pvt, gnss_data_t *result) {
 
   result->altitude    = pvt.h / 1000.0;
   result->latitude    = pvt.lat;
-  result->latitude    /= DEG_TO_MAVLINK;
+  result->latitude    /= DEG_TO_UBX;
   result->longitude   = pvt.lon;
-  result->longitude   /= DEG_TO_MAVLINK;
+  result->longitude   /= DEG_TO_UBX;
   result->v[0]        = pvt.velN / 1000.0;
   result->v[1]        = pvt.velE / 1000.0;
   result->v[2]        = pvt.velD / 1000.0;
@@ -313,19 +374,30 @@ void uBlox::pvtdispatch(const ubx_nav_pvt_payload &pvt) {
 THD_FUNCTION(uBlox::ubxRxThread, arg) {
   chRegSetThreadName("GNSS_UBX");
   uBlox *self = static_cast<uBlox *>(arg);
-  msg_t byte;
-  ubx_msg_t status;
-  ubx_nav_pvt pvt;
+  size_t retry = 10;
 
-  osalThreadSleepSeconds(2);
+  /* wait until receiver boots up */
+  while (retry--) {
+    if (true == self->device_alive(MS2ST(500)))
+      break;
+  }
+  if (0 == retry) {
+    osalSysHalt("Not detected. Please launch some self escape function here");
+  }
 
+  /* configure receiver */
   osalSysLock();
   self->dyn_model_cache  = *self->dyn_model;
   self->fix_period_cache = *self->fix_period;
   osalSysUnlock();
   self->configure(self->dyn_model_cache, self->fix_period_cache);
 
+  /* main loop */
   while (!chThdShouldTerminateX()) {
+    msg_t byte;
+    ubx_msg_t status;
+    ubx_nav_pvt pvt;osalSysHalt("check how often constructor of 'pvt' calls");
+
     self->update_settings();
     byte = sdGetTimeout(self->sdp, MS2ST(100));
     if (MSG_TIMEOUT != byte) {
@@ -357,7 +429,8 @@ THD_FUNCTION(uBlox::ubxRxThread, arg) {
 /**
  *
  */
-uBlox::uBlox(SerialDriver *sdp) : GNSSReceiver(sdp) {
+uBlox::uBlox(SerialDriver *sdp, uint32_t start_baudrate, uint32_t working_baudrate) :
+    GNSSReceiver(sdp, start_baudrate, working_baudrate) {
   return;
 }
 
@@ -370,7 +443,7 @@ void uBlox::start(void) {
   param_registry.valueSearch("GNSS_fix_period", &fix_period);
 
   worker = chThdCreateStatic(gnssRxThreadWA, sizeof(gnssRxThreadWA),
-                      GPSPRIO, ubxRxThread, this);
+                             GPSPRIO, ubxRxThread, this);
   osalDbgCheck(nullptr != worker);
   ready = true;
 }

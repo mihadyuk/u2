@@ -30,15 +30,6 @@ extern mavlink_gps_raw_int_t        mavlink_out_gps_raw_int_struct;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-/**
- *
- */
-static SerialConfig gps_ser_cfg = {
-    GNSS_DEFAULT_BAUDRATE,
-    0,
-    0,
-    0,
-};
 
 static const uint8_t msg_gga_rmc_only[] =
     "$PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*28\r\n";
@@ -94,9 +85,10 @@ void mtkgps::ggarmc2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc) {
  *
  */
 void mtkgps::configure(void) {
+  SerialConfig gps_ser_cfg = {0,0,0,0};
 
   /* start on default baudrate */
-  gps_ser_cfg.speed = GNSS_DEFAULT_BAUDRATE;
+  gps_ser_cfg.speed = this->start_baudrate;
   sdStart(this->sdp, &gps_ser_cfg);
 
   /* set only GGA, RMC output. We have to do this some times
@@ -187,14 +179,16 @@ THD_FUNCTION(mtkgps::nmeaRxThread, arg) {
         self->nmea_parser.unpack(gga);
         gga_msec = gga.msec + gga.time.tm_sec * 1000;
         if (nullptr != self->sniff_sdp) {
-          chprintf((BaseSequentialStream *)self->sniff_sdp, "gga_parsed = %u\n", gga.msec);
+          chprintf((BaseSequentialStream *)self->sniff_sdp,
+              "gga_parsed = %u\n", gga.msec);
         }
         break;
       case sentence_type_t::RMC:
         self->nmea_parser.unpack(rmc);
         rmc_msec = rmc.msec + rmc.time.tm_sec * 1000;
         if (nullptr != self->sniff_sdp) {
-          chprintf((BaseSequentialStream *)self->sniff_sdp, "rmc_parsed = %u\n", rmc.msec);
+          chprintf((BaseSequentialStream *)self->sniff_sdp,
+              "rmc_parsed = %u\n", rmc.msec);
         }
         break;
       default:
@@ -202,8 +196,7 @@ THD_FUNCTION(mtkgps::nmeaRxThread, arg) {
       }
 
       /* */
-      //if ((gga_msec != rmc_msec) && (gga_msec != GGA_VOID) && (rmc_msec != RMC_VOID)) { // test string
-      if (gga_msec == rmc_msec) { // correct string
+      if (gga_msec == rmc_msec) {
 
         self->ggarmc2mavlink(gga, rmc);
 
@@ -220,7 +213,8 @@ THD_FUNCTION(mtkgps::nmeaRxThread, arg) {
         }
 
         if (nullptr != self->sniff_sdp) {
-          chprintf((BaseSequentialStream *)self->sniff_sdp, "---- gga = %u; rmc = %u\n", gga_msec, rmc_msec);
+          chprintf((BaseSequentialStream *)self->sniff_sdp,
+              "---- gga = %u; rmc = %u\n", gga_msec, rmc_msec);
         }
 
         gga_msec = GGA_VOID;
@@ -240,7 +234,8 @@ THD_FUNCTION(mtkgps::nmeaRxThread, arg) {
 /**
  *
  */
-mtkgps::mtkgps(SerialDriver *sdp) : GNSSReceiver(sdp) {
+mtkgps::mtkgps(SerialDriver *sdp, uint32_t start_baudrate, uint32_t working_baudrate) :
+    GNSSReceiver(sdp, start_baudrate, working_baudrate) {
   return;
 }
 

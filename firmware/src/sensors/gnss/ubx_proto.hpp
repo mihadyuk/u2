@@ -38,13 +38,15 @@ enum class ubx_msg_t : uint16_t {
   NAV_PVT     = 0x0701,
   NAV_SAT     = 0x3501,
 
+  ACK_ACK     = 0x0105,
+  ACK_NACK    = 0x0005,
+
   CFG_MSG     = 0x0106,
   CFG_NAV5    = 0x2406,
   CFG_RATE    = 0x0806,
   CFG_PRT     = 0x0006,
 
-  ACK_ACK     = 0x0105,
-  ACK_NACK    = 0x0005,
+  MON_VER     = 0x040A,
 };
 
 /**
@@ -230,6 +232,23 @@ struct ubx_nav_sat {
   uint16_t recvd_bytes;
 };
 
+/**
+ *
+ */
+struct ubx_mon_ver_payload {
+  ubx_mon_ver_payload(void) {memset(this, 0, sizeof(*this));}
+  char swVer[30];
+  char hwVer[10];
+  char extended1[30];
+  char extended2[30];
+} __attribute__((packed));
+
+struct ubx_mon_ver {
+  ubx_mon_ver_payload payload;
+  const ubx_msg_t rtti = ubx_msg_t::MON_VER;
+  uint16_t recvd_bytes;
+};
+
 //TODO: CFG_TP5 time pulse param
 
 /**
@@ -257,6 +276,7 @@ class UbxProto {
 public:
   UbxProto(void);
   ubx_msg_t collect(uint8_t byte);
+  size_t packPollRequest(ubx_msg_t type, uint8_t *buf, size_t buflen);
   template <typename T> size_t pack(const T &msg, uint8_t *buf, size_t buflen);
   template <typename T> void unpack(T &result);
   void drop(void);

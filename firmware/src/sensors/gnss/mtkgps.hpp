@@ -11,7 +11,8 @@ namespace gnss {
  */
 class mtkgps : public GNSSReceiver {
 public:
-  mtkgps(SerialDriver *sdp);
+  mtkgps(SerialDriver *sdp, uint32_t start_baudrate,
+                            uint32_t working_baudrate);
   void start(void);
 private:
   NmeaProto nmea_parser;

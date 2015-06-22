@@ -116,8 +116,8 @@ __CCM__ static marg_data_t marg_data;
 __CCM__ static PPS pps;
 __CCM__ static MPXV mpxv;
 __CCM__ static Calibrator calibrator;
-//__CCM__        gnss::mtkgps GNSS(&GPSSD);
-__CCM__        gnss::uBlox GNSS(&GPSSD);
+//__CCM__        gnss::mtkgps GNSS(&GPSSD, 9600, 57600);
+__CCM__        gnss::uBlox GNSS(&GPSSD, 9600, 57600);
 __CCM__ static gnss::gnss_data_t gnss_data;
 __CCM__ control::HIL hil;
 #if USE_STARLINO_AHRS
