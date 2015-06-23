@@ -27,7 +27,7 @@
  ******************************************************************************
  */
 
-#define MAIN_SENSOR_ADIS    TRUE
+#define MAIN_SENSOR_ADIS    FALSE
 
 /*
  ******************************************************************************
@@ -36,6 +36,7 @@
  */
 extern mavlink_debug_t                 mavlink_out_debug_struct;
 extern mavlink_debug_vect_t            mavlink_out_debug_vect_struct;
+extern mavlink_highres_imu_t           mavlink_out_highres_imu_struct;
 
 /*
  ******************************************************************************
@@ -156,6 +157,29 @@ void Navi6dWrapper::prepare_data(const baro_data_t &abs_press,
 /**
  *
  */
+void Navi6dWrapper::navi2mavlink(void) {
+
+  const NaviData<double> &data = nav_sins.navi_data;
+
+  mavlink_out_highres_imu_struct.xacc = data.fb_c[0][0];
+  mavlink_out_highres_imu_struct.yacc = data.fb_c[1][0];
+  mavlink_out_highres_imu_struct.zacc = data.fb_c[2][0];
+
+  mavlink_out_highres_imu_struct.xgyro = data.wb_c[0][0];
+  mavlink_out_highres_imu_struct.ygyro = data.wb_c[1][0];
+  mavlink_out_highres_imu_struct.zgyro = data.wb_c[2][0];
+
+  mavlink_out_highres_imu_struct.xmag = data.mb_c[0][0];
+  mavlink_out_highres_imu_struct.ymag = data.mb_c[1][0];
+  mavlink_out_highres_imu_struct.zmag = data.mb_c[2][0];
+
+  mavlink_out_highres_imu_struct.time_usec = TimeKeeper::utc();
+}
+
+
+/**
+ *
+ */
 #if ! FAKE_SINS
 void Navi6dWrapper::navi2acs(void) {
 
@@ -190,7 +214,6 @@ void Navi6dWrapper::navi2acs(void) {
   acs_in.ch[ACS_INPUT_free_ay] = data.free_acc[1][0];
   acs_in.ch[ACS_INPUT_free_az] = data.free_acc[2][0];
 
-  //mavlink_out_debug_struct.value = data.status & (1UL << 5UL);
   mavlink_out_debug_struct.value = data.mag_mod;
 }
 #endif
@@ -267,21 +290,12 @@ void Navi6dWrapper::start(float dT) {
   kalman_params.sigma_R[5][0] = *R_baro; //baro
   kalman_params.sigma_R[6][0] = *R_mag; //mag
 
-#if MAIN_SENSOR_ADIS
   kalman_params.sigma_Qm[0][0] = *Qm_acc; //acc
   kalman_params.sigma_Qm[1][0] = *Qm_gyr; //gyr
   kalman_params.sigma_Qm[2][0] = *Qm_acc_x; //acc_x
   kalman_params.sigma_Qm[3][0] = *Qm_acc_y; //acc_y
   kalman_params.sigma_Qm[4][0] = *Qm_acc_z; //acc_z
   kalman_params.sigma_Qm[5][0] = *Qm_gyr_bias; //gyr_bias
-#else // MPU6050
-  kalman_params.sigma_Qm[0][0] = 0.01; //acc
-  kalman_params.sigma_Qm[1][0] = 0.01; //gyr
-  kalman_params.sigma_Qm[2][0] = 0.0001; //acc_x
-  kalman_params.sigma_Qm[3][0] = 0.0001; //acc_y
-  kalman_params.sigma_Qm[4][0] = 0.0001; //acc_z
-  kalman_params.sigma_Qm[5][0] = 0.0005; //gyr_bias
-#endif
 
   init_params.dT = dT;
 
@@ -317,28 +331,17 @@ void Navi6dWrapper::update(const baro_data_t &abs_press,
 #if ! FAKE_SINS
   osalDbgCheck(ready);
 
-//  ref_params.glrt_acc_sigma = *acc_sigma;
-//  ref_params.glrt_gyr_sigma = *gyr_sigma;
-//  ref_params.glrt_n = *samples;
-//  ref_params.glrt_gamma = *gamma;
   nav_sins.set_ref_params(ref_params);
 
   prepare_data(abs_press, speed, marg);
   nav_sins.run();
   navi2acs();
+  navi2mavlink();
 
   mavlink_out_debug_vect_struct.time_usec = TimeKeeper::utc();
-//  mavlink_out_debug_vect_struct.x = nav_sins.navi_data.wb_c[0][0];
-//  mavlink_out_debug_vect_struct.y = nav_sins.navi_data.wb_c[1][0];
-//  mavlink_out_debug_vect_struct.z = nav_sins.navi_data.wb_c[2][0];
   mavlink_out_debug_vect_struct.x = nav_sins.navi_data.a_bias[0][0];
   mavlink_out_debug_vect_struct.y = nav_sins.navi_data.a_bias[1][0];
   mavlink_out_debug_vect_struct.z = nav_sins.navi_data.a_bias[2][0];
-
-//  if (nav_sins.glrt_det.status)
-//    red_led_on();
-//  else
-//    red_led_off();
 
 #else
   (void)abs_press;

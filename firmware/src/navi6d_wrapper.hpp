@@ -20,6 +20,7 @@ public:
   void stop(void);
 private:
   void navi2acs(void);
+  void navi2mavlink(void);
   void prepare_data(const baro_data_t &abs_press,
                     const speedometer_data_t &speed,
                     const marg_data_t &marg);

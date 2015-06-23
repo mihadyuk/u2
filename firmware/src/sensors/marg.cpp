@@ -59,7 +59,7 @@ extern sensor_state_registry_t SensorStateRegistry;
 extern MavLogger mav_logger;
 
 extern mavlink_raw_imu_t                mavlink_out_raw_imu_struct;
-extern mavlink_highres_imu_t            mavlink_out_highres_imu_struct;
+extern mavlink_scaled_imu_t             mavlink_out_scaled_imu_struct;
 
 /*
  ******************************************************************************
@@ -73,7 +73,7 @@ extern mavlink_highres_imu_t            mavlink_out_highres_imu_struct;
  ******************************************************************************
  */
 static mavMail raw_imu_mail;
-static mavMail highres_imu_mail;
+static mavMail scaled_imu_mail;
 
 /*
  ******************************************************************************
@@ -86,24 +86,22 @@ static mavMail highres_imu_mail;
 /**
  *
  */
-//#include "geometry.hpp"
-//mavlink_out_highres_imu_struct.zgyro = 3600 * rad2deg(sqrt(data.gyr[2] * data.gyr[2] + data.gyr[1] * data.gyr[1] + data.gyr[0] * data.gyr[0]));
 void marg2mavlink(const marg_data_t &data) {
 
   /**/
-  mavlink_out_highres_imu_struct.xacc = data.acc[0];
-  mavlink_out_highres_imu_struct.yacc = data.acc[1];
-  mavlink_out_highres_imu_struct.zacc = data.acc[2];
+  mavlink_out_scaled_imu_struct.xacc = data.acc[0] * 1000;
+  mavlink_out_scaled_imu_struct.yacc = data.acc[1] * 1000;
+  mavlink_out_scaled_imu_struct.zacc = data.acc[2] * 1000;
 
-  mavlink_out_highres_imu_struct.xgyro = data.gyr[0];
-  mavlink_out_highres_imu_struct.ygyro = data.gyr[1];
-  mavlink_out_highres_imu_struct.zgyro = data.gyr[2];
+  mavlink_out_scaled_imu_struct.xgyro = data.gyr[0] * 1000;
+  mavlink_out_scaled_imu_struct.ygyro = data.gyr[1] * 1000;
+  mavlink_out_scaled_imu_struct.zgyro = data.gyr[2] * 1000;
 
-  mavlink_out_highres_imu_struct.xmag = data.mag[0];
-  mavlink_out_highres_imu_struct.ymag = data.mag[1];
-  mavlink_out_highres_imu_struct.zmag = data.mag[2];
+  mavlink_out_scaled_imu_struct.xmag = data.mag[0] * 1000;
+  mavlink_out_scaled_imu_struct.ymag = data.mag[1] * 1000;
+  mavlink_out_scaled_imu_struct.zmag = data.mag[2] * 1000;
 
-  mavlink_out_highres_imu_struct.time_usec = TimeKeeper::utc();
+  mavlink_out_scaled_imu_struct.time_boot_ms = TIME_BOOT_MS;
 
   /**/
   mavlink_out_raw_imu_struct.xacc = data.acc_raw[0];
@@ -131,9 +129,9 @@ static void log_append(void) {
     mav_logger.write(&raw_imu_mail);
   }
 
-  if (highres_imu_mail.free()) {
-    highres_imu_mail.fill(&mavlink_out_highres_imu_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_HIGHRES_IMU);
-    mav_logger.write(&highres_imu_mail);
+  if (scaled_imu_mail.free()) {
+    scaled_imu_mail.fill(&mavlink_out_scaled_imu_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_SCALED_IMU);
+    mav_logger.write(&scaled_imu_mail);
   }
 }
 

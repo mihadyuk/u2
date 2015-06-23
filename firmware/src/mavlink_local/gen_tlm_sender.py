@@ -23,6 +23,7 @@ names_uav = [
     ["raw_press",   "raw_pressure"],
     ["rc",          "rc_channels"],
     ["rc_scaled",   "rc_channels_scaled"],
+    ["scal_imu",    "scaled_imu"],
     ["scal_press",  "scaled_pressure"],
     ["sys_status",  "sys_status"],
     ["vfr_hud",     "vfr_hud"],

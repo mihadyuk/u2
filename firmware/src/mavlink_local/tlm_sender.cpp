@@ -35,6 +35,7 @@ extern const mavlink_raw_imu_t mavlink_out_raw_imu_struct;
 extern const mavlink_raw_pressure_t mavlink_out_raw_pressure_struct;
 extern const mavlink_rc_channels_t mavlink_out_rc_channels_struct;
 extern const mavlink_rc_channels_scaled_t mavlink_out_rc_channels_scaled_struct;
+extern const mavlink_scaled_imu_t mavlink_out_scaled_imu_struct;
 extern const mavlink_scaled_pressure_t mavlink_out_scaled_pressure_struct;
 extern const mavlink_sys_status_t mavlink_out_sys_status_struct;
 extern const mavlink_vfr_hud_t mavlink_out_vfr_hud_struct;
@@ -73,6 +74,7 @@ static void send_raw_imu(void);
 static void send_raw_press(void);
 static void send_rc(void);
 static void send_rc_scaled(void);
+static void send_scal_imu(void);
 static void send_scal_press(void);
 static void send_sys_status(void);
 static void send_vfr_hud(void);
@@ -100,6 +102,7 @@ static mavMail raw_imu_mail __CCM__;
 static mavMail raw_pressure_mail __CCM__;
 static mavMail rc_channels_mail __CCM__;
 static mavMail rc_channels_scaled_mail __CCM__;
+static mavMail scaled_imu_mail __CCM__;
 static mavMail scaled_pressure_mail __CCM__;
 static mavMail sys_status_mail __CCM__;
 static mavMail vfr_hud_mail __CCM__;
@@ -119,9 +122,10 @@ __CCM__ static tlm_registry_t Registry[] = {
     {21, nullptr, send_raw_press},
     {22, nullptr, send_rc},
     {23, nullptr, send_rc_scaled},
-    {24, nullptr, send_scal_press},
-    {25, nullptr, send_sys_status},
-    {26, nullptr, send_vfr_hud},
+    {24, nullptr, send_scal_imu},
+    {25, nullptr, send_scal_press},
+    {26, nullptr, send_sys_status},
+    {27, nullptr, send_vfr_hud},
 };
 
 /*
@@ -313,6 +317,20 @@ static void send_rc_scaled(void){
     mail_undelivered++;
 }
 
+static void send_scal_imu(void){
+  msg_t status = MSG_RESET;
+  if (scaled_imu_mail.free()){
+    scaled_imu_mail.fill(&mavlink_out_scaled_imu_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_SCALED_IMU);
+    status = mav_postman.post(scaled_imu_mail);
+    if (status != MSG_OK){
+      mailbox_overflow++;
+      scaled_imu_mail.release();
+    }
+  }
+  else
+    mail_undelivered++;
+}
+
 static void send_scal_press(void){
   msg_t status = MSG_RESET;
   if (scaled_pressure_mail.free()){
@@ -433,9 +451,10 @@ static void load_parameters(void) {
   param_registry.valueSearch("T_raw_press", &(Registry[10].sleepperiod));
   param_registry.valueSearch("T_rc", &(Registry[11].sleepperiod));
   param_registry.valueSearch("T_rc_scaled", &(Registry[12].sleepperiod));
-  param_registry.valueSearch("T_scal_press", &(Registry[13].sleepperiod));
-  param_registry.valueSearch("T_sys_status", &(Registry[14].sleepperiod));
-  param_registry.valueSearch("T_vfr_hud", &(Registry[15].sleepperiod));
+  param_registry.valueSearch("T_scal_imu", &(Registry[13].sleepperiod));
+  param_registry.valueSearch("T_scal_press", &(Registry[14].sleepperiod));
+  param_registry.valueSearch("T_sys_status", &(Registry[15].sleepperiod));
+  param_registry.valueSearch("T_vfr_hud", &(Registry[16].sleepperiod));
 }
 
 /*

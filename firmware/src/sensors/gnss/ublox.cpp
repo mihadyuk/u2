@@ -446,9 +446,9 @@ THD_FUNCTION(uBlox::ubxRxThread, arg) {
   uBlox *self = static_cast<uBlox *>(arg);
   msg_t byte = MSG_TIMEOUT;
   ubx_msg_t status = ubx_msg_t::EMPTY;
-  osalThreadSleepMilliseconds(1);
 
   /* wait until receiver boots up */
+  osalThreadSleepSeconds(2);
   while (true) {
     if (self->device_alive(MS2ST(500)))
       break;

@@ -33,18 +33,21 @@ enum class ubx_msg_t : uint16_t {
   EMPTY       = 0x0000,
 
   NAV_POSLLH  = 0x0201,
+  NAV_PVT     = 0x0701,
   NAV_VELNED  = 0x1201,
   NAV_TIMEUTC = 0x2101,
-  NAV_PVT     = 0x0701,
   NAV_SAT     = 0x3501,
 
-  ACK_ACK     = 0x0105,
-  ACK_NACK    = 0x0005,
+  RXM_SFRBX   = 0x1302,
+  RXM_RAWX    = 0x1502,
 
-  CFG_MSG     = 0x0106,
-  CFG_NAV5    = 0x2406,
-  CFG_RATE    = 0x0806,
+  ACK_NACK    = 0x0005,
+  ACK_ACK     = 0x0105,
+
   CFG_PRT     = 0x0006,
+  CFG_MSG     = 0x0106,
+  CFG_RATE    = 0x0806,
+  CFG_NAV5    = 0x2406,
 
   MON_VER     = 0x040A,
 };
