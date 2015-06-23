@@ -27,6 +27,7 @@ private:
   UbxProto ubx_parser;
   static THD_FUNCTION(ubxRxThread, arg);
   void pvt2mavlink(const ubx_nav_pvt_payload &pvt);
+  void get_version(void);
   void set_fix_period(uint16_t msec);
   void set_port(void);
   void set_dyn_model(uint32_t dyn_model);
@@ -44,6 +45,11 @@ private:
   const uint32_t *fix_period = nullptr;
   uint32_t dyn_model_cache = 8;
   uint32_t fix_period_cache = 200;
+  uint16_t nack_cnt = 0;
+  uint16_t no_answer_cnt = 0;
+  ubx_nav_pvt pvt;
+  ubx_mon_ver<5> ver;
+  ubx_nav_sat<20> sat;
 };
 
 } // namespace

@@ -1,4 +1,4 @@
-#pragma GCC optimize "-O2"
+#pragma GCC optimize "-O0"
 
 #include "main.h"
 
@@ -188,7 +188,10 @@ void uBlox::write_with_confirm(const T &msg, systime_t timeout) {
   sdWrite(this->sdp, buf, len);
   if (0 != timeout) {
     ack = wait_ack(msg.rtti, timeout);
-    osalDbgCheck(ack == ublox_ack_t::ACK);
+    if (ack == ublox_ack_t::ACK)
+      this->nack_cnt++;
+    if (ack == ublox_ack_t::NONE)
+      this->no_answer_cnt++;
   }
 }
 
@@ -216,7 +219,7 @@ void uBlox::set_port(void) {
   msg.payload.mode = (0b11 << 6) | (0b100 << 9);
   msg.payload.baudrate = this->working_baudrate;
   msg.payload.inProtoMask = 1;
-  //msg.outProtoMask = 0b11; // nmea + ubx
+  //msg.payload.outProtoMask = 0b11; // nmea + ubx
   msg.payload.outProtoMask = 0b1; // ubx only
   msg.payload.flags = 0;
 
@@ -249,7 +252,6 @@ void uBlox::set_message_rate(void) {
 
   msg.payload.rate = 1;
   msg.payload.msg_wanted = ubx_msg_t::NAV_PVT;
-
   write_with_confirm(msg, S2ST(1));
 }
 
@@ -261,9 +263,9 @@ bool uBlox::device_alive(systime_t timeout) {
   SerialConfig gps_ser_cfg = {this->start_baudrate,0,0,0};
   uint8_t buf[UBX_OVERHEAD_TOTAL];
   size_t len;
-  ubx_mon_ver version;
   ubx_msg_t recvd = ubx_msg_t::EMPTY;
   bool ret = false;
+  ubx_mon_ver<0> version;
 
   sdStart(this->sdp, &gps_ser_cfg);
 
@@ -274,7 +276,6 @@ bool uBlox::device_alive(systime_t timeout) {
   recvd = wait_one_timeout(ubx_msg_t::MON_VER, timeout);
   if (ubx_msg_t::MON_VER == recvd) {
     this->ubx_parser.unpack(version);
-    osalSysHalt("Manually check version struct and delete unneeded extended fields");
     ret = true;
   }
   else {
@@ -283,6 +284,25 @@ bool uBlox::device_alive(systime_t timeout) {
 
   sdStop(this->sdp);
   return ret;
+}
+
+/**
+ *
+ */
+void uBlox::get_version(void) {
+
+  uint8_t buf[UBX_OVERHEAD_TOTAL];
+  size_t len;
+  ubx_msg_t recvd = ubx_msg_t::EMPTY;
+
+  len = ubx_parser.packPollRequest(ubx_msg_t::MON_VER, buf, sizeof(buf));
+  osalDbgCheck(len > 0 && len <= sizeof(buf));
+
+  sdWrite(this->sdp, buf, len);
+  recvd = wait_one_timeout(ubx_msg_t::MON_VER, S2ST(1));
+  if (ubx_msg_t::MON_VER == recvd) {
+    this->ubx_parser.unpack(this->ver);
+  }
 }
 
 /**
@@ -299,6 +319,7 @@ void uBlox::configure(uint32_t dyn_model, uint32_t fix_period) {
   gps_ser_cfg.speed = this->working_baudrate;
   sdStart(this->sdp, &gps_ser_cfg);
 
+  get_version();
   set_fix_period(fix_period);
   set_dyn_model(dyn_model);
   set_message_rate();
@@ -371,18 +392,66 @@ void uBlox::pvtdispatch(const ubx_nav_pvt_payload &pvt) {
 /**
  *
  */
+static void dbg_print(BaseSequentialStream *sdp, ubx_nav_pvt &pvt) { /*
+  uint32_t iTOW;    // ms GPS time of week
+  uint16_t year;    // 1999..2099
+  uint8_t  month;   // 1..12
+  uint8_t  day;     // 1..31
+  uint8_t  hour;    // 0..23
+  uint8_t  min;     // 0..59
+  uint8_t  sec;     // 0..60
+  uint8_t  valid;   // Validity  flags
+  uint32_t tAcc;    // ns Time accuracy estimate
+  int32_t  nano;    // ns Fraction of second -1e9..1e9
+
+  uint8_t  fixType;
+  uint8_t  fixFlags;
+  uint8_t  reserved;
+  uint8_t  numSV;   // number of satellites used in solution
+
+  int32_t  lon;     // deg 10e-7
+  int32_t  lat;     // deg 10e-7
+  int32_t  h;       // mm Height above ellipsoid
+  int32_t  hMSL;    // mm
+  uint32_t hAcc;    // mm Horizontal accuracy estimate
+  uint32_t vAcc;    // mm Vertical accuracy estimate
+
+  int32_t  velN;    // mm/s
+  int32_t  velE;    // mm/s
+  int32_t  velD;    // mm/s
+  uint32_t gSpeed;  // mm/s Speed module (2D)
+  int32_t  hdg;     // deg * 1e-5 Heading of motion
+  uint32_t speedAcc;// mm/s Speed accuracy estimate
+  uint32_t hdgAcc;  // deg * 1e-5 Coarse/heading accuracy estimate
+
+  uint16_t pDOP;    // 0.01
+  uint8_t  reserved2[6];
+  int32_t  hedVeh;  // deg * 1e-5 Heading of vehicle
+  uint8_t  reserved3[4]; */
+  if (nullptr != sdp) {
+    chprintf(sdp, "lat = %D",   pvt.payload.lat);
+    chprintf(sdp, "lon = %D",   pvt.payload.lon);
+    chprintf(sdp, "h = %D",     pvt.payload.h);
+    chprintf(sdp, "hMSL = %D",  pvt.payload.hMSL);
+    chprintf(sdp, "hAcc = %D",  pvt.payload.hAcc);
+    chprintf(sdp, "vAcc = %D",  pvt.payload.vAcc);
+  }
+}
+
+/**
+ *
+ */
 THD_FUNCTION(uBlox::ubxRxThread, arg) {
   chRegSetThreadName("GNSS_UBX");
   uBlox *self = static_cast<uBlox *>(arg);
-  size_t retry = 10;
+  msg_t byte = MSG_TIMEOUT;
+  ubx_msg_t status = ubx_msg_t::EMPTY;
+  osalThreadSleepMilliseconds(1);
 
   /* wait until receiver boots up */
-  while (retry--) {
-    if (true == self->device_alive(MS2ST(500)))
+  while (true) {
+    if (self->device_alive(MS2ST(500)))
       break;
-  }
-  if (0 == retry) {
-    osalSysHalt("Not detected. Please launch some self escape function here");
   }
 
   /* configure receiver */
@@ -394,22 +463,18 @@ THD_FUNCTION(uBlox::ubxRxThread, arg) {
 
   /* main loop */
   while (!chThdShouldTerminateX()) {
-    msg_t byte;
-    ubx_msg_t status;
-    ubx_nav_pvt pvt;osalSysHalt("check how often constructor of 'pvt' calls");
-
     self->update_settings();
     byte = sdGetTimeout(self->sdp, MS2ST(100));
     if (MSG_TIMEOUT != byte) {
       status = self->ubx_parser.collect(byte);
-
       switch(status) {
       case ubx_msg_t::EMPTY:
         break;
       case ubx_msg_t::NAV_PVT:
-        self->ubx_parser.unpack(pvt);
-        self->pvt2mavlink(pvt.payload);
-        self->pvtdispatch(pvt.payload);
+        self->ubx_parser.unpack(self->pvt);
+        dbg_print((BaseSequentialStream *)self->sniff_sdp, self->pvt);
+        self->pvt2mavlink(self->pvt.payload);
+        self->pvtdispatch(self->pvt.payload);
         break;
       default:
         self->ubx_parser.drop(); // it is essential to drop unneeded message

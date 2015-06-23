@@ -162,6 +162,7 @@ struct ubx_cfg_nav5 {
  *
  */
 struct ubx_nav_pvt_payload {
+  ubx_nav_pvt_payload(void) {memset(this, 0, sizeof(*this));}
   uint32_t iTOW;    // ms GPS time of week
   uint16_t year;    // 1999..2099
   uint8_t  month;   // 1..12
@@ -218,16 +219,19 @@ struct __svs {
   uint32_t flags;
 } __attribute__((packed));
 
+template <size_t svs_cnt>
 struct ubx_nav_sat_payload {
+  ubx_nav_sat_payload(void) {memset(this, 0, sizeof(*this));}
   uint32_t iTOW;    // ms GPS time of week
   uint8_t  version;
   uint8_t  numSvs;
   uint8_t  reserved[2];
-  __svs    svs[20];
+  __svs    svs[svs_cnt];
 } __attribute__((packed));
 
+template <size_t svs_cnt>
 struct ubx_nav_sat {
-  ubx_nav_sat_payload payload;
+  ubx_nav_sat_payload<svs_cnt> payload;
   const ubx_msg_t rtti = ubx_msg_t::NAV_SAT;
   uint16_t recvd_bytes;
 };
@@ -235,16 +239,19 @@ struct ubx_nav_sat {
 /**
  *
  */
+template <size_t ext_cnt>
 struct ubx_mon_ver_payload {
   ubx_mon_ver_payload(void) {memset(this, 0, sizeof(*this));}
   char swVer[30];
   char hwVer[10];
-  char extended1[30];
-  char extended2[30];
+  /* Extended optional fields. Set first index to desired value.
+   * For example: NEO-M8N has 5 extended fields */
+  char extended[ext_cnt][30];
 } __attribute__((packed));
 
+template <size_t ext_cnt>
 struct ubx_mon_ver {
-  ubx_mon_ver_payload payload;
+  ubx_mon_ver_payload<ext_cnt> payload;
   const ubx_msg_t rtti = ubx_msg_t::MON_VER;
   uint16_t recvd_bytes;
 };
