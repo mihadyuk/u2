@@ -30,9 +30,14 @@ private:
   ACSInput &acs_in;
   gnss::GNSSReceiver &GNSS;
   gnss::gnss_data_t gnss_data;
-  const uint32_t *gnss_enable = nullptr;
-  const uint32_t *odo_enable  = nullptr;
-  const uint32_t *baro_enable = nullptr;
+  const uint32_t *en_gnss   = nullptr;
+  const uint32_t *en_odo    = nullptr;
+  const uint32_t *en_baro   = nullptr;
+  const uint32_t *en_euler  = nullptr;
+  const uint32_t *en_nonhol = nullptr;
+  const uint32_t *en_mag    = nullptr;
+  const uint32_t *en_zihr   = nullptr;
+  const uint32_t *en_gnss_v = nullptr;
 
   const float *acc_sigma = nullptr;
   const float *gyr_sigma = nullptr;
@@ -44,6 +49,8 @@ private:
   const float *R_nonhol = nullptr;
   const float *R_baro = nullptr;
   const float *R_mag = nullptr;
+  const float *R_euler = nullptr;
+  const float *R_zihr = nullptr;
   const float *Qm_acc = nullptr;
   const float *Qm_gyr = nullptr;
   const float *Qm_acc_x = nullptr;

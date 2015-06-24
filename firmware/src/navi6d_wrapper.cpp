@@ -43,12 +43,13 @@ extern mavlink_highres_imu_t           mavlink_out_highres_imu_struct;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
+typedef float klmnfp;
 #if ! FAKE_SINS
-__CCM__ static NavigatorSins<double, 15, 13> nav_sins;
-__CCM__ static InitParams<double> init_params;
-__CCM__ static CalibParams<double> calib_params;
-__CCM__ static KalmanParams<double> kalman_params;
-__CCM__ static RefParams<double> ref_params;
+__CCM__ static NavigatorSins<klmnfp, 15, 16> nav_sins;
+__CCM__ static InitParams<klmnfp> init_params;
+__CCM__ static CalibParams<klmnfp> calib_params;
+__CCM__ static KalmanParams<klmnfp> kalman_params;
+__CCM__ static RefParams<klmnfp> ref_params;
 #endif
 
 /*
@@ -69,43 +70,43 @@ __CCM__ static RefParams<double> ref_params;
  */
 void Navi6dWrapper::prepare_gnss(const speedometer_data_t &speed) {
 #if ! FAKE_SINS
-  if ((*gnss_enable == 1) && (gnss_data.fresh) && (gnss_data.fix > 0)) {
+  if ((*en_gnss == 1) && (gnss_data.fresh) && (gnss_data.fix > 0)) {
     nav_sins.sensor_data.r_sns[0][0] = deg2rad(gnss_data.latitude);
     nav_sins.sensor_data.r_sns[1][0] = deg2rad(gnss_data.longitude);
     nav_sins.sensor_data.r_sns[2][0] = gnss_data.altitude;
     nav_sins.sensor_flags.sns_r_en = true;
     nav_sins.sensor_flags.sns_h_en = true;
-
-    switch(gnss_data.speed_type) {
-    case gnss::speed_t::SPEED_COURSE:
-      nav_sins.sensor_data.v_sns[0][0] = gnss_data.speed * cos(deg2rad(gnss_data.course));
-      nav_sins.sensor_data.v_sns[1][0] = gnss_data.speed * sin(deg2rad(gnss_data.course));
-      nav_sins.sensor_data.v_sns[2][0] = gnss_data.course;
-      nav_sins.sensor_flags.sns_v_n_en = true;
-      nav_sins.sensor_flags.sns_v_e_en = true;
-      nav_sins.sensor_flags.sns_v_d_en = false;
-      break;
-    case gnss::speed_t::VECTOR_3D:
-    case gnss::speed_t::BOTH:
-      for (size_t i=0; i<3; i++) {
-        nav_sins.sensor_data.v_sns[i][0] = gnss_data.v[i];
+    if (*en_gnss_v == 1) {
+      switch(gnss_data.speed_type) {
+      case gnss::speed_t::SPEED_COURSE:
+        nav_sins.sensor_data.v_sns[0][0] = gnss_data.speed * cos(deg2rad(gnss_data.course));
+        nav_sins.sensor_data.v_sns[1][0] = gnss_data.speed * sin(deg2rad(gnss_data.course));
+        nav_sins.sensor_data.v_sns[2][0] = gnss_data.course;
+        nav_sins.sensor_flags.sns_v_n_en = true;
+        nav_sins.sensor_flags.sns_v_e_en = true;
+        nav_sins.sensor_flags.sns_v_d_en = false;
+        break;
+      case gnss::speed_t::VECTOR_3D:
+      case gnss::speed_t::BOTH:
+        for (size_t i=0; i<3; i++) {
+          nav_sins.sensor_data.v_sns[i][0] = gnss_data.v[i];
+        }
+        nav_sins.sensor_flags.sns_v_n_en = true;
+        nav_sins.sensor_flags.sns_v_e_en = true;
+        nav_sins.sensor_flags.sns_v_d_en = true;
+        break;
+      default:
+        nav_sins.sensor_flags.sns_v_n_en = false;
+        nav_sins.sensor_flags.sns_v_e_en = false;
+        nav_sins.sensor_flags.sns_v_d_en = false;
+        break;
       }
-      nav_sins.sensor_flags.sns_v_n_en = true;
-      nav_sins.sensor_flags.sns_v_e_en = true;
-      nav_sins.sensor_flags.sns_v_d_en = true;
-      break;
-    default:
-      nav_sins.sensor_flags.sns_v_n_en = false;
-      nav_sins.sensor_flags.sns_v_e_en = false;
-      nav_sins.sensor_flags.sns_v_d_en = false;
-      break;
     }
   }
-  else {
-    nav_sins.sensor_data.v_odo[0][0] = speed.speed;
-    nav_sins.sensor_data.v_odo[1][0] = 0;
-    nav_sins.sensor_data.v_odo[2][0] = 0;
-  }
+
+  nav_sins.sensor_data.v_odo[0][0] = speed.speed;
+  nav_sins.sensor_data.v_odo[1][0] = 0;
+  nav_sins.sensor_data.v_odo[2][0] = 0;
 
   // Important! Must be set to false after data processing
   if (gnss_data.fresh) {
@@ -126,16 +127,36 @@ void Navi6dWrapper::prepare_data(const baro_data_t &abs_press,
 {
   prepare_gnss(speed);
 
-  if (*odo_enable == 1) {
+  if ((0 == speed.speed) && (1 == *en_zihr)) {
+    nav_sins.sensor_flags.zihr_en = true;
+  }
+
+  if (nav_sins.glrt_det.status){
+    nav_sins.sensor_data.ang[2][0] = nav_sins.navi_data.eu_nv[2][0];
+  }
+
+  if (*en_odo == 1) {
     nav_sins.sensor_flags.odo_en = true;
+  }
+
+  if (*en_nonhol == 1) {
     nav_sins.sensor_flags.nonhol_y_en = true;
     nav_sins.sensor_flags.nonhol_z_en = true;
   }
 
-  if (*baro_enable == 1) {
+  if (*en_mag == 1) {
+    nav_sins.sensor_flags.mag_en = true;
+  }
+
+  if (*en_euler == 1) {
+    if (nav_sins.glrt_det.status){
+      nav_sins.sensor_flags.course_en = true;
+    }
+  }
+  nav_sins.sensor_flags.baro_fix_en = true;
+  if (*en_baro == 1) {
     nav_sins.sensor_flags.alt_b_en = true;
     nav_sins.sensor_data.alt_b[0][0] = abs_press.alt;
-    nav_sins.sensor_flags.baro_fix_en = true;
   }
 
   for(size_t i=0; i<3; i++) {
@@ -159,7 +180,7 @@ void Navi6dWrapper::prepare_data(const baro_data_t &abs_press,
  */
 void Navi6dWrapper::navi2mavlink(void) {
 
-  const NaviData<double> &data = nav_sins.navi_data;
+  const NaviData<klmnfp> &data = nav_sins.navi_data;
 
   mavlink_out_highres_imu_struct.xacc = data.fb_c[0][0];
   mavlink_out_highres_imu_struct.yacc = data.fb_c[1][0];
@@ -183,7 +204,7 @@ void Navi6dWrapper::navi2mavlink(void) {
 #if ! FAKE_SINS
 void Navi6dWrapper::navi2acs(void) {
 
-  const NaviData<double> &data = nav_sins.navi_data;
+  const NaviData<klmnfp> &data = nav_sins.navi_data;
 
   acs_in.ch[ACS_INPUT_roll] = data.eu_nv[0][0];
   acs_in.ch[ACS_INPUT_pitch]= data.eu_nv[1][0];
@@ -241,9 +262,14 @@ void Navi6dWrapper::start(float dT) {
   gnss_data.fresh = false;
   GNSS.subscribe(&gnss_data);
 
-  param_registry.valueSearch("SINS_gnss_enable",&gnss_enable);
-  param_registry.valueSearch("SINS_odo_enable", &odo_enable);
-  param_registry.valueSearch("SINS_baro_enable",&baro_enable);
+  param_registry.valueSearch("SINS_en_gnss",   &en_gnss);
+  param_registry.valueSearch("SINS_en_odo",    &en_odo);
+  param_registry.valueSearch("SINS_en_baro",   &en_baro);
+  param_registry.valueSearch("SINS_en_euler",  &en_euler);
+  param_registry.valueSearch("SINS_en_mag",    &en_mag);
+  param_registry.valueSearch("SINS_en_nonhol", &en_nonhol);
+  param_registry.valueSearch("SINS_en_zihr",   &en_zihr);
+  param_registry.valueSearch("SINS_en_gnss_v", &en_gnss_v);
 
   param_registry.valueSearch("SINS_R_ne_sns",   &R_ne_sns);
   param_registry.valueSearch("SINS_R_d_sns",    &R_d_sns);
@@ -252,6 +278,8 @@ void Navi6dWrapper::start(float dT) {
   param_registry.valueSearch("SINS_R_nonhol",   &R_nonhol);
   param_registry.valueSearch("SINS_R_baro",     &R_baro);
   param_registry.valueSearch("SINS_R_mag",      &R_mag);
+  param_registry.valueSearch("SINS_R_euler",    &R_euler);
+  param_registry.valueSearch("SINS_R_zihr",     &R_zihr);
 
   param_registry.valueSearch("SINS_Qm_acc",     &Qm_acc);
   param_registry.valueSearch("SINS_Qm_gyr",     &Qm_gyr);
@@ -279,7 +307,7 @@ void Navi6dWrapper::start(float dT) {
   init_params.est_gyro_bias = true;
 #endif
 
-  init_params.sigma_Pi[0][0] = 200; //initial position STD (m)
+  //init_params.sigma_Pi[0][0] = 200; //initial position STD (m)
   init_params.sigma_Pi[3][0] = M_PI; //initial heading STD (rad)
 
   kalman_params.sigma_R[0][0] = *R_ne_sns; //ne_sns
@@ -289,6 +317,8 @@ void Navi6dWrapper::start(float dT) {
   kalman_params.sigma_R[4][0] = *R_nonhol; //nonhol
   kalman_params.sigma_R[5][0] = *R_baro; //baro
   kalman_params.sigma_R[6][0] = *R_mag; //mag
+  kalman_params.sigma_R[7][0] = *R_euler; //roll,pitch,yaw (rad)
+  kalman_params.sigma_R[8][0] = *R_zihr; // zihr
 
   kalman_params.sigma_Qm[0][0] = *Qm_acc; //acc
   kalman_params.sigma_Qm[1][0] = *Qm_gyr; //gyr
