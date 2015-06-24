@@ -2,7 +2,7 @@
 #define NAVI6D_WRAPPER_HPP_
 
 #include "baro_data.hpp"
-#include "speedometer_data.hpp"
+#include "odometer_data.hpp"
 #include "acs_input.hpp"
 #include "gnss_receiver.hpp"
 #include "marg_data.hpp"
@@ -14,7 +14,7 @@ class Navi6dWrapper {
 public:
   Navi6dWrapper(ACSInput &acs_in, gnss::GNSSReceiver &GNSS);
   void update(const baro_data_t &abs_press,
-              const speedometer_data_t &speed,
+              const odometer_data_t &odo,
               const marg_data_t &marg);
   void start(float dT);
   void stop(void);
@@ -22,9 +22,9 @@ private:
   void navi2acs(void);
   void navi2mavlink(void);
   void prepare_data(const baro_data_t &abs_press,
-                    const speedometer_data_t &speed,
+                    const odometer_data_t &odo,
                     const marg_data_t &marg);
-  void prepare_gnss(const speedometer_data_t &speed);
+  void prepare_gnss(const odometer_data_t &odo);
   void reload_settings(void);
   bool ready = false;
   ACSInput &acs_in;

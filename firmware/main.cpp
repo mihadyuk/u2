@@ -64,7 +64,7 @@ Giovanni
 #include "fir_test.hpp"
 #include "maxsonar.hpp"
 #include "pps.hpp"
-#include "speedometer.hpp"
+#include "odometer.hpp"
 #include "mpxv.hpp"
 #include "calibrator.hpp"
 #include "hil.hpp"
@@ -110,8 +110,8 @@ Marg marg;
 BMP085 bmp_085(&I2CD_SLOW, BMP085_I2C_ADDR);
 __CCM__ static baro_data_t abs_press;
 __CCM__ static MaxSonar maxsonar;
-__CCM__ static speedometer_data_t speed_data;
-__CCM__ static Speedometer speedometer;
+__CCM__ static odometer_data_t odo_data;
+__CCM__ static Odometer odometer;
 __CCM__ static marg_data_t marg_data;
 __CCM__ static PPS pps;
 __CCM__ static MPXV mpxv;
@@ -192,7 +192,7 @@ int main(void) {
   marg.start();
   calibrator.start();
   maxsonar.start();
-  speedometer.start();
+  odometer.start();
   acs.start();
   pps.start();
   mpxv.start();
@@ -212,8 +212,8 @@ int main(void) {
     marg.get(marg_data, MS2ST(200));
     GNSS.getCache(gnss_data);
     gps2acs_in(gnss_data, acs_in);
-    speedometer.update(speed_data, marg_data.dT);
-    speedometer2acs_in(speed_data, acs_in);
+    odometer.update(odo_data, marg_data.dT);
+    speedometer2acs_in(odo_data, acs_in);
     mpxv.get();
     PwrMgrUpdate();
     bmp_085.get(abs_press);
@@ -236,7 +236,7 @@ int main(void) {
     acs_in.ch[ACS_INPUT_pitch]= euler[1];
     acs_in.ch[ACS_INPUT_yaw]  = euler[2];
 #else
-    navi6d.update(abs_press, speed_data, marg_data);
+    navi6d.update(abs_press, odo_data, marg_data);
 #endif
     acs_input2mavlink(acs_in);
   }

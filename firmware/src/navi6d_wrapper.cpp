@@ -68,7 +68,7 @@ __CCM__ static RefParams<klmnfp> ref_params;
 /**
  *
  */
-void Navi6dWrapper::prepare_gnss(const speedometer_data_t &speed) {
+void Navi6dWrapper::prepare_gnss(const odometer_data_t &speed) {
 #if ! FAKE_SINS
   if ((*en_gnss == 1) && (gnss_data.fresh) && (gnss_data.fix > 0)) {
     nav_sins.sensor_data.r_sns[0][0] = deg2rad(gnss_data.latitude);
@@ -122,7 +122,7 @@ void Navi6dWrapper::prepare_gnss(const speedometer_data_t &speed) {
  */
 #if ! FAKE_SINS
 void Navi6dWrapper::prepare_data(const baro_data_t &abs_press,
-                                 const speedometer_data_t &speed,
+                                 const odometer_data_t &speed,
                                  const marg_data_t &marg)
 {
   prepare_gnss(speed);
@@ -167,7 +167,7 @@ void Navi6dWrapper::prepare_data(const baro_data_t &abs_press,
 }
 #else
 void Navi6dWrapper::prepare_data(const baro_data_t &abs_press,
-                                 const speedometer_data_t &speed,
+                                 const odometer_data_t &speed,
                                  const marg_data_t &marg) {
   (void)abs_press;
   (void)speed;
@@ -355,7 +355,7 @@ void Navi6dWrapper::stop(void) {
  *
  */
 void Navi6dWrapper::update(const baro_data_t &abs_press,
-                           const speedometer_data_t &speed,
+                           const odometer_data_t &speed,
                            const marg_data_t &marg)
 {
 #if ! FAKE_SINS
