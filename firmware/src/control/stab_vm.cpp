@@ -1,4 +1,4 @@
-#pragma GCC optimize "-O2"
+//#pragma GCC optimize "-O2"
 
 #include "main.h"
 
@@ -204,8 +204,9 @@ public:
       next->update(this->pid(*position, alcoi_target, VM_dT));
       alcoi_time_elapsed -= VM_dT;
     }
-    else
+    else {
       next->update(this->pid(*position, target, VM_dT));
+    }
   }
 
   void alcoi_pulse(float strength, float time) {
@@ -396,6 +397,9 @@ static PIDInit<float> get_pid_init(uint8_t pidnum) {
     ret.postproc = nullptr;
     break;
   case 1:
+    ret.postproc = wrap_pi;
+    break;
+  case 2:
     ret.postproc = wrap_2pi;
     break;
   default:

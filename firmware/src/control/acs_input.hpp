@@ -4,7 +4,7 @@
 #include "string.h" /* for memset() */
 #include "manual_switch_enum.hpp"
 
-#include "gps_data.hpp"
+#include "gnss_data.hpp"
 #include "baro_data.hpp"
 #include "speedometer_data.hpp"
 
@@ -63,13 +63,11 @@ typedef enum {
   ACS_INPUT_wy,
   ACS_INPUT_wz,
 
-//  ACS_INPUT_vgps,     // speed from GPS (m/s)
-//  ACS_INPUT_vodo,     // speed from odometer (m/s)
-//  ACS_INPUT_vair,     // air speed (m/s)
-
-  ACS_INPUT_dZ,       // cross track error (rad)
-  ACS_INPUT_dYaw,
-  ACS_INPUT_trgt_crs, // course to target point (rad)
+  ACS_INPUT_dZrad,      // cross track error (rad)
+  ACS_INPUT_dZm,        // cross track error (m)
+  ACS_INPUT_dYaw,       // (rad)
+  ACS_INPUT_trgt_crs,   // course to target point (rad)
+  ACS_INPUT_trgt_speed, // m/s
 
   // raw futaba values (normalized -1..1)
   ACS_INPUT_futaba_raw_00,
@@ -93,14 +91,16 @@ typedef enum {
   ACS_INPUT_futaba_height,
   ACS_INPUT_futaba_yaw,
 
-  // some constants
-  ACS_INPUT_one_neg,
-  ACS_INPUT_half_neg,
-  ACS_INPUT_quarter_neg,
-  ACS_INPUT_zero,
-  ACS_INPUT_quarter,
-  ACS_INPUT_half,
-  ACS_INPUT_one,
+  // some constants for debug
+  ACS_INPUT_const_two_neg,
+  ACS_INPUT_const_one_neg,
+  ACS_INPUT_const_half_neg,
+  ACS_INPUT_const_quarter_neg,
+  ACS_INPUT_const_zero,
+  ACS_INPUT_const_quarter,
+  ACS_INPUT_const_half,
+  ACS_INPUT_const_one,
+  ACS_INPUT_const_two,
 
   ACS_INPUT_ENUM_END,
 } state_vector_enum;
@@ -116,13 +116,15 @@ struct ACSInput {
     memset(this, 0, sizeof(*this));
 
     /* fill special values */
-    ch[ACS_INPUT_one_neg]     = -1;
-    ch[ACS_INPUT_half_neg]    = -0.5f;
-    ch[ACS_INPUT_quarter_neg] = -0.25f;
-    ch[ACS_INPUT_zero]        = 0;
-    ch[ACS_INPUT_quarter]     = 0.25f;
-    ch[ACS_INPUT_half]        = 0.5f;
-    ch[ACS_INPUT_one]         = 1;
+    ch[ACS_INPUT_const_two_neg]     = -2;
+    ch[ACS_INPUT_const_one_neg]     = -1;
+    ch[ACS_INPUT_const_half_neg]    = -0.5f;
+    ch[ACS_INPUT_const_quarter_neg] = -0.25f;
+    ch[ACS_INPUT_const_zero]        = 0;
+    ch[ACS_INPUT_const_quarter]     = 0.25f;
+    ch[ACS_INPUT_const_half]        = 0.5f;
+    ch[ACS_INPUT_const_one]         = 1;
+    ch[ACS_INPUT_const_two]         = 2;
   }
 
   float ch[ACS_INPUT_ENUM_END];
@@ -134,7 +136,7 @@ struct ACSInput {
  *
  */
 void acs_input2mavlink(const ACSInput &acs_in);
-void gps2acs_in(const gps_data_t &gps, ACSInput &acs_in);
+void gps2acs_in(const gnss::gnss_data_t &gps, ACSInput &acs_in);
 void baro2acs_in(const baro_data_t &baro, ACSInput &acs_in);
 void speedometer2acs_in(const speedometer_data_t &speed, ACSInput &acs_in);
 

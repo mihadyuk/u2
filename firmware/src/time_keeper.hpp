@@ -1,6 +1,8 @@
 #ifndef TIME_KEEPER_HPP_
 #define TIME_KEEPER_HPP_
 
+#include "gnss_receiver.hpp"
+
 /* Use this constant if correct time value can not be determined */
 #define TIME_INVALID    0
 
@@ -9,7 +11,7 @@
  */
 class TimeKeeper {
 public:
-  TimeKeeper(void);
+  TimeKeeper(gnss::GNSSReceiver &GNSS);
   void start(void);
   void stop(void);
   int format_time(char *str, size_t len);
@@ -21,6 +23,7 @@ public:
 private:
   friend THD_FUNCTION(TimekeeperThread, arg);
   thread_t *worker = nullptr;
+  gnss::GNSSReceiver &GNSS;
   static bool ready;
 };
 

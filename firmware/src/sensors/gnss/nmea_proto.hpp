@@ -1,5 +1,5 @@
-#ifndef NMEA_HPP_
-#define NMEA_HPP_
+#ifndef NMEA_PROTO_HPP_
+#define NMEA_PROTO_HPP_
 
 #include "string.h" // for memset
 
@@ -9,7 +9,7 @@
 #define GPS_TOKEN_MAP_LEN     24
 #define GPS_MAX_TOKEN_LEN     16
 
-namespace gps {
+namespace gnss {
 
 /**
  *
@@ -18,13 +18,15 @@ struct nmea_gga_t {
   nmea_gga_t(void) {
     memset(this, 0, sizeof(*this));
   }
-  double  latitude;     // deg
-  double  longitude;    // deg
-  float   altitude;     // m
-  float   hdop;
-  float   geoid;
-  uint8_t satellites;
-  uint8_t fix;
+  double    latitude;     // deg
+  double    longitude;    // deg
+  float     altitude;     // m
+  float     hdop;
+  float     geoid;
+  struct tm time;
+  uint16_t  msec;         // milliseconds from message timestamp
+  uint8_t   satellites;
+  uint8_t   fix;
 };
 
 /**
@@ -34,10 +36,10 @@ struct nmea_rmc_t {
   nmea_rmc_t(void) {
     memset(this, 0, sizeof(*this));
   }
-  struct tm time;
   float     speed;    // m/s
   float     course;   // deg
-  bool      sec_round; /* there is no fractional part in seconds' field */
+  struct tm time;
+  uint16_t  msec;     // milliseconds from message timestamp
 };
 
 /**
@@ -53,7 +55,7 @@ enum class sentence_type_t {
 /**
  *
  */
-enum class collect_state_t {
+enum class nmea_collect_state_t {
   START,      /* wait '$' sign */
   DATA,       /* collect data until '*' sign */
   CHECKSUM1,  /* collect 1st byte of checksum */
@@ -65,25 +67,30 @@ enum class collect_state_t {
 /**
  *
  */
-class NmeaParser {
+class NmeaProto {
 public:
-  NmeaParser(void);
+  NmeaProto(void);
   sentence_type_t collect(uint8_t byte);
   void unpack(nmea_rmc_t &result);
   void unpack(nmea_gga_t &result);
+  uint8_t checksum(const uint8_t *data, size_t len);
+  void checksum2str(uint8_t sum, char *str);
+  uint8_t checksumFromStr(const char *str);
+  void seal(char *msg);
 private:
+  bool checksum_autotest(void);
+  bool _autotest(const char *sentence);
   void reset_collector(void);
   const char* token(char *result, size_t number);
   sentence_type_t validate_sentence(void);
   sentence_type_t get_name(const char *name);
   size_t tip;
   size_t maptip;
-  collect_state_t state;
+  nmea_collect_state_t state;
   uint8_t buf[GPS_MSG_LEN];
   uint8_t token_map[GPS_TOKEN_MAP_LEN];
-  SerialDriver *dump_sdp = nullptr;
 };
 
 } /* namespace */
 
-#endif /* NMEA_HPP_ */
+#endif /* NMEA_PROTO_HPP_ */

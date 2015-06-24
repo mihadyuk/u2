@@ -7,7 +7,7 @@
 #include "global_flags.h"
 #include "time_keeper.hpp"
 #include "exti_local.hpp"
-#include "eb500.hpp"
+#include "ublox.hpp"
 
 /*
  * Время работает следующим образом:
@@ -38,7 +38,7 @@
  */
 
 /* delta between RTC and GPS (sec.) */
-#define TIME_CORRECTION_THRESHOLD       4
+#define TIME_CORRECTION_THRESHOLD       2
 
 /* Approximated build time stamp. Needed to prevent setting of current
  * time in past. Probably it must be automatically calculated every build. */
@@ -48,19 +48,16 @@
 #define RTC_TIMER_STEP                  UINT16_MAX
 
 /* Very dirty oscillator correction. Please remove it */
-#define RTC_TIMER_SKEW                  -3
+#define RTC_TIMER_SKEW_DEFAULT          -3
 
 #define RTC_GPTD                        GPTD6
 
 /**
- * structure for PPS jitter statistic
+ *
  */
-struct time_staticstic_t {
-  int32_t   max = 0;            /**< @brief Minimal measurement.    */
-  int32_t   min = 0;            /**< @brief Maximum measurement.    */
-  int32_t   last = 0;           /**< @brief Last measurement.       */
-  size_t    n = 0;              /**< @brief Number of measurements. */
-  int32_t   cumulative = 0;     /**< @brief Cumulative measurement. */
+struct drift_estimate_t {
+  int64_t sample = TIME_INVALID;
+  int64_t sample_prev = TIME_INVALID;
 };
 
 /*
@@ -85,8 +82,9 @@ static void gptcb(GPTDriver *gptp);
 static int64_t unix_usec = TIME_INVALID;
 static int64_t time_gps_us = TIME_INVALID;
 
-static int64_t pps_sample_us_prev = TIME_INVALID;
-static int64_t pps_sample_us = TIME_INVALID;
+static int64_t timer_skew = RTC_TIMER_SKEW_DEFAULT;
+
+static drift_estimate_t drift_est;
 
 bool TimeKeeper::ready = false;
 
@@ -102,9 +100,7 @@ static const GPTConfig gptcfg = {
 
 static chibios_rt::BinarySemaphore ppstimesync_sem(true);
 
-__CCM__ static gps_data_t gps;
-
-__CCM__ static time_staticstic_t time_stat;
+__CCM__ static gnss::gnss_data_t gps;
 
 /*
  *******************************************************************************
@@ -120,24 +116,8 @@ static void gptcb(GPTDriver *gptp) {
   (void)gptp;
 
   osalSysLockFromISR();
-  unix_usec += RTC_TIMER_STEP + RTC_TIMER_SKEW;
+  unix_usec += RTC_TIMER_STEP + timer_skew;
   osalSysUnlockFromISR();
-}
-
-/**
- *
- */
-static void jitter_stats_update(void) {
-
-  int32_t speed_delta = (pps_sample_us - pps_sample_us_prev) - 1000000;
-
-  time_stat.n++;
-  time_stat.cumulative += speed_delta;
-  time_stat.last = speed_delta;
-  if (speed_delta < time_stat.min)
-    time_stat.min = speed_delta;
-  else if (speed_delta > time_stat.max)
-    time_stat.max = speed_delta;
 }
 
 /**
@@ -189,50 +169,44 @@ static int64_t rtc_get_time_unix_usec(void) {
 /**
  *
  */
-static THD_WORKING_AREA(TimekeeperThreadWA, 512) __CCM__;
+__CCM__ static THD_WORKING_AREA(TimekeeperThreadWA, 512);
 THD_FUNCTION(TimekeeperThread, arg) {
   chRegSetThreadName("Timekeeper");
   TimeKeeper *self = static_cast<TimeKeeper *>(arg);
-  (void)self;
-  msg_t sem_status = MSG_RESET;
-  chibios_rt::EvtListener el;
-  event_gps.registerMask(&el, EVMSK_GPS_FRESH_VALID);
-  eventmask_t gps_evt;
 
+  /* wait until receiver boots */
   while (!chThdShouldTerminateX()) {
-    sem_status = ppstimesync_sem.wait(MS2ST(1200));
-    if (MSG_OK == sem_status) {
-      el.getAndClearFlags();
-
-      jitter_stats_update();
-
-      while (true) { /* wait first measurement with rounde seconds */
-        gps_evt = chEvtWaitOneTimeout(EVMSK_GPS_FRESH_VALID, MS2ST(1200));
-        if (EVMSK_GPS_FRESH_VALID == gps_evt) {
-          GPSGet(gps);
-          if (gps.sec_round) {
-            int64_t tmp = 1000000;
-            tmp *= mktime(&gps.time);
-            osalSysLock();
-            time_gps_us = tmp;
-            osalSysUnlock();
-
-            /* now correct time in internal RTC (if needed) */
-            int32_t t1 = time_gps_us / 1000000;
-            int32_t t2 = rtc_get_time_unix(nullptr);
-            int32_t dt = t1 - t2;
-
-            if (abs(dt) > TIME_CORRECTION_THRESHOLD)
-              rtc_set_time(&gps.time);
-
-            break; // while(true)
-          }
-        }
-      }
+    if (MSG_OK != ppstimesync_sem.wait(MS2ST(1200))) {
+      self->GNSS.subscribe(&gps);
+      break;
     }
   }
 
-  event_gps.unregister(&el);
+  while (!chThdShouldTerminateX()) {
+    if ((gps.fresh) && (gps.fix > 0) && (0 == gps.msec)) {
+      int64_t tmp = 1000000;
+      tmp *= mktime(&gps.time);
+      osalSysLock();
+      time_gps_us = tmp;
+      osalSysUnlock();
+
+      /* now correct time in internal RTC (if needed) */
+      int32_t t1 = time_gps_us / 1000000;
+      int32_t t2 = rtc_get_time_unix(nullptr);
+      int32_t dt = t1 - t2;
+
+      if (abs(dt) > TIME_CORRECTION_THRESHOLD)
+        rtc_set_time(&gps.time);
+    }
+
+    if (gps.fresh) {
+      gps.fresh = false;
+    }
+
+    osalThreadSleepMilliseconds(20);
+  }
+
+  self->GNSS.unsubscribe(&gps);
   chThdExit(MSG_OK);
 }
 
@@ -246,7 +220,7 @@ THD_FUNCTION(TimekeeperThread, arg) {
 /**
  *
  */
-TimeKeeper::TimeKeeper(void) {
+TimeKeeper::TimeKeeper(gnss::GNSSReceiver &GNSS) : GNSS(GNSS) {
   ready = false;
 }
 
@@ -298,7 +272,7 @@ int64_t TimeKeeper::utc(void) {
   if (cnt2 >= cnt1)
     return ret + cnt1;
   else
-    return ret + cnt1 + RTC_TIMER_STEP + RTC_TIMER_SKEW;
+    return ret + cnt1 + RTC_TIMER_STEP + timer_skew;
 }
 
 /**
@@ -342,9 +316,22 @@ int TimeKeeper::format_time(int64_t time, char *str, size_t len){
  */
 void TimeKeeper::PPS_ISR_I(void) {
 
-  pps_sample_us_prev = pps_sample_us;
-  pps_sample_us = utc();
+  drift_est.sample_prev = drift_est.sample;
+  drift_est.sample = utc();
   ppstimesync_sem.signalI();
+}
+
+/**
+ *
+ */
+static size_t format_usec(char *buf, size_t N, int64_t tv_usec) {
+  int32_t i = tv_usec / 1000000;
+  int32_t f = tv_usec % 1000000;
+
+  if (0 != f)
+    return snprintf(buf, N, "%ld.%ld", i, f);
+  else
+    return snprintf(buf, N, "%ld.000000", i);
 }
 
 /**
@@ -357,72 +344,77 @@ thread_t* date_clicmd(int argc, const char * const * argv, SerialDriver *sdp) {
   int64_t tv_usec = 0;
   int sscanf_status;
 
+  /**/
+  if (argc == 2) {
+    if (0 == strcmp(argv[0], "set")) {
+      sscanf_status = sscanf(argv[1], "%i", (int*)&tv_sec);
+      if (sscanf_status != 1)
+        cli_println("ERROR. Time value inconsistent");
+      else if (tv_sec < BUILD_TIME)
+        cli_println("ERROR. Time in past");
+      else{
+        tv_usec = tv_sec;
+        tv_usec *= 1000000;
+        rtc_set_time_unix(tv_sec);
+        TimeKeeper::utc(tv_usec);
+      }
+    }
+    else if (0 == strcmp(argv[0], "drift")) {
+      sscanf_status = sscanf(argv[1], "%i", (int*)&tv_sec);
+      if (sscanf_status != 1)
+        cli_println("ERROR. Value inconsistent");
+      else {
+        timer_skew = tv_sec;
+      }
+    }
+  }
+
   /* 1 argument */
-  if (argc == 1){
-    sscanf_status = sscanf(argv[0], "%i", (int*)&tv_sec);
-    if (sscanf_status != 1)
-      cli_println("ERROR. Time value inconsistent");
-    else if (tv_sec < BUILD_TIME)
-      cli_println("ERROR. Time in past");
-    else{
-      tv_usec = tv_sec;
-      tv_usec *= 1000000;
-      rtc_set_time_unix(tv_sec);
-      TimeKeeper::utc(tv_usec);
+  else if (argc == 1) {
+    if (0 == strcmp(argv[0], "drift")) {
+      int tmp = timer_skew;
+      cli_print(tmp);
+      cli_println("");
     }
   }
 
   /* error handler */
-  else{
-    const int n = 40;
-    int nres = 0;
+  else {
+    const size_t n = 40;
+    size_t nres = 0;
     char str[n];
 
     tv_usec = rtc_get_time_unix_usec();
-    nres = snprintf(str, n, "%lld", tv_usec);
+    nres = format_usec(str, n, tv_usec);
     cli_print("RTC: ");
     cli_print_long(str, n, nres);
-    cli_print(" uS since Unix epoch. ");
+    cli_print(" S since Unix epoch. ");
     TimeKeeper::format_time(tv_usec, str, n);
     cli_println(str);
 
     tv_usec = TimeKeeper::utc();
-    nres = snprintf(str, n, "%lld", tv_usec);
+    nres = format_usec(str, n, tv_usec);
     cli_print("CNT: ");
     cli_print_long(str, n, nres);
-    cli_print(" uS since Unix epoch. ");
+    cli_print(" S since Unix epoch. ");
     TimeKeeper::format_time(tv_usec, str, n);
     cli_println(str);
 
     chSysLock();
     tv_usec = time_gps_us;
     chSysUnlock();
-    nres = snprintf(str, n, "%lld", tv_usec);
+    nres = format_usec(str, n, tv_usec);
     cli_print("GPS: ");
     cli_print_long(str, n, nres);
-    cli_print(" uS since Unix epoch. ");
+    cli_print(" S since Unix epoch. ");
     TimeKeeper::format_time(tv_usec, str, n);
     cli_println(str);
 
-    cli_println("PPS jitter:");
-    nres = snprintf(str, n, "%ld", time_stat.last);
-    cli_print("last:       ");
-    cli_print_long(str, n, nres);
-    nres = snprintf(str, n, "%ld", time_stat.min);
-    cli_print("min:        ");
-    cli_print_long(str, n, nres);
-    nres = snprintf(str, n, "%ld", time_stat.max);
-    cli_print("max:        ");
-    cli_print_long(str, n, nres);
-    nres = snprintf(str, n, "%ld", time_stat.cumulative);
-    cli_print("cumulative: ");
-    cli_print_long(str, n, nres);
-    nres = snprintf(str, n, "%u", time_stat.n);
-    cli_print("iterations: ");
+    nres = snprintf(str, n, "Drift estimate: %lld", drift_est.sample - drift_est.sample_prev - 1000000);
     cli_print_long(str, n, nres);
 
     cli_println("");
-    cli_println("To adjust time run 'date N'");
+    cli_println("To adjust time run 'date set N'");
     cli_println("    where 'N' is count of seconds (UTC) since Unix epoch.");
     cli_println("    you can obtain this value from Unix command line: 'date -u +%s'");
   }

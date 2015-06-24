@@ -76,6 +76,7 @@ static const ADCConversionGroup adccg = {
 
 static filters::AlphaBeta<int32_t, 128> temp_filter;
 static filters::AlphaBeta<int32_t, 128> mpxv_filter;
+static filters::AlphaBeta<int32_t, 128> main_supply_filter;
 
 /*
  *******************************************************************************
@@ -146,6 +147,13 @@ adcsample_t ADCget6v(void) {
  */
 adcsample_t ADCgetCurrent(void) {
   return samples[ADC_CURRENT_SENS_CH - CHANNEL_OFFSET];
+}
+
+/**
+ *
+ */
+adcsample_t ADCgetMainVoltage(void) {
+  return do_filter(ADC_MAIN_SUPPLY_CH - CHANNEL_OFFSET, main_supply_filter);
 }
 
 /**

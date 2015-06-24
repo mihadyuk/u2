@@ -11,7 +11,7 @@
  *
  */
 template<typename T>
-static inline T deg2rad(T deg){
+static inline T deg2rad(T deg) {
   return deg * static_cast<T>(DEG_TO_RAD);
 }
 
@@ -19,7 +19,7 @@ static inline T deg2rad(T deg){
  *
  */
 template<typename T>
-T rad2deg(T rad){
+T rad2deg(T rad) {
   return rad * static_cast<T>(RAD_TO_DEG);
 }
 
@@ -27,7 +27,7 @@ T rad2deg(T rad){
  * Get meters from radians on earth sphere
  */
 template<typename T>
-T rad2m(T rad){
+T rad2m(T rad) {
   return rad * static_cast<T>(RAD_TO_M);
 }
 
@@ -35,7 +35,7 @@ T rad2m(T rad){
  *
  */
 template <typename T>
-T wrap_180(T error){
+T wrap_180(T error) {
   if (error > static_cast<T>(180))
     error -= static_cast<T>(360);
   else if (error < static_cast<T>(-180))
@@ -47,7 +47,7 @@ T wrap_180(T error){
  *
  */
 template <typename T>
-T wrap_360(T angle){
+T wrap_360(T angle) {
   if (angle > static_cast<T>(360))
     angle -= static_cast<T>(360);
   else if (angle < static_cast<T>(0))
@@ -59,7 +59,7 @@ T wrap_360(T angle){
  *
  */
 template <typename T>
-T wrap_pi(T error){
+T wrap_pi(T error) {
   if (error > static_cast<T>(M_PI))
     error -= 2 * static_cast<T>(M_PI);
   else if (error < -static_cast<T>(M_PI))
@@ -71,7 +71,7 @@ T wrap_pi(T error){
  *
  */
 template <typename T>
-T wrap_2pi(T angle){
+T wrap_2pi(T angle) {
   if (angle > 2 * static_cast<T>(M_PI))
     angle -= 2 * static_cast<T>(M_PI);
   else if (angle < 0)

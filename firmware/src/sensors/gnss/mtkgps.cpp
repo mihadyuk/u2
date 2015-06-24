@@ -1,51 +1,35 @@
 #include "main.h"
 
-#include "nmea.hpp"
 #include "mavlink_local.hpp"
-#include "eb500.hpp"
+#include "mtkgps.hpp"
 #include "mav_logger.hpp"
 #include "geometry.hpp"
 #include "time_keeper.hpp"
 #include "pads.h"
 #include "chprintf.h"
+#include "array_len.hpp"
+#include "param_registry.hpp"
 
-using namespace gps;
+using namespace gnss;
 
 /*
  ******************************************************************************
  * DEFINES
  ******************************************************************************
  */
-#define HDG_UNKNOWN             65535
-
-#define GPS_DEFAULT_BAUDRATE    9600
-#define GPS_HI_BAUDRATE         57600
 
 /*
  ******************************************************************************
  * EXTERNS
  ******************************************************************************
  */
-chibios_rt::EvtSource event_gps;
-
 extern mavlink_gps_raw_int_t        mavlink_out_gps_raw_int_struct;
-
-extern MavLogger mav_logger;
 
 /*
  ******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-/**
- *
- */
-static SerialConfig gps_ser_cfg = {
-    GPS_DEFAULT_BAUDRATE,
-    0,
-    0,
-    0,
-};
 
 static const uint8_t msg_gga_rmc_only[] =
     "$PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*28\r\n";
@@ -60,18 +44,9 @@ static const uint8_t fix_period_2hz[] = "$PMTK300,500,0,0,0,0*28\r\n";
 /* set serial port baudrate */
 static const uint8_t gps_high_baudrate[] = "$PMTK251,57600*2C\r\n";
 
-__CCM__ static NmeaParser nmea_parser;
-
-__CCM__ static nmea_gga_t gga;
-__CCM__ static nmea_rmc_t rmc;
-__CCM__ static gps_data_t cache;
-
-static chibios_rt::BinarySemaphore pps_sem(true);
-static chibios_rt::BinarySemaphore protect_sem(false);
-
-static SerialDriver *hook_sdp = nullptr;
-
-static mavMail gps_raw_int_mail;
+/* constants for NMEA parser needs */
+static const uint16_t GGA_VOID = 0xFFFF;
+static const uint16_t RMC_VOID = (0xFFFF - 1);
 
 /*
  ******************************************************************************
@@ -86,22 +61,11 @@ static mavMail gps_raw_int_mail;
  *******************************************************************************
  *******************************************************************************
  */
-/**
- *
- */
-static void log_append(void) {
-
-  if (gps_raw_int_mail.free()) {
-    gps_raw_int_mail.fill(&mavlink_out_gps_raw_int_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_GPS_RAW_INT);
-    mav_logger.write(&gps_raw_int_mail);
-  }
-}
-
 
 /**
  *
  */
-static void gps2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc) {
+void mtkgps::ggarmc2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc) {
 
   mavlink_out_gps_raw_int_struct.time_usec = TimeKeeper::utc();
   mavlink_out_gps_raw_int_struct.lat = gga.latitude  * DEG_TO_MAVLINK;
@@ -114,55 +78,42 @@ static void gps2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc) {
   mavlink_out_gps_raw_int_struct.cog = rmc.course * 100;
   mavlink_out_gps_raw_int_struct.vel = rmc.speed * 100;
 
-  log_append();
+  log_append(&mavlink_out_gps_raw_int_struct);
 }
 
 /**
  *
  */
-static void acquire(void) {
-  protect_sem.wait();
-}
-
-/**
- *
- */
-static void release(void) {
-  protect_sem.signal();
-}
-
-/**
- *
- */
-static void gps_configure(void) {
+void mtkgps::configure(void) {
+  SerialConfig gps_ser_cfg = {0,0,0,0};
 
   /* start on default baudrate */
-  gps_ser_cfg.speed = GPS_DEFAULT_BAUDRATE;
-  sdStart(&GPSSD, &gps_ser_cfg);
+  gps_ser_cfg.speed = this->start_baudrate;
+  sdStart(this->sdp, &gps_ser_cfg);
 
   /* set only GGA, RMC output. We have to do this some times
    * because serial port contains some garbage and this garbage will
    * be flushed out during sending of some messages */
   size_t i=3;
   while (i--) {
-    sdWrite(&GPSSD, msg_gga_rmc_only, sizeof(msg_gga_rmc_only));
+    sdWrite(this->sdp, msg_gga_rmc_only, sizeof(msg_gga_rmc_only));
     chThdSleepSeconds(1);
   }
 
   /* set fix rate */
-//  sdWrite(&GPSSD, fix_period_5hz, sizeof(fix_period_5hz));
-//  sdWrite(&GPSSD, fix_period_4hz, sizeof(fix_period_4hz));
-//  sdWrite(&GPSSD, fix_period_2hz, sizeof(fix_period_2hz));
+  sdWrite(this->sdp, fix_period_5hz, sizeof(fix_period_5hz));
+//  sdWrite(this->sdp, fix_period_4hz, sizeof(fix_period_4hz));
+//  sdWrite(this->sdp, fix_period_2hz, sizeof(fix_period_2hz));
   chThdSleepSeconds(1);
 
 //  /* смена скорости _приемника_ на повышенную */
-//  sdWrite(&GPSSD, gps_high_baudrate, sizeof(gps_high_baudrate));
+//  sdWrite(this->sdp, gps_high_baudrate, sizeof(gps_high_baudrate));
 //  chThdSleepSeconds(1);
 //
 //  /* перезапуск _порта_ на повышенной частоте */
-//  sdStop(&GPSSD);
+//  sdStop(this->sdp);
 //  gps_ser_cfg.speed = GPS_HI_BAUDRATE;
-//  sdStart(&GPSSD, &gps_ser_cfg);
+//  sdStart(this->sdp, &gps_ser_cfg);
 //  chThdSleepSeconds(1);
 
   (void)fix_period_5hz;
@@ -174,65 +125,100 @@ static void gps_configure(void) {
 /**
  *
  */
-static THD_WORKING_AREA(gpsRxThreadWA, 320) __CCM__;
-THD_FUNCTION(gpsRxThread, arg) {
-  chRegSetThreadName("GNSS");
-  (void)arg;
+static void gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
+                        gnss_data_t *result) {
+
+  if (false == result->fresh) {
+    result->altitude   = gga.altitude;
+    result->latitude   = gga.latitude;
+    result->longitude  = gga.longitude;
+    result->course     = rmc.course;
+    result->speed      = rmc.speed;
+    result->speed_type = speed_t::SPEED_COURSE;
+    result->time       = rmc.time;
+    result->msec       = rmc.msec;
+    result->fix        = gga.fix;
+    result->fresh      = true; // this line must be at the very end for atomicity
+  }
+}
+
+/**
+ *
+ */
+void mtkgps::update_settings(void) {
+  return;
+}
+
+/**
+ *
+ */
+THD_FUNCTION(mtkgps::nmeaRxThread, arg) {
+  chRegSetThreadName("GNSS_NMEA");
+  mtkgps *self = static_cast<mtkgps *>(arg);
   msg_t byte;
   sentence_type_t status;
-  bool gga_acquired = false;
-  bool rmc_acquired = false;
-  systime_t prev = 0;
-  systime_t curr = 0;
+  nmea_gga_t gga;
+  nmea_rmc_t rmc;
+  uint16_t gga_msec = GGA_VOID;
+  uint16_t rmc_msec = RMC_VOID;
 
   osalThreadSleepSeconds(5);
-  gps_configure();
+  self->configure();
 
   while (!chThdShouldTerminateX()) {
-    byte = sdGetTimeout(&GPSSD, MS2ST(100));
+    self->update_settings();
+
+    byte = sdGetTimeout(self->sdp, MS2ST(100));
     if (MSG_TIMEOUT != byte) {
-      status = nmea_parser.collect(byte);
-      if (nullptr != hook_sdp)
-        sdPut(hook_sdp, byte);
+      status = self->nmea_parser.collect(byte);
+      if (nullptr != self->sniff_sdp)
+        sdPut(self->sniff_sdp, byte);
 
       switch(status) {
       case sentence_type_t::GGA:
-        nmea_parser.unpack(gga);
-        gga_acquired = true;
+        self->nmea_parser.unpack(gga);
+        gga_msec = gga.msec + gga.time.tm_sec * 1000;
+        if (nullptr != self->sniff_sdp) {
+          chprintf((BaseSequentialStream *)self->sniff_sdp,
+              "gga_parsed = %u\n", gga.msec);
+        }
         break;
       case sentence_type_t::RMC:
-        nmea_parser.unpack(rmc);
-        rmc_acquired = true;
+        self->nmea_parser.unpack(rmc);
+        rmc_msec = rmc.msec + rmc.time.tm_sec * 1000;
+        if (nullptr != self->sniff_sdp) {
+          chprintf((BaseSequentialStream *)self->sniff_sdp,
+              "rmc_parsed = %u\n", rmc.msec);
+        }
         break;
       default:
         break;
       }
 
       /* */
-      if (gga_acquired && rmc_acquired) {
-        gga_acquired = false;
-        rmc_acquired = false;
+      if (gga_msec == rmc_msec) {
 
-        gps2mavlink(gga, rmc);
+        self->ggarmc2mavlink(gga, rmc);
 
-        acquire();
-        cache.altitude   = gga.altitude;
-        cache.latitude   = gga.latitude;
-        cache.longitude  = gga.longitude;
-        cache.course     = rmc.course;
-        cache.speed      = rmc.speed;
-        cache.time       = rmc.time;
-        cache.sec_round  = rmc.sec_round;
-        if (gga.fix == 1) {
-          event_gps.broadcastFlags(EVMSK_GPS_FRESH_VALID);
-          if (nullptr != hook_sdp) {
-            curr = chVTGetSystemTimeX();
-            systime_t out = ST2MS(curr - prev);
-            prev = curr;
-            chprintf((BaseSequentialStream *)hook_sdp, "%U\r\n", out);
+        self->acquire();
+        for (size_t i=0; i<ArrayLen(self->spamlist); i++) {
+          if (nullptr != self->spamlist[i]) {
+            gnss_unpack(gga, rmc, self->spamlist[i]);
           }
         }
-        release();
+        self->release();
+
+        if (gga.fix == 1) {
+          event_gnss.broadcastFlags(EVMSK_GNSS_FRESH_VALID);
+        }
+
+        if (nullptr != self->sniff_sdp) {
+          chprintf((BaseSequentialStream *)self->sniff_sdp,
+              "---- gga = %u; rmc = %u\n", gga_msec, rmc_msec);
+        }
+
+        gga_msec = GGA_VOID;
+        rmc_msec = RMC_VOID;
       }
     }
   }
@@ -248,42 +234,20 @@ THD_FUNCTION(gpsRxThread, arg) {
 /**
  *
  */
-void GPSInit(void){
-
-  chThdCreateStatic(gpsRxThreadWA, sizeof(gpsRxThreadWA),
-                    GPSPRIO, gpsRxThread, NULL);
+mtkgps::mtkgps(SerialDriver *sdp, uint32_t start_baudrate, uint32_t working_baudrate) :
+    GNSSReceiver(sdp, start_baudrate, working_baudrate) {
+  return;
 }
 
 /**
  *
  */
-void GPSSetDumpHook(SerialDriver *sdp) {
+void mtkgps::start(void) {
 
-  hook_sdp = sdp;
-}
+  param_registry.valueSearch("GNSS_fix_period", &fix_period);
 
-/**
- *
- */
-void GPSDeleteDumpHook(void) {
-
-  hook_sdp = nullptr;
-}
-
-/**
- *
- */
-void GPSGet(gps_data_t &result) {
-
-  acquire();
-  result = cache;
-  release();
-}
-
-/**
- *
- */
-void GPS_PPS_ISR_I(void) {
-
-  pps_sem.signalI();
+  worker = chThdCreateStatic(gnssRxThreadWA, sizeof(gnssRxThreadWA),
+                      GPSPRIO, nmeaRxThread, this);
+  osalDbgCheck(nullptr != worker);
+  ready = true;
 }

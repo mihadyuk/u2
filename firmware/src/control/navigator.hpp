@@ -15,6 +15,7 @@ public:
   NavOut<double> update(const NavIn<double> &in);
   void stop(void);
   void loadLine(const NavLine<double> &line);
+  double get_crsAB(void) {return sphere.get_crsAB();}
 private:
   bool ready = false;
   NavSphere<double> sphere;

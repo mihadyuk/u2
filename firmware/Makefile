@@ -137,6 +137,7 @@ CONTROLSRC =\
 		src/control/futaba/receiver_synth.cpp \
 		src/control/futaba/receiver_mavlink.cpp \
 		src/control/acs.cpp \
+		src/control/acs_loop_active.cpp \
 		src/control/acs_input.cpp \
 		src/control/acs_commands.cpp \
 		src/control/mission_executor.cpp \
@@ -178,8 +179,12 @@ SENSORSRC = src/i2c_local.cpp \
 		src/sensors/ak8975.cpp \
 		src/sensors/lsm303_acc.cpp \
 		src/sensors/lsm303_mag.cpp \
-		src/sensors/eb500.cpp \
-		src/sensors/eb500_cli.cpp \
+		src/sensors/gnss/nmea_proto.cpp \
+		src/sensors/gnss/ubx_proto.cpp \
+		src/sensors/gnss/ublox.cpp \
+		src/sensors/gnss/mtkgps.cpp \
+		src/sensors/gnss/gnss_receiver.cpp \
+		src/sensors/gnss/gnss_cli.cpp \
 		src/sensors/bmp085.cpp \
 		src/sensors/maxsonar.cpp \
 		src/sensors/speedometer.cpp \
@@ -205,9 +210,9 @@ CPPSRC = $(CHCPPSRC) \
 		src/blinker.cpp \
 		src/sanity.cpp \
 		src/time_keeper.cpp \
-		src/nmea.cpp \
 		src/navi6d_wrapper.cpp \
 		src/kinematic/ahrs.cpp \
+		src/kinematic/ahrs_starlino.cpp \
 		lib/filters/fir_test.cpp \
 
 
@@ -242,6 +247,7 @@ INCDIR = $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
          $(CHIBIOS)/os/various/cpp_wrappers \
          $(CHIBIOS)/community/os/various \
          src/sensors \
+         src/sensors/gnss \
          lib/microrl/src \
          lib/uav_utils \
          lib/filters \

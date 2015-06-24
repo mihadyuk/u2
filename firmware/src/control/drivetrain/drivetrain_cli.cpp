@@ -2,8 +2,6 @@
 #include <string.h>
 
 #include "main.h"
-#include "impact.hpp"
-#include "misc_math.hpp"
 #include "drivetrain.hpp"
 #include "cli.hpp"
 

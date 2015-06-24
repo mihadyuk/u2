@@ -38,6 +38,8 @@ public:
   uint16_t getTrgtCmd(void);
 
 private:
+  void navout2mavlink(const NavOut<double> &nav_out);
+  void navout2acsin(const NavOut<double> &nav_out, ACSInput &acs_in);
   void broadcast_mission_current(uint16_t seq);
   void broadcast_mission_item_reached(uint16_t seq);
   bool wp_reached(const NavOut<double> &nav_out);

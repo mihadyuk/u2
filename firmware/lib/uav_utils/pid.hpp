@@ -48,6 +48,7 @@ public:
    */
   void reset(void) {
     iState = 0;
+    errorPrev = 0;
   }
 
   /**

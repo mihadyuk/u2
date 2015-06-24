@@ -301,7 +301,22 @@ void Adis::set_sample_rate(void) {
  */
 void Adis::set_kalman(void) {
   select_page(3);
-  write(EKF_CNFG, 1 << 3);
+  write(EKF_CNFG, (1 << 3) | (1 << 12) | (1 << 9) | (1 << 8) | (1 << 1));
+  //write(EKF_CNFG, (1 << 3) | (1 << 8) | (1 << 9) | (1 << 12) | (1 << 1));
+  //write(EKF_CNFG, 1 << 3);
+  select_page(0);
+}
+
+/**
+ *
+ */
+void Adis::set_zero_offset(void) {
+  select_page(2);
+
+  for (size_t i=0; i<3; i++) {
+    write(0x10 + i*2, 0);
+  }
+
   select_page(0);
 }
 
@@ -388,6 +403,7 @@ sensor_state_t Adis::start(void) {
 
     set_sample_rate();
     set_kalman();
+    set_zero_offset();
 
     Exti.adis(true);
 

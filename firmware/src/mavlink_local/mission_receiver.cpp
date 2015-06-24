@@ -17,7 +17,7 @@ using namespace chibios_rt;
  ******************************************************************************
  */
 #define MISSION_WP_CHECKS_ENABLED     TRUE
-#define MIN_TARGET_RADIUS_WGS84       5       /* minimal allowed waypoint radius for global frame */
+#define MIN_TARGET_RADIUS_WGS84       2       /* minimal allowed waypoint radius for global frame */
 #define MIN_TARGET_RADIUS_LOCAL       0.5f    /* minimal allowed waypoint radius for local frame */
 #define MIN_POINTS_PER_MISSION        2       /* minimal number of waypoints in valid mission */
 #define TARGET_RADIUS                 param2  /* convenience alias */
@@ -46,10 +46,10 @@ extern EvtSource event_mission_updated;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-__CCM__ static mavMail                        mission_count_mail;
-__CCM__ static mavMail                        mission_request_mail;
-__CCM__ static mavMail                        mission_ack_mail;
-__CCM__ static mavMail                        mission_item_mail;
+__CCM__ static mavMail  mission_count_mail;
+__CCM__ static mavMail  mission_request_mail;
+__CCM__ static mavMail  mission_ack_mail;
+__CCM__ static mavMail  mission_item_mail;
 
 __CCM__ static mavlink_mission_count_t        mavlink_out_mission_count_struct;
 __CCM__ static mavlink_mission_request_t      mavlink_out_mission_request_struct;

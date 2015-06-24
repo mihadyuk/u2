@@ -39,7 +39,8 @@ Giovanni
 #include "global_flags.h"
 #include "fault_handlers.h"
 #include "mavlink_local.hpp"
-#include "eb500.hpp"
+#include "mtkgps.hpp"
+#include "ublox.hpp"
 #include "sanity.hpp"
 #include "i2c_local.hpp"
 #include "nvram_local.hpp"
@@ -61,6 +62,14 @@ Giovanni
 #include "adc_local.hpp"
 #include "pwr_mgr.hpp"
 #include "fir_test.hpp"
+#include "maxsonar.hpp"
+#include "pps.hpp"
+#include "speedometer.hpp"
+#include "mpxv.hpp"
+#include "calibrator.hpp"
+#include "hil.hpp"
+#include "navi6d_wrapper.hpp"
+#include "ahrs_starlino.hpp"
 
 using namespace chibios_rt;
 
@@ -68,11 +77,14 @@ using namespace chibios_rt;
 #pragma GCC optimize "-funroll-loops"
 #pragma GCC optimize "-O2"
 
+#define USE_STARLINO_AHRS     FALSE
+
 /*
  ******************************************************************************
  * EXTERNS
  ******************************************************************************
  */
+extern mavlink_system_info_t   mavlink_system_info_struct;
 
 /* reset all global flags */
 GlobalFlags_t GlobalFlags = {0,0,0,0,0,0,0,0,
@@ -89,43 +101,31 @@ __CCM__ static ACSInput acs_in;
 __CCM__ static control::Drivetrain drivetrain;
 static control::ACS acs(drivetrain, acs_in);
 
-
 MissionReceiver mission_receiver;
 sensor_state_registry_t SensorStateRegistry;
-TimeKeeper time_keeper;
 TlmSender tlm_sender;
 static LinkMgr link_mgr;
 MavLogger mav_logger;
 Marg marg;
 BMP085 bmp_085(&I2CD_SLOW, BMP085_I2C_ADDR);
 __CCM__ static baro_data_t abs_press;
-
-
-#include "maxsonar.hpp"
-#include "pps.hpp"
-#include "speedometer.hpp"
-#include "mpxv.hpp"
-#include "calibrator.hpp"
-#include "hil.hpp"
-
 __CCM__ static MaxSonar maxsonar;
-
 __CCM__ static speedometer_data_t speed_data;
 __CCM__ static Speedometer speedometer;
-
-__CCM__ static gps_data_t gps_data;
 __CCM__ static marg_data_t marg_data;
-
 __CCM__ static PPS pps;
 __CCM__ static MPXV mpxv;
 __CCM__ static Calibrator calibrator;
-
+//__CCM__        gnss::mtkgps GNSS(&GPSSD, 9600, 57600);
+__CCM__        gnss::uBlox GNSS(&GPSSD, 9600, 57600);
+__CCM__ static gnss::gnss_data_t gnss_data;
 __CCM__ control::HIL hil;
-
-extern mavlink_system_info_t   mavlink_system_info_struct;
-
-#include "navi6d_wrapper.hpp"
-static Navi6dWrapper navi6d(acs_in);
+#if USE_STARLINO_AHRS
+__CCM__ static AHRSStarlino ahrs_starlino;
+#else
+__CCM__ static Navi6dWrapper navi6d(acs_in, GNSS);
+#endif
+TimeKeeper time_keeper(GNSS);
 
 /*
  ******************************************************************************
@@ -185,7 +185,7 @@ int main(void) {
   tlm_sender.start();
 
   bmp_085.start();
-  GPSInit();
+  GNSS.start();
   mav_logger.start(NORMALPRIO);
   osalThreadSleepMilliseconds(1);
 
@@ -201,13 +201,17 @@ int main(void) {
 
   /* ahrs fake run to acquire dT */
   marg.get(marg_data, MS2ST(200));
+#if USE_STARLINO_AHRS
+  ahrs_starlino.start();
+#else
   navi6d.start(marg_data.dT);
+#endif
 
   mavlink_system_info_struct.state = MAV_STATE_STANDBY;
   while (true) {
     marg.get(marg_data, MS2ST(200));
-    GPSGet(gps_data);
-    gps2acs_in(gps_data, acs_in);
+    GNSS.getCache(gnss_data);
+    gps2acs_in(gnss_data, acs_in);
     speedometer.update(speed_data, marg_data.dT);
     speedometer2acs_in(speed_data, acs_in);
     mpxv.get();
@@ -225,10 +229,17 @@ int main(void) {
       acs.update(marg_data.dT);
     }
 
-    navi6d.update(gps_data, abs_press, speed_data, marg_data);
+#if USE_STARLINO_AHRS
+    float euler[3];
+    ahrs_starlino.update(euler, marg_data.acc, marg_data.gyr, marg_data.mag, marg_data.dT);
+    acs_in.ch[ACS_INPUT_roll] = euler[0];
+    acs_in.ch[ACS_INPUT_pitch]= euler[1];
+    acs_in.ch[ACS_INPUT_yaw]  = euler[2];
+#else
+    navi6d.update(abs_press, speed_data, marg_data);
+#endif
     acs_input2mavlink(acs_in);
   }
-
   return 0;
 }
 

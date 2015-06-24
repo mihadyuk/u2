@@ -113,6 +113,7 @@ public:
   crosstrack_t<T> crosstrack(T latD, T lonD);
   crs_dist_t<T> course_distance(T latD, T lonD);
   T targetDistance(T latD, T lonD);
+  T get_crsAB(void) {return crsAB;}
 
 private:
   T latA, lonA, latB, lonB; // radians
