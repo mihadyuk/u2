@@ -3,7 +3,7 @@
 
 #include "drivetrain_impact.hpp"
 #include "servo_tree.hpp"
-#include "engine.hpp"
+#include "engine_1ch.hpp"
 
 namespace control {
 
@@ -23,7 +23,7 @@ public:
 private:
   bool ready = false;
   PWM pwm;
-  Engine engine;
+  Engine1ch engine;
   ServoTree servo;
 };
 

@@ -130,6 +130,7 @@ CONTROLSRC =\
 		src/control/drivetrain/servo_tree.cpp \
 		src/control/drivetrain/drivetrain.cpp \
 		src/control/drivetrain/engine.cpp \
+		src/control/drivetrain/engine_1ch.cpp \
 		src/control/futaba/futaba.cpp \
 		src/control/futaba/receiver.cpp \
 		src/control/futaba/receiver_ppm.cpp \

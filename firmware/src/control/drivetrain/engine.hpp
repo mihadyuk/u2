@@ -26,13 +26,12 @@ public:
   void arm(void);
   void disarm(void);
   void update(const DrivetrainImpact &impact);
-private:
+protected:
+  virtual void start_impl(void) = 0;
+  virtual void update_impl(const DrivetrainImpact &impact) = 0;
   void thrust2mavlink(float thr);
   PWM &pwm;
   EngineState state;
-  const uint32_t *thr_min = nullptr;
-  const uint32_t *thr_mid = nullptr;
-  const uint32_t *thr_max = nullptr;
 };
 
 } /* namespace */

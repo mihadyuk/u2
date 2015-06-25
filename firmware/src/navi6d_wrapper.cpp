@@ -340,9 +340,6 @@ void Navi6dWrapper::start(void) {
   nav_sins.command_executor(1);
 
   ready = true;
-
-#else
-  (void)dT;
 #endif
 }
 
@@ -377,9 +374,11 @@ void Navi6dWrapper::update(const baro_data_t &abs_press,
   navi2mavlink();
 
   mavlink_out_debug_vect_struct.time_usec = TimeKeeper::utc();
-  mavlink_out_debug_vect_struct.x = nav_sins.navi_data.a_bias[0][0];
+/*  mavlink_out_debug_vect_struct.x = nav_sins.navi_data.a_bias[0][0];
   mavlink_out_debug_vect_struct.y = nav_sins.navi_data.a_bias[1][0];
   mavlink_out_debug_vect_struct.z = nav_sins.navi_data.a_bias[2][0];
+*/
+  mavlink_out_debug_vect_struct.x = nav_sins.glrt_det.test_stat;
 
 #else
   (void)abs_press;

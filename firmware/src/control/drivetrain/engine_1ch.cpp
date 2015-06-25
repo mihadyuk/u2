@@ -1,5 +1,6 @@
 #include "main.h"
-#include "engine.hpp"
+
+#include "engine_1ch.hpp"
 #include "float2pwm.hpp"
 #include "param_registry.hpp"
 #include "mavlink_local.hpp"
@@ -17,7 +18,6 @@ using namespace control;
  * EXTERNS
  ******************************************************************************
  */
-extern mavlink_vfr_hud_t          mavlink_out_vfr_hud_struct;
 
 /*
  ******************************************************************************
@@ -30,6 +30,7 @@ extern mavlink_vfr_hud_t          mavlink_out_vfr_hud_struct;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
+const int16_t THRUST_DISARMED_VALUE = 1500;
 
 /*
  ******************************************************************************
@@ -38,14 +39,6 @@ extern mavlink_vfr_hud_t          mavlink_out_vfr_hud_struct;
  ******************************************************************************
  ******************************************************************************
  */
-
-/**
- * @brief   Converts normalized value (-1..1) to mavlink
- */
-void Engine::thrust2mavlink(float thr) {
-
-  mavlink_out_vfr_hud_struct.throttle = roundf(putinrange(thr * 100, 0, 100));
-}
 
 /*
  ******************************************************************************
@@ -56,9 +49,7 @@ void Engine::thrust2mavlink(float thr) {
 /**
  *
  */
-Engine::Engine(PWM &pwm) :
-pwm(pwm),
-state(EngineState::uninit)
+Engine1ch::Engine1ch(PWM &pwm) : Engine(pwm)
 {
   return;
 }
@@ -66,39 +57,26 @@ state(EngineState::uninit)
 /**
  *
  */
-void Engine::start(void) {
+void Engine1ch::start_impl(void) {
 
-  start_impl();
-  state = EngineState::disarmed;
+  param_registry.valueSearch("SRV_thr_min", &thr_min);
+  param_registry.valueSearch("SRV_thr_mid", &thr_mid);
+  param_registry.valueSearch("SRV_thr_max", &thr_max);
 }
 
 /**
  *
  */
-void Engine::stop(void) {
-  state = EngineState::uninit;
+void Engine1ch::update_impl(const DrivetrainImpact &impact) {
+  int16_t thrust;
+
+  thrust2mavlink(impact.ch[IMPACT_THR]);
+  thrust = float2pwm(impact.ch[IMPACT_THR], *thr_min, *thr_mid, *thr_max);
+
+  if (EngineState::armed == state)
+    pwm.update(thrust, PWM_CH_THR);
+  else if (EngineState::disarmed == state)
+    pwm.update(THRUST_DISARMED_VALUE, PWM_CH_THR);
+  else
+    osalSysHalt("Unhandled value");
 }
-
-/**
- *
- */
-void Engine::update(const DrivetrainImpact &impact) {
-
-  osalDbgCheck(EngineState::uninit != state);
-  update_impl(impact);
-}
-
-/**
- *
- */
-void Engine::arm(void) {
-  state = EngineState::armed;
-}
-
-/**
- *
- */
-void Engine::disarm(void) {
-  state = EngineState::disarmed;
-}
-
