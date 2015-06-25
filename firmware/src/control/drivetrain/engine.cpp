@@ -1,6 +1,7 @@
 #include "main.h"
+
 #include "engine.hpp"
-#include "float2pwm.hpp"
+#include "float2servopwm.hpp"
 #include "param_registry.hpp"
 #include "mavlink_local.hpp"
 
@@ -56,8 +57,7 @@ void Engine::thrust2mavlink(float thr) {
 /**
  *
  */
-Engine::Engine(PWM &pwm) :
-pwm(pwm),
+Engine::Engine(void) :
 state(EngineState::uninit)
 {
   return;

@@ -16,6 +16,7 @@ typedef enum {
   PWM_CH_ELE = 1,
   PWM_CH_RUD = 2,
   PWM_CH_THR = 3,
+  PWM_CH_THR_REVERSE = 0,
 } pwm_ch_t;
 
 /**

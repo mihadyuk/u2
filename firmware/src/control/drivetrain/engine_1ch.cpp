@@ -1,7 +1,7 @@
 #include "main.h"
 
 #include "engine_1ch.hpp"
-#include "float2pwm.hpp"
+#include "float2servopwm.hpp"
 #include "param_registry.hpp"
 #include "mavlink_local.hpp"
 
@@ -49,7 +49,7 @@ const int16_t THRUST_DISARMED_VALUE = 1500;
 /**
  *
  */
-Engine1ch::Engine1ch(PWM &pwm) : Engine(pwm)
+Engine1ch::Engine1ch(PWM &pwm) : pwm(pwm)
 {
   return;
 }
@@ -71,7 +71,7 @@ void Engine1ch::update_impl(const DrivetrainImpact &impact) {
   int16_t thrust;
 
   thrust2mavlink(impact.ch[IMPACT_THR]);
-  thrust = float2pwm(impact.ch[IMPACT_THR], *thr_min, *thr_mid, *thr_max);
+  thrust = float2servo_pwm(impact.ch[IMPACT_THR], *thr_min, *thr_mid, *thr_max);
 
   if (EngineState::armed == state)
     pwm.update(thrust, PWM_CH_THR);

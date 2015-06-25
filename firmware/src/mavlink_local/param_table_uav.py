@@ -17,6 +17,7 @@ ONBOARD_PARAM_NAME_LENGTH = 15
 param = [
 ("SYS_id",          1,          20,         255,        "u", "default",     "System ID.\\n This value MUST BE FIRST in param structure. Value 0 reserved for ground station."),
 ("SYS_mavtype",     0,          10,         16,         "u", "default",     "Autopilot type (0 - generic, 1 - fixed wing, 10 - ground rover).\\nOther types you can found in enum MAV_TYPE \\nNOTE! You MUST REBOOT device after changing it."),
+("SYS_vehicle_type",0,          0,          1,          "u", "default",     "Vehicle type. 0 - Maverick, 1 - hand crafted rover \\nNOTE! You MUST REBOOT device after changing it."),
 ("SH_over_radio",   0,          0,          1,          "u", "default",     "When 1 than drop shell on xbee channel and telemetry on USB_CDC and vice versa."),
 
 #/* veights of different components */
@@ -207,7 +208,8 @@ param = [
 ("SRV_7_max",       SERVO_MIN,  1500,       SERVO_MAX,  "u", "default",     "NULL"),
 ("SRV_7_mid",       SERVO_MIN,  1500,       SERVO_MAX,  "u", "default",     "NULL"),
 #/* car specific settings */
-("SRV_rud_dz",      1,          16,         64,         "u", "default",     "NULL"),
+("SRV_rud_dz",      1,          16,         1500,       "u", "default",     "NULL"),
+("SRV_thr_dz",      1,          16,         1500,       "u", "default",     "NULL"),
 
 # Radio control settings
 ("RC_timeout",      500,        2000,       10000,      "u", "default",     "NULL"),

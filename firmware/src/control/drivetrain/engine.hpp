@@ -20,17 +20,17 @@ enum class EngineState {
  */
 class Engine {
 public:
-  Engine(PWM &pwm);
+  Engine(void);
   void start(void);
   void stop(void);
   void arm(void);
   void disarm(void);
   void update(const DrivetrainImpact &impact);
-protected:
+private:
   virtual void start_impl(void) = 0;
   virtual void update_impl(const DrivetrainImpact &impact) = 0;
+protected:
   void thrust2mavlink(float thr);
-  PWM &pwm;
   EngineState state;
 };
 

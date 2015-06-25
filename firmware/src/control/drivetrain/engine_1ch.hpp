@@ -16,6 +16,7 @@ public:
 private:
   void start_impl(void);
   void update_impl(const DrivetrainImpact &impact);
+  PWM &pwm;
   const uint32_t *thr_min = nullptr;
   const uint32_t *thr_mid = nullptr;
   const uint32_t *thr_max = nullptr;
