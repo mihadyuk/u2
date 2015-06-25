@@ -180,6 +180,7 @@ void Navi6dWrapper::prepare_data(const baro_data_t &abs_press,
 /**
  *
  */
+#if ! FAKE_SINS
 void Navi6dWrapper::navi2mavlink(void) {
 
   const NaviData<klmnfp> &data = nav_sins.navi_data;
@@ -198,7 +199,7 @@ void Navi6dWrapper::navi2mavlink(void) {
 
   mavlink_out_highres_imu_struct.time_usec = TimeKeeper::utc();
 }
-
+#endif
 
 /**
  *
