@@ -204,7 +204,7 @@ int main(void) {
 #if USE_STARLINO_AHRS
   ahrs_starlino.start();
 #else
-  navi6d.start(marg_data.dT);
+  navi6d.start();
 #endif
 
   mavlink_system_info_struct.state = MAV_STATE_STANDBY;

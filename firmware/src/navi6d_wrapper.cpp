@@ -1,4 +1,6 @@
 #pragma GCC optimize "-O2"
+#pragma GCC optimize "-ffast-math"
+#pragma GCC optimize "-funroll-loops"
 #pragma GCC diagnostic ignored "-Wdouble-promotion"
 
 #define FAKE_SINS     FALSE
@@ -257,7 +259,7 @@ GNSS(GNSS)
 /**
  *
  */
-void Navi6dWrapper::start(float dT) {
+void Navi6dWrapper::start(void) {
 #if ! FAKE_SINS
   gnss_data.fresh = false;
   GNSS.subscribe(&gnss_data);
@@ -327,7 +329,7 @@ void Navi6dWrapper::start(float dT) {
   kalman_params.sigma_Qm[4][0] = *Qm_acc_z; //acc_z
   kalman_params.sigma_Qm[5][0] = *Qm_gyr_bias; //gyr_bias
 
-  init_params.dT = dT;
+  init_params.dT = this->dT_cache;
 
   nav_sins.set_init_params(init_params);
   nav_sins.set_calib_params(calib_params);
@@ -362,6 +364,11 @@ void Navi6dWrapper::update(const baro_data_t &abs_press,
   osalDbgCheck(ready);
 
   nav_sins.set_ref_params(ref_params);
+  if (this->dT_cache != marg.dT) {
+    this->dT_cache = marg.dT;
+    init_params.dT = marg.dT;
+    nav_sins.set_init_params(init_params);
+  }
 
   prepare_data(abs_press, speed, marg);
   nav_sins.run();

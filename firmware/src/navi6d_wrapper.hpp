@@ -16,7 +16,7 @@ public:
   void update(const baro_data_t &abs_press,
               const odometer_data_t &odo,
               const marg_data_t &marg);
-  void start(float dT);
+  void start(void);
   void stop(void);
 private:
   void navi2acs(void);
@@ -27,6 +27,7 @@ private:
   void prepare_gnss(const odometer_data_t &odo);
   void reload_settings(void);
   bool ready = false;
+  float dT_cache = 0.01;
   ACSInput &acs_in;
   gnss::GNSSReceiver &GNSS;
   gnss::gnss_data_t gnss_data;
