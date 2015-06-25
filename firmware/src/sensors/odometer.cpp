@@ -147,6 +147,7 @@ void Odometer::speed2mavlink(const odometer_data_t &result) {
 
   //mavlink_out_vfr_hud_struct.groundspeed = result.speed * 100; // *100 for gps speed compare
   //mavlink_out_vfr_hud_struct.groundspeed = result.speed * 50; // for PID tuning
+//  mavlink_out_vfr_hud_struct.groundspeed = result.path;
   mavlink_out_vfr_hud_struct.groundspeed = result.speed;
 }
 
