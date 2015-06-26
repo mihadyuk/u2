@@ -125,7 +125,7 @@ __CCM__ static AHRSStarlino ahrs_starlino;
 #else
 __CCM__ static Navi6dWrapper navi6d(acs_in, GNSS);
 #endif
-TimeKeeper time_keeper(GNSS);
+__CCM__ static TimeKeeper time_keeper(GNSS);
 
 /*
  ******************************************************************************
