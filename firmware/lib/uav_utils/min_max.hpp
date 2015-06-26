@@ -20,7 +20,7 @@ T min(T v1, T v2, T v3) {
 
 template<typename T>
 T min(T v1, T v2, T v3, T v4) {
-  return min(min(v1, v2, v3), v4);
+  return min(min(v1, v2), min(v3, v4));
 }
 
 /**
@@ -42,7 +42,7 @@ T max(T v1, T v2, T v3) {
 
 template<typename T>
 T max(T v1, T v2, T v3, T v4) {
-  return max(max(v1, v2, v3), v4);
+  return max(max(v1, v2), max(v3, v4));
 }
 
 /**
@@ -60,7 +60,7 @@ constexpr T max_const(T v1, T v2, T v3) {
 
 template<typename T>
 constexpr T max_const(T v1, T v2, T v3, T v4) {
-  return max_const(max_const(v1, v2, v3), v4);
+  return max_const(max_const(v1, v2), max_const(v3, v4));
 }
 
 /**
@@ -78,7 +78,7 @@ constexpr T min_const(T v1, T v2, T v3) {
 
 template<typename T>
 constexpr T min_const(T v1, T v2, T v3, T v4) {
-  return min_const(min_const(v1, v2, v3), v4);
+  return min_const(min_const(v1, v2), min_const(v3, v4));
 }
 
 #endif /* MIN_MAX_HPP_ */
