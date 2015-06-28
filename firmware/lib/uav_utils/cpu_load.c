@@ -45,9 +45,7 @@ static thread_t *get_idle_thread(void){
   const char *name;
 
   while (NULL != first) {
-    chSysLock();
-    name = chRegGetThreadNameI(first);
-    chSysUnlock();
+    name = chRegGetThreadNameX(first);
     if (0 == strcmp("idle", name))
       return first;
     first = chRegNextThread(first);
