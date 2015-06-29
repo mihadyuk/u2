@@ -19,9 +19,9 @@ public:
   static int64_t utc(void);
   static void utc(int64_t t);
   static int format_time(int64_t time, char *str, size_t len);
-
 private:
-  friend THD_FUNCTION(TimekeeperThread, arg);
+  THD_WORKING_AREA(TimekeeperThreadWA, 512);
+  static THD_FUNCTION(TimekeeperThread, arg);
   thread_t *worker = nullptr;
   gnss::GNSSReceiver &GNSS;
   static bool ready;

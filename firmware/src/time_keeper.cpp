@@ -169,12 +169,12 @@ static int64_t rtc_get_time_unix_usec(void) {
 /**
  *
  */
-__CCM__ static THD_WORKING_AREA(TimekeeperThreadWA, 512);
-THD_FUNCTION(TimekeeperThread, arg) {
+THD_FUNCTION(TimeKeeper::TimekeeperThread, arg) {
   chRegSetThreadName("Timekeeper");
   TimeKeeper *self = static_cast<TimeKeeper *>(arg);
 
   /* wait until receiver boots */
+  osalThreadSleepSeconds(5);
   while (!chThdShouldTerminateX()) {
     if (MSG_OK != ppstimesync_sem.wait(MS2ST(1200))) {
       self->GNSS.subscribe(&gps);

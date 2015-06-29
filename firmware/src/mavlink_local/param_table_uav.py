@@ -17,6 +17,7 @@ ONBOARD_PARAM_NAME_LENGTH = 15
 param = [
 ("SYS_id",          1,          20,         255,        "u", "default",     "System ID.\\n This value MUST BE FIRST in param structure. Value 0 reserved for ground station."),
 ("SYS_mavtype",     0,          10,         16,         "u", "default",     "Autopilot type (0 - generic, 1 - fixed wing, 10 - ground rover).\\nOther types you can found in enum MAV_TYPE \\nNOTE! You MUST REBOOT device after changing it."),
+("SYS_vehicle_type",0,          0,          1,          "u", "default",     "Vehicle type. 0 - Maverick, 1 - hand crafted rover \\nNOTE! You MUST REBOOT device after changing it."),
 ("SH_over_radio",   0,          0,          1,          "u", "default",     "When 1 than drop shell on xbee channel and telemetry on USB_CDC and vice versa."),
 
 #/* veights of different components */
@@ -146,17 +147,24 @@ param = [
 ("BAT_fill",        0,          0,          100,        "u", "default",     "Start battery filling in percents"),
 
 # Fusion algorithm settings
-("SINS_gnss_enable",0,          1,          1,          "u", "default",     "NULL"),
-("SINS_odo_enable", 0,          1,          1,          "u", "default",     "NULL"),
-("SINS_baro_enable",0,          1,          1,          "u", "default",     "NULL"),
+("SINS_en_gnss",    0,          1,          1,          "u", "default",     "NULL"),
+("SINS_en_odo",     0,          1,          1,          "u", "default",     "NULL"),
+("SINS_en_baro",    0,          1,          1,          "u", "default",     "NULL"),
+("SINS_en_zihr",    0,          1,          1,          "u", "default",     "NULL"),
+("SINS_en_nonhol",  0,          1,          1,          "u", "default",     "NULL"),
+("SINS_en_euler",   0,          1,          1,          "u", "default",     "NULL"),
+("SINS_en_mag",     0,          1,          1,          "u", "default",     "NULL"),
+("SINS_en_gnss_v",  0,          1,          1,          "u", "default",     "NULL"),
 
-("SINS_R_ne_sns",   0.01,       5,          20,         "f", "default",     "NULL"),
-("SINS_R_d_sns",    0.01,       10,         20,         "f", "default",     "NULL"),
-("SINS_R_v_n_sns",  0.01,       0.2,        20,         "f", "default",     "NULL"),
-("SINS_R_odo",      0.01,       0.1,        20,         "f", "default",     "NULL"),
-("SINS_R_nonhol",   0.01,       0.1,        20,         "f", "default",     "NULL"),
-("SINS_R_baro",     0.01,       0.3,        20,         "f", "default",     "NULL"),
-("SINS_R_mag",      0.01,       0.3,        20,         "f", "default",     "NULL"),
+("SINS_R_ne_sns",   0.001,      5,          20,         "f", "default",     "NULL"),
+("SINS_R_d_sns",    0.001,      10,         20,         "f", "default",     "NULL"),
+("SINS_R_v_n_sns",  0.001,      0.2,        20,         "f", "default",     "NULL"),
+("SINS_R_odo",      0.001,      0.1,        20,         "f", "default",     "NULL"),
+("SINS_R_nonhol",   0.001,      0.1,        20,         "f", "default",     "NULL"),
+("SINS_R_baro",     0.001,      0.3,        20,         "f", "default",     "NULL"),
+("SINS_R_mag",      0.001,      0.3,        20,         "f", "default",     "NULL"),
+("SINS_R_euler",    0.001,      0.01,       20,         "f", "default",     "NULL"),
+("SINS_R_zihr",     0.001,      0.01,       20,         "f", "default",     "NULL"),
 
 ("SINS_Qm_acc",     0.0000001,  0.001,      1,          "f", "default",     "NULL"),
 ("SINS_Qm_gyr",     0.0000001,  0.001,      1,          "f", "default",     "NULL"),
@@ -200,7 +208,8 @@ param = [
 ("SRV_7_max",       SERVO_MIN,  1500,       SERVO_MAX,  "u", "default",     "NULL"),
 ("SRV_7_mid",       SERVO_MIN,  1500,       SERVO_MAX,  "u", "default",     "NULL"),
 #/* car specific settings */
-("SRV_rud_dz",      1,          16,         64,         "u", "default",     "NULL"),
+("SRV_rud_dz",      1,          16,         1500,       "u", "default",     "NULL"),
+("SRV_thr_dz",      1,          16,         1500,       "u", "default",     "NULL"),
 
 # Radio control settings
 ("RC_timeout",      500,        2000,       10000,      "u", "default",     "NULL"),

@@ -18,10 +18,6 @@
 //#include "servo_cli.hpp"
 //#include "sensors_cli.hpp"
 
-#if USE_EEPROM_TEST_SUIT
-#include "eeprom_testsuit.h"
-#endif
-
 /*
  ******************************************************************************
  * DEFINES
@@ -73,9 +69,6 @@ static const ShellCmd_t cliutils[] = {
     {"shellswap", &shellswap_clicmd,  "swap telemetry and shell channels"},
     {"uname",     &uname_clicmd,      "'info' alias"},
 //    {"wps",       &wps_clicmd,        "simple waypoint interface"},
-    #if USE_EEPROM_TEST_SUIT
-    {"eepromtest",&eepromtest_clicmd, "run EEPROM testsuit. Uses lots of RAM"},
-    #endif
     {NULL,        NULL,               NULL}/* end marker */
 };
 

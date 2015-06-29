@@ -1,5 +1,5 @@
-#ifndef FLOAT2PWM_HPP_
-#define FLOAT2PWM_HPP_
+#ifndef FLOAT2SERVOPWM_HPP_
+#define FLOAT2SERVOPWM_HPP_
 
 #include "putinrange.hpp"
 
@@ -12,7 +12,7 @@ namespace control {
 /**
  *
  */
-static inline uint16_t float2pwm(float a, int min, int mid, int max) {
+static inline uint16_t float2servo_pwm(float a, int min, int mid, int max) {
   uint16_t ret;
 
   a = putinrange(a, -1, 1);
@@ -27,4 +27,4 @@ static inline uint16_t float2pwm(float a, int min, int mid, int max) {
 
 } // namespace
 
-#endif /* FLOAT2PWM_HPP_ */
+#endif /* FLOAT2SERVOPWM_HPP_ */

@@ -54,13 +54,13 @@ endif
 # Stack size to be allocated to the Cortex-M process stack. This stack is
 # the stack used by the main() thread.
 ifeq ($(USE_PROCESS_STACKSIZE),)
-  USE_PROCESS_STACKSIZE = 0x1200
+  USE_PROCESS_STACKSIZE = 0x1600
 endif
 
 # Stack size to the allocated to the Cortex-M main/exceptions stack. This
 # stack is used for processing interrupts and exceptions.
 ifeq ($(USE_EXCEPTIONS_STACKSIZE),)
-  USE_EXCEPTIONS_STACKSIZE = 0x1200
+  USE_EXCEPTIONS_STACKSIZE = 0x1600
 endif
 
 # Enables the use of FPU on Cortex-M4 (no, softfp, hard).
@@ -130,6 +130,8 @@ CONTROLSRC =\
 		src/control/drivetrain/servo_tree.cpp \
 		src/control/drivetrain/drivetrain.cpp \
 		src/control/drivetrain/engine.cpp \
+		src/control/drivetrain/engine_1ch.cpp \
+		src/control/drivetrain/engine_2ch.cpp \
 		src/control/futaba/futaba.cpp \
 		src/control/futaba/receiver.cpp \
 		src/control/futaba/receiver_ppm.cpp \
@@ -187,7 +189,7 @@ SENSORSRC = src/i2c_local.cpp \
 		src/sensors/gnss/gnss_cli.cpp \
 		src/sensors/bmp085.cpp \
 		src/sensors/maxsonar.cpp \
-		src/sensors/speedometer.cpp \
+		src/sensors/odometer.cpp \
 		src/sensors/adc_local.cpp \
 		src/sensors/pwr_mgr.cpp \
 		src/sensors/mpxv.cpp \
@@ -303,7 +305,7 @@ AOPT =
 TOPT = -mthumb -DTHUMB
 
 # Common warning flags
-WARN = -Wall -Wextra -Wdouble-promotion -Wformat #-Wconversion -Werror
+WARN = -Wall -Wextra -Wdouble-promotion -Wformat -Wundef -Werror #-Wconversion -Werror
 
 # Define C warning options here
 CWARN = $(WARN) -Wstrict-prototypes

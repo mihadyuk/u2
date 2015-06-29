@@ -1,6 +1,6 @@
 #include "main.h"
 #include "pads.h"
-#include "speedometer.hpp"
+#include "odometer.hpp"
 #include "mavlink_local.hpp"
 #include "param_registry.hpp"
 
@@ -29,7 +29,7 @@ extern mavlink_vfr_hud_t              mavlink_out_vfr_hud_struct;
  * PROTOTYPES
  ******************************************************************************
  */
-void speedometer_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p);
+void odometer_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p);
 
 /*
  ******************************************************************************
@@ -39,13 +39,13 @@ void speedometer_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32
 
 static const systime_t timeout = MS2ST((32768 * 1000) / EICU_FREQ);
 
-uint32_t Speedometer::total_path = 0;
-uint16_t Speedometer::period_cache = 0;
+uint32_t Odometer::total_path = 0;
+uint16_t Odometer::period_cache = 0;
 
 static const EICUChannelConfig speedometercfg = {
     EICU_INPUT_ACTIVE_LOW,
     EICU_INPUT_EDGE,
-    speedometer_cb
+    odometer_cb
 };
 
 static const EICUConfig eicucfg = {
@@ -69,14 +69,14 @@ static const EICUConfig eicucfg = {
 /**
  *
  */
-void speedometer_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p) {
+void odometer_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p) {
   (void)eicup;
   (void)channel;
   (void)w;
 
   osalSysLockFromISR();
-  Speedometer::total_path++;
-  Speedometer::period_cache = p;
+  Odometer::total_path++;
+  Odometer::period_cache = p;
   osalSysUnlockFromISR();
 }
 
@@ -85,7 +85,7 @@ void speedometer_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32
  *
  * @retval  OSAL_SUCCESS if measurement considered good.
  */
-bool Speedometer::check_sample(uint32_t *path_ret,
+bool Odometer::check_sample(uint32_t *path_ret,
                                uint16_t *last_pulse_period, float dT) {
   bool ret = OSAL_FAILED;
   uint32_t path; /* cache value for atomicity */
@@ -143,10 +143,11 @@ bool Speedometer::check_sample(uint32_t *path_ret,
 /**
  *
  */
-void Speedometer::speed2mavlink(const speedometer_data_t &result) {
+void Odometer::speed2mavlink(const odometer_data_t &result) {
 
   //mavlink_out_vfr_hud_struct.groundspeed = result.speed * 100; // *100 for gps speed compare
   //mavlink_out_vfr_hud_struct.groundspeed = result.speed * 50; // for PID tuning
+//  mavlink_out_vfr_hud_struct.groundspeed = result.path;
   mavlink_out_vfr_hud_struct.groundspeed = result.speed;
 }
 
@@ -158,7 +159,7 @@ void Speedometer::speed2mavlink(const speedometer_data_t &result) {
 /**
  *
  */
-void Speedometer::start(void) {
+void Odometer::start(void) {
 
   param_registry.valueSearch("SPD_pulse2m", &pulse2m);
 
@@ -178,7 +179,7 @@ void Speedometer::start(void) {
 /**
  *
  */
-void Speedometer::stop(void) {
+void Odometer::stop(void) {
 
   ready = false;
 
@@ -189,7 +190,7 @@ void Speedometer::stop(void) {
 /**
  *
  */
-void Speedometer::update(speedometer_data_t &result, float dT) {
+void Odometer::update(odometer_data_t &result, float dT) {
   float pps; /* pulse per second */
   uint16_t last_pulse_period;
   bool status;

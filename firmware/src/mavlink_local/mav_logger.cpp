@@ -28,6 +28,8 @@ using namespace chibios_rt;
  */
 #define err_check()   {if(err != FR_OK){exit(MSG_RESET);}}
 
+#define MAVLINK_LOG_FORMAT              FALSE
+
 /*
  ******************************************************************************
  * EXTERNS

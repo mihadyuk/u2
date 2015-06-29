@@ -136,7 +136,7 @@ void baro2acs_in(const baro_data_t &baro, ACSInput &acs_in) {
 /**
  *
  */
-void speedometer2acs_in(const speedometer_data_t &speed, ACSInput &acs_in) {
+void speedometer2acs_in(const odometer_data_t &speed, ACSInput &acs_in) {
   acs_in.ch[ACS_INPUT_odo_speed] = speed.speed;
 }
 

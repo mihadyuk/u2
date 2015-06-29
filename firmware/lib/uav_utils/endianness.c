@@ -4,9 +4,6 @@
 #include "hal.h"
 #include "endianness.h"
 
-// BIG      4321
-// LITTLE   1234
-
 /**
  *
  */
@@ -26,14 +23,14 @@ void endianness_test(void){
   bool big = is_big_endian();
 
 #if BYTE_ORDER == LITTLE_ENDIAN
-  if (big)
+  if (big) {
     osalSysHalt("Project built with incorrect endianness");
-
+  }
 #elif BYTE_ORDER == BIG_ENDIAN
-  if (!big)
+  if (!big) {
     osalSysHalt("Project built with incorrect endianness");
-
+  }
 #else
-#error "Endiansess not defined"
+#error "Endianness not defined"
 #endif
 }

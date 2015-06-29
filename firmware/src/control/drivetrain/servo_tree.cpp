@@ -2,7 +2,7 @@
 
 #include "servo_tree.hpp"
 #include "param_registry.hpp"
-#include "float2pwm.hpp"
+#include "float2servopwm.hpp"
 
 using namespace control;
 
@@ -87,13 +87,13 @@ void ServoTree::update(const DrivetrainImpact &impact) {
 
   osalDbgCheck(ready);
 
-  tmp = float2pwm(impact.ch[IMPACT_AIL], *ail_min, *ail_mid, *ail_max);
+  tmp = float2servo_pwm(impact.ch[IMPACT_AIL], *ail_min, *ail_mid, *ail_max);
   pwm.update(tmp, PWM_CH_AIL);
 
-  tmp = float2pwm(impact.ch[IMPACT_ELE], *ele_min, *ele_mid, *ele_max);
+  tmp = float2servo_pwm(impact.ch[IMPACT_ELE], *ele_min, *ele_mid, *ele_max);
   pwm.update(tmp, PWM_CH_ELE);
 
-  tmp = float2pwm(impact.ch[IMPACT_RUD], *rud_min, *rud_mid, *rud_max);
+  tmp = float2servo_pwm(impact.ch[IMPACT_RUD], *rud_min, *rud_mid, *rud_max);
   pwm.update(tmp, PWM_CH_RUD);
 }
 

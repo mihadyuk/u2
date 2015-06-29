@@ -3,7 +3,8 @@
 
 #include "drivetrain_impact.hpp"
 #include "servo_tree.hpp"
-#include "engine.hpp"
+#include "engine_1ch.hpp"
+#include "engine_2ch.hpp"
 
 namespace control {
 
@@ -19,11 +20,10 @@ public:
   void disarm(void);
   msg_t update(const DrivetrainImpact &impact);
   uint32_t capabilities(void);
-
 private:
   bool ready = false;
   PWM pwm;
-  Engine engine;
+  Engine *engine;
   ServoTree servo;
 };
 

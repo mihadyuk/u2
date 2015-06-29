@@ -1,6 +1,10 @@
+#include <cstdlib>
+
 #include "main.h"
+
 #include "engine_2ch.hpp"
 #include "putinrange.hpp"
+#include "param_registry.hpp"
 
 using namespace control;
 
@@ -27,6 +31,7 @@ using namespace control;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
+const int16_t THRUST_DISARMED_VALUE = 0;
 
 /*
  ******************************************************************************
@@ -38,10 +43,27 @@ using namespace control;
 /**
  *
  */
-int16_t float2pwm(float a) {
-  int16_t ret = DRIVETRAIN_PWM_PERIOD * a;
+int16_t Engine2ch::float2pwm(float thr) {
+  int16_t pwm = DRIVETRAIN_PWM_PERIOD * putinrange(thr, -1, 1);
+  return putinrange(pwm, -DRIVETRAIN_PWM_PERIOD, DRIVETRAIN_PWM_PERIOD);
+}
 
-  return putinrange(ret, -DRIVETRAIN_PWM_PERIOD, DRIVETRAIN_PWM_PERIOD);
+/**
+ *
+ */
+void Engine2ch::write_thrust_pwm(int16_t thrpwm) {
+
+  if (abs(thrpwm) < (int16_t)*thr_dz)
+    thrpwm = 0;
+
+  if (thrpwm > 0) {
+    pwm.update(0, PWM_CH_THR_REVERSE);
+    pwm.update(thrpwm, PWM_CH_THR);
+  }
+  else {
+    pwm.update(abs(thrpwm), PWM_CH_THR_REVERSE);
+    pwm.update(0, PWM_CH_THR);
+  }
 }
 
 /*
@@ -54,46 +76,37 @@ int16_t float2pwm(float a) {
  *
  */
 Engine2ch::Engine2ch(PWM &pwm) :
-pwm(pwm) {
+pwm(pwm)
+{
   return;
 }
 
 /**
  *
  */
-void Engine2ch::start(void) {
-
-  ready = true;
+void Engine2ch::start_impl(void) {
+  param_registry.valueSearch("SRV_thr_dz",  &thr_dz);
 }
 
 /**
  *
  */
-void Engine2ch::stop(void) {
-  ready = false;
+void Engine2ch::update_impl(const DrivetrainImpact &impact) {
+
+  int16_t thrust;
+
+  thrust2mavlink(impact.ch[IMPACT_THR]);
+  thrust = this->float2pwm(impact.ch[IMPACT_THR]);
+
+  if (EngineState::armed == state) {
+    write_thrust_pwm(thrust);
+  }
+  else if (EngineState::disarmed == state) {
+    pwm.update(THRUST_DISARMED_VALUE, PWM_CH_THR);
+    pwm.update(THRUST_DISARMED_VALUE, PWM_CH_THR_REVERSE);
+  }
+  else
+    osalSysHalt("Unhandled value");
 }
 
-/**
- *
- */
-void Engine2ch::update(const FutabaOutput &futaba_data, const Impact &impact) {
-  int16_t tmp;
-
-  osalDbgCheck(ready);
-
-  if (OverrideLevel::pwm == futaba_data.level) {
-    osalSysHalt("Unrealized");
-  }
-  else {
-    tmp = float2pwm(impact.a[IMPACT_CH_SPEED]);
-    if (tmp > 0) {
-      pwm.update(tmp, PWM_CH_THRUST_FORTH);
-      pwm.update(0,   PWM_CH_THRUST_BACK);
-    }
-    else {
-      pwm.update(0,   PWM_CH_THRUST_FORTH);
-      pwm.update(tmp, PWM_CH_THRUST_BACK);
-    }
-  }
-}
 

@@ -37,7 +37,6 @@ template <typename T>
 class Polynomial {
 public:
   Polynomial(const T *poly, size_t len){
-    osalDbgAssert(len > 0, "polynomial length can not be zero");
     this->poly = poly;
     this->len = len;
   }

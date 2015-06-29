@@ -20,19 +20,18 @@ enum class EngineState {
  */
 class Engine {
 public:
-  Engine(PWM &pwm);
+  Engine(void);
   void start(void);
   void stop(void);
   void arm(void);
   void disarm(void);
   void update(const DrivetrainImpact &impact);
 private:
+  virtual void start_impl(void) = 0;
+  virtual void update_impl(const DrivetrainImpact &impact) = 0;
+protected:
   void thrust2mavlink(float thr);
-  PWM &pwm;
   EngineState state;
-  const uint32_t *thr_min = nullptr;
-  const uint32_t *thr_mid = nullptr;
-  const uint32_t *thr_max = nullptr;
 };
 
 } /* namespace */
