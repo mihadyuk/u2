@@ -47,7 +47,9 @@ extern mavlink_gps_raw_int_t    mavlink_out_gps_raw_int_struct;
  *******************************************************************************
  *******************************************************************************
  */
-#include <functional>
+/**
+ *
+ */
 static uint16_t check_period(uint16_t period) {
   if (period <= 200)
     return 200;
@@ -57,10 +59,6 @@ static uint16_t check_period(uint16_t period) {
     return 500;
   else
     return 1000;
-}
-
-static uint16_t my_checker(std::function<uint16_t(uint16_t)> f, uint16_t val) {
-  return f(val);
 }
 
 /**
@@ -216,7 +214,7 @@ void uBlox::write_with_confirm(const T &msg, systime_t timeout) {
 void uBlox::set_fix_period(uint16_t msec) {
   ubx_cfg_rate msg;
 
-  msg.payload.measRate = my_checker(check_period, msec);
+  msg.payload.measRate = check_period(msec);
   msg.payload.navRate = 1;
   msg.payload.timeRef = 0;
 
