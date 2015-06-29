@@ -9,6 +9,8 @@
 #define PID_CLAMP_NONE      0
 #define PID_CLAMP_POS       1
 
+#define PID_USE_STD_FUNCTION      FALSE
+
 /**
  *
  */
@@ -22,8 +24,11 @@ struct PIDInit {
   T const *D;
   T const *Min;
   T const *Max;
+#if PID_USE_STD_FUNCTION
   std::function<T(T)> postproc;
-  //T (*postproc)(T);
+#else
+  T (*postproc)(T);
+#endif
 };
 
 /**
@@ -69,10 +74,15 @@ public:
 
 protected:
   /**
-   * @brief   Pointer to postprocessing function for error. Generally is wrap_pi() for delta Yaw.
+   * @brief   Pointer to postprocessing function for error.
+   *          Generally is wrap_pi() for delta Yaw.
    *          Set to nullptr if unneeded.
    */
+#if PID_USE_STD_FUNCTION
+  std::function<T(T)> postproc;
+#else
   T (*postproc)(T);
+#endif
   T iState;           /* Integrator state */
   T errorPrev;        /* Previous error value for trapezoidal integration */
   T const *pGain;     /* proportional gain */
