@@ -3,6 +3,7 @@
 
 #include "float.h" /* for FLT_EPSILON macro */
 #include "iir.hpp"
+#include <functional>
 
 #define PID_CLAMP_NEG       -1
 #define PID_CLAMP_NONE      0
@@ -21,7 +22,8 @@ struct PIDInit {
   T const *D;
   T const *Min;
   T const *Max;
-  T (*postproc)(T);
+  std::function<T(T)> postproc;
+  //T (*postproc)(T);
 };
 
 /**

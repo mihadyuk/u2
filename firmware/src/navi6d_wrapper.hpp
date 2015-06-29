@@ -40,6 +40,9 @@ private:
   const uint32_t *en_zihr   = nullptr;
   const uint32_t *en_gnss_v = nullptr;
 
+  const uint32_t *size_meas = nullptr;
+  const uint32_t *size_state = nullptr;
+
   const float *acc_sigma = nullptr;
   const float *gyr_sigma = nullptr;
   const float *gamma = nullptr;

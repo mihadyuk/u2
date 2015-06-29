@@ -45,9 +45,9 @@ extern mavlink_highres_imu_t           mavlink_out_highres_imu_struct;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-typedef float klmnfp;
+typedef double klmnfp;
 #if ! FAKE_SINS
-__CCM__ static NavigatorSins<klmnfp, 15, 16> nav_sins;
+__CCM__ static NavigatorSins<klmnfp, 15, 17> nav_sins;
 __CCM__ static InitParams<klmnfp> init_params;
 __CCM__ static CalibParams<klmnfp> calib_params;
 __CCM__ static KalmanParams<klmnfp> kalman_params;
@@ -131,10 +131,6 @@ void Navi6dWrapper::prepare_data(const baro_data_t &abs_press,
 
   if ((0 == speed.speed) && (1 == *en_zihr)) {
     nav_sins.sensor_flags.zihr_en = true;
-  }
-
-  if (nav_sins.glrt_det.status){
-    nav_sins.sensor_data.ang[2][0] = nav_sins.navi_data.eu_nv[2][0];
   }
 
   if (*en_odo == 1) {
@@ -378,7 +374,11 @@ void Navi6dWrapper::update(const baro_data_t &abs_press,
   mavlink_out_debug_vect_struct.y = nav_sins.navi_data.a_bias[1][0];
   mavlink_out_debug_vect_struct.z = nav_sins.navi_data.a_bias[2][0];
 */
-  mavlink_out_debug_vect_struct.x = nav_sins.glrt_det.test_stat;
+    mavlink_out_debug_vect_struct.x = nav_sins.sensor_data.v_sns[0][0];
+    mavlink_out_debug_vect_struct.y = nav_sins.sensor_data.v_sns[1][0];
+    mavlink_out_debug_vect_struct.z = nav_sins.sensor_data.v_sns[2][0];
+
+  //mavlink_out_debug_vect_struct.x = nav_sins.glrt_det.test_stat;
 
 #else
   (void)abs_press;

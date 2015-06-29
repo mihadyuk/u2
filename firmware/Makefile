@@ -305,7 +305,7 @@ AOPT =
 TOPT = -mthumb -DTHUMB
 
 # Common warning flags
-WARN = -Wall -Wextra -Wdouble-promotion -Wformat -Wundef -Werror #-Wconversion -Werror
+WARN = -Wall -Wextra -Wdouble-promotion -Wformat -Wundef #-Wconversion -Werror
 
 # Define C warning options here
 CWARN = $(WARN) -Wstrict-prototypes
