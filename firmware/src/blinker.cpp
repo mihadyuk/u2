@@ -196,18 +196,17 @@ void Blinker::start(void){
     chThdTerminate(this->redworker);
     chThdWait(this->redworker);
   }
-
   this->redworker = chThdCreateStatic(RedBlinkThreadWA,
-          sizeof(RedBlinkThreadWA),
-          NORMALPRIO - 10,
-          RedBlinkThread,
-          NULL);
+          sizeof(RedBlinkThreadWA), NORMALPRIO - 10, RedBlinkThread, nullptr);
+  osalDbgCheck(nullptr != this->redworker);
 
+  if (nullptr != this->blueworker) {
+    chThdTerminate(this->blueworker);
+    chThdWait(this->blueworker);
+  }
   this->blueworker = chThdCreateStatic(BlueBlinkThreadWA,
-          sizeof(BlueBlinkThreadWA),
-          NORMALPRIO - 10,
-          BlueBlinkThread,
-          NULL);
+          sizeof(BlueBlinkThreadWA), NORMALPRIO - 10, BlueBlinkThread, nullptr);
+  osalDbgCheck(nullptr != this->blueworker);
 
   ready = true;
 }
@@ -225,8 +224,8 @@ void Blinker::stop(void){
   chThdWait(redworker);
   chThdWait(blueworker);
 
-  redworker = NULL;
-  blueworker = NULL;
+  redworker = nullptr;
+  blueworker = nullptr;
 }
 
 /**
