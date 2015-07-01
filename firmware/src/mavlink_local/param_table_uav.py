@@ -147,6 +147,8 @@ param = [
 ("BAT_fill",        0,          0,          100,        "u", "default",     "Start battery filling in percents"),
 
 # Fusion algorithm settings
+("SINS_restart",    0,          1,          0xFFFF,     "u", "default",     "Change this value to enforce sins restart"),
+
 ("SINS_en_gnss",    0,          1,          1,          "u", "default",     "NULL"),
 ("SINS_en_odo",     0,          1,          1,          "u", "default",     "NULL"),
 ("SINS_en_baro",    0,          1,          1,          "u", "default",     "NULL"),
@@ -155,6 +157,7 @@ param = [
 ("SINS_en_euler",   0,          1,          1,          "u", "default",     "NULL"),
 ("SINS_en_mag",     0,          1,          1,          "u", "default",     "NULL"),
 ("SINS_en_gnss_v",  0,          1,          1,          "u", "default",     "NULL"),
+("SINS_en_zupt",    0,          1,          1,          "u", "default",     "NULL"),
 
 ("SINS_R_ne_sns",   0.001,      5,          20,         "f", "default",     "NULL"),
 ("SINS_R_d_sns",    0.001,      10,         20,         "f", "default",     "NULL"),
@@ -176,6 +179,14 @@ param = [
 ("SINS_eu_vh_roll", -180,       0,          180,        "f", "default",     "deg"),
 ("SINS_eu_vh_pitch",-90,        0,          90,         "f", "default",     "deg"),
 ("SINS_eu_vh_yaw",  -360,       0,          360,        "f", "default",     "deg"),
+
+("SINS_acc_b_x",   -1000,       0,          1000,       "f", "default",     "m/s^2"),
+("SINS_acc_b_y",   -1000,       0,          1000,       "f", "default",     "m/s^2"),
+("SINS_acc_b_z",   -1000,       0,          1000,       "f", "default",     "m/s^2"),
+
+("SINS_gyr_b_x",   -1000,       0,          1000,       "f", "default",     "rad"),
+("SINS_gyr_b_y",   -1000,       0,          1000,       "f", "default",     "rad"),
+("SINS_gyr_b_z",   -1000,       0,          1000,       "f", "default",     "rad"),
 
 ("GLRT_acc_sigma",  0.0001,     0.01,       1,          "f", "default",     "NULL"),
 ("GLRT_gyr_sigma",  0.00001,    0.01,       0.5,        "f", "default",     "NULL"),

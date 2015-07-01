@@ -19,6 +19,8 @@ public:
   void start(void);
   void stop(void);
 private:
+  void read_settings(void);
+  void sins_cold_start(void);
   void navi2acs(void);
   void navi2mavlink(void);
   void prepare_data(const baro_data_t &abs_press,
@@ -39,9 +41,10 @@ private:
   const uint32_t *en_mag    = nullptr;
   const uint32_t *en_zihr   = nullptr;
   const uint32_t *en_gnss_v = nullptr;
+  const uint32_t *en_zupt = nullptr;
 
-  const uint32_t *size_meas = nullptr;
-  const uint32_t *size_state = nullptr;
+  const uint32_t *restart = nullptr;
+  uint32_t restart_cache = 0;
 
   const float *acc_sigma = nullptr;
   const float *gyr_sigma = nullptr;
@@ -64,6 +67,14 @@ private:
   const float *eu_vh_roll = nullptr;
   const float *eu_vh_pitch = nullptr;
   const float *eu_vh_yaw = nullptr;
+
+  const float *acc_b_x = nullptr;
+  const float *acc_b_y = nullptr;
+  const float *acc_b_z = nullptr;
+  const float *gyr_b_x = nullptr;
+  const float *gyr_b_y = nullptr;
+  const float *gyr_b_z = nullptr;
+
   const uint32_t *samples = nullptr;
 };
 

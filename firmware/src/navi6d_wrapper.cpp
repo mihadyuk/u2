@@ -45,9 +45,9 @@ extern mavlink_highres_imu_t           mavlink_out_highres_imu_struct;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-typedef double klmnfp;
+typedef float klmnfp;
 #if ! FAKE_SINS
-__CCM__ static NavigatorSins<klmnfp, 15, 17> nav_sins;
+__CCM__ static NavigatorSins<klmnfp, 21, 17> nav_sins;
 __CCM__ static InitParams<klmnfp> init_params;
 __CCM__ static CalibParams<klmnfp> calib_params;
 __CCM__ static KalmanParams<klmnfp> kalman_params;
@@ -129,12 +129,16 @@ void Navi6dWrapper::prepare_data(const baro_data_t &abs_press,
 {
   prepare_gnss(speed);
 
-  if ((0 == speed.speed) && (1 == *en_zihr)) {
+  if (*en_zihr == 1) {
     nav_sins.sensor_flags.zihr_en = true;
   }
 
   if (*en_odo == 1) {
     nav_sins.sensor_flags.odo_en = true;
+  }
+
+  if (*en_zupt == 1) {
+    nav_sins.sensor_flags.zupt_en = true;
   }
 
   if (*en_nonhol == 1) {
@@ -238,6 +242,122 @@ void Navi6dWrapper::navi2acs(void) {
 }
 #endif
 
+/**
+ *
+ */
+void Navi6dWrapper::read_settings(void) {
+
+  param_registry.valueSearch("SINS_en_gnss",    &en_gnss);
+  param_registry.valueSearch("SINS_en_odo",     &en_odo);
+  param_registry.valueSearch("SINS_en_baro",    &en_baro);
+  param_registry.valueSearch("SINS_en_euler",   &en_euler);
+  param_registry.valueSearch("SINS_en_mag",     &en_mag);
+  param_registry.valueSearch("SINS_en_nonhol",  &en_nonhol);
+  param_registry.valueSearch("SINS_en_zihr",    &en_zihr);
+  param_registry.valueSearch("SINS_en_gnss_v",  &en_gnss_v);
+  param_registry.valueSearch("SINS_en_zupt",    &en_zupt);
+
+  param_registry.valueSearch("SINS_R_ne_sns",   &R_ne_sns);
+  param_registry.valueSearch("SINS_R_d_sns",    &R_d_sns);
+  param_registry.valueSearch("SINS_R_v_n_sns",  &R_v_n_sns);
+  param_registry.valueSearch("SINS_R_odo",      &R_odo);
+  param_registry.valueSearch("SINS_R_nonhol",   &R_nonhol);
+  param_registry.valueSearch("SINS_R_baro",     &R_baro);
+  param_registry.valueSearch("SINS_R_mag",      &R_mag);
+  param_registry.valueSearch("SINS_R_euler",    &R_euler);
+  param_registry.valueSearch("SINS_R_zihr",     &R_zihr);
+
+  param_registry.valueSearch("SINS_Qm_acc",     &Qm_acc);
+  param_registry.valueSearch("SINS_Qm_gyr",     &Qm_gyr);
+  param_registry.valueSearch("SINS_Qm_acc_x",   &Qm_acc_x);
+  param_registry.valueSearch("SINS_Qm_acc_y",   &Qm_acc_y);
+  param_registry.valueSearch("SINS_Qm_acc_z",   &Qm_acc_z);
+  param_registry.valueSearch("SINS_Qm_gyr_bias",&Qm_gyr_bias);
+
+  param_registry.valueSearch("SINS_eu_vh_roll", &eu_vh_roll);
+  param_registry.valueSearch("SINS_eu_vh_pitch",&eu_vh_pitch);
+  param_registry.valueSearch("SINS_eu_vh_yaw",  &eu_vh_yaw);
+
+  param_registry.valueSearch("SINS_acc_b_x",    &acc_b_x);
+  param_registry.valueSearch("SINS_acc_b_y",    &acc_b_y);
+  param_registry.valueSearch("SINS_acc_b_z",    &acc_b_z);
+
+  param_registry.valueSearch("SINS_gyr_b_x",    &gyr_b_x);
+  param_registry.valueSearch("SINS_gyr_b_y",    &gyr_b_y);
+  param_registry.valueSearch("SINS_gyr_b_z",    &gyr_b_z);
+
+  param_registry.valueSearch("SINS_eu_vh_roll", &eu_vh_roll);
+  param_registry.valueSearch("SINS_eu_vh_pitch",&eu_vh_pitch);
+  param_registry.valueSearch("SINS_eu_vh_yaw",  &eu_vh_yaw);
+
+  param_registry.valueSearch("GLRT_acc_sigma",  &acc_sigma);
+  param_registry.valueSearch("GLRT_gyr_sigma",  &gyr_sigma);
+  param_registry.valueSearch("GLRT_gamma",      &gamma);
+  param_registry.valueSearch("GLRT_samples",    &samples);
+
+  param_registry.valueSearch("SINS_restart", &restart);
+}
+
+/**
+ *
+ */
+void Navi6dWrapper::sins_cold_start(void) {
+
+  ref_params.eu_vh_base[0][0] = deg2rad(*eu_vh_roll);
+  ref_params.eu_vh_base[1][0] = deg2rad(*eu_vh_pitch);
+  ref_params.eu_vh_base[2][0] = deg2rad(*eu_vh_yaw);
+
+  init_params.est_gyro_bias = true;
+  //init_params.sigma_Pi[0][0] = 200; //initial position STD (m)
+  init_params.sigma_Pi[3][0] = M_PI; //initial heading STD (rad)
+  init_params.dT = this->dT_cache;
+  init_params.rst_dT = 0.5;
+
+  kalman_params.sigma_R[0][0] = *R_ne_sns; //ne_sns
+  kalman_params.sigma_R[1][0] = *R_d_sns; //d_sns
+  kalman_params.sigma_R[2][0] = *R_v_n_sns; //v_n_sns
+  kalman_params.sigma_R[3][0] = *R_odo; //odo
+  kalman_params.sigma_R[4][0] = *R_nonhol; //nonhol
+  kalman_params.sigma_R[5][0] = *R_baro; //baro
+  kalman_params.sigma_R[6][0] = *R_mag; //mag
+  kalman_params.sigma_R[7][0] = *R_euler; //roll,pitch,yaw (rad)
+  kalman_params.sigma_R[8][0] = *R_zihr; // zihr
+
+  kalman_params.sigma_Qm[0][0] = *Qm_acc; //acc
+  kalman_params.sigma_Qm[1][0] = *Qm_gyr; //gyr
+  kalman_params.sigma_Qm[2][0] = *Qm_acc_x; //acc_x
+  kalman_params.sigma_Qm[3][0] = *Qm_acc_y; //acc_y
+  kalman_params.sigma_Qm[4][0] = *Qm_acc_z; //acc_z
+  kalman_params.sigma_Qm[5][0] = *Qm_gyr_bias; //gyr_bias
+
+  calib_params.ba[0][0] = *acc_b_x;
+  calib_params.ba[1][0] = *acc_b_y;
+  calib_params.ba[2][0] = *acc_b_z;
+
+  calib_params.bw[0][0] = *gyr_b_x;
+  calib_params.bw[1][0] = *gyr_b_y;
+  calib_params.bw[2][0] = *gyr_b_z;
+
+  calib_params.bm[0][0] = -3.79611/1000;
+  calib_params.bm[1][0] = 15.2098/1000;
+  calib_params.bm[2][0] = -5.45266/1000;
+
+  calib_params.m_s[0][0] = 0.916692;
+  calib_params.m_s[1][0] = 0.912;
+  calib_params.m_s[2][0] = 0.9896;
+
+  calib_params.m_no[0][0] = -0.0031;
+  calib_params.m_no[1][0] = 0.0078;
+  calib_params.m_no[2][0] = 0.0018;
+
+  nav_sins.set_init_params(init_params);
+  nav_sins.set_calib_params(calib_params);
+  nav_sins.set_kalman_params(kalman_params);
+  nav_sins.set_ref_params(ref_params);
+
+  nav_sins.command_executor(1);
+}
+
 /*
  *******************************************************************************
  * EXPORTED FUNCTIONS
@@ -261,79 +381,8 @@ void Navi6dWrapper::start(void) {
   gnss_data.fresh = false;
   GNSS.subscribe(&gnss_data);
 
-  param_registry.valueSearch("SINS_en_gnss",   &en_gnss);
-  param_registry.valueSearch("SINS_en_odo",    &en_odo);
-  param_registry.valueSearch("SINS_en_baro",   &en_baro);
-  param_registry.valueSearch("SINS_en_euler",  &en_euler);
-  param_registry.valueSearch("SINS_en_mag",    &en_mag);
-  param_registry.valueSearch("SINS_en_nonhol", &en_nonhol);
-  param_registry.valueSearch("SINS_en_zihr",   &en_zihr);
-  param_registry.valueSearch("SINS_en_gnss_v", &en_gnss_v);
-
-  param_registry.valueSearch("SINS_R_ne_sns",   &R_ne_sns);
-  param_registry.valueSearch("SINS_R_d_sns",    &R_d_sns);
-  param_registry.valueSearch("SINS_R_v_n_sns",  &R_v_n_sns);
-  param_registry.valueSearch("SINS_R_odo",      &R_odo);
-  param_registry.valueSearch("SINS_R_nonhol",   &R_nonhol);
-  param_registry.valueSearch("SINS_R_baro",     &R_baro);
-  param_registry.valueSearch("SINS_R_mag",      &R_mag);
-  param_registry.valueSearch("SINS_R_euler",    &R_euler);
-  param_registry.valueSearch("SINS_R_zihr",     &R_zihr);
-
-  param_registry.valueSearch("SINS_Qm_acc",     &Qm_acc);
-  param_registry.valueSearch("SINS_Qm_gyr",     &Qm_gyr);
-  param_registry.valueSearch("SINS_Qm_acc_x",   &Qm_acc_x);
-  param_registry.valueSearch("SINS_Qm_acc_y",   &Qm_acc_y);
-  param_registry.valueSearch("SINS_Qm_acc_z",   &Qm_acc_z);
-  param_registry.valueSearch("SINS_Qm_gyr_bias",&Qm_gyr_bias);
-
-  param_registry.valueSearch("SINS_eu_vh_roll", &eu_vh_roll);
-  param_registry.valueSearch("SINS_eu_vh_pitch",&eu_vh_pitch);
-  param_registry.valueSearch("SINS_eu_vh_yaw",  &eu_vh_yaw);
-
-  param_registry.valueSearch("GLRT_acc_sigma",  &acc_sigma);
-  param_registry.valueSearch("GLRT_gyr_sigma",  &gyr_sigma);
-  param_registry.valueSearch("GLRT_gamma",      &gamma);
-  param_registry.valueSearch("GLRT_samples",    &samples);
-
-  ref_params.eu_vh_base[0][0] = deg2rad(*eu_vh_roll);
-  ref_params.eu_vh_base[1][0] = deg2rad(*eu_vh_pitch);
-  ref_params.eu_vh_base[2][0] = deg2rad(*eu_vh_yaw);
-
-#if MAIN_SENSOR_ADIS
-  init_params.est_gyro_bias = false;
-#else
-  init_params.est_gyro_bias = true;
-#endif
-
-  //init_params.sigma_Pi[0][0] = 200; //initial position STD (m)
-  init_params.sigma_Pi[3][0] = M_PI; //initial heading STD (rad)
-
-  kalman_params.sigma_R[0][0] = *R_ne_sns; //ne_sns
-  kalman_params.sigma_R[1][0] = *R_d_sns; //d_sns
-  kalman_params.sigma_R[2][0] = *R_v_n_sns; //v_n_sns
-  kalman_params.sigma_R[3][0] = *R_odo; //odo
-  kalman_params.sigma_R[4][0] = *R_nonhol; //nonhol
-  kalman_params.sigma_R[5][0] = *R_baro; //baro
-  kalman_params.sigma_R[6][0] = *R_mag; //mag
-  kalman_params.sigma_R[7][0] = *R_euler; //roll,pitch,yaw (rad)
-  kalman_params.sigma_R[8][0] = *R_zihr; // zihr
-
-  kalman_params.sigma_Qm[0][0] = *Qm_acc; //acc
-  kalman_params.sigma_Qm[1][0] = *Qm_gyr; //gyr
-  kalman_params.sigma_Qm[2][0] = *Qm_acc_x; //acc_x
-  kalman_params.sigma_Qm[3][0] = *Qm_acc_y; //acc_y
-  kalman_params.sigma_Qm[4][0] = *Qm_acc_z; //acc_z
-  kalman_params.sigma_Qm[5][0] = *Qm_gyr_bias; //gyr_bias
-
-  init_params.dT = this->dT_cache;
-
-  nav_sins.set_init_params(init_params);
-  nav_sins.set_calib_params(calib_params);
-  nav_sins.set_kalman_params(kalman_params);
-  nav_sins.set_ref_params(ref_params);
-
-  nav_sins.command_executor(1);
+  read_settings();
+  restart_cache = *restart + 1; // enforce sins restart in first update call
 
   ready = true;
 #endif
@@ -357,11 +406,18 @@ void Navi6dWrapper::update(const baro_data_t &abs_press,
 #if ! FAKE_SINS
   osalDbgCheck(ready);
 
-  nav_sins.set_ref_params(ref_params);
+  /* reapply new dT if needed */
   if (this->dT_cache != marg.dT) {
     this->dT_cache = marg.dT;
     init_params.dT = marg.dT;
+    init_params.rst_dT = 0.5;
     nav_sins.set_init_params(init_params);
+  }
+
+  /* restart sins if requested */
+  if (*restart != restart_cache) {
+    sins_cold_start();
+    restart_cache = *restart;
   }
 
   prepare_data(abs_press, speed, marg);
@@ -377,9 +433,12 @@ void Navi6dWrapper::update(const baro_data_t &abs_press,
  /*   mavlink_out_debug_vect_struct.x = nav_sins.sensor_data.v_sns[0][0];
     mavlink_out_debug_vect_struct.y = nav_sins.sensor_data.v_sns[1][0];
     mavlink_out_debug_vect_struct.z = nav_sins.sensor_data.v_sns[2][0];*/
-    mavlink_out_debug_vect_struct.x = nav_sins.navi_data.a_bias[0][0];
-    mavlink_out_debug_vect_struct.y = nav_sins.navi_data.a_bias[1][0];
-    mavlink_out_debug_vect_struct.z = nav_sins.navi_data.a_bias[2][0];
+    /*mavlink_out_debug_vect_struct.x = sqrt(nav_sins.navi_data.mb_c[0][0]*nav_sins.navi_data.mb_c[0][0]+
+        nav_sins.navi_data.mb_c[1][0]*nav_sins.navi_data.mb_c[1][0]+
+        nav_sins.navi_data.mb_c[2][0]*nav_sins.navi_data.mb_c[2][0]);*/
+    mavlink_out_debug_vect_struct.x = nav_sins.navi_data.mb_c[0][0];
+    mavlink_out_debug_vect_struct.y = nav_sins.navi_data.mb_c[1][0];
+    mavlink_out_debug_vect_struct.z = nav_sins.navi_data.mb_c[2][0];
   //mavlink_out_debug_vect_struct.x = nav_sins.glrt_det.test_stat;
 
 #else
