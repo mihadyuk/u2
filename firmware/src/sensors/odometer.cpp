@@ -3,6 +3,7 @@
 #include "odometer.hpp"
 #include "mavlink_local.hpp"
 #include "param_registry.hpp"
+#include "putinrange.hpp"
 
 using namespace chibios_rt;
 
@@ -202,12 +203,13 @@ void Odometer::update(odometer_data_t &result, float dT) {
     pps = 0;
   }
   else {
+    last_pulse_period = filter_median(last_pulse_period);
+    last_pulse_period = putinrange(last_pulse_period, 500, 65000);
     pps = static_cast<float>(EICU_FREQ) / static_cast<float>(last_pulse_period);
   }
 
   /* now calculate speed */
   pps = filter_alphabeta(pps);
-  //pps = filter_median(pps);
   result.speed = *pulse2m * pps;
   speed2mavlink(result);
 }
