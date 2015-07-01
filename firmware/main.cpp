@@ -133,7 +133,7 @@ __CCM__ static TimeKeeper time_keeper(GNSS);
 #include <functional>
 void std::__throw_bad_function_call(void) {
   osalSysHalt("__throw_bad_function_call");
-  while (true) {;}
+  while(true);
 }
 
 /*
