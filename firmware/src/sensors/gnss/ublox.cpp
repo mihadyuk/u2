@@ -463,6 +463,8 @@ THD_FUNCTION(uBlox::ubxRxThread, arg) {
   /* wait until receiver boots up */
   osalThreadSleepSeconds(2);
   while (true) {
+    if (chThdShouldTerminateX())
+      goto EXIT;
     if (self->device_alive(MS2ST(500)))
       break;
   }
@@ -496,6 +498,7 @@ THD_FUNCTION(uBlox::ubxRxThread, arg) {
     }
   }
 
+EXIT:
   chThdExit(MSG_OK);
 }
 
