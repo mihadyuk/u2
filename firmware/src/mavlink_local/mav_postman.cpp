@@ -57,7 +57,7 @@ static THD_FUNCTION(RxThread, arg) {
   msg_t c = Q_TIMEOUT;
   mavChannel *channel = static_cast<mavChannel *>(arg);
 
-  while (!chThdShouldTerminateX()){
+  while (!chThdShouldTerminateX()) {
     c = channel->get(MS2ST(20));
     if (c != Q_TIMEOUT){
       if (mavlink_parse_char(MAVLINK_COMM_0, c, &rx_msg, &rx_status)) {
@@ -79,9 +79,9 @@ static THD_FUNCTION(TxThread, arg) {
   mavMail *mail;
   size_t len;
 
-  while (!chThdShouldTerminateX()){
-    if (MSG_OK == txmb.fetch(&mail, MS2ST(100))){
-      if (0 != mavlink_encode(mail->msgid, mail->compid, &tx_msg,  mail->mavmsg)){
+  while (!chThdShouldTerminateX()) {
+    if (MSG_OK == txmb.fetch(&mail, MS2ST(100))) {
+      if (0 != mavlink_encode(mail->msgid, mail->compid, &tx_msg,  mail->mavmsg)) {
         len = mavlink_msg_to_send_buffer(sendbuf, &tx_msg);
         channel->write(sendbuf, len);
       }
@@ -131,7 +131,7 @@ void MavPostman::stop(void){
 
   if (false == ready)
     return;
-  else{
+  else {
     ready = false;
     chThdTerminate(rxworker);
     chThdTerminate(txworker);

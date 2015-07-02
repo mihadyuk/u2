@@ -3,9 +3,10 @@
 
 #define DRIVETRAIN_PWM_CHANNELS   4
 
-//#define DRIVETRAIN_PWM_CLK        8000000
-#define DRIVETRAIN_PWM_CLK        1000000 /* 1MHz clock */
-#define DRIVETRAIN_PWM_PERIOD     20000   /* 20000 == 50Hz pulse generation */
+#define DRIVETRAIN_PWM_CLK        8000000
+#define DRIVETRAIN_PWM_PERIOD     2000
+//#define DRIVETRAIN_PWM_CLK        1000000 /* 1MHz clock */
+//#define DRIVETRAIN_PWM_PERIOD     20000   /* 20000 == 50Hz pulse generation */
 
 namespace control {
 

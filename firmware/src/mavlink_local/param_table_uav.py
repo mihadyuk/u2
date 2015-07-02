@@ -180,13 +180,21 @@ param = [
 ("SINS_eu_vh_pitch",-90,        0,          90,         "f", "default",     "deg"),
 ("SINS_eu_vh_yaw",  -360,       0,          360,        "f", "default",     "deg"),
 
-("SINS_acc_b_x",   -1000,       0,          1000,       "f", "default",     "m/s^2"),
-("SINS_acc_b_y",   -1000,       0,          1000,       "f", "default",     "m/s^2"),
-("SINS_acc_b_z",   -1000,       0,          1000,       "f", "default",     "m/s^2"),
+("SINS_acc_bias_x", -1000,      0,          1000,       "f", "default",     "m/s^2"),
+("SINS_acc_bias_y", -1000,      0,          1000,       "f", "default",     "m/s^2"),
+("SINS_acc_bias_z", -1000,      0,          1000,       "f", "default",     "m/s^2"),
 
-("SINS_gyr_b_x",   -1000,       0,          1000,       "f", "default",     "rad"),
-("SINS_gyr_b_y",   -1000,       0,          1000,       "f", "default",     "rad"),
-("SINS_gyr_b_z",   -1000,       0,          1000,       "f", "default",     "rad"),
+("SINS_gyr_bias_x", -1000,      0,          1000,       "f", "default",     "rad"),
+("SINS_gyr_bias_y", -1000,      0,          1000,       "f", "default",     "rad"),
+("SINS_gyr_bias_z", -1000,      0,          1000,       "f", "default",     "rad"),
+
+("SINS_acc_scale_x",-3,         1,          3,          "f", "default",     "m/s^2"),
+("SINS_acc_scale_y",-3,         1,          3,          "f", "default",     "m/s^2"),
+("SINS_acc_scale_z",-3,         1,          3,          "f", "default",     "m/s^2"),
+
+("SINS_gyr_scale_x",-3,         1,          3,          "f", "default",     "rad"),
+("SINS_gyr_scale_y",-3,         1,          3,          "f", "default",     "rad"),
+("SINS_gyr_scale_z",-3,         1,          3,          "f", "default",     "rad"),
 
 ("GLRT_acc_sigma",  0.0001,     0.01,       1,          "f", "default",     "NULL"),
 ("GLRT_gyr_sigma",  0.00001,    0.01,       0.5,        "f", "default",     "NULL"),

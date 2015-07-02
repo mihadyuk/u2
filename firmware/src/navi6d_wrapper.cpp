@@ -45,9 +45,9 @@ extern mavlink_highres_imu_t           mavlink_out_highres_imu_struct;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-typedef float klmnfp;
+typedef double klmnfp;
 #if ! FAKE_SINS
-__CCM__ static NavigatorSins<klmnfp, 21, 17> nav_sins;
+__CCM__ static NavigatorSins<klmnfp, 15, 17> nav_sins;
 __CCM__ static InitParams<klmnfp> init_params;
 __CCM__ static CalibParams<klmnfp> calib_params;
 __CCM__ static KalmanParams<klmnfp> kalman_params;
@@ -278,13 +278,21 @@ void Navi6dWrapper::read_settings(void) {
   param_registry.valueSearch("SINS_eu_vh_pitch",&eu_vh_pitch);
   param_registry.valueSearch("SINS_eu_vh_yaw",  &eu_vh_yaw);
 
-  param_registry.valueSearch("SINS_acc_b_x",    &acc_b_x);
-  param_registry.valueSearch("SINS_acc_b_y",    &acc_b_y);
-  param_registry.valueSearch("SINS_acc_b_z",    &acc_b_z);
+  param_registry.valueSearch("SINS_acc_bias_x", &acc_bias_x);
+  param_registry.valueSearch("SINS_acc_bias_y", &acc_bias_y);
+  param_registry.valueSearch("SINS_acc_bias_z", &acc_bias_z);
 
-  param_registry.valueSearch("SINS_gyr_b_x",    &gyr_b_x);
-  param_registry.valueSearch("SINS_gyr_b_y",    &gyr_b_y);
-  param_registry.valueSearch("SINS_gyr_b_z",    &gyr_b_z);
+  param_registry.valueSearch("SINS_gyr_bias_x", &gyr_bias_x);
+  param_registry.valueSearch("SINS_gyr_bias_y", &gyr_bias_y);
+  param_registry.valueSearch("SINS_gyr_bias_z", &gyr_bias_z);
+
+  param_registry.valueSearch("SINS_acc_scale_x",&acc_scale_x);
+  param_registry.valueSearch("SINS_acc_scale_y",&acc_scale_y);
+  param_registry.valueSearch("SINS_acc_scale_z",&acc_scale_z);
+
+  param_registry.valueSearch("SINS_gyr_scale_x",&gyr_scale_x);
+  param_registry.valueSearch("SINS_gyr_scale_y",&gyr_scale_y);
+  param_registry.valueSearch("SINS_gyr_scale_z",&gyr_scale_z);
 
   param_registry.valueSearch("SINS_eu_vh_roll", &eu_vh_roll);
   param_registry.valueSearch("SINS_eu_vh_pitch",&eu_vh_pitch);
@@ -330,13 +338,21 @@ void Navi6dWrapper::sins_cold_start(void) {
   kalman_params.sigma_Qm[4][0] = *Qm_acc_z; //acc_z
   kalman_params.sigma_Qm[5][0] = *Qm_gyr_bias; //gyr_bias
 
-  calib_params.ba[0][0] = *acc_b_x;
-  calib_params.ba[1][0] = *acc_b_y;
-  calib_params.ba[2][0] = *acc_b_z;
+  calib_params.ba[0][0] = *acc_bias_x;
+  calib_params.ba[1][0] = *acc_bias_y;
+  calib_params.ba[2][0] = *acc_bias_z;
 
-  calib_params.bw[0][0] = *gyr_b_x;
-  calib_params.bw[1][0] = *gyr_b_y;
-  calib_params.bw[2][0] = *gyr_b_z;
+  calib_params.bw[0][0] = *gyr_bias_x;
+  calib_params.bw[1][0] = *gyr_bias_y;
+  calib_params.bw[2][0] = *gyr_bias_z;
+
+  calib_params.sa[0][0] = *acc_scale_x;
+  calib_params.sa[1][0] = *acc_scale_y;
+  calib_params.sa[2][0] = *acc_scale_z;
+
+  calib_params.sw[0][0] = *gyr_scale_x;
+  calib_params.sw[1][0] = *gyr_scale_y;
+  calib_params.sw[2][0] = *gyr_scale_z;
 
   calib_params.bm[0][0] = -3.79611/1000;
   calib_params.bm[1][0] = 15.2098/1000;

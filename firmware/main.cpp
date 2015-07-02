@@ -258,6 +258,9 @@ int main(void) {
 
 DEATH:
   blinker.stop();
+  gps_power_off();
+  xbee_reset_assert();
+  nvram_power_off();
   while (true) {
     red_led_on();
     osalThreadSleepSeconds(1);
