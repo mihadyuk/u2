@@ -187,6 +187,7 @@ void MavSpamList::unsubscribe(uint8_t msg_id, SubscribeLink *linkp) {
     head = head->next;
     linkp->next = nullptr;
     linkp->connected = false;
+    unlock();
     return;
   }
 
@@ -195,6 +196,7 @@ void MavSpamList::unsubscribe(uint8_t msg_id, SubscribeLink *linkp) {
       head->next = linkp->next;
       linkp->next = nullptr;
       linkp->connected = false;
+      unlock();
       return;
     }
     head = head->next;
