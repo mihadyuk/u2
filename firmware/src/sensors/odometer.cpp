@@ -43,7 +43,7 @@ static const systime_t timeout = MS2ST((32768 * 1000) / EICU_FREQ);
 uint32_t Odometer::total_path = 0;
 uint16_t Odometer::period_cache = 0;
 
-static const EICUChannelConfig speedometercfg = {
+static const EICUChannelConfig odometercfg = {
     EICU_INPUT_ACTIVE_LOW,
     EICU_INPUT_EDGE,
     odometer_cb
@@ -52,7 +52,7 @@ static const EICUChannelConfig speedometercfg = {
 static const EICUConfig eicucfg = {
     EICU_FREQ,    /* EICU clock frequency in Hz.*/
     {
-        &speedometercfg,
+        &odometercfg,
         NULL,
         NULL,
         NULL
@@ -86,8 +86,7 @@ void odometer_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t 
  *
  * @retval  OSAL_SUCCESS if measurement considered good.
  */
-bool Odometer::check_sample(uint32_t *path_ret,
-                               uint16_t *last_pulse_period, float dT) {
+bool Odometer::check_sample(uint32_t *path_ret, uint16_t *last_pulse_period, float dT) {
   bool ret = OSAL_FAILED;
   uint32_t path; /* cache value for atomicity */
 
