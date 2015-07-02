@@ -218,14 +218,17 @@ void Blinker::stop(void){
 
   ready = false;
 
-  chThdTerminate(redworker);
-  chThdTerminate(blueworker);
+  if (nullptr != redworker) {
+    chThdTerminate(redworker);
+    chThdWait(redworker);
+    redworker = nullptr;
+  }
 
-  chThdWait(redworker);
-  chThdWait(blueworker);
-
-  redworker = nullptr;
-  blueworker = nullptr;
+  if (nullptr != blueworker) {
+    chThdTerminate(blueworker);
+    chThdWait(blueworker);
+    blueworker = nullptr;
+  }
 }
 
 /**
