@@ -173,14 +173,7 @@ THD_FUNCTION(TimeKeeper::TimekeeperThread, arg) {
   chRegSetThreadName("Timekeeper");
   TimeKeeper *self = static_cast<TimeKeeper *>(arg);
 
-  /* wait until receiver boots */
-  osalThreadSleepSeconds(5);
-  while (!chThdShouldTerminateX()) {
-    if (MSG_OK != ppstimesync_sem.wait(MS2ST(1200))) {
-      self->GNSS.subscribe(&gps);
-      break;
-    }
-  }
+  self->GNSS.subscribe(&gps);
 
   while (!chThdShouldTerminateX()) {
     if ((gps.fresh) && (gps.fix > 0) && (0 == gps.msec)) {
