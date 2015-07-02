@@ -3,8 +3,8 @@
 
 class MissionReceiver : public chibios_rt::BaseStaticThread<640> {
 public:
-  MissionReceiver(void);
   void main(void);
+  void stop(void);
 };
 
 #endif /* MISSION_RECEIVER_HPP_ */

@@ -415,7 +415,7 @@ void MissionReceiver::main(void) {
   mav_postman.subscribe(MAVLINK_MSG_ID_MISSION_ITEM,          &mission_item_link);
   mav_postman.subscribe(MAVLINK_MSG_ID_MISSION_ACK,           &mission_ack_link);
 
-  while (!chThdShouldTerminateX()) {
+  while (! this->shouldTerminate()) {
     if (MSG_OK == mission_mailbox.fetch(&recv_mail, MISSION_CHECK_PERIOD)) {
       switch(recv_mail->msgid) {
 
@@ -485,9 +485,11 @@ void MissionReceiver::main(void) {
  * EXPORTED FUNCTIONS
  ******************************************************************************
  */
+
 /**
  *
  */
-MissionReceiver::MissionReceiver(void) {
-  return;
+void MissionReceiver::stop(void) {
+  this->requestTerminate();
+  this->wait();
 }
