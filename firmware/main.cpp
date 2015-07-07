@@ -124,7 +124,7 @@ __CCM__ static Navi6dWrapper navi6d(acs_in, GNSS);
 __CCM__ static TimeKeeper time_keeper(GNSS);
 
 /**
- *
+ * C++11 stub for std::function
  */
 #include <functional>
 void std::__throw_bad_function_call(void) {
