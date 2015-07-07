@@ -9,13 +9,24 @@
 
 typedef double klmnfp;
 
+
+class Navi6dBase {
+public:
+  Navi6dBase(void);
+private:
+  void prepare_data(const baro_data_t &abs_press,
+                    const odometer_data_t &odo,
+                    const marg_data_t &marg);
+  void prepare_data_gnss(gnss::gnss_data_t &gnss_data);
+};
+
 /**
  *
  */
 class Navi6dWrapper {
 public:
   Navi6dWrapper(ACSInput &acs_in, gnss::GNSSReceiver &GNSS);
-  void update(const baro_data_t &abs_press,
+  void update(const baro_data_t &baro,
               const odometer_data_t &odo,
               const marg_data_t &marg);
   void start(void);
@@ -26,7 +37,7 @@ private:
   void navi2acs(void);
   void navi2mavlink(void);
   void debug2mavlink(void);
-  void prepare_data(const baro_data_t &abs_press,
+  void prepare_data(const baro_data_t &baro,
                     const odometer_data_t &odo,
                     const marg_data_t &marg);
   void prepare_data_gnss(gnss::gnss_data_t &gnss_data);

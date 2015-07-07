@@ -16,7 +16,6 @@
 #include "navi6d_wrapper.hpp"
 #include "mavlink_local.hpp"
 #include "acs_input.hpp"
-#include "ublox.hpp"
 #include "geometry.hpp"
 #include "time_keeper.hpp"
 #include "param_registry.hpp"
@@ -97,11 +96,11 @@ static void dbg_in_fill_gnss(const gnss::gnss_data_t &data) {
 /**
  *
  */
-static void dbg_in_fill_other(const baro_data_t &abs_press,
+static void dbg_in_fill_other(const baro_data_t &baro,
                               const odometer_data_t &odo,
                               const marg_data_t &marg) {
 
-  dbg_in_struct.baro_alt  = abs_press.alt;
+  dbg_in_struct.baro_alt  = baro.alt;
   dbg_in_struct.odo_speed = odo.speed;
   dbg_in_struct.marg_dt   = marg.dT;
   for (size_t i=0; i<3; i++) {
@@ -199,14 +198,14 @@ void Navi6dWrapper::prepare_data_gnss(gnss::gnss_data_t &gnss_data) {
  *
  */
 #if ! FAKE_SINS
-void Navi6dWrapper::prepare_data(const baro_data_t &abs_press,
-                                 const odometer_data_t &speed,
+void Navi6dWrapper::prepare_data(const baro_data_t &baro,
+                                 const odometer_data_t &odo,
                                  const marg_data_t &marg) {
 
   dbg_in_fill_gnss(this->gps);
   prepare_data_gnss(this->gps);
 
-  dbg_in_fill_other(abs_press, speed, marg);
+  dbg_in_fill_other(baro, odo, marg);
   dbg_in_append_log();
 
   if (*en_zihr == 1) {
@@ -214,7 +213,7 @@ void Navi6dWrapper::prepare_data(const baro_data_t &abs_press,
   }
 
   if (*en_odo == 1) {
-    nav_sins.sensor_data.v_odo[0][0] = speed.speed;
+    nav_sins.sensor_data.v_odo[0][0] = odo.speed;
     nav_sins.sensor_data.v_odo[1][0] = 0;
     nav_sins.sensor_data.v_odo[2][0] = 0;
     nav_sins.sensor_flags.odo_en = true;
@@ -241,7 +240,7 @@ void Navi6dWrapper::prepare_data(const baro_data_t &abs_press,
   nav_sins.sensor_flags.baro_fix_en = true;
   if (*en_baro == 1) {
     nav_sins.sensor_flags.alt_b_en = true;
-    nav_sins.sensor_data.alt_b[0][0] = abs_press.alt;
+    nav_sins.sensor_data.alt_b[0][0] = baro.alt;
   }
 
   for(size_t i=0; i<3; i++) {
@@ -520,8 +519,8 @@ void Navi6dWrapper::stop(void) {
 /**
  *
  */
-void Navi6dWrapper::update(const baro_data_t &abs_press,
-                           const odometer_data_t &speed,
+void Navi6dWrapper::update(const baro_data_t &baro,
+                           const odometer_data_t &odo,
                            const marg_data_t &marg)
 {
 #if ! FAKE_SINS
@@ -541,7 +540,7 @@ void Navi6dWrapper::update(const baro_data_t &abs_press,
     restart_cache = *restart;
   }
 
-  prepare_data(abs_press, speed, marg);
+  prepare_data(baro, odo, marg);
   nav_sins.run();
   navi2acs();
   navi2mavlink();
@@ -553,7 +552,7 @@ void Navi6dWrapper::update(const baro_data_t &abs_press,
 
 #else
   (void)abs_press;
-  (void)speed;
+  (void)odo;
   (void)marg;
 #endif
 }
