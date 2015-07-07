@@ -69,9 +69,9 @@ static bool fresh_data = false;
 /* по этому таймеру будет синхронизироваться файл лога */
 static virtual_timer_t sync_vt;
 
-static unpacked_sdc_cid_t cidsdc    __CCM__;
-static unpacked_sdc_csd_20_t csd20  __CCM__;
-static unpacked_sdc_csd_10_t csd10  __CCM__;
+__CCM__ static unpacked_sdc_cid_t cidsdc;
+__CCM__ static unpacked_sdc_csd_20_t csd20;
+__CCM__ static unpacked_sdc_csd_10_t csd10;
 
 /*
  ******************************************************************************
@@ -225,7 +225,7 @@ void MavLogger::main(void) {
   chVTObjectInit(&sync_vt);
   chVTSet(&sync_vt, SYNC_PERIOD, &sync_cb, NULL);
 
-  /* wait until card not ready */
+  /* wait card readyness */
 NOT_READY:
   while (!sdcIsCardInserted(&SDCD1)) {
     if (this->shouldTerminate())
@@ -272,7 +272,7 @@ NOT_READY:
       goto NOT_READY;
     }
 
-    /* wait ID */
+    /* */
     if (logwriter_mb.fetch(&mail, MS2ST(100)) == MSG_OK) {
       err = append_log(mail, &fresh_data);
       err_check();
