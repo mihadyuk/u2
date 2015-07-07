@@ -7,7 +7,6 @@
 
 #include <math.h>
 #include "main.h"
-#include "math_f.hpp"
 
 #if ! FAKE_SINS
 #include "navigator_sins.hpp"
@@ -21,7 +20,7 @@
 #include "geometry.hpp"
 #include "time_keeper.hpp"
 #include "param_registry.hpp"
-#include "pads.h"
+#include "mav_logger.hpp"
 
 /*
  ******************************************************************************
@@ -40,12 +39,14 @@ extern mavlink_debug_t                 mavlink_out_debug_struct;
 extern mavlink_debug_vect_t            mavlink_out_debug_vect_struct;
 extern mavlink_highres_imu_t           mavlink_out_highres_imu_struct;
 
+extern MavLogger mav_logger;
+
 /*
  ******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-typedef double klmnfp;
+
 #if ! FAKE_SINS
 __CCM__ static NavigatorSins<klmnfp, 15, 17> nav_sins;
 __CCM__ static InitParams<klmnfp> init_params;
@@ -53,6 +54,11 @@ __CCM__ static CalibParams<klmnfp> calib_params;
 __CCM__ static KalmanParams<klmnfp> kalman_params;
 __CCM__ static RefParams<klmnfp> ref_params;
 #endif
+
+__CCM__ static mavlink_navi6d_debug_input_t   dbg_in_struct;
+__CCM__ static mavlink_navi6d_debug_output_t  dbg_out_struct;
+__CCM__ static mavMail dbg_in_mail;
+__CCM__ static mavMail dbg_out_mail;
 
 /*
  ******************************************************************************
@@ -67,10 +73,86 @@ __CCM__ static RefParams<klmnfp> ref_params;
  *******************************************************************************
  *******************************************************************************
  */
+
 /**
  *
  */
-void Navi6dWrapper::prepare_gnss(const odometer_data_t &speed) {
+static void dbg_in_fill_gnss(const gnss::gnss_data_t &data) {
+
+  dbg_in_struct.gnss_lat        = data.latitude;
+  dbg_in_struct.gnss_lon        = data.longitude;
+  dbg_in_struct.gnss_alt        = data.altitude;
+  dbg_in_struct.gnss_course     = data.course;
+  dbg_in_struct.gnss_fix_type   = data.fix;
+  dbg_in_struct.gnss_fresh      = data.fresh;
+  dbg_in_struct.gnss_speed_type = (uint8_t)data.speed_type;
+  dbg_in_struct.gnss_speed      = data.speed;
+  for (size_t i=0; i<3; i++) {
+    dbg_in_struct.gnss_v[i]     = data.v[i];
+  }
+
+  dbg_in_struct.time_boot_ms    = TIME_BOOT_MS;
+}
+
+/**
+ *
+ */
+static void dbg_in_fill_other(const baro_data_t &abs_press,
+                              const odometer_data_t &odo,
+                              const marg_data_t &marg) {
+
+  dbg_in_struct.baro_alt  = abs_press.alt;
+  dbg_in_struct.odo_speed = odo.speed;
+  dbg_in_struct.marg_dt   = marg.dT;
+  for (size_t i=0; i<3; i++) {
+    dbg_in_struct.marg_acc[i] = marg.acc[i];
+    dbg_in_struct.marg_gyr[i] = marg.gyr[i];
+    dbg_in_struct.marg_mag[i] = marg.mag[i];
+  }
+
+  dbg_in_struct.time_boot_ms    = TIME_BOOT_MS;
+}
+
+/**
+ *
+ */
+static void dbg_in_append_log(void) {
+  if (dbg_in_mail.free()) {
+    dbg_in_mail.fill(&dbg_in_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_NAVI6D_DEBUG_INPUT);
+    mav_logger.write(&dbg_in_mail);
+  }
+}
+
+/**
+ *
+ */
+static void dbg_out_fill(const NaviData<klmnfp> &data) {
+
+  dbg_out_struct.roll = data.eu_nv[0][0];
+  dbg_out_struct.pitch= data.eu_nv[1][0];
+  dbg_out_struct.yaw  = data.eu_nv[2][0];
+
+  dbg_out_struct.lat  = data.r[0][0];
+  dbg_out_struct.lon  = data.r[1][0];
+  dbg_out_struct.alt  = data.r[2][0];
+
+  dbg_out_struct.time_boot_ms = TIME_BOOT_MS;
+}
+
+/**
+ *
+ */
+static void dbg_out_append_log(void) {
+  if (dbg_out_mail.free()) {
+    dbg_out_mail.fill(&dbg_out_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_NAVI6D_DEBUG_OUTPUT);
+    mav_logger.write(&dbg_out_mail);
+  }
+}
+
+/**
+ *
+ */
+void Navi6dWrapper::prepare_data_gnss(gnss::gnss_data_t &gnss_data) {
 #if ! FAKE_SINS
   if ((*en_gnss == 1) && (gnss_data.fresh) && (gnss_data.fix > 0)) {
     nav_sins.sensor_data.r_sns[0][0] = deg2rad(gnss_data.latitude);
@@ -106,16 +188,10 @@ void Navi6dWrapper::prepare_gnss(const odometer_data_t &speed) {
     }
   }
 
-  nav_sins.sensor_data.v_odo[0][0] = speed.speed;
-  nav_sins.sensor_data.v_odo[1][0] = 0;
-  nav_sins.sensor_data.v_odo[2][0] = 0;
-
   // Important! Must be set to false after data processing
   if (gnss_data.fresh) {
     gnss_data.fresh = false;
   }
-#else
-  (void)speed;
 #endif
 }
 
@@ -125,15 +201,22 @@ void Navi6dWrapper::prepare_gnss(const odometer_data_t &speed) {
 #if ! FAKE_SINS
 void Navi6dWrapper::prepare_data(const baro_data_t &abs_press,
                                  const odometer_data_t &speed,
-                                 const marg_data_t &marg)
-{
-  prepare_gnss(speed);
+                                 const marg_data_t &marg) {
+
+  dbg_in_fill_gnss(this->gps);
+  prepare_data_gnss(this->gps);
+
+  dbg_in_fill_other(abs_press, speed, marg);
+  dbg_in_append_log();
 
   if (*en_zihr == 1) {
     nav_sins.sensor_flags.zihr_en = true;
   }
 
   if (*en_odo == 1) {
+    nav_sins.sensor_data.v_odo[0][0] = speed.speed;
+    nav_sins.sensor_data.v_odo[1][0] = 0;
+    nav_sins.sensor_data.v_odo[2][0] = 0;
     nav_sins.sensor_flags.odo_en = true;
   }
 
@@ -205,6 +288,30 @@ void Navi6dWrapper::navi2mavlink(void) {
  *
  */
 #if ! FAKE_SINS
+void Navi6dWrapper::debug2mavlink(void) {
+  mavlink_out_debug_vect_struct.time_usec = TimeKeeper::utc();
+  /*  mavlink_out_debug_vect_struct.x = nav_sins.navi_data.a_bias[0][0];
+  mavlink_out_debug_vect_struct.y = nav_sins.navi_data.a_bias[1][0];
+  mavlink_out_debug_vect_struct.z = nav_sins.navi_data.a_bias[2][0];
+  */
+  /*   mavlink_out_debug_vect_struct.x = nav_sins.sensor_data.v_sns[0][0];
+    mavlink_out_debug_vect_struct.y = nav_sins.sensor_data.v_sns[1][0];
+    mavlink_out_debug_vect_struct.z = nav_sins.sensor_data.v_sns[2][0];*/
+    /*mavlink_out_debug_vect_struct.x = sqrt(nav_sins.navi_data.mb_c[0][0]*nav_sins.navi_data.mb_c[0][0]+
+        nav_sins.navi_data.mb_c[1][0]*nav_sins.navi_data.mb_c[1][0]+
+        nav_sins.navi_data.mb_c[2][0]*nav_sins.navi_data.mb_c[2][0]);*/
+    mavlink_out_debug_vect_struct.x = nav_sins.navi_data.mb_c[0][0];
+    mavlink_out_debug_vect_struct.y = nav_sins.navi_data.mb_c[1][0];
+    mavlink_out_debug_vect_struct.z = nav_sins.navi_data.mb_c[2][0];
+  //mavlink_out_debug_vect_struct.x = nav_sins.glrt_det.test_stat;
+  mavlink_out_debug_struct.value = nav_sins.navi_data.mag_mod;
+}
+#endif
+
+/**
+ *
+ */
+#if ! FAKE_SINS
 void Navi6dWrapper::navi2acs(void) {
 
   const NaviData<klmnfp> &data = nav_sins.navi_data;
@@ -237,8 +344,6 @@ void Navi6dWrapper::navi2acs(void) {
   acs_in.ch[ACS_INPUT_free_ax] = data.free_acc[0][0];
   acs_in.ch[ACS_INPUT_free_ay] = data.free_acc[1][0];
   acs_in.ch[ACS_INPUT_free_az] = data.free_acc[2][0];
-
-  mavlink_out_debug_struct.value = data.mag_mod;
 }
 #endif
 
@@ -303,7 +408,7 @@ void Navi6dWrapper::read_settings(void) {
   param_registry.valueSearch("GLRT_gamma",      &gamma);
   param_registry.valueSearch("GLRT_samples",    &samples);
 
-  param_registry.valueSearch("SINS_restart", &restart);
+  param_registry.valueSearch("SINS_restart",    &restart);
 }
 
 /**
@@ -394,8 +499,8 @@ GNSS(GNSS)
  */
 void Navi6dWrapper::start(void) {
 #if ! FAKE_SINS
-  gnss_data.fresh = false;
-  GNSS.subscribe(&gnss_data);
+  gps.fresh = false;
+  GNSS.subscribe(&gps);
 
   read_settings();
   restart_cache = *restart + 1; // enforce sins restart in first update call
@@ -409,7 +514,7 @@ void Navi6dWrapper::start(void) {
  */
 void Navi6dWrapper::stop(void) {
   ready = false;
-  GNSS.unsubscribe(&gnss_data);
+  GNSS.unsubscribe(&gps);
 }
 
 /**
@@ -441,21 +546,10 @@ void Navi6dWrapper::update(const baro_data_t &abs_press,
   navi2acs();
   navi2mavlink();
 
-  mavlink_out_debug_vect_struct.time_usec = TimeKeeper::utc();
-/*  mavlink_out_debug_vect_struct.x = nav_sins.navi_data.a_bias[0][0];
-  mavlink_out_debug_vect_struct.y = nav_sins.navi_data.a_bias[1][0];
-  mavlink_out_debug_vect_struct.z = nav_sins.navi_data.a_bias[2][0];
-*/
- /*   mavlink_out_debug_vect_struct.x = nav_sins.sensor_data.v_sns[0][0];
-    mavlink_out_debug_vect_struct.y = nav_sins.sensor_data.v_sns[1][0];
-    mavlink_out_debug_vect_struct.z = nav_sins.sensor_data.v_sns[2][0];*/
-    /*mavlink_out_debug_vect_struct.x = sqrt(nav_sins.navi_data.mb_c[0][0]*nav_sins.navi_data.mb_c[0][0]+
-        nav_sins.navi_data.mb_c[1][0]*nav_sins.navi_data.mb_c[1][0]+
-        nav_sins.navi_data.mb_c[2][0]*nav_sins.navi_data.mb_c[2][0]);*/
-    mavlink_out_debug_vect_struct.x = nav_sins.navi_data.mb_c[0][0];
-    mavlink_out_debug_vect_struct.y = nav_sins.navi_data.mb_c[1][0];
-    mavlink_out_debug_vect_struct.z = nav_sins.navi_data.mb_c[2][0];
-  //mavlink_out_debug_vect_struct.x = nav_sins.glrt_det.test_stat;
+  debug2mavlink();
+
+  dbg_out_fill(nav_sins.navi_data);
+  dbg_out_append_log();
 
 #else
   (void)abs_press;

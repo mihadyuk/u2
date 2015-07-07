@@ -3,11 +3,34 @@
 <mavlink>
 <include>common.xml</include>
 	<messages>
-		<message id="150" name="LAPWING_DUMMY_MESSAGE">
-			<description>Dummy placeholder.</description>
-			<field type="uint64_t" name="time_usec">Timestamp (microseconds since Unix epoch)</field>
+		<message id="150" name="NAVI6D_DEBUG_INPUT">
+			<description>Navi6d input data.</description>
 			<field type="uint32_t" name="time_boot_ms">Timestamp (milliseconds since system boot)</field>
-			<field type="uint32_t" name="flags">State flags</field>
+			<field type="double"   name="gnss_lat"></field>
+			<field type="double"   name="gnss_lon"></field>
+			<field type="float"    name="gnss_alt"></field>
+			<field type="float"    name="gnss_speed"></field>
+			<field type="float"    name="gnss_course"></field>
+			<field type="float[3]" name="gnss_v">3 component speed vector</field>
+			<field type="uint8_t"  name="gnss_fresh">bool flag</field>
+			<field type="uint8_t"  name="gnss_speed_type"></field>
+			<field type="uint8_t"  name="gnss_fix_type"></field>
+			<field type="float"	   name="marg_dt"></field>
+			<field type="float[3]" name="marg_acc"></field>
+			<field type="float[3]" name="marg_gyr"></field>
+			<field type="float[3]" name="marg_mag"></field>
+			<field type="float"    name="baro_alt"></field>
+			<field type="float"    name="odo_speed"></field>
+		</message>
+		<message id="151" name="NAVI6D_DEBUG_OUTPUT">
+			<description>Navi6d output data.</description>
+			<field type="uint32_t" name="time_boot_ms">Timestamp (milliseconds since system boot)</field>
+			<field type="double"   name="lat"></field>
+			<field type="double"   name="lon"></field>
+			<field type="float"    name="alt"></field>
+			<field type="float"    name="roll"></field>
+			<field type="float"    name="pitch"></field>
+			<field type="float"    name="yaw"></field>
 		</message>
 	</messages>
 </mavlink>
