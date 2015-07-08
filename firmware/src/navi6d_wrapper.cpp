@@ -46,6 +46,8 @@ extern MavLogger mav_logger;
  ******************************************************************************
  */
 
+typedef float klmnfp;
+
 #if ! FAKE_SINS
 __CCM__ static NavigatorSins<klmnfp, 21, 17> nav_sins;
 __CCM__ static InitParams<klmnfp> init_params;

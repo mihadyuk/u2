@@ -7,9 +7,6 @@
 #include "gnss_receiver.hpp"
 #include "marg_data.hpp"
 
-typedef double klmnfp;
-
-
 class Navi6dBase {
 public:
   Navi6dBase(void);
