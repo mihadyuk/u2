@@ -4,6 +4,7 @@
 
 #include "../../firmware/lib/mavlink/C/lapwing/mavlink.h"
 #include "navi6d_wrapper.hpp"
+#include "param_registry.hpp"
 
 using namespace std;
 static mavlink_message_t rx_msg;
@@ -12,17 +13,21 @@ static mavlink_status_t rx_status;
 static mavlink_navi6d_debug_input_t   dbg_in_struct;
 static mavlink_navi6d_debug_output_t  dbg_out_struct;
 
-static Navi6dWrapper navi6d;
+Navi6dWrapper navi6d;
+ParamRegistry param_registry("../../qgc_stuff/parameters/parameters_small.txt");
 
 int main () {
   bool in_recvd = false;
   bool out_recvd = false;
 
+  navi6d.start();
+
   char byte;
   ifstream log;
-  log.open ("log.raw", ios::binary);
-
-  navi6d.start();
+  log.open ("../log.raw", ios::binary);
+  if (! log.is_open()) {
+    throw std::exception(); // file not found
+  }
 
   while (! log.eof()) {
     log.read(&byte, 1);
@@ -52,6 +57,7 @@ int main () {
 
   navi6d.stop();
   log.close();
+  cout << "Test successfull" << endl;
   return 0;
 }
 

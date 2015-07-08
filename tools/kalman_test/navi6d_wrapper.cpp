@@ -1,7 +1,7 @@
-#pragma GCC optimize "-O2"
-#pragma GCC optimize "-ffast-math"
-#pragma GCC optimize "-funroll-loops"
-#pragma GCC diagnostic ignored "-Wdouble-promotion"
+//#pragma GCC optimize "-O2"
+//#pragma GCC optimize "-ffast-math"
+//#pragma GCC optimize "-funroll-loops"
+//#pragma GCC diagnostic ignored "-Wdouble-promotion"
 
 #define FAKE_SINS     FALSE
 
@@ -13,6 +13,7 @@
 #include "../../firmware/lib/mavlink/C/lapwing/mavlink.h"
 #include "../../firmware/lib/uav_utils/geometry.hpp"
 #include "navi6d_wrapper.hpp"
+#include "param_registry.hpp"
 
 /*
  ******************************************************************************
@@ -28,6 +29,8 @@
  ******************************************************************************
  */
 
+extern ParamRegistry param_registry;
+
 /*
  ******************************************************************************
  * GLOBAL VARIABLES
@@ -35,7 +38,7 @@
  */
 
 #if ! FAKE_SINS
-static NavigatorSins<klmnfp, 15, 17> nav_sins;
+static NavigatorSins<klmnfp, 21, 17> nav_sins;
 static InitParams<klmnfp> init_params;
 static CalibParams<klmnfp> calib_params;
 static KalmanParams<klmnfp> kalman_params;
@@ -84,24 +87,6 @@ static void unpack_test_data(baro_data_t &baro,
   for (size_t i=0; i<3; i++) {
     gps.v[i] = test.gnss_v[i];
   }
-}
-
-/**
- *
- */
-static bool dbg_out_verify(const NaviData<klmnfp> &data,
-                           const mavlink_navi6d_debug_output_t &ref) {
-
-  if ((ref.roll != data.eu_nv[0][0]) ||
-      (ref.pitch!= data.eu_nv[1][0]) ||
-      (ref.yaw  != data.eu_nv[2][0]) ||
-      (ref.lat  != data.r[0][0]) ||
-      (ref.lon  != data.r[1][0]) ||
-      (ref.alt  != data.r[2][0])) {
-    return false;
-  }
-  else
-    return true;
 }
 
 /**
@@ -205,7 +190,63 @@ void Navi6dWrapper::prepare_data(const baro_data_t &baro,
  *
  */
 void Navi6dWrapper::read_settings(void) {
+  param_registry.valueSearch("SINS_en_gnss",    &en_gnss);
+  param_registry.valueSearch("SINS_en_odo",     &en_odo);
+  param_registry.valueSearch("SINS_en_baro",    &en_baro);
+  param_registry.valueSearch("SINS_en_euler",   &en_euler);
+  param_registry.valueSearch("SINS_en_mag",     &en_mag);
+  param_registry.valueSearch("SINS_en_nonhol",  &en_nonhol);
+  param_registry.valueSearch("SINS_en_zihr",    &en_zihr);
+  param_registry.valueSearch("SINS_en_gnss_v",  &en_gnss_v);
+  param_registry.valueSearch("SINS_en_zupt",    &en_zupt);
 
+  param_registry.valueSearch("SINS_R_ne_sns",   &R_ne_sns);
+  param_registry.valueSearch("SINS_R_d_sns",    &R_d_sns);
+  param_registry.valueSearch("SINS_R_v_n_sns",  &R_v_n_sns);
+  param_registry.valueSearch("SINS_R_odo",      &R_odo);
+  param_registry.valueSearch("SINS_R_nonhol",   &R_nonhol);
+  param_registry.valueSearch("SINS_R_baro",     &R_baro);
+  param_registry.valueSearch("SINS_R_mag",      &R_mag);
+  param_registry.valueSearch("SINS_R_euler",    &R_euler);
+  param_registry.valueSearch("SINS_R_zihr",     &R_zihr);
+
+  param_registry.valueSearch("SINS_Qm_acc",     &Qm_acc);
+  param_registry.valueSearch("SINS_Qm_gyr",     &Qm_gyr);
+  param_registry.valueSearch("SINS_Qm_acc_x",   &Qm_acc_x);
+  param_registry.valueSearch("SINS_Qm_acc_y",   &Qm_acc_y);
+  param_registry.valueSearch("SINS_Qm_acc_z",   &Qm_acc_z);
+  param_registry.valueSearch("SINS_Qm_gyr_bias",&Qm_gyr_bias);
+
+  param_registry.valueSearch("SINS_eu_vh_roll", &eu_vh_roll);
+  param_registry.valueSearch("SINS_eu_vh_pitch",&eu_vh_pitch);
+  param_registry.valueSearch("SINS_eu_vh_yaw",  &eu_vh_yaw);
+
+  param_registry.valueSearch("SINS_acc_bias_x", &acc_bias_x);
+  param_registry.valueSearch("SINS_acc_bias_y", &acc_bias_y);
+  param_registry.valueSearch("SINS_acc_bias_z", &acc_bias_z);
+
+  param_registry.valueSearch("SINS_gyr_bias_x", &gyr_bias_x);
+  param_registry.valueSearch("SINS_gyr_bias_y", &gyr_bias_y);
+  param_registry.valueSearch("SINS_gyr_bias_z", &gyr_bias_z);
+
+  param_registry.valueSearch("SINS_acc_scale_x",&acc_scale_x);
+  param_registry.valueSearch("SINS_acc_scale_y",&acc_scale_y);
+  param_registry.valueSearch("SINS_acc_scale_z",&acc_scale_z);
+
+  param_registry.valueSearch("SINS_gyr_scale_x",&gyr_scale_x);
+  param_registry.valueSearch("SINS_gyr_scale_y",&gyr_scale_y);
+  param_registry.valueSearch("SINS_gyr_scale_z",&gyr_scale_z);
+
+  param_registry.valueSearch("SINS_eu_vh_roll", &eu_vh_roll);
+  param_registry.valueSearch("SINS_eu_vh_pitch",&eu_vh_pitch);
+  param_registry.valueSearch("SINS_eu_vh_yaw",  &eu_vh_yaw);
+
+  param_registry.valueSearch("GLRT_acc_sigma",  &acc_sigma);
+  param_registry.valueSearch("GLRT_gyr_sigma",  &gyr_sigma);
+  param_registry.valueSearch("GLRT_gamma",      &gamma);
+  param_registry.valueSearch("GLRT_samples",    &samples);
+
+  param_registry.valueSearch("SINS_restart",    &restart);
 }
 
 /**
@@ -274,6 +315,32 @@ void Navi6dWrapper::sins_cold_start(void) {
   nav_sins.set_ref_params(ref_params);
 
   nav_sins.command_executor(1);
+}
+
+/**
+ *
+ */
+static const double coordinate_tolerance = 10 / RAD_TO_M;
+static const double height_tolerance = 20;
+static size_t drop = 3000;
+static size_t total_run = 0;
+static bool dbg_out_verify(const NaviData<klmnfp> &data,
+                           const mavlink_navi6d_debug_output_t &ref) {
+
+  total_run++;
+  if (drop > 0) {
+    drop--;
+  }
+  else {
+    if (std::abs(ref.lat - data.r[0][0]) > coordinate_tolerance)
+      throw std::exception();
+    if (std::abs(ref.lon - data.r[1][0]) > coordinate_tolerance)
+      throw std::exception();
+    if (std::abs(ref.alt - data.r[2][0]) > height_tolerance)
+      throw std::exception();
+  }
+
+  return true;
 }
 
 /*

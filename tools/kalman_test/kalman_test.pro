@@ -5,11 +5,13 @@ CONFIG -= qt
 CONFIG += c++11
 
 SOURCES += main.cpp \
-    navi6d_wrapper.cpp
+    navi6d_wrapper.cpp \
+    param_registry.cpp
 
 include(deployment.pri)
 qtcAddDeployment()
 
 HEADERS += \
-    navi6d_wrapper.hpp
+    navi6d_wrapper.hpp \
+    param_registry.hpp
 
