@@ -3,9 +3,8 @@
 //#pragma GCC optimize "-funroll-loops"
 //#pragma GCC diagnostic ignored "-Wdouble-promotion"
 
-#define FAKE_SINS     FALSE
-
-#include <math.h>
+#include <iostream>
+#include <cmath>
 
 #include "../../firmware/lib/navi6d/navigator_sins.hpp"
 #include "../../firmware/lib/navi6d/kalman_flags.cpp" // dirty hack allowing to not add this file to the Makefile
@@ -13,7 +12,10 @@
 #include "../../firmware/lib/mavlink/C/lapwing/mavlink.h"
 #include "../../firmware/lib/uav_utils/geometry.hpp"
 #include "navi6d_wrapper.hpp"
+
 #include "param_registry.hpp"
+
+using namespace std;
 
 /*
  ******************************************************************************
@@ -37,13 +39,20 @@ extern ParamRegistry param_registry;
  ******************************************************************************
  */
 
-#if ! FAKE_SINS
-static NavigatorSins<klmnfp, 21, 17> nav_sins;
-static InitParams<klmnfp> init_params;
-static CalibParams<klmnfp> calib_params;
-static KalmanParams<klmnfp> kalman_params;
-static RefParams<klmnfp> ref_params;
+#if !defined(KALMAN_STATE_SIZE)
+#define KALMAN_STATE_SIZE           21
 #endif
+
+#if !defined(KALMAN_MEASUREMENT_SIZE)
+#define KALMAN_MEASUREMENT_SIZE     17
+#endif
+
+typedef double klmnfp;
+NavigatorSins<klmnfp, KALMAN_STATE_SIZE, KALMAN_MEASUREMENT_SIZE> nav_sins;
+InitParams<klmnfp> init_params;
+CalibParams<klmnfp> calib_params;
+KalmanParams<klmnfp> kalman_params;
+RefParams<klmnfp> ref_params;
 
 /*
  ******************************************************************************
@@ -317,11 +326,25 @@ void Navi6dWrapper::sins_cold_start(void) {
   nav_sins.command_executor(1);
 }
 
+
+void check_result(double r1, double r2, double tolerance) {
+
+  if (! std::isnormal(r1))
+    throw std::exception();
+
+  if (! std::isnormal(r2))
+    throw std::exception();
+
+  if (std::abs(r1 - r2) > tolerance)
+    throw std::exception();
+}
+
 /**
  *
  */
-static const double coordinate_tolerance = 10 / RAD_TO_M;
+static const double coordinate_tolerance = 10.0 / RAD_TO_M;
 static const double height_tolerance = 20;
+static const double ahrs_tolerance = deg2rad(60.0);
 static size_t drop = 3000;
 static size_t total_run = 0;
 static bool dbg_out_verify(const NaviData<klmnfp> &data,
@@ -332,12 +355,12 @@ static bool dbg_out_verify(const NaviData<klmnfp> &data,
     drop--;
   }
   else {
-    if (std::abs(ref.lat - data.r[0][0]) > coordinate_tolerance)
-      throw std::exception();
-    if (std::abs(ref.lon - data.r[1][0]) > coordinate_tolerance)
-      throw std::exception();
-    if (std::abs(ref.alt - data.r[2][0]) > height_tolerance)
-      throw std::exception();
+    check_result(ref.lat, data.r[0][0], coordinate_tolerance);
+    check_result(ref.lon, data.r[1][0], coordinate_tolerance);
+    check_result(ref.alt, data.r[2][0], height_tolerance);
+
+    check_result(ref.roll,  data.eu_nv[0][0], ahrs_tolerance);
+    check_result(ref.pitch, data.eu_nv[1][0], ahrs_tolerance);
   }
 
   return true;
@@ -370,6 +393,7 @@ void Navi6dWrapper::start(void) {
  *
  */
 void Navi6dWrapper::stop(void) {
+
   ready = false;
 }
 

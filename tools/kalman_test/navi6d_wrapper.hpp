@@ -9,8 +9,6 @@
 #include "../../firmware/src/sensors/gnss/gnss_data.hpp"
 #include "../../firmware/src/sensors/marg_data.hpp"
 
-typedef double klmnfp;
-
 /**
  *
  */
@@ -22,6 +20,7 @@ public:
   void start(void);
   void stop(void);
 private:
+
   void read_settings(void);
   void sins_cold_start(void);
   void navi2acs(void);

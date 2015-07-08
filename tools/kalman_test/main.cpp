@@ -57,7 +57,7 @@ int main () {
 
   navi6d.stop();
   log.close();
-  cout << "Test successfull" << endl;
+
   return 0;
 }
 

@@ -47,7 +47,7 @@ extern MavLogger mav_logger;
  */
 
 #if ! FAKE_SINS
-__CCM__ static NavigatorSins<klmnfp, 15, 17> nav_sins;
+__CCM__ static NavigatorSins<klmnfp, 21, 17> nav_sins;
 __CCM__ static InitParams<klmnfp> init_params;
 __CCM__ static CalibParams<klmnfp> calib_params;
 __CCM__ static KalmanParams<klmnfp> kalman_params;

@@ -6,6 +6,7 @@
 #include <string>
 #include <cstring>
 #include <array>
+#include <type_traits>
 
 #define PARAM_REGISTRY_MAX_ELEMENTS     128
 
@@ -19,6 +20,7 @@ struct param_unpacked {
   }
   unsigned int mav;
   unsigned int comp;
+  unsigned int type;
   char name[16];
   T val;
 };
@@ -105,7 +107,26 @@ private:
 /**
  *
  */
-template<class T>
+template <typename T>
+void check_type(const param_unpacked<T> &param) {
+  if (std::is_integral<T>::value && std::is_signed<T>::value &&
+      (param.type != MAVLINK_TYPE_INT32_T)) {
+    throw std::exception();
+  }
+  if (std::is_integral<T>::value && std::is_unsigned<T>::value &&
+      (param.type != MAVLINK_TYPE_UINT32_T)) {
+    throw std::exception();
+  }
+  if ((std::is_floating_point<T>::value) &&
+      (param.type != MAVLINK_TYPE_FLOAT)) {
+    throw std::exception();
+  }
+}
+
+/**
+ *
+ */
+template<typename T>
 void ParamRegistry::_valueSearch(const char *name, const T **ret) {
   param_unpacked<T> result;
   std::string line;
@@ -114,7 +135,7 @@ void ParamRegistry::_valueSearch(const char *name, const T **ret) {
   while (getline(param_db, line)) {
     my_scanf(line, result);
     if (0 == strncmp(result.name, name, sizeof(result.name))) {
-      std::cout << "found param: " << line << std::endl;
+      check_type(result);
       *ret = my_push(result.val);
       return;
     }
