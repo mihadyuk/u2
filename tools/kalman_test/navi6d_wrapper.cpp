@@ -350,7 +350,7 @@ static bool check_result(double r1, double r2, double tolerance) {
 static const double coordinate_tolerance = 20.0 / RAD_TO_M;
 static const double height_tolerance = 20;
 static const double ahrs_tolerance = deg2rad(60.0);
-static size_t drop = 3000;
+static double drop_seconds = 3 * 60;
 static size_t total_run = 0;
 static void print_failed_message(const NaviData<klmnfp> &data,
                                  const mavlink_navi6d_debug_output_t &ref) {
@@ -372,11 +372,12 @@ static void print_failed_message(const NaviData<klmnfp> &data,
  *
  */
 static bool dbg_out_verify(const NaviData<klmnfp> &data,
-                           const mavlink_navi6d_debug_output_t &ref) {
+                           const mavlink_navi6d_debug_output_t &ref,\
+                           double dT) {
 
   total_run++;
-  if (drop > 0) {
-    drop--;
+  if (drop_seconds > 0) {
+    drop_seconds -= dT;
   }
   else {
     if (! check_result(ref.lat, data.r[0][0], coordinate_tolerance)   ||
@@ -454,7 +455,7 @@ void Navi6dWrapper::update(const mavlink_navi6d_debug_input_t &test,
   prepare_data(baro, odo, marg, gps);
   nav_sins.run();
 
-  dbg_out_verify(nav_sins.navi_data, ref);
+  dbg_out_verify(nav_sins.navi_data, ref, test.marg_dt);
 }
 
 
