@@ -7,7 +7,6 @@ for i in $S
 do
 	for j in $M
 	do
-		echo "CC  <$i, $j>"
 		make -f ../Makefile_tests STATE=$i MEAS=$j > /dev/null
 		if [ $? -ne 0 ]; then
 			echo "build FAILED. Exiting."
@@ -15,12 +14,11 @@ do
 		else
 			./kalman_test_${i}_${j}
 			if [ $? -ne 0 ]; then
-				echo "run <$i, $j> FAILED. Exiting."
+				echo "<$i, $j> FAILED. Exiting."
 				exit
 			else
-				echo "run <$i, $j>: OK"
+				echo "<$i, $j>: OK"
 			fi
-			rm ./kalman_test_${i}_${j}
 		fi
 	done
 done

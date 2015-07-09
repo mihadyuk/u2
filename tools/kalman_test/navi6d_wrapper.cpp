@@ -347,10 +347,10 @@ static bool check_result(double r1, double r2, double tolerance) {
 /**
  *
  */
-static const double coordinate_tolerance = 20.0 / RAD_TO_M;
-static const double height_tolerance = 20;
-static const double ahrs_tolerance = deg2rad(60.0);
-static double drop_seconds = 3 * 60;
+static const double coordinate_tolerance = 5 / RAD_TO_M;
+static const double height_tolerance = 10;
+static const double ahrs_tolerance = deg2rad(5.0);
+static double drop_seconds = 2 * 60;
 static size_t total_run = 0;
 static void print_failed_message(const NaviData<klmnfp> &data,
                                  const mavlink_navi6d_debug_output_t &ref) {
