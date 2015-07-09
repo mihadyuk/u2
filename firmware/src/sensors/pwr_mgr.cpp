@@ -24,8 +24,8 @@ extern mavlink_system_info_t  mavlink_system_info_struct;
  */
 #define SECONDARY_VOLTAGE_GOOD    5400 // mV
 
-#define MAIN_VOLTAGE_LOW          6600 // mV
-#define MAIN_VOLTAGE_CRITICAL     6300 // mV
+#define MAIN_VOLTAGE_LOW          6800 // mV
+#define MAIN_VOLTAGE_CRITICAL     6400 // mV
 #define MAIN_VOLTAGE_IGNORE       400  // sensor not connected at all
 
 /*
