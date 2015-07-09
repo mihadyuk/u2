@@ -1,2 +1,3 @@
 build-*
 log.raw
+test_area/kalman_test_*
