@@ -478,7 +478,7 @@ param = [
 ("SPD_speed_max",   0.0,        0,          60.0,       "f", "default",    "NULL"),
 
 # GNSS settings
-("GNSS_dyn_model",  0,          8,          8,          "u", "default",    "NULL"),
+("GNSS_dyn_model",  0,          8,          8,          "u", "default",    "0 - portable, 2 - stationary, 3 - pedestrian 4 - automotive, 5 - sea,\\n 6 - airborne with <1g Acceleration, 7 - airborne with <2g Acceleration, 8 - airborne with <4g Acceleration"),
 ("GNSS_fix_period", 100,        200,        1000,       "u", "default",    "NULL"),
 
 #/**** fake field with 14 symbols name ****/

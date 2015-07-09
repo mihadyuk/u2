@@ -299,7 +299,7 @@ const GlobalParam_t ParamRegistry::param_db[] = {
 {"SPD_pulse2m", {.f32 = 0.000000}, {.f32 = 0.055556}, {.f32 = 1.000000}, &gp_val[284], PARAM_DEFAULT, MAVLINK_TYPE_FLOAT,    "Multiply odometer pulses count by this coefficient to get\ntrip in meters. Coarse value is 0.05555555"},
 {"SPD_trgt_speed", {.f32 = 0.000000}, {.f32 = 0.000000}, {.f32 = 60.000000}, &gp_val[285], PARAM_DEFAULT, MAVLINK_TYPE_FLOAT,    NULL},
 {"SPD_speed_max", {.f32 = 0.000000}, {.f32 = 0.000000}, {.f32 = 60.000000}, &gp_val[286], PARAM_DEFAULT, MAVLINK_TYPE_FLOAT,    NULL},
-{"GNSS_dyn_model", {.u32 = 0}, {.u32 = 8}, {.u32 = 8}, &gp_val[287], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, NULL},
+{"GNSS_dyn_model", {.u32 = 0}, {.u32 = 8}, {.u32 = 8}, &gp_val[287], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, "0 - portable, 2 - stationary, 3 - pedestrian 4 - automotive, 5 - sea,\n 6 - airborne with <1g Acceleration, 7 - airborne with <2g Acceleration, 8 - airborne with <4g Acceleration"},
 {"GNSS_fix_period", {.u32 = 100}, {.u32 = 200}, {.u32 = 1000}, &gp_val[288], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, NULL},
 {"param_end_mark__", {.u32 = 0}, {.u32 = 0}, {.u32 = 1224}, &gp_val[289], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, "Fake parameter with maximum allowable name length"},
 };
