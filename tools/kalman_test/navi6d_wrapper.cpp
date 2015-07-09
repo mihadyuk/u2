@@ -48,6 +48,7 @@ extern ParamRegistry param_registry;
 #endif
 
 typedef double klmnfp;
+
 NavigatorSins<klmnfp, KALMAN_STATE_SIZE, KALMAN_MEASUREMENT_SIZE> nav_sins;
 InitParams<klmnfp> init_params;
 CalibParams<klmnfp> calib_params;
@@ -326,27 +327,50 @@ void Navi6dWrapper::sins_cold_start(void) {
   nav_sins.command_executor(1);
 }
 
-
-void check_result(double r1, double r2, double tolerance) {
+/**
+ *
+ */
+static bool check_result(double r1, double r2, double tolerance) {
 
   if (! std::isnormal(r1))
-    throw std::exception();
+    return false;
 
   if (! std::isnormal(r2))
-    throw std::exception();
+    return false;
 
   if (std::abs(r1 - r2) > tolerance)
-    throw std::exception();
+    return false;
+
+  return true;
 }
 
 /**
  *
  */
-static const double coordinate_tolerance = 10.0 / RAD_TO_M;
+static const double coordinate_tolerance = 20.0 / RAD_TO_M;
 static const double height_tolerance = 20;
 static const double ahrs_tolerance = deg2rad(60.0);
 static size_t drop = 3000;
 static size_t total_run = 0;
+static void print_failed_message(const NaviData<klmnfp> &data,
+                                 const mavlink_navi6d_debug_output_t &ref) {
+  cout << "failed on " << total_run << " iteration" << endl;
+  cout << "ref.lat: " << ref.lat << ", calculated.lat: " << data.r[0][0]
+      << ", tolerance: " << coordinate_tolerance << endl;
+  cout << "ref.lon: " << ref.lon << ", calculated.lon: " << data.r[1][0]
+      << ", tolerance: " << coordinate_tolerance << endl;
+  cout << "ref.alt: " << ref.alt << ", calculated.alt: " << data.r[2][0]
+      << ", tolerance: " << height_tolerance << endl;
+
+  cout << "ref.roll: " << ref.roll << ", calculated.roll: " << data.eu_nv[0][0]
+      << ", tolerance: " << ahrs_tolerance << endl;
+  cout << "ref.pitch: " << ref.pitch << ", calculated.pitch: " << data.eu_nv[1][0]
+      << ", tolerance: " << ahrs_tolerance << endl;
+}
+
+/**
+ *
+ */
 static bool dbg_out_verify(const NaviData<klmnfp> &data,
                            const mavlink_navi6d_debug_output_t &ref) {
 
@@ -355,12 +379,15 @@ static bool dbg_out_verify(const NaviData<klmnfp> &data,
     drop--;
   }
   else {
-    check_result(ref.lat, data.r[0][0], coordinate_tolerance);
-    check_result(ref.lon, data.r[1][0], coordinate_tolerance);
-    check_result(ref.alt, data.r[2][0], height_tolerance);
+    if (! check_result(ref.lat, data.r[0][0], coordinate_tolerance)   ||
+        ! check_result(ref.lon, data.r[1][0], coordinate_tolerance)   ||
+        ! check_result(ref.alt, data.r[2][0], height_tolerance)       ||
 
-    check_result(ref.roll,  data.eu_nv[0][0], ahrs_tolerance);
-    check_result(ref.pitch, data.eu_nv[1][0], ahrs_tolerance);
+        ! check_result(ref.roll,  data.eu_nv[0][0], ahrs_tolerance)   ||
+        ! check_result(ref.pitch, data.eu_nv[1][0], ahrs_tolerance)) {
+      print_failed_message(data, ref);
+      throw std::exception();
+    }
   }
 
   return true;
