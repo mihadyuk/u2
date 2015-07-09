@@ -28,8 +28,7 @@ private:
   void debug2mavlink(void);
   void prepare_data(const baro_data_t &baro,
                     const odometer_data_t &odo,
-                    const marg_data_t &marg,
-                    gnss::gnss_data_t &gps);
+                    const marg_data_t &marg);
   void prepare_data_gnss(gnss::gnss_data_t &gnss_data);
   void reload_settings(void);
   bool ready = false;

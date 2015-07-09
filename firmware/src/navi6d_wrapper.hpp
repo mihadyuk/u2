@@ -7,16 +7,6 @@
 #include "gnss_receiver.hpp"
 #include "marg_data.hpp"
 
-class Navi6dBase {
-public:
-  Navi6dBase(void);
-private:
-  void prepare_data(const baro_data_t &abs_press,
-                    const odometer_data_t &odo,
-                    const marg_data_t &marg);
-  void prepare_data_gnss(gnss::gnss_data_t &gnss_data);
-};
-
 /**
  *
  */

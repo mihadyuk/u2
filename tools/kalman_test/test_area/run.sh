@@ -12,7 +12,7 @@ do
 			echo "build FAILED. Exiting."
 			exit
 		else
-			./kalman_test_${i}_${j}
+			./kalman_test_${i}_${j}.tmp
 			if [ $? -ne 0 ]; then
 				echo "<$i, $j> FAILED. Exiting."
 				exit

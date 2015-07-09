@@ -12,7 +12,7 @@ SOURCES = ../main.cpp \
 		../param_registry.cpp 
 
 kalman_test_$(STATE)_$(MEAS): $(SOURCES)
-	g++ $(CXXFLAGS) -o kalman_test_$(STATE)_$(MEAS) $^
+	g++ $(CXXFLAGS) -o kalman_test_$(STATE)_$(MEAS).tmp $^
 
 clean:
 	rm -f main.o navi6d_wrapper.o param_registry.o kalman_test
