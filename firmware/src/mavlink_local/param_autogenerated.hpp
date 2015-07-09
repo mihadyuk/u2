@@ -51,7 +51,7 @@ const GlobalParam_t ParamRegistry::param_db[] = {
 {"MAG_zerocnt", {.u32 = 256}, {.u32 = 512}, {.u32 = 4096}, &gp_val[36], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, NULL},
 {"ADIS_smplrtdiv", {.u32 = 12}, {.u32 = 24}, {.u32 = 246}, &gp_val[37], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, "Divider for ADIS's 2460Hz sample rate"},
 {"MPU_dlpf", {.u32 = 0}, {.u32 = 5}, {.u32 = 6}, &gp_val[38], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, "If dlpf>0 than use internal LPF and internal sample rate divider.Otherwise use 1kHz sample rate with external FIR and external decimator"},
-{"MPU_smplrtdiv", {.u32 = 1}, {.u32 = 10}, {.u32 = 50}, &gp_val[39], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, "Divider for MPU's 1kHz sample rate"},
+{"MPU_smplrtdiv", {.u32 = 1}, {.u32 = 10}, {.u32 = 100}, &gp_val[39], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, "Divider for MPU's 1kHz sample rate"},
 {"MPU_fir_f", {.i32 = -1}, {.i32 = 0}, {.i32 = 6}, &gp_val[40], PARAM_DEFAULT, MAVLINK_TYPE_INT32_T,  "Cut off frequency of the external FIR filter (F = 2^N). Set -1 to disable filter at all."},
 {"MPU_gyr_fs", {.u32 = 0}, {.u32 = 1}, {.u32 = 3}, &gp_val[41], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, "MPU gyroscope full scale (0 - 250, 1 - 500, 2 - 1000, 3 - 2000) deg/s"},
 {"MPU_acc_fs", {.u32 = 0}, {.u32 = 3}, {.u32 = 3}, &gp_val[42], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, "MPU accelerometer full scale (0 - 2, 1 - 4, 2 - 8, 3 - 16) g"},

@@ -31,6 +31,8 @@
 			<field type="float"    name="roll"></field>
 			<field type="float"    name="pitch"></field>
 			<field type="float"    name="yaw"></field>
+			<field type="uint8_t"  name="kalman_state_size"></field>
+			<field type="uint8_t"  name="kalman_meas_size"></field>
 		</message>
 	</messages>
 </mavlink>

@@ -79,7 +79,7 @@ param = [
 
 # common MPU6050 settings
 ("MPU_dlpf",        0,          5,          6,          "u", "default",     "If dlpf>0 than use internal LPF and internal sample rate divider.\nOtherwise use 1kHz sample rate with external FIR and external decimator"),
-("MPU_smplrtdiv",   1,          10,         50,         "u", "default",     "Divider for MPU's 1kHz sample rate"),
+("MPU_smplrtdiv",   1,          10,         100,        "u", "default",     "Divider for MPU's 1kHz sample rate"),
 ("MPU_fir_f",       -1,         0,          6,          "i", "default",     "Cut off frequency of the external FIR filter (F = 2^N). Set -1 to disable filter at all."),
 ("MPU_gyr_fs",      0,          1,          3,          "u", "default",     "MPU gyroscope full scale (0 - 250, 1 - 500, 2 - 1000, 3 - 2000) deg/s"),
 ("MPU_acc_fs",      0,          3,          3,          "u", "default",     "MPU accelerometer full scale (0 - 2, 1 - 4, 2 - 8, 3 - 16) g"),

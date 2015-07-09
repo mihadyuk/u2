@@ -46,10 +46,12 @@ extern MavLogger mav_logger;
  ******************************************************************************
  */
 
-typedef float klmnfp;
+typedef double klmnfp;
+#define KALMAN_STATE_SIZE   21
+#define KALMAN_MEAS_SIZE    17
 
 #if ! FAKE_SINS
-__CCM__ static NavigatorSins<klmnfp, 21, 17> nav_sins;
+__CCM__ static NavigatorSins<klmnfp, KALMAN_STATE_SIZE, KALMAN_MEAS_SIZE> nav_sins;
 __CCM__ static InitParams<klmnfp> init_params;
 __CCM__ static CalibParams<klmnfp> calib_params;
 __CCM__ static KalmanParams<klmnfp> kalman_params;
@@ -136,6 +138,9 @@ static void dbg_out_fill(const NaviData<klmnfp> &data) {
   dbg_out_struct.lat  = data.r[0][0];
   dbg_out_struct.lon  = data.r[1][0];
   dbg_out_struct.alt  = data.r[2][0];
+
+  dbg_out_struct.kalman_state_size  = KALMAN_STATE_SIZE;
+  dbg_out_struct.kalman_meas_size   = KALMAN_MEAS_SIZE;
 
   dbg_out_struct.time_boot_ms = TIME_BOOT_MS;
 }
