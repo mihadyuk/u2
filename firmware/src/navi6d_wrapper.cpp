@@ -47,7 +47,7 @@ extern MavLogger mav_logger;
  */
 
 typedef double klmnfp;
-#define KALMAN_STATE_SIZE   21
+#define KALMAN_STATE_SIZE   15
 #define KALMAN_MEAS_SIZE    17
 
 #if ! FAKE_SINS
