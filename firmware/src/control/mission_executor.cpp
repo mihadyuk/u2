@@ -13,7 +13,12 @@ using namespace control;
  * DEFINES
  ******************************************************************************
  */
+
+// some convenient aliases
 #define WP_RADIUS     param2
+
+#define JUMP_REPEAT   param2
+#define JUMP_SEQ      param1
 
 /*
  ******************************************************************************
@@ -24,6 +29,8 @@ extern mavlink_system_t                 mavlink_system_struct;
 extern mavlink_mission_current_t        mavlink_out_mission_current_struct;
 extern mavlink_mission_item_reached_t   mavlink_out_mission_item_reached_struct;
 extern mavlink_nav_controller_output_t  mavlink_out_nav_controller_output_struct;
+
+extern EvtSource event_mission_reached;
 
 /*
  ******************************************************************************
@@ -37,8 +44,8 @@ extern mavlink_nav_controller_output_t  mavlink_out_nav_controller_output_struct
  ******************************************************************************
  */
 
-static mavMail mission_current_mail;
-static mavMail mission_item_reached_mail;
+//static mavMail mission_current_mail;
+//static mavMail mission_item_reached_mail;
 
 /*
  ******************************************************************************
@@ -60,7 +67,33 @@ void MissionExecutor::broadcast_mission_current(uint16_t seq) {
  */
 void MissionExecutor::broadcast_mission_item_reached(uint16_t seq) {
 
+  event_mission_reached.broadcastFlags(EVMSK_MISSION_REACHED | (seq << 16));
   mavlink_out_mission_item_reached_struct.seq = seq;
+}
+
+/**
+ *
+ */
+uint16_t MissionExecutor::jump_to_handler(uint16_t next) {
+
+  /* protection from idiots */
+  if (0 == round(third.JUMP_REPEAT))
+    return next+1;
+
+  /**/
+  if (! jumpctx.active) {
+    jumpctx.active = true;
+    jumpctx.remain = round(third.JUMP_REPEAT);
+  }
+  else {
+    jumpctx.remain--;
+    if (0 == jumpctx.remain) {
+      jumpctx.active = false;
+      return next+1;
+    }
+  }
+
+  return round(third.JUMP_SEQ);
 }
 
 /**
@@ -90,10 +123,18 @@ bool MissionExecutor::load_next_mission_item(void) {
   }
   else {
     next = third.seq + 1;
+    __LOAD_JUMP:
     load_status = wpdb.read(&third, next);
     if (OSAL_SUCCESS == load_status) {
-      state = MissionState::navigate;
-      broadcast_mission_current(trgt.seq);
+      /* handle 'jump_to' command */
+      if (MAV_CMD_DO_JUMP == third.command) {
+        next = jump_to_handler(next);
+        goto __LOAD_JUMP;
+      }
+      else {
+        state = MissionState::navigate;
+        broadcast_mission_current(trgt.seq);
+      }
     }
     else {
       state = MissionState::error;
@@ -154,6 +195,7 @@ void MissionExecutor::navigate(void) {
   navout2mavlink(nav_out);
 
   if (wp_reached(nav_out)) {
+    broadcast_mission_item_reached(trgt.seq);
     load_next_mission_item();
     NavLine<double> line(deg2rad(prev.x), deg2rad(prev.y), deg2rad(trgt.x), deg2rad(trgt.y));
     navigator.loadLine(line);
@@ -165,8 +207,6 @@ void MissionExecutor::navigate(void) {
  * EXPORTED FUNCTIONS
  ******************************************************************************
  */
-
-static time_measurement_t tmp_nav;
 
 /**
  *
@@ -184,7 +224,7 @@ acs_in(acs_in) {
  *
  */
 void MissionExecutor::start(void) {
-  chTMObjectInit(&tmp_nav);
+  chTMObjectInit(&this->tmp_nav);
   state = MissionState::idle;
 }
 
@@ -256,9 +296,9 @@ MissionState MissionExecutor::update(void) {
 
   switch (state) {
   case MissionState::navigate:
-    chTMStartMeasurementX(&tmp_nav);
+    chTMStartMeasurementX(&this->tmp_nav);
     this->navigate();
-    chTMStopMeasurementX(&tmp_nav);
+    chTMStopMeasurementX(&this->tmp_nav);
     break;
 
   default:
@@ -294,36 +334,29 @@ void MissionExecutor::setHome(float lat, float lon, float alt) {
 /**
  *
  */
-bool MissionExecutor::loadNext(void) {
-  return this->load_next_mission_item();
-}
-
-/**
- *
- */
-void MissionExecutor::goHome(void) {
+void MissionExecutor::forceGoHome(void) {
   return;
 }
 
 /**
  *
  */
-void MissionExecutor::returnToLaunch(void) {
+uint16_t MissionExecutor::getCurrentMission(void) {
+  return this->trgt.seq;
+}
+
+/**
+ *
+ */
+void MissionExecutor::forceReturnToLaunch(void) {
   return;
 }
 
 /**
  *
  */
-bool MissionExecutor::jumpTo(uint16_t seq) {
+bool MissionExecutor::forceJumpTo(uint16_t seq) {
   (void)seq;
 
   return OSAL_FAILED;
-}
-
-/**
- *
- */
-uint16_t MissionExecutor::getTrgtCmd(void) {
-  return trgt.command;
 }

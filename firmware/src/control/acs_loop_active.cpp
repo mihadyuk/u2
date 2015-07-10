@@ -97,47 +97,11 @@ static const uint8_t loiter_bytecode[] = {
 /**
  *
  */
-void ACS::reached_handler(void) {
-  bool load_status = OSAL_FAILED;
-
-  switch (mission.getTrgtCmd()) {
-  case MAV_CMD_NAV_WAYPOINT:
-    load_status = mission.loadNext();
-    if (OSAL_FAILED == load_status) {
-      this->nav_substate = NavigateSubstate::loiter;
-    }
-    break;
-
-  /**/
-  case MAV_CMD_NAV_LOITER_UNLIM:
-  case MAV_CMD_NAV_LOITER_TIME:
-  case MAV_CMD_NAV_LOITER_TURNS:
-    this->nav_substate = NavigateSubstate::loiter;
-    break;
-
-  /**/
-  default:
-    load_status = mission.loadNext();
-    if (OSAL_FAILED == load_status) {
-      this->nav_substate = NavigateSubstate::loiter;
-    }
-    break;
-  }
-}
-
-/**
- *
- */
 void ACS::loop_active_navigate_mission(float dT) {
 
   MissionState mi_status = mission.update();
 
   switch (mi_status) {
-  case MissionState::reached:
-    reached_handler();
-    break;
-
-  /**/
   case MissionState::completed:
     this->nav_substate = NavigateSubstate::loiter;
     blue_led_off();

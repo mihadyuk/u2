@@ -108,12 +108,18 @@ static MAV_MISSION_RESULT check_wp(const mavlink_mission_item_t *wp, uint16_t se
 
 #if MISSION_WP_CHECKS_ENABLED
   /* check supported frame types */
-  if ((wp->frame != MAV_FRAME_GLOBAL) || (wp->frame == MAV_FRAME_LOCAL_NED)){
+  if ((wp->frame != MAV_FRAME_GLOBAL) && (wp->frame != MAV_FRAME_MISSION)) {
     chsnprintf(dbg_str, sizeof(dbg_str), "%s%d",
                                  "MISSION: Unsupported frame #", (int)wp->seq);
     mavlink_dbg_print(MAV_SEVERITY_ERROR, dbg_str, GLOBAL_COMPONENT_ID);
     return MAV_MISSION_UNSUPPORTED_FRAME;
   }
+
+#warning "jump_to не может иметь нулевое количество повторов"
+#warning "jump_to не может ссылаться на другой jump_to"
+#warning "jump_to не может указывать дальше, чем текущее количество принятых ППМ"
+#warning "jump_to не может перепрыгунть меньше 2 точек, чтобы избежать сингулярностей в полетном задании"
+#warning "jump_to не может иметь номер < 3"
 
 //  /* first item must be take off */
 //  if ((0 == seq) && (MAV_CMD_NAV_TAKEOFF != wp->command)){

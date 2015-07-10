@@ -35,6 +35,7 @@ mavlink_highres_imu_t           mavlink_out_highres_imu_struct;
 mavlink_hil_state_t             mavlink_out_hil_state_struct;
 mavlink_local_position_ned_t    mavlink_out_local_position_ned_struct;
 mavlink_mission_current_t       mavlink_out_mission_current_struct;
+mavlink_mission_item_reached_t  mavlink_out_mission_item_reached_struct;
 mavlink_nav_controller_output_t mavlink_out_nav_controller_output_struct;
 mavlink_raw_imu_t               mavlink_out_raw_imu_struct;
 mavlink_raw_pressure_t          mavlink_out_raw_pressure_struct;
@@ -50,6 +51,7 @@ mavlink_vfr_hud_t               mavlink_out_vfr_hud_struct;
  * @brief   Event sources.
  */
 EvtSource event_mission_updated;
+EvtSource event_mission_reached;
 EvtSource event_parameters_updated;
 
 /*
