@@ -11,9 +11,9 @@ namespace control {
  *
  */
 struct AlcoiPulse {
-  size_t        pid = 0xFF;
-  float         width = 0; // seconds
-  float         strength = 0; // context dependent
+  size_t  pid = 0xFF;
+  float   width = 0; // seconds
+  float   strength = 0; // context dependent
 };
 
 /**
@@ -22,13 +22,13 @@ struct AlcoiPulse {
 typedef enum {
   END,
   INPUT,
-  PID, // usage: PID, N, position. Target will be passed implicitly
+  PID, // usage: PID, №, position. Target will be passed implicitly
   SUM,
   SCALE,
   FORK,
   FORK_RET,
   OUTPUT,
-  NEG,    /* value negation. It is simplier than scale */
+  NEG,    /* value negation. It is simpler than scale by -1 */
   TERM    /* terminator */
 } vm_opcode_enum;
 

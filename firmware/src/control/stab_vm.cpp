@@ -17,7 +17,8 @@ using namespace control;
  ******************************************************************************
  */
 
-#define DEBUG_STAB_VM       TRUE
+#define DEBUG_STAB_VM         TRUE
+
 #if DEBUG_STAB_VM
   #define vmDbgCheck(c) osalDbgCheck(c)
   #define vmDbgPanic(c) osalSysHalt(c)
