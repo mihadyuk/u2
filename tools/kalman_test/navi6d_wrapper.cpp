@@ -44,7 +44,7 @@ extern ParamRegistry param_registry;
 #endif
 
 #if !defined(KALMAN_MEASUREMENT_SIZE)
-#define KALMAN_MEASUREMENT_SIZE     17
+#define KALMAN_MEASUREMENT_SIZE     15
 #endif
 
 typedef double klmnfp;
