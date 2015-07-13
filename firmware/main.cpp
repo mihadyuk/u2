@@ -242,12 +242,11 @@ int main(void) {
         mavlink_system_info_struct.state = MAV_STATE_STANDBY;
     }
     else {
+      navi6d.update(abs_press, odo_data, marg_data);
       hil.update(acs_in); /* must be called _before_ ACS */
+      acs_input2mavlink(acs_in);
       acs.update(marg_data.dT, mbs);
     }
-
-    navi6d.update(abs_press, odo_data, marg_data);
-    acs_input2mavlink(acs_in);
   }
 
   stop_services();
