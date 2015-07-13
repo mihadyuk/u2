@@ -341,7 +341,7 @@ void MissionExecutor::forceGoHome(void) {
 /**
  *
  */
-uint16_t MissionExecutor::getCurrentMission(void) {
+uint16_t MissionExecutor::getCurrentMission(void) const {
   return this->trgt.seq;
 }
 

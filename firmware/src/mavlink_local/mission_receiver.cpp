@@ -19,7 +19,7 @@ using namespace chibios_rt;
 #define MISSION_WP_CHECKS_ENABLED     TRUE
 #define MIN_TARGET_RADIUS_WGS84       2       /* minimal allowed waypoint radius for global frame */
 #define MIN_TARGET_RADIUS_LOCAL       0.5f    /* minimal allowed waypoint radius for local frame */
-#define MIN_POINTS_PER_MISSION        2       /* minimal number of waypoints in valid mission */
+#define MIN_POINTS_PER_MISSION        3       /* minimal number of waypoints in valid mission */
 #define TARGET_RADIUS                 param2  /* convenience alias */
 
 #define MISSION_RETRY_CNT             10
@@ -102,11 +102,81 @@ static void mission_clear_all(void){
 }
 
 /**
+ * param1 Sequence number
+ * param2 Repeat count
+ */
+static MAV_MISSION_RESULT check_do_jump(const mavlink_mission_item_t *wp,
+                                        uint16_t total_wps) {
+
+  // jump_to can not have zero repeat counter
+  if (0 == wp->param2) {
+    chsnprintf(dbg_str, sizeof(dbg_str), "%s%d",
+                             "MISSION: Zero repeat count #", (int)wp->seq);
+    mavlink_dbg_print(MAV_SEVERITY_ERROR, dbg_str, GLOBAL_COMPONENT_ID);
+    return MAV_MISSION_INVALID_PARAM2;
+  }
+
+  // jump_to can not refer to other jump_to
+  mavlink_mission_item_t tmp;
+  wpdb.read(&tmp, round(wp->param1));
+  if (MAV_CMD_DO_JUMP == tmp.command) {
+    chsnprintf(dbg_str, sizeof(dbg_str), "%s%d",
+                   "MISSION: Jump can not refer other jump #", (int)wp->seq);
+    mavlink_dbg_print(MAV_SEVERITY_ERROR, dbg_str, GLOBAL_COMPONENT_ID);
+    return MAV_MISSION_INVALID_PARAM1;
+  }
+
+  // jump_to can not point "to future"
+  if (round(wp->param1) > wp->seq) {
+    chsnprintf(dbg_str, sizeof(dbg_str), "%s%d",
+              "MISSION: Jump can not point to not loaded WPs #", (int)wp->seq);
+    mavlink_dbg_print(MAV_SEVERITY_ERROR, dbg_str, GLOBAL_COMPONENT_ID);
+    return MAV_MISSION_INVALID_PARAM1;
+  }
+
+  // jump_to can not have number < 3
+  if (wp->seq < 3) {
+    chsnprintf(dbg_str, sizeof(dbg_str), "%s%d",
+              "MISSION: Can not insert jump earlier than 3 WPs #", (int)wp->seq);
+    mavlink_dbg_print(MAV_SEVERITY_ERROR, dbg_str, GLOBAL_COMPONENT_ID);
+    return MAV_MISSION_INVALID_PARAM1;
+  }
+
+  // jump_to can not be last mission item
+  if (wp->seq >= (total_wps - 1)) {
+    chsnprintf(dbg_str, sizeof(dbg_str), "%s%d",
+                  "MISSION: Jump can not be last WP #", (int)wp->seq);
+    mavlink_dbg_print(MAV_SEVERITY_ERROR, dbg_str, GLOBAL_COMPONENT_ID);
+    return MAV_MISSION_ERROR;
+  }
+
+  // "jump_to не может перепрыгунть меньше 2 точек, чтобы избежать сингулярностей в полетном задании"
+  if ((wp->seq - round(wp->param1)) < 3) {
+    chsnprintf(dbg_str, sizeof(dbg_str), "%s%d",
+              "MISSION: Can not jump less than 2 WPs #", (int)wp->seq);
+    mavlink_dbg_print(MAV_SEVERITY_ERROR, dbg_str, GLOBAL_COMPONENT_ID);
+    return MAV_MISSION_INVALID_PARAM1;
+  }
+
+  return MAV_MISSION_ACCEPTED;
+}
+
+/**
  * Perform waypoint checking
  */
-static MAV_MISSION_RESULT check_wp(const mavlink_mission_item_t *wp, uint16_t seq){
+static MAV_MISSION_RESULT check_wp(const mavlink_mission_item_t *wp,
+                                   uint16_t seq, uint16_t total_wps) {
 
 #if MISSION_WP_CHECKS_ENABLED
+
+  /* check sequence intergrity */
+  if (wp->seq != seq){
+    chsnprintf(dbg_str, sizeof(dbg_str), "%s%d - %d",
+                        "MISSION: Invalid sequence #", (int)wp->seq, (int)seq);
+    mavlink_dbg_print(MAV_SEVERITY_ERROR, dbg_str, GLOBAL_COMPONENT_ID);
+    return MAV_MISSION_INVALID_SEQUENCE;
+  }
+
   /* check supported frame types */
   if ((wp->frame != MAV_FRAME_GLOBAL) && (wp->frame != MAV_FRAME_MISSION)) {
     chsnprintf(dbg_str, sizeof(dbg_str), "%s%d",
@@ -114,12 +184,6 @@ static MAV_MISSION_RESULT check_wp(const mavlink_mission_item_t *wp, uint16_t se
     mavlink_dbg_print(MAV_SEVERITY_ERROR, dbg_str, GLOBAL_COMPONENT_ID);
     return MAV_MISSION_UNSUPPORTED_FRAME;
   }
-
-#warning "jump_to не может иметь нулевое количество повторов"
-#warning "jump_to не может ссылаться на другой jump_to"
-#warning "jump_to не может указывать дальше, чем текущее количество принятых ППМ"
-#warning "jump_to не может перепрыгунть меньше 2 точек, чтобы избежать сингулярностей в полетном задании"
-#warning "jump_to не может иметь номер < 3"
 
 //  /* first item must be take off */
 //  if ((0 == seq) && (MAV_CMD_NAV_TAKEOFF != wp->command)){
@@ -137,12 +201,8 @@ static MAV_MISSION_RESULT check_wp(const mavlink_mission_item_t *wp, uint16_t se
 //    return MAV_MISSION_ERROR;
 //  }
 
-  /* check sequence intergrity */
-  if (wp->seq != seq){
-    chsnprintf(dbg_str, sizeof(dbg_str), "%s%d - %d",
-                        "MISSION: Invalid sequence #", (int)wp->seq, (int)seq);
-    mavlink_dbg_print(MAV_SEVERITY_ERROR, dbg_str, GLOBAL_COMPONENT_ID);
-    return MAV_MISSION_INVALID_SEQUENCE;
+  if (MAV_CMD_DO_JUMP == wp->command) {
+    return check_do_jump(wp, total_wps);
   }
 
   /* check target radius */
@@ -349,22 +409,22 @@ static MAV_MISSION_RESULT check_mission(uint16_t N) {
 /**
  *
  */
-static msg_t gcs2mav(Mailbox<mavMail*, 1> &mission_mailbox, uint16_t N) {
+static msg_t gcs2mav(Mailbox<mavMail*, 1> &mission_mailbox, uint16_t total_wps) {
 
   size_t seq = 0;
   MAV_MISSION_RESULT storage_status = MAV_MISSION_ERROR;
   msg_t ret = MSG_RESET;
 
   /* */
-  storage_status = check_mission(N);
+  storage_status = check_mission(total_wps);
   if (MAV_MISSION_ACCEPTED != storage_status)
     goto EXIT;
 
   /**/
-  for (seq=0; seq<N; seq++) {
+  for (seq=0; seq<total_wps; seq++) {
     if (MSG_OK == try_exchange(mission_mailbox, &mavlink_in_mission_item_struct, seq)) {
       /* check waypoint cosherness and write it if cosher */
-      storage_status = check_wp(&mavlink_in_mission_item_struct, seq);
+      storage_status = check_wp(&mavlink_in_mission_item_struct, seq, total_wps);
       if (MAV_MISSION_ACCEPTED != storage_status) {
         ret = MSG_RESET;
         goto EXIT;

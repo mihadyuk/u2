@@ -38,7 +38,7 @@ public:
   MissionState update(void);
   void setHome(void);
   void setHome(float lat, float lon, float alt);
-  uint16_t getCurrentMission(void);
+  uint16_t getCurrentMission(void) const;
 
   void forceGoHome(void);
   void forceReturnToLaunch(void);
