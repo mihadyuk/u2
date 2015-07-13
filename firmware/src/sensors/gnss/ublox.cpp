@@ -443,11 +443,12 @@ static void dbg_print(BaseSequentialStream *sdp, ubx_nav_pvt &pvt) { /*
   uint8_t  reserved3[4]; */
   if (nullptr != sdp) {
     chprintf(sdp, "lat = %D",   pvt.payload.lat);
-    chprintf(sdp, "lon = %D",   pvt.payload.lon);
-    chprintf(sdp, "h = %D",     pvt.payload.h);
-    chprintf(sdp, "hMSL = %D",  pvt.payload.hMSL);
-    chprintf(sdp, "hAcc = %D",  pvt.payload.hAcc);
-    chprintf(sdp, "vAcc = %D",  pvt.payload.vAcc);
+    chprintf(sdp, ", lon = %D",   pvt.payload.lon);
+    chprintf(sdp, ", h = %D",     pvt.payload.h);
+    chprintf(sdp, ", hMSL = %D",  pvt.payload.hMSL);
+    chprintf(sdp, ", hAcc = %D",  pvt.payload.hAcc);
+    chprintf(sdp, ", vAcc = %D",  pvt.payload.vAcc);
+    chprintf(sdp, "\r\n");
   }
 }
 
