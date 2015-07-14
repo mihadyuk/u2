@@ -4,6 +4,7 @@
 #include "waypoint_db.hpp"
 #include "mav_dbg.hpp"
 #include "navigator_types.hpp"
+#include "mav_logger.hpp"
 
 using namespace chibios_rt;
 using namespace control;
@@ -20,6 +21,8 @@ using namespace control;
 #define JUMP_REPEAT   param2
 #define JUMP_SEQ      param1
 
+#define PID_TUNE_DEBUG      TRUE
+
 /*
  ******************************************************************************
  * EXTERNS
@@ -31,6 +34,8 @@ extern mavlink_mission_item_reached_t   mavlink_out_mission_item_reached_struct;
 extern mavlink_nav_controller_output_t  mavlink_out_nav_controller_output_struct;
 
 extern EvtSource event_mission_reached;
+
+extern MavLogger mav_logger;
 
 /*
  ******************************************************************************
@@ -44,8 +49,10 @@ extern EvtSource event_mission_reached;
  ******************************************************************************
  */
 
-//static mavMail mission_current_mail;
-//static mavMail mission_item_reached_mail;
+#if PID_TUNE_DEBUG
+__CCM__ static mavMail pid_tune_mail;
+__CCM__ static mavlink_debug_vect_t mavlink_out_debug_vect_struct = {0, 0, 0, 0, "PID_TUNE"};
+#endif
 
 /*
  ******************************************************************************
@@ -147,7 +154,7 @@ bool MissionExecutor::load_next_mission_item(void) {
 /**
  *
  */
-void MissionExecutor::navout2acsin(const NavOut<double> &nav_out, ACSInput &acs_in) {
+void MissionExecutor::navout2acsin(const NavOut<double> &nav_out) {
   acs_in.ch[ACS_INPUT_dZrad] = nav_out.xtd;
   acs_in.ch[ACS_INPUT_dZm]   = rad2m(nav_out.xtd);
 
@@ -164,6 +171,19 @@ void MissionExecutor::navout2mavlink(const NavOut<double> &nav_out) {
   mavlink_out_nav_controller_output_struct.xtrack_error = rad2m(nav_out.xtd);
   mavlink_out_nav_controller_output_struct.target_bearing = rad2deg(nav_out.crs);
   mavlink_out_nav_controller_output_struct.nav_bearing = rad2deg(acs_in.ch[ACS_INPUT_dYaw]);
+
+  mavlink_out_debug_vect_struct.x = mavlink_out_nav_controller_output_struct.xtrack_error;
+  mavlink_out_debug_vect_struct.y = mavlink_out_nav_controller_output_struct.target_bearing;
+  mavlink_out_debug_vect_struct.z = mavlink_out_nav_controller_output_struct.nav_bearing;
+  mavlink_out_debug_vect_struct.time_usec = TIME_BOOT_MS;
+
+#if PID_TUNE_DEBUG
+  if (pid_tune_mail.free()) {
+    pid_tune_mail.fill(&mavlink_out_debug_vect_struct,
+        MAV_COMP_ID_ALL, MAVLINK_MSG_ID_DEBUG_VECT);
+    mav_logger.write(&pid_tune_mail);
+  }
+#endif
 }
 
 /**
@@ -191,7 +211,7 @@ void MissionExecutor::navigate(void) {
   NavIn<double> nav_in(acs_in.ch[ACS_INPUT_lat], acs_in.ch[ACS_INPUT_lon]);
   NavOut<double> nav_out = navigator.update(nav_in);
 
-  navout2acsin(nav_out, this->acs_in);
+  navout2acsin(nav_out);
   navout2mavlink(nav_out);
 
   if (wp_reached(nav_out)) {
