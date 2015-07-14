@@ -51,11 +51,11 @@ extern ParamRegistry param_registry;
 
 typedef double klmnfp;
 
-NavigatorSins<klmnfp, KALMAN_STATE_SIZE, KALMAN_MEASUREMENT_SIZE> nav_sins;
-InitParams<klmnfp> init_params;
-CalibParams<klmnfp> calib_params;
-KalmanParams<klmnfp> kalman_params;
-RefParams<klmnfp> ref_params;
+static NavigatorSins<klmnfp, KALMAN_STATE_SIZE, KALMAN_MEASUREMENT_SIZE> nav_sins;
+static InitParams<klmnfp> init_params;
+static CalibParams<klmnfp> calib_params;
+static KalmanParams<klmnfp> kalman_params;
+static RefParams<klmnfp> ref_params;
 
 /*
  ******************************************************************************

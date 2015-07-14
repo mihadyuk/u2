@@ -7,6 +7,7 @@
 #include <cstring>
 #include <array>
 #include <type_traits>
+#include <cstdlib>
 
 #define PARAM_REGISTRY_MAX_ELEMENTS     128
 
