@@ -23,7 +23,7 @@
  ******************************************************************************
  */
 
-#define MAIN_SENSOR_ADIS    FALSE
+#define KALMAN_DEBUG_LOG          FALSE
 
 /*
  ******************************************************************************
@@ -34,7 +34,9 @@ extern mavlink_debug_t                 mavlink_out_debug_struct;
 extern mavlink_debug_vect_t            mavlink_out_debug_vect_struct;
 extern mavlink_highres_imu_t           mavlink_out_highres_imu_struct;
 
+#if KALMAN_DEBUG_LOG
 extern MavLogger mav_logger;
+#endif
 
 /*
  ******************************************************************************
@@ -114,10 +116,12 @@ static void dbg_in_fill_other(const baro_data_t &baro,
  *
  */
 static void dbg_in_append_log(void) {
+#if KALMAN_DEBUG_LOG
   if (dbg_in_mail.free()) {
     dbg_in_mail.fill(&dbg_in_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_NAVI6D_DEBUG_INPUT);
     mav_logger.write(&dbg_in_mail);
   }
+#endif
 }
 
 /**
@@ -143,10 +147,12 @@ static void dbg_out_fill(const NaviData<klmnfp> &data) {
  *
  */
 static void dbg_out_append_log(void) {
+#if KALMAN_DEBUG_LOG
   if (dbg_out_mail.free()) {
     dbg_out_mail.fill(&dbg_out_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_NAVI6D_DEBUG_OUTPUT);
     mav_logger.write(&dbg_out_mail);
   }
+#endif
 }
 
 /**
