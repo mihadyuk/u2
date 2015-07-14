@@ -4,6 +4,8 @@
 //#pragma GCC diagnostic ignored "-Wdouble-promotion"
 
 #include <iostream>
+
+#define _USE_MATH_DEFINES
 #include <cmath>
 
 #include "../../firmware/lib/navi6d/navigator_sins.hpp"
@@ -104,10 +106,10 @@ static void unpack_test_data(baro_data_t &baro,
  */
 static bool check_result(double r1, double r2, double tolerance) {
 
-  if (! std::isnormal(r1))
+  if (std::isinf(r1) || std::isnan(r1))
     return false;
 
-  if (! std::isnormal(r2))
+  if (std::isinf(r2) || std::isnan(r2))
     return false;
 
   if (std::abs(r1 - r2) > tolerance)

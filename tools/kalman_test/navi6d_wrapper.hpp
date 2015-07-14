@@ -2,7 +2,6 @@
 #define NAVI6D_WRAPPER_HPP_
 
 #include <cstring>
-#include <ctime>
 
 #include "../../firmware/src/sensors/baro_data.hpp"
 #include "../../firmware/src/sensors/odometer_data.hpp"

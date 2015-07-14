@@ -141,7 +141,8 @@ void ParamRegistry::_valueSearch(const char *name, const T **ret) {
     }
   }
 
-  throw std::exception(); // parameter not found
+  std::cout << "ERROR: Parameter not found: " << name << std::endl;
+  std::exit(-1);
 }
 
 #endif // PARAMREGISTRY_H

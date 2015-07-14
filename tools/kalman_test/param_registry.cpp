@@ -7,7 +7,8 @@ ParamRegistry::ParamRegistry(const char *filename) {
 
   param_db.open (filename, ios::in);
   if (! param_db.is_open()) {
-    throw std::exception(); // file not found
+    cout << "ERROR: can not open file with parameters: " << filename << endl;
+    std::exit(-1);
   }
 }
 

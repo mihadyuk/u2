@@ -14,7 +14,7 @@ static mavlink_navi6d_debug_input_t   dbg_in_struct;
 static mavlink_navi6d_debug_output_t  dbg_out_struct;
 
 Navi6dWrapper navi6d;
-ParamRegistry param_registry("../../qgc_stuff/parameters/parameters_small.txt");
+ParamRegistry param_registry("../parameters.txt");
 
 int main () {
   bool in_recvd = false;
@@ -22,14 +22,16 @@ int main () {
 
   navi6d.start();
 
-  char byte;
   ifstream log;
-  log.open ("../log.raw", ios::binary);
+  const char *logname = "../log.raw";
+  log.open (logname, ios::binary);
   if (! log.is_open()) {
-    throw std::exception(); // file not found
+    cout << "ERROR: can not open log file: " << logname << endl;
+    std::exit(-1);
   }
 
   while (! log.eof()) {
+    char byte;
     log.read(&byte, 1);
     if (mavlink_parse_char(MAVLINK_COMM_0, byte, &rx_msg, &rx_status)) {
       switch (rx_msg.msgid) {
