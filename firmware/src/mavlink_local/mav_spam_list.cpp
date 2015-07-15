@@ -1,10 +1,7 @@
-#include <memory> /* for placement new() */
-
 #include "main.h"
+
 #include "mav_spam_list.hpp"
 #include "mav_codec.h"
-
-#include "tlsf.h"
 
 /*
  ******************************************************************************
@@ -67,10 +64,12 @@ typedef LinkRegistry <
     MAVLINK_MSG_ID_SET_MODE
 > link_registry;
 
-static uint8_t tlsf_array[8192] __CCM__;
-static size_t malloc_cnt = 0, free_cnt = 0;
+__CCM__ static chibios_rt::ObjectsPool<mavlink_message_t, 8> msg_pool;
 
-static chibios_rt::BinarySemaphore malloc_sem(false);
+static size_t max_delta = 0;
+static size_t malloc_cnt = 0;
+static size_t free_cnt = 0;
+static size_t malloc_failed_cnt = 0;
 
 /*
  ******************************************************************************
@@ -80,24 +79,33 @@ static chibios_rt::BinarySemaphore malloc_sem(false);
  ******************************************************************************
  */
 
-static void *uav_malloc(size_t size) {
+/**
+ *
+ */
+static mavlink_message_t *uav_malloc(void) {
 
-  malloc_sem.wait();
-  void *ret = tlsf_malloc(size);
-  malloc_sem.signal();
+  mavlink_message_t *ret = (mavlink_message_t *)msg_pool.alloc();
 
-  if (nullptr != ret)
+  if (nullptr != ret) {
     malloc_cnt++;
+    size_t delta = malloc_cnt - free_cnt;
+    if (delta > max_delta)
+      max_delta = delta;
+  }
+  else {
+    malloc_failed_cnt++;
+  }
+
   return ret;
 }
 
-static void uav_free (void *ptr) {
+/**
+ *
+ */
+static void uav_free (mavlink_message_t *ptr) {
 
   free_cnt++;
-
-  malloc_sem.wait();
-  tlsf_free(ptr);
-  malloc_sem.signal();
+  msg_pool.free(ptr);
 }
 
 /**
@@ -124,19 +132,13 @@ int MavSpamList::search(uint8_t msg_id) const {
  */
 MavSpamList::MavSpamList(void) : sem(false) {
 
-  uint8_t id;
-  int mempool_status;
-
   for (size_t i=0; i<link_registry::reg_len; i++) {
     link_registry::link[i] = nullptr; // just to be safe
-    id = link_registry::msg_id[i];
+    uint8_t id = link_registry::msg_id[i];
     for (size_t n=i+1; n<link_registry::reg_len; n++) {
       osalDbgAssert(link_registry::msg_id[n] != id, "Duplicated IDs forbidden");
     }
   }
-
-  mempool_status = init_memory_pool(sizeof(tlsf_array), tlsf_array);
-  osalDbgCheck(-1 != mempool_status);
 }
 
 /**
@@ -212,8 +214,6 @@ void MavSpamList::unsubscribe(uint8_t msg_id, SubscribeLink *linkp) {
  */
 void MavSpamList::dispatch(const mavlink_message_t &msg) {
 
-  void *msgptr;
-  void *mailptr_tmp;
   SubscribeLink *head = nullptr;
   msg_t post_result = MSG_TIMEOUT;
   int idx = search(msg.msgid);
@@ -224,24 +224,19 @@ void MavSpamList::dispatch(const mavlink_message_t &msg) {
     head = link_registry::link[idx];
     while (nullptr != head) {
 
-      msgptr = uav_malloc(mavlink_decode_memsize(&msg));
-      if (nullptr == msgptr)
+      mavlink_message_t *msgptr = uav_malloc();
+      if (nullptr == msgptr) {
         break;
-      mailptr_tmp = uav_malloc(sizeof(mavMail));
-      if (nullptr == mailptr_tmp) {
-        uav_free(msgptr);
-        break;
+      }
+      else {
+        memcpy(msgptr, &msg, sizeof(msg));
+        post_result = head->mb->post(msgptr, TIME_IMMEDIATE);
+        if (MSG_OK != post_result) {
+          uav_free(msgptr);
+          this->drop++;
+        }
       }
 
-      mavlink_decode(&msg, msgptr);
-      mavMail *mailptr = new(mailptr_tmp) mavMail;
-      mailptr->fill(msgptr, static_cast<MAV_COMPONENT>(msg.compid), msg.msgid);
-      post_result = head->mb->post(mailptr, TIME_IMMEDIATE);
-      if (MSG_OK != post_result) {
-        uav_free(msgptr);
-        uav_free(mailptr_tmp);
-        this->drop++;
-      }
       head = head->next;
     }
   }
@@ -252,7 +247,6 @@ void MavSpamList::dispatch(const mavlink_message_t &msg) {
 /**
  *
  */
-void MavSpamList::free(mavMail *mail) {
-  uav_free((void *)mail->mavmsg);
-  uav_free(mail);
+void MavSpamList::free(mavlink_message_t *msgptr) {
+  uav_free(msgptr);
 }

@@ -64,8 +64,8 @@ private:
   void loop_critical(float dT, FutabaResult fr);
   FutabaResult analize_futaba(float dT);
   void message_handler(void);
-  void command_long_handler(const mavMail *recv_mail);
-  void set_mode_handler(const mavMail *recv_mail);
+  void command_long_handler(const mavlink_message_t *recv_mail);
+  void set_mode_handler(const mavlink_message_t *recv_mail);
   enum MAV_RESULT alcoi_command_handler(const mavlink_command_long_t *clp);
   enum MAV_RESULT calibrate_command_handler(const mavlink_command_long_t *clp);
   enum MAV_RESULT take_off_handler(const mavlink_command_long_t *clp);
@@ -77,7 +77,7 @@ private:
   MissionExecutor mission;
   Navigator navigator;
   StabVM stabilizer;
-  chibios_rt::Mailbox<mavMail*, 3> command_mailbox;
+  chibios_rt::Mailbox<mavlink_message_t*, 3> command_mailbox;
   SubscribeLink command_link, set_mode_link;
   ActiveSubstate active_substate = ActiveSubstate::navigate;
   NavigateSubstate nav_substate = NavigateSubstate::mission;

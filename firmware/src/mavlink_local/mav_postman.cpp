@@ -38,7 +38,7 @@ MavSpamList MavPostman::spam_list;
 __CCM__ static mavlink_message_t rx_msg;
 __CCM__ static mavlink_status_t rx_status;
 __CCM__ static mavlink_message_t tx_msg;
-static uint8_t sendbuf[MAVLINK_SENDBUF_SIZE]; /* do not set ccm here. This buffer may be used to send data via DMA */
+static uint8_t sendbuf[MAVLINK_SENDBUF_SIZE]; /* do not set CCM here. This buffer may be used to send data via DMA */
 
 /*
  ******************************************************************************
@@ -170,8 +170,8 @@ msg_t MavPostman::postAhead(mavMail &mail) {
 /**
  *
  */
-void MavPostman::free(mavMail *mail) {
-  spam_list.free(mail);
+void MavPostman::free(mavlink_message_t *msg) {
+  spam_list.free(msg);
 }
 
 /**

@@ -252,11 +252,12 @@ static void send_mission_item(uint16_t seq) {
  *             gets the WAYPOINT_ACK or another message that starts
  *             a different transaction or a timeout happens.
  */
-static msg_t mav2gcs(Mailbox<mavMail*, 1> &mission_mailbox) {
+static msg_t mav2gcs(Mailbox<mavlink_message_t*, 1> &mission_mailbox) {
 
   uint32_t retry_cnt = MISSION_RETRY_CNT;
-  mavMail *recv_mail;
+  mavlink_message_t *recv_msg;
   uint16_t seq;
+  mavlink_mission_request_t mireq;
 
   if (mission_count_mail.free()) {
     mavlink_out_mission_count_struct.target_component = destCompID;
@@ -270,17 +271,19 @@ static msg_t mav2gcs(Mailbox<mavMail*, 1> &mission_mailbox) {
     return MSG_RESET;
 
   do {
-    if (MSG_OK == mission_mailbox.fetch(&recv_mail, MISSION_TIMEOUT)) {
-      switch(recv_mail->msgid) {
+    if (MSG_OK == mission_mailbox.fetch(&recv_msg, MISSION_TIMEOUT)) {
+      mavlink_msg_mission_request_decode(recv_msg, &mireq);
+
+      switch(recv_msg->msgid) {
       /* ground want to know how many items we have */
       case MAVLINK_MSG_ID_MISSION_REQUEST:
-        seq = static_cast<const mavlink_mission_request_t *>(recv_mail->mavmsg)->seq;
+        seq = mireq.seq;
         send_mission_item(seq);
         break;
 
       /*  */
       case MAVLINK_MSG_ID_MISSION_ACK:
-        mav_postman.free(recv_mail);
+        mav_postman.free(recv_msg);
         goto SUCCESS;
         break;
 
@@ -290,7 +293,7 @@ static msg_t mav2gcs(Mailbox<mavMail*, 1> &mission_mailbox) {
         break;
       }
 
-      mav_postman.free(recv_mail);
+      mav_postman.free(recv_msg);
     }
     else
       break;
@@ -325,29 +328,29 @@ static msg_t send_mission_request(uint16_t seq) {
 /**
  *
  */
-static msg_t wait_mission_item(Mailbox<mavMail*, 1> &mission_mailbox,
+static msg_t wait_mission_item(Mailbox<mavlink_message_t*, 1> &mission_mailbox,
                                mavlink_mission_item_t *result, uint16_t seq) {
 
   systime_t start = chVTGetSystemTimeX();
   systime_t end = start + MISSION_TIMEOUT;
-  mavMail *recv_mail = nullptr;
+  mavlink_message_t *recv_msg = nullptr;
   bool message_good = false;
 
   do {
-    if (MSG_OK == mission_mailbox.fetch(&recv_mail, MISSION_CHECK_PERIOD)) {
-      if (MAVLINK_MSG_ID_MISSION_ITEM == recv_mail->msgid) {
-        memcpy(result, recv_mail->mavmsg, sizeof(mavlink_mission_item_t));
+    if (MSG_OK == mission_mailbox.fetch(&recv_msg, MISSION_CHECK_PERIOD)) {
+      if (MAVLINK_MSG_ID_MISSION_ITEM == recv_msg->msgid) {
+        mavlink_msg_mission_item_decode(recv_msg, result);
         if (result->seq == seq) {
           message_good = true;
         }
       }
-      mav_postman.free(recv_mail);
-      recv_mail = nullptr;
+      mav_postman.free(recv_msg);
+      recv_msg = nullptr;
     }
   } while(!message_good && chVTIsSystemTimeWithinX(start, end));
 
   /* check program logic */
-  osalDbgCheck(nullptr == recv_mail);
+  osalDbgCheck(nullptr == recv_msg);
 
   /**/
   if (message_good)
@@ -359,7 +362,7 @@ static msg_t wait_mission_item(Mailbox<mavMail*, 1> &mission_mailbox,
 /**
  *
  */
-static msg_t try_exchange(Mailbox<mavMail*, 1> &mission_mailbox,
+static msg_t try_exchange(Mailbox<mavlink_message_t*, 1> &mission_mailbox,
                          mavlink_mission_item_t *result, uint16_t seq) {
   msg_t ret1 = MSG_TIMEOUT;
   msg_t ret2 = MSG_TIMEOUT;
@@ -409,7 +412,7 @@ static MAV_MISSION_RESULT check_mission(uint16_t N) {
 /**
  *
  */
-static msg_t gcs2mav(Mailbox<mavMail*, 1> &mission_mailbox, uint16_t total_wps) {
+static msg_t gcs2mav(Mailbox<mavlink_message_t*, 1> &mission_mailbox, uint16_t total_wps) {
 
   size_t seq = 0;
   MAV_MISSION_RESULT storage_status = MAV_MISSION_ERROR;
@@ -463,9 +466,9 @@ void MissionReceiver::main(void) {
 
   chRegSetThreadName("MissionRecv");
 
-  mavMail *recv_mail;
-  Mailbox<mavMail*, 1> mission_mailbox;
-  const mavlink_mission_count_t *mission_count;
+  mavlink_message_t *recv_msg;
+  Mailbox<mavlink_message_t*, 1> mission_mailbox;
+  mavlink_mission_count_t mission_count;
 
   SubscribeLink mission_request_list_link(&mission_mailbox);
   SubscribeLink mission_clear_all_link(&mission_mailbox);
@@ -482,47 +485,47 @@ void MissionReceiver::main(void) {
   mav_postman.subscribe(MAVLINK_MSG_ID_MISSION_ACK,           &mission_ack_link);
 
   while (! this->shouldTerminate()) {
-    if (MSG_OK == mission_mailbox.fetch(&recv_mail, MISSION_CHECK_PERIOD)) {
-      switch(recv_mail->msgid) {
+    if (MSG_OK == mission_mailbox.fetch(&recv_msg, MISSION_CHECK_PERIOD)) {
+      switch(recv_msg->msgid) {
 
       /* ground says how many items it wants to send here */
       case MAVLINK_MSG_ID_MISSION_COUNT:
-        mission_count = static_cast<const mavlink_mission_count_t *>(recv_mail->mavmsg);
-        destCompID = recv_mail->compid;
-        if (MSG_OK == gcs2mav(mission_mailbox, mission_count->count))
+        mavlink_msg_mission_count_decode(recv_msg, &mission_count);
+        destCompID = static_cast<MAV_COMPONENT>(recv_msg->compid);
+        if (MSG_OK == gcs2mav(mission_mailbox, mission_count.count))
           event_mission_updated.broadcastFlags(EVMSK_MISSION_UPDATED);
-        mav_postman.free(recv_mail);
+        mav_postman.free(recv_msg);
         break;
 
       /* ground want to know how many items we have */
       case MAVLINK_MSG_ID_MISSION_REQUEST_LIST:
-        destCompID = recv_mail->compid;
+        destCompID = static_cast<MAV_COMPONENT>(recv_msg->compid);
         mav2gcs(mission_mailbox);
-        mav_postman.free(recv_mail);
+        mav_postman.free(recv_msg);
         break;
 
       /* ground wants erase all wps */
       case MAVLINK_MSG_ID_MISSION_CLEAR_ALL:
-        destCompID = recv_mail->compid;
+        destCompID = static_cast<MAV_COMPONENT>(recv_msg->compid);
         mission_clear_all();
-        mav_postman.free(recv_mail);
+        mav_postman.free(recv_msg);
         break;
 
       /* message out of order, drop it */
       case MAVLINK_MSG_ID_MISSION_ACK:
-        mav_postman.free(recv_mail);
+        mav_postman.free(recv_msg);
         break;
 
       /* message out of order, drop it */
       case MAVLINK_MSG_ID_MISSION_REQUEST:
-        mav_postman.free(recv_mail);
+        mav_postman.free(recv_msg);
         break;
 
       /**/
       case MAVLINK_MSG_ID_MISSION_ITEM:
         /* If a waypoint planner component receives WAYPOINT messages outside
          * of transactions it answers with a WAYPOINT_ACK message. */
-        mav_postman.free(recv_mail);
+        mav_postman.free(recv_msg);
         send_ack(MAV_MISSION_DENIED);
         break;
 
