@@ -17,7 +17,8 @@ using namespace control;
  ******************************************************************************
  */
 
-#define DEBUG_STAB_VM       TRUE
+#define DEBUG_STAB_VM         TRUE
+
 #if DEBUG_STAB_VM
   #define vmDbgCheck(c) osalDbgCheck(c)
   #define vmDbgPanic(c) osalSysHalt(c)
@@ -397,10 +398,10 @@ static PIDInit<float> get_pid_init(uint8_t pidnum) {
     ret.postproc = nullptr;
     break;
   case 1:
-    ret.postproc = wrap_pi;
+    ret.postproc = wrap_pi<float>;
     break;
   case 2:
-    ret.postproc = wrap_2pi;
+    ret.postproc = wrap_2pi<float>;
     break;
   default:
     osalSysHalt("Unrecognized function");

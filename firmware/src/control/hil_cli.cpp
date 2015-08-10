@@ -112,7 +112,9 @@ thread_t* hil_clicmd(int argc, const char * const * argv, SerialDriver *sdp) {
   (void)sdp;
 
   if (0 == argc) {
-    cli_println("Not enough arguments");
+    cli_println("Not enough arguments.");
+    cli_println("Usage: hil gnss 53.9268055 27.5913531 500");
+    cli_println("Usage: hil disable");
     goto EXIT;
   }
 

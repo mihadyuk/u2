@@ -1,4 +1,4 @@
-#pragma GCC optimize "-O0"
+#pragma GCC optimize "-O2"
 
 #include "main.h"
 
@@ -47,6 +47,19 @@ extern mavlink_gps_raw_int_t    mavlink_out_gps_raw_int_struct;
  *******************************************************************************
  *******************************************************************************
  */
+/**
+ *
+ */
+static uint16_t check_period(uint16_t period) {
+  if (period <= 200)
+    return 200;
+  else if (period <= 400)
+    return 400;
+  else if (period <= 500)
+    return 500;
+  else
+    return 1000;
+}
 
 /**
  *
@@ -201,7 +214,7 @@ void uBlox::write_with_confirm(const T &msg, systime_t timeout) {
 void uBlox::set_fix_period(uint16_t msec) {
   ubx_cfg_rate msg;
 
-  msg.payload.measRate = msec;
+  msg.payload.measRate = check_period(msec);
   msg.payload.navRate = 1;
   msg.payload.timeRef = 0;
 
@@ -430,11 +443,12 @@ static void dbg_print(BaseSequentialStream *sdp, ubx_nav_pvt &pvt) { /*
   uint8_t  reserved3[4]; */
   if (nullptr != sdp) {
     chprintf(sdp, "lat = %D",   pvt.payload.lat);
-    chprintf(sdp, "lon = %D",   pvt.payload.lon);
-    chprintf(sdp, "h = %D",     pvt.payload.h);
-    chprintf(sdp, "hMSL = %D",  pvt.payload.hMSL);
-    chprintf(sdp, "hAcc = %D",  pvt.payload.hAcc);
-    chprintf(sdp, "vAcc = %D",  pvt.payload.vAcc);
+    chprintf(sdp, ", lon = %D",   pvt.payload.lon);
+    chprintf(sdp, ", h = %D",     pvt.payload.h);
+    chprintf(sdp, ", hMSL = %D",  pvt.payload.hMSL);
+    chprintf(sdp, ", hAcc = %D",  pvt.payload.hAcc);
+    chprintf(sdp, ", vAcc = %D",  pvt.payload.vAcc);
+    chprintf(sdp, "\r\n");
   }
 }
 
@@ -450,6 +464,8 @@ THD_FUNCTION(uBlox::ubxRxThread, arg) {
   /* wait until receiver boots up */
   osalThreadSleepSeconds(2);
   while (true) {
+    if (chThdShouldTerminateX())
+      goto EXIT;
     if (self->device_alive(MS2ST(500)))
       break;
   }
@@ -483,6 +499,7 @@ THD_FUNCTION(uBlox::ubxRxThread, arg) {
     }
   }
 
+EXIT:
   chThdExit(MSG_OK);
 }
 

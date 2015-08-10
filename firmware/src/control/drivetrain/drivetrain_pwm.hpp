@@ -3,6 +3,9 @@
 
 #define DRIVETRAIN_PWM_CHANNELS   4
 
+//#define DRIVETRAIN_PWM_CLK        8000000 /* 1MHz clock */
+//#define DRIVETRAIN_PWM_PERIOD     2000   /* 20000 == 50Hz pulse generation */
+
 #define DRIVETRAIN_PWM_CLK        1000000 /* 1MHz clock */
 #define DRIVETRAIN_PWM_PERIOD     20000   /* 20000 == 50Hz pulse generation */
 
@@ -16,7 +19,7 @@ typedef enum {
   PWM_CH_ELE = 1,
   PWM_CH_RUD = 2,
   PWM_CH_THR = 3,
-  PWM_CH_THR_REVERSE = 0,
+  PWM_CH_THR_REVERSE = 0, // for simple PWM to brushed motor
 } pwm_ch_t;
 
 /**

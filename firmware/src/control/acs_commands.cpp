@@ -131,30 +131,31 @@ enum MAV_RESULT ACS::land_handler(const mavlink_command_long_t *clp) {
 /**
  *
  */
-void ACS::command_long_handler(const mavMail *recv_mail) {
+void ACS::command_long_handler(const mavlink_message_t *recv_msg) {
 
   enum MAV_RESULT result = MAV_RESULT_FAILED;
-  const mavlink_command_long_t *clp =
-      static_cast<const mavlink_command_long_t *>(recv_mail->mavmsg);
+  mavlink_command_long_t cl;
 
-  if (! mavlink_msg_for_me(clp))
+  mavlink_msg_command_long_decode(recv_msg, &cl);
+
+  if (! mavlink_msg_for_me(&cl))
     goto SILENT_EXIT;
 
-  switch (clp->command) {
+  switch (cl.command) {
   case MAV_CMD_DO_SET_SERVO:
-    result = this->alcoi_command_handler(clp);
+    result = this->alcoi_command_handler(&cl);
     break;
 
   case MAV_CMD_NAV_TAKEOFF:
-    result = this->take_off_handler(clp);
+    result = this->take_off_handler(&cl);
     break;
 
   case MAV_CMD_NAV_LAND:
-    result = this->land_handler(clp);
+    result = this->land_handler(&cl);
     break;
 
   case MAV_CMD_PREFLIGHT_CALIBRATION:
-    result = this->calibrate_command_handler(clp);
+    result = this->calibrate_command_handler(&cl);
     break;
 
   default:
@@ -162,7 +163,7 @@ void ACS::command_long_handler(const mavMail *recv_mail) {
     break;
   }
 
-  command_ack(result, clp->command, GLOBAL_COMPONENT_ID);
+  command_ack(result, cl.command, GLOBAL_COMPONENT_ID);
 
 SILENT_EXIT:
   return;
@@ -171,17 +172,18 @@ SILENT_EXIT:
 /**
  *
  */
-void ACS::set_mode_handler(const mavMail *recv_mail) {
+void ACS::set_mode_handler(const mavlink_message_t *recv_msg) {
 
-  const mavlink_set_mode_t *smp =
-      static_cast<const mavlink_set_mode_t *>(recv_mail->mavmsg);
+  mavlink_set_mode_t sm;
 
-  if (smp->target_system != mavlink_system_struct.sysid)
+  mavlink_msg_set_mode_decode(recv_msg, &sm);
+
+  if (sm.target_system != mavlink_system_struct.sysid)
     return; /* it is not for our system */
 
   /* mode may changed only in standby state */
   if (MAV_STATE_STANDBY == mavlink_system_info_struct.state) {
-    mavlink_system_info_struct.mode = smp->base_mode;
+    mavlink_system_info_struct.mode = sm.base_mode;
 
     /* process "armed" flag */
     if (mavlink_system_info_struct.mode | MAV_MODE_FLAG_SAFETY_ARMED)
@@ -199,16 +201,16 @@ void ACS::set_mode_handler(const mavMail *recv_mail) {
  */
 void ACS::message_handler(void) {
 
-  mavMail *recv_mail;
+  mavlink_message_t *recv_msg;
 
-  if (MSG_OK == command_mailbox.fetch(&recv_mail, TIME_IMMEDIATE)) {
-    switch (recv_mail->msgid) {
+  if (MSG_OK == command_mailbox.fetch(&recv_msg, TIME_IMMEDIATE)) {
+    switch (recv_msg->msgid) {
     case MAVLINK_MSG_ID_COMMAND_LONG:
-      command_long_handler(recv_mail);
+      command_long_handler(recv_msg);
       break;
 
     case MAVLINK_MSG_ID_SET_MODE:
-      set_mode_handler(recv_mail);
+      set_mode_handler(recv_msg);
       break;
 
     default:

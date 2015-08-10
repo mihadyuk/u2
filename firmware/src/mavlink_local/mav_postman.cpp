@@ -38,7 +38,7 @@ MavSpamList MavPostman::spam_list;
 __CCM__ static mavlink_message_t rx_msg;
 __CCM__ static mavlink_status_t rx_status;
 __CCM__ static mavlink_message_t tx_msg;
-static uint8_t sendbuf[MAVLINK_SENDBUF_SIZE]; /* do not set ccm here. This buffer may be used to send data via DMA */
+static uint8_t sendbuf[MAVLINK_SENDBUF_SIZE]; /* do not set CCM here. This buffer may be used to send data via DMA */
 
 /*
  ******************************************************************************
@@ -57,7 +57,7 @@ static THD_FUNCTION(RxThread, arg) {
   msg_t c = Q_TIMEOUT;
   mavChannel *channel = static_cast<mavChannel *>(arg);
 
-  while (!chThdShouldTerminateX()){
+  while (!chThdShouldTerminateX()) {
     c = channel->get(MS2ST(20));
     if (c != Q_TIMEOUT){
       if (mavlink_parse_char(MAVLINK_COMM_0, c, &rx_msg, &rx_status)) {
@@ -79,9 +79,9 @@ static THD_FUNCTION(TxThread, arg) {
   mavMail *mail;
   size_t len;
 
-  while (!chThdShouldTerminateX()){
-    if (MSG_OK == txmb.fetch(&mail, MS2ST(100))){
-      if (0 != mavlink_encode(mail->msgid, mail->compid, &tx_msg,  mail->mavmsg)){
+  while (!chThdShouldTerminateX()) {
+    if (MSG_OK == txmb.fetch(&mail, MS2ST(100))) {
+      if (0 != mavlink_encode(mail->msgid, mail->compid, &tx_msg,  mail->mavmsg)) {
         len = mavlink_msg_to_send_buffer(sendbuf, &tx_msg);
         channel->write(sendbuf, len);
       }
@@ -131,7 +131,7 @@ void MavPostman::stop(void){
 
   if (false == ready)
     return;
-  else{
+  else {
     ready = false;
     chThdTerminate(rxworker);
     chThdTerminate(txworker);
@@ -170,8 +170,8 @@ msg_t MavPostman::postAhead(mavMail &mail) {
 /**
  *
  */
-void MavPostman::free(mavMail *mail) {
-  spam_list.free(mail);
+void MavPostman::free(mavlink_message_t *msg) {
+  spam_list.free(msg);
 }
 
 /**

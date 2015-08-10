@@ -28,13 +28,14 @@
 #ifndef _CHCONF_H_
 #define _CHCONF_H_
 
+#define CORTEX_ENABLE_WFI_IDLE              TRUE
+
 /*===========================================================================*/
 /**
  * @name System timers settings
  * @{
  */
 /*===========================================================================*/
-
 /**
  * @brief   System time counter resolution.
  * @note    Allowed values are 16 or 32 bits.

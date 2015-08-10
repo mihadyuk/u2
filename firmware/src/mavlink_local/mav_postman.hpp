@@ -21,7 +21,7 @@ public:
   void stop(void);
   msg_t post(mavMail &mail);
   msg_t postAhead(mavMail &mail);
-  void free(mavMail *mail);
+  void free(mavlink_message_t *msg);
   void subscribe(uint8_t msg_id, SubscribeLink *sl);
   void unsubscribe(uint8_t msg_id, SubscribeLink *sl);
   static MavSpamList spam_list;

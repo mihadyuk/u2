@@ -5,6 +5,8 @@
 #include "drivetrain.hpp"
 #include "param_registry.hpp"
 #include "min_max.hpp"
+#include "mavlink_local.hpp"
+#include "mav_logger.hpp"
 
 using namespace control;
 
@@ -14,11 +16,15 @@ using namespace control;
  ******************************************************************************
  */
 
+#define DRIVETRAIN_RUDDER_DEBUG       TRUE
+
 /*
  ******************************************************************************
  * EXTERNS
  ******************************************************************************
  */
+
+extern MavLogger mav_logger;
 
 /*
  ******************************************************************************
@@ -32,7 +38,12 @@ using namespace control;
  ******************************************************************************
  */
 
-static uint8_t ebuf[max_const(sizeof(Engine1ch), sizeof(Engine2ch))];
+static uint8_t newbuf[max_const(sizeof(Engine1ch), sizeof(Engine2ch))];
+
+#if DRIVETRAIN_RUDDER_DEBUG
+__CCM__ static mavlink_named_value_float_t mavlink_named_value_float_struct = {0, 0, "RUDDER"};
+__CCM__ static mavMail named_value_mail;
+#endif
 
 /*
  ******************************************************************************
@@ -41,6 +52,20 @@ static uint8_t ebuf[max_const(sizeof(Engine1ch), sizeof(Engine2ch))];
  ******************************************************************************
  ******************************************************************************
  */
+
+static void drivetrain2mavlink(const DrivetrainImpact &impact) {
+
+  mavlink_named_value_float_struct.value = impact.ch[IMPACT_RUD];
+  mavlink_named_value_float_struct.time_boot_ms = TIME_BOOT_MS;
+
+#if DRIVETRAIN_RUDDER_DEBUG
+  if (named_value_mail.free()) {
+    named_value_mail.fill(&mavlink_named_value_float_struct,
+        MAV_COMP_ID_ALL, MAVLINK_MSG_ID_NAMED_VALUE_FLOAT);
+    mav_logger.write(&named_value_mail);
+  }
+#endif
+}
 
 /*
  ******************************************************************************
@@ -68,9 +93,9 @@ void Drivetrain::start(void) {
   const uint32_t *veh;
   param_registry.valueSearch("SYS_vehicle_type",  &veh);
   if (0 == *veh)
-    engine = new(ebuf) Engine1ch(pwm);
+    engine = new(newbuf) Engine1ch(pwm);
   else if (1 == *veh)
-    engine = new(ebuf) Engine2ch(pwm);
+    engine = new(newbuf) Engine2ch(pwm);
   else
     osalSysHalt("Unhandled value");
   engine->start();
@@ -98,6 +123,8 @@ void Drivetrain::stop(void) {
 msg_t Drivetrain::update(const DrivetrainImpact &impact) {
 
   osalDbgCheck(ready);
+
+  drivetrain2mavlink(impact);
 
   servo.update(impact);
   engine->update(impact);

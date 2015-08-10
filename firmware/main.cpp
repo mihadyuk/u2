@@ -73,10 +73,6 @@ Giovanni
 
 using namespace chibios_rt;
 
-/* cheat sheet for use in other files */
-#pragma GCC optimize "-funroll-loops"
-#pragma GCC optimize "-O2"
-
 #define USE_STARLINO_AHRS     FALSE
 
 /*
@@ -116,9 +112,7 @@ __CCM__ static marg_data_t marg_data;
 __CCM__ static PPS pps;
 __CCM__ static MPXV mpxv;
 __CCM__ static Calibrator calibrator;
-//__CCM__        gnss::mtkgps GNSS(&GPSSD, 9600, 57600);
 __CCM__        gnss::uBlox GNSS(&GPSSD, 9600, 57600);
-__CCM__ static gnss::gnss_data_t gnss_data;
 __CCM__ control::HIL hil;
 #if USE_STARLINO_AHRS
 __CCM__ static AHRSStarlino ahrs_starlino;
@@ -126,6 +120,15 @@ __CCM__ static AHRSStarlino ahrs_starlino;
 __CCM__ static Navi6dWrapper navi6d(acs_in, GNSS);
 #endif
 __CCM__ static TimeKeeper time_keeper(GNSS);
+
+/**
+ * C++11 stub for std::function
+ */
+#include <functional>
+void std::__throw_bad_function_call(void) {
+  osalSysHalt("__throw_bad_function_call");
+  while(true);
+}
 
 /*
  ******************************************************************************
@@ -140,6 +143,45 @@ __CCM__ static TimeKeeper time_keeper(GNSS);
  *******************************************************************************
  *******************************************************************************
  */
+
+static void start_services(void) {
+  MavlinkInit();      /* mavlink constants initialization must be called after parameters init */
+  mission_receiver.start(MISSIONRECVRPRIO);
+  link_mgr.start();      /* launch after controller to reduce memory fragmentation on thread creation */
+  tlm_sender.start();
+  bmp_085.start();
+  GNSS.start();
+  time_keeper.start();
+  mav_logger.start(NORMALPRIO);
+  osalThreadSleepMilliseconds(1);
+  marg.start();
+  calibrator.start();
+  maxsonar.start();
+  odometer.start();
+  wpdb.start();
+  acs.start();
+  pps.start();
+  mpxv.start();
+  blinker.start();
+  navi6d.start();
+}
+
+static void stop_services(void) {
+  navi6d.stop();
+  blinker.stop();
+  acs.stop();
+  wpdb.stop();
+  odometer.stop();
+  marg.stop();
+  mav_logger.stop();
+  time_keeper.stop();
+  GNSS.stop();
+  bmp_085.stop();
+  tlm_sender.stop();
+  link_mgr.stop();
+  mission_receiver.stop();
+}
+
 int main(void) {
 
   halInit();
@@ -167,55 +209,30 @@ int main(void) {
   chHeapObjectInit(&ThdHeap, (uint8_t *)MEM_ALIGN_NEXT(link_thd_buf), THREAD_HEAP_SIZE);
 
   Exti.start();
-  time_keeper.start();
   I2CInitLocal();
   NvramTest();
   NvramInit();
   ParametersInit();   /* read parameters from EEPROM via I2C */
-  wpdb.start();
   SanityControlInit();
 
   PwrMgrInit();
+  if (main_battery_state::GOOD != PwrMgrMainBatteryStartCheck())
+    goto DEATH;
   if (PwrMgr6vGood())
     pwr5v_power_on();
 
-  MavlinkInit();      /* mavlink constants initialization must be called after parameters init */
-  mission_receiver.start(MISSIONRECVRPRIO);
-  link_mgr.start();      /* launch after controller to reduce memory fragmentation on thread creation */
-  tlm_sender.start();
-
-  bmp_085.start();
-  GNSS.start();
-  mav_logger.start(NORMALPRIO);
-  osalThreadSleepMilliseconds(1);
-
-  marg.start();
-  calibrator.start();
-  maxsonar.start();
-  odometer.start();
-  acs.start();
-  pps.start();
-  mpxv.start();
-
-  blinker.start();
-
-  /* ahrs fake run to acquire dT */
-  marg.get(marg_data, MS2ST(200));
-#if USE_STARLINO_AHRS
-  ahrs_starlino.start();
-#else
-  navi6d.start();
-#endif
+  start_services();
 
   mavlink_system_info_struct.state = MAV_STATE_STANDBY;
   while (true) {
+    main_battery_state mbs = PwrMgrUpdate();
+    if (main_battery_state::CRITICAL == mbs)
+      break; // break main cycle
+
     marg.get(marg_data, MS2ST(200));
-    GNSS.getCache(gnss_data);
-    gps2acs_in(gnss_data, acs_in);
     odometer.update(odo_data, marg_data.dT);
     speedometer2acs_in(odo_data, acs_in);
     mpxv.get();
-    PwrMgrUpdate();
     bmp_085.get(abs_press);
     baro2acs_in(abs_press, acs_in);
 
@@ -225,22 +242,28 @@ int main(void) {
         mavlink_system_info_struct.state = MAV_STATE_STANDBY;
     }
     else {
+      navi6d.update(abs_press, odo_data, marg_data);
       hil.update(acs_in); /* must be called _before_ ACS */
-      acs.update(marg_data.dT);
+      acs_input2mavlink(acs_in);
+      acs.update(marg_data.dT, mbs);
     }
-
-#if USE_STARLINO_AHRS
-    float euler[3];
-    ahrs_starlino.update(euler, marg_data.acc, marg_data.gyr, marg_data.mag, marg_data.dT);
-    acs_in.ch[ACS_INPUT_roll] = euler[0];
-    acs_in.ch[ACS_INPUT_pitch]= euler[1];
-    acs_in.ch[ACS_INPUT_yaw]  = euler[2];
-#else
-    navi6d.update(abs_press, odo_data, marg_data);
-#endif
-    acs_input2mavlink(acs_in);
   }
-  return 0;
+
+  stop_services();
+
+DEATH:
+  blinker.stop();
+  gps_power_off();
+  xbee_reset_assert();
+  nvram_power_off();
+  while (true) {
+    red_led_on();
+    osalThreadSleepSeconds(1);
+    red_led_off();
+    osalThreadSleepSeconds(1);
+  }
+
+  return 0; // warning suppressor
 }
 
 

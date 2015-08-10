@@ -8,7 +8,6 @@
 #pragma GCC diagnostic pop
 
 #include "encode_table.h"
-#include "decode_table.h"
 
 /*
  ******************************************************************************
@@ -59,19 +58,5 @@ uint16_t mavlink_encode(uint8_t msgid, MAV_COMPONENT compid,
                                      compid,
                                      msg,
                                      mavlink_struct);
-}
-
-/**
- * @brief   Use this function to acquire size of memory block for decoded message
- */
-size_t mavlink_decode_memsize(const mavlink_message_t* msg) {
-  return mavlink_message_size_table[msg->msgid];
-}
-
-/**
- *
- */
-void mavlink_decode(const mavlink_message_t* msg, void* mavlink_struct) {
-  mavlink_decode_table[msg->msgid](msg, mavlink_struct);
 }
 

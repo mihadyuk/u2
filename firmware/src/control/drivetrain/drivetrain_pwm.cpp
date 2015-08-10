@@ -47,8 +47,9 @@ static void pwm_cb(PWMDriver *pwmp) {
   }
 
   osalSysLockFromISR();
-  for (i=0; i<4; i++)
+  for (i=0; i<4; i++) {
     pwmEnableChannelI(pwmp, i, val[i]);
+  }
   osalSysUnlockFromISR();
 }
 
@@ -137,4 +138,3 @@ void PWM::update(uint16_t pwm, size_t channel) {
   else
     return;
 }
-

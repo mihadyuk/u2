@@ -6,6 +6,7 @@
 #include "adc_local.hpp"
 #include "param_registry.hpp"
 #include "alpha_beta.hpp"
+#include "pwr_mgr.hpp"
 
 /*
  ******************************************************************************
@@ -22,6 +23,10 @@ extern mavlink_system_info_t  mavlink_system_info_struct;
  ******************************************************************************
  */
 #define SECONDARY_VOLTAGE_GOOD    5400 // mV
+
+#define MAIN_VOLTAGE_LOW          6800 // mV
+#define MAIN_VOLTAGE_CRITICAL     6500 // mV
+#define MAIN_VOLTAGE_IGNORE       400  // sensor not connected at all
 
 /*
  ******************************************************************************
@@ -96,15 +101,18 @@ static uint32_t get_comp_main_current(uint16_t raw){
   return ((((uint32_t)raw) * *adc_I_k) + *adc_I_b) / 1000;
 }
 
-/*
- * Process ADC data.
+/**
+ *
  */
-void PwrMgrUpdate(void) {
-  uint32_t main_current = get_comp_main_current(ADCgetCurrent());
-  (void)main_current;
-
-  mavlink_out_sys_status_struct.current_battery = -1;
-  mavlink_out_sys_status_struct.voltage_battery = comp_main_voltage(ADCgetMainVoltage());
+static main_battery_state translate_voltage(uint16_t mv) {
+  if (mv < MAIN_VOLTAGE_IGNORE)
+    return main_battery_state::GOOD;
+  else if (mv < MAIN_VOLTAGE_CRITICAL)
+    return main_battery_state::CRITICAL;
+  else if (mv < MAIN_VOLTAGE_LOW)
+    return main_battery_state::LOW;
+  else
+    return main_battery_state::GOOD;
 }
 
 /*
@@ -148,5 +156,32 @@ bool PwrMgr6vGood(void) {
   return comp_secondary_voltage(tmp) >= SECONDARY_VOLTAGE_GOOD;
 }
 
+/**
+ *
+ */
+main_battery_state PwrMgrMainBatteryStartCheck(void) {
+  int32_t mv;
+
+  for (size_t i=0; i<256; i++) {
+    mv = comp_main_voltage(ADCgetMainVoltage());
+  }
+
+  return translate_voltage(mv);
+}
+
+/*
+ * Process ADC data.
+ */
+main_battery_state PwrMgrUpdate(void) {
+  uint32_t main_current = get_comp_main_current(ADCgetCurrent());
+  (void)main_current;
+
+  uint16_t mv = comp_main_voltage(ADCgetMainVoltage());
+
+  mavlink_out_sys_status_struct.current_battery = -1;
+  mavlink_out_sys_status_struct.voltage_battery = mv;
+
+  return translate_voltage(mv);
+}
 
 

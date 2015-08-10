@@ -79,7 +79,7 @@ param = [
 
 # common MPU6050 settings
 ("MPU_dlpf",        0,          5,          6,          "u", "default",     "If dlpf>0 than use internal LPF and internal sample rate divider.\nOtherwise use 1kHz sample rate with external FIR and external decimator"),
-("MPU_smplrtdiv",   1,          10,         50,         "u", "default",     "Divider for MPU's 1kHz sample rate"),
+("MPU_smplrtdiv",   1,          10,         100,        "u", "default",     "Divider for MPU's 1kHz sample rate"),
 ("MPU_fir_f",       -1,         0,          6,          "i", "default",     "Cut off frequency of the external FIR filter (F = 2^N). Set -1 to disable filter at all."),
 ("MPU_gyr_fs",      0,          1,          3,          "u", "default",     "MPU gyroscope full scale (0 - 250, 1 - 500, 2 - 1000, 3 - 2000) deg/s"),
 ("MPU_acc_fs",      0,          3,          3,          "u", "default",     "MPU accelerometer full scale (0 - 2, 1 - 4, 2 - 8, 3 - 16) g"),
@@ -147,6 +147,8 @@ param = [
 ("BAT_fill",        0,          0,          100,        "u", "default",     "Start battery filling in percents"),
 
 # Fusion algorithm settings
+("SINS_restart",    0,          1,          0xFFFF,     "u", "default",     "Change this value to enforce sins restart"),
+
 ("SINS_en_gnss",    0,          1,          1,          "u", "default",     "NULL"),
 ("SINS_en_odo",     0,          1,          1,          "u", "default",     "NULL"),
 ("SINS_en_baro",    0,          1,          1,          "u", "default",     "NULL"),
@@ -155,6 +157,7 @@ param = [
 ("SINS_en_euler",   0,          1,          1,          "u", "default",     "NULL"),
 ("SINS_en_mag",     0,          1,          1,          "u", "default",     "NULL"),
 ("SINS_en_gnss_v",  0,          1,          1,          "u", "default",     "NULL"),
+("SINS_en_zupt",    0,          1,          1,          "u", "default",     "NULL"),
 
 ("SINS_R_ne_sns",   0.001,      5,          20,         "f", "default",     "NULL"),
 ("SINS_R_d_sns",    0.001,      10,         20,         "f", "default",     "NULL"),
@@ -176,6 +179,22 @@ param = [
 ("SINS_eu_vh_roll", -180,       0,          180,        "f", "default",     "deg"),
 ("SINS_eu_vh_pitch",-90,        0,          90,         "f", "default",     "deg"),
 ("SINS_eu_vh_yaw",  -360,       0,          360,        "f", "default",     "deg"),
+
+("SINS_acc_bias_x", -1000,      0,          1000,       "f", "default",     "m/s^2"),
+("SINS_acc_bias_y", -1000,      0,          1000,       "f", "default",     "m/s^2"),
+("SINS_acc_bias_z", -1000,      0,          1000,       "f", "default",     "m/s^2"),
+
+("SINS_gyr_bias_x", -1000,      0,          1000,       "f", "default",     "rad"),
+("SINS_gyr_bias_y", -1000,      0,          1000,       "f", "default",     "rad"),
+("SINS_gyr_bias_z", -1000,      0,          1000,       "f", "default",     "rad"),
+
+("SINS_acc_scale_x",-3,         1,          3,          "f", "default",     "m/s^2"),
+("SINS_acc_scale_y",-3,         1,          3,          "f", "default",     "m/s^2"),
+("SINS_acc_scale_z",-3,         1,          3,          "f", "default",     "m/s^2"),
+
+("SINS_gyr_scale_x",-3,         1,          3,          "f", "default",     "rad"),
+("SINS_gyr_scale_y",-3,         1,          3,          "f", "default",     "rad"),
+("SINS_gyr_scale_z",-3,         1,          3,          "f", "default",     "rad"),
 
 ("GLRT_acc_sigma",  0.0001,     0.01,       1,          "f", "default",     "NULL"),
 ("GLRT_gyr_sigma",  0.00001,    0.01,       0.5,        "f", "default",     "NULL"),
@@ -459,7 +478,7 @@ param = [
 ("SPD_speed_max",   0.0,        0,          60.0,       "f", "default",    "NULL"),
 
 # GNSS settings
-("GNSS_dyn_model",  0,          8,          8,          "u", "default",    "NULL"),
+("GNSS_dyn_model",  0,          8,          8,          "u", "default",    "0 - portable, 2 - stationary, 3 - pedestrian 4 - automotive, 5 - sea,\\n 6 - airborne with <1g Acceleration, 7 - airborne with <2g Acceleration, 8 - airborne with <4g Acceleration"),
 ("GNSS_fix_period", 100,        200,        1000,       "u", "default",    "NULL"),
 
 #/**** fake field with 14 symbols name ****/

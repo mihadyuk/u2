@@ -1,0 +1,19 @@
+# default variable for kalman filter size
+# You can override them using: 'make all STATE=9 MEAS=6'
+STATE = 21
+MEAS = 17
+
+CXXFLAGS=-std=c++11 -Wall -Wextra -Wundef -O2 -march=native -ffast-math -DKALMAN_STATE_SIZE=$(STATE) -DKALMAN_MEASUREMENT_SIZE=$(MEAS)
+
+all: kalman_test_$(STATE)_$(MEAS)
+
+SOURCES = ../main.cpp \
+		../navi6d_wrapper.cpp \
+		../param_registry.cpp 
+
+kalman_test_$(STATE)_$(MEAS): $(SOURCES)
+	g++ $(CXXFLAGS) -o kalman_test_$(STATE)_$(MEAS).tmp $^
+
+clean:
+	rm -f main.o navi6d_wrapper.o param_registry.o kalman_test
+

@@ -31,7 +31,7 @@ using namespace control;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-const int16_t THRUST_DISARMED_VALUE = 0;
+const uint16_t THRUST_DISARMED_VALUE = 0;
 
 /*
  ******************************************************************************
@@ -43,17 +43,19 @@ const int16_t THRUST_DISARMED_VALUE = 0;
 /**
  *
  */
-int16_t Engine2ch::float2pwm(float thr) {
-  int16_t pwm = DRIVETRAIN_PWM_PERIOD * putinrange(thr, -1, 1);
-  return putinrange(pwm, -DRIVETRAIN_PWM_PERIOD, DRIVETRAIN_PWM_PERIOD);
+int32_t Engine2ch::float2pwm(float thr) {
+
+  int32_t period = DRIVETRAIN_PWM_PERIOD;
+  int32_t pwm = period * putinrange(thr, -1, 1);
+  return putinrange(pwm, -period, period);
 }
 
 /**
  *
  */
-void Engine2ch::write_thrust_pwm(int16_t thrpwm) {
+void Engine2ch::write_thrust_pwm(int32_t thrpwm) {
 
-  if (abs(thrpwm) < (int16_t)*thr_dz)
+  if (abs(thrpwm) < (int32_t)*thr_dz)
     thrpwm = 0;
 
   if (thrpwm > 0) {

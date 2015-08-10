@@ -13,8 +13,8 @@ public:
 private:
   void start_impl(void);
   void update_impl(const DrivetrainImpact &impact);
-  int16_t float2pwm(float thr);
-  void write_thrust_pwm(int16_t thrpwm);
+  int32_t float2pwm(float thr);
+  void write_thrust_pwm(int32_t thrpwm);
   PWM &pwm;
   const uint32_t *thr_dz  = nullptr;
 };
