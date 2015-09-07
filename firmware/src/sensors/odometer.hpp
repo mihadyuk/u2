@@ -23,6 +23,7 @@ public:
   void update(odometer_data_t &result, float dT);
 private:
   friend void odometer_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p);
+  friend void odo_vtfunc(void *p);
   bool check_sample(uint32_t *path_ret, uint16_t *last_pulse_period, float dT);
   void speed2mavlink(const odometer_data_t &result);
   systime_t capture_time;
@@ -33,6 +34,7 @@ private:
   filters::AlphaBeta<float, 4> filter_alphabeta;
   filters::Median<float, 3> filter_median;
   const float *pulse2m = nullptr;
+  const uint32_t *use_icu = nullptr;
   SampleCosher sample_state;
   bool ready = false;
 };

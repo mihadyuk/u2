@@ -157,7 +157,7 @@ param = [
 ("SINS_en_euler",   0,          1,          1,          "u", "default",     "NULL"),
 ("SINS_en_mag",     0,          1,          1,          "u", "default",     "NULL"),
 ("SINS_en_gnss_v",  0,          1,          1,          "u", "default",     "NULL"),
-("SINS_en_zupt",    0,          1,          1,          "u", "default",     "NULL"),
+("SINS_en_zupt",    0,          1,          2,          "u", "default",     "NULL"),
 
 ("SINS_R_ne_sns",   0.001,      5,          20,         "f", "default",     "NULL"),
 ("SINS_R_d_sns",    0.001,      10,         20,         "f", "default",     "NULL"),
@@ -476,6 +476,7 @@ param = [
 ("SPD_pulse2m",     0.0,        0.0555555,  1.0,        "f", "default",    "Multiply odometer pulses count by this coefficient to get\\ntrip in meters. Coarse value is 0.05555555"),
 ("SPD_trgt_speed",  0.0,        0,          60.0,       "f", "default",    "NULL"),
 ("SPD_speed_max",   0.0,        0,          60.0,       "f", "default",    "NULL"),
+("SPD_use_icu",     0,          0,          1,          "u", "default",    "NULL"),
 
 # GNSS settings
 ("GNSS_dyn_model",  0,          8,          8,          "u", "default",    "0 - portable, 2 - stationary, 3 - pedestrian 4 - automotive, 5 - sea,\\n 6 - airborne with <1g Acceleration, 7 - airborne with <2g Acceleration, 8 - airborne with <4g Acceleration"),

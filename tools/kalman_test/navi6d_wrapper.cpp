@@ -221,9 +221,8 @@ void Navi6dWrapper::update(const mavlink_navi6d_debug_input_t &test,
   /* reapply new dT if needed */
   if (this->dT_cache != marg.dT) {
     this->dT_cache = marg.dT;
-    init_params.dT = marg.dT;
-    init_params.rst_dT = 0.5;
-    nav_sins.set_init_params(init_params);
+    nav_sins.params.init_params.dT = marg.dT;
+    nav_sins.params.init_params.rst_dT = 0.5;
   }
 
   /* restart sins if requested */

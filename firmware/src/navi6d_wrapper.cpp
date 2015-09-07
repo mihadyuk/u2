@@ -46,13 +46,13 @@ extern MavLogger mav_logger;
 
 typedef double klmnfp;
 #define KALMAN_STATE_SIZE         15
-#define KALMAN_MEASUREMENT_SIZE   17
+#define KALMAN_MEASUREMENT_SIZE   16
 
 __CCM__ static NavigatorSins<klmnfp, KALMAN_STATE_SIZE, KALMAN_MEASUREMENT_SIZE> nav_sins;
-__CCM__ static InitParams<klmnfp> init_params;
-__CCM__ static CalibParams<klmnfp> calib_params;
-__CCM__ static KalmanParams<klmnfp> kalman_params;
-__CCM__ static RefParams<klmnfp> ref_params;
+//__CCM__ static InitParams<klmnfp> init_params;
+//__CCM__ static CalibParams<klmnfp> calib_params;
+//__CCM__ static KalmanParams<klmnfp> kalman_params;
+//__CCM__ static RefParams<klmnfp> ref_params;
 
 __CCM__ static mavlink_navi6d_debug_input_t   dbg_in_struct;
 __CCM__ static mavlink_navi6d_debug_output_t  dbg_out_struct;
@@ -194,9 +194,9 @@ void Navi6dWrapper::debug2mavlink(void) {
         nav_sins.navi_data.mb_c[2][0]*nav_sins.navi_data.mb_c[2][0]);*/
     mavlink_out_debug_vect_struct.x = nav_sins.navi_data.mb_c[0][0];
     mavlink_out_debug_vect_struct.y = nav_sins.navi_data.mb_c[1][0];
-    mavlink_out_debug_vect_struct.z = nav_sins.navi_data.mb_c[2][0];
+    mavlink_out_debug_vect_struct.z = nav_sins.zupt_man.glrt_det.test_stat;
   //mavlink_out_debug_vect_struct.x = nav_sins.glrt_det.test_stat;
-  mavlink_out_debug_struct.value = nav_sins.navi_data.mag_mod;
+  mavlink_out_debug_struct.value = nav_sins.navi_data.status;
 }
 
 /**
@@ -231,9 +231,9 @@ void Navi6dWrapper::navi2acs(void) {
   acs_in.ch[ACS_INPUT_wy] = data.w_b[1][0];
   acs_in.ch[ACS_INPUT_wz] = data.w_b[2][0];
 
-  acs_in.ch[ACS_INPUT_free_ax] = data.free_acc[0][0];
-  acs_in.ch[ACS_INPUT_free_ay] = data.free_acc[1][0];
-  acs_in.ch[ACS_INPUT_free_az] = data.free_acc[2][0];
+  acs_in.ch[ACS_INPUT_free_ax] = data.free_accb[0][0];
+  acs_in.ch[ACS_INPUT_free_ay] = data.free_accb[1][0];
+  acs_in.ch[ACS_INPUT_free_az] = data.free_accb[2][0];
 }
 
 /*
@@ -290,11 +290,14 @@ void Navi6dWrapper::update(const baro_data_t &baro,
   /* reapply new dT if needed */
   if (this->dT_cache != marg.dT) {
     this->dT_cache = marg.dT;
-    init_params.dT = marg.dT;
-    init_params.rst_dT = 0.5;
-    nav_sins.set_init_params(init_params);
+    nav_sins.params.init_params.dT = marg.dT;
+    nav_sins.params.init_params.rst_dT = 0.5;
   }
-
+  nav_sins.params.ref_params.mag_eu_bs[0][0] = M_PI;
+  nav_sins.params.ref_params.mag_eu_bs[1][0] = 0.0;
+  nav_sins.params.ref_params.mag_eu_bs[2][0] = -M_PI;
+  nav_sins.params.init_params.zupt_source = *en_zupt;
+  nav_sins.params.ref_params.glrt_gamma = 7.0;
   /* restart sins if requested */
   if (*restart != restart_cache) {
     sins_cold_start();

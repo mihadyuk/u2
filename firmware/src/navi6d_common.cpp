@@ -71,67 +71,69 @@ void Navi6dWrapper::read_settings(void) {
  */
 void Navi6dWrapper::sins_cold_start(void) {
 
-  ref_params.eu_vh_base[0][0] = deg2rad(*eu_vh_roll);
-  ref_params.eu_vh_base[1][0] = deg2rad(*eu_vh_pitch);
-  ref_params.eu_vh_base[2][0] = deg2rad(*eu_vh_yaw);
+  nav_sins.params.ref_params.eu_vh_base[0][0] = deg2rad(*eu_vh_roll);
+  nav_sins.params.ref_params.eu_vh_base[1][0] = deg2rad(*eu_vh_pitch);
+  nav_sins.params.ref_params.eu_vh_base[2][0] = deg2rad(*eu_vh_yaw);
 
-  init_params.est_gyro_bias = true;
+  nav_sins.params.init_params.est_gyro_bias = true;
   //init_params.sigma_Pi[0][0] = 200; //initial position STD (m)
-  init_params.sigma_Pi[3][0] = M_PI; //initial heading STD (rad)
-  init_params.dT = this->dT_cache;
-  init_params.rst_dT = 0.5;
+  nav_sins.params.init_params.sigma_Pi[3][0] = M_PI; //initial heading STD (rad)
+  nav_sins.params.init_params.dT = this->dT_cache;
+  nav_sins.params.init_params.rst_dT = 0.5;
 
-  kalman_params.sigma_R[0][0] = *R_ne_sns; //ne_sns
-  kalman_params.sigma_R[1][0] = *R_d_sns; //d_sns
-  kalman_params.sigma_R[2][0] = *R_v_n_sns; //v_n_sns
-  kalman_params.sigma_R[3][0] = *R_odo; //odo
-  kalman_params.sigma_R[4][0] = *R_nonhol; //nonhol
-  kalman_params.sigma_R[5][0] = *R_baro; //baro
-  kalman_params.sigma_R[6][0] = *R_mag; //mag
-  kalman_params.sigma_R[7][0] = *R_euler; //roll,pitch,yaw (rad)
-  kalman_params.sigma_R[8][0] = *R_zihr; // zihr
+  nav_sins.params.kalman_params.sigma_R[0][0] = *R_ne_sns; //ne_sns
+  nav_sins.params.kalman_params.sigma_R[1][0] = *R_d_sns; //d_sns
+  nav_sins.params.kalman_params.sigma_R[2][0] = *R_v_n_sns; //v_n_sns
+  nav_sins.params.kalman_params.sigma_R[3][0] = *R_odo; //odo
+  nav_sins.params.kalman_params.sigma_R[4][0] = *R_nonhol; //nonhol
+  nav_sins.params.kalman_params.sigma_R[5][0] = *R_baro; //baro
+  nav_sins.params.kalman_params.sigma_R[6][0] = *R_mag; //mag
+  nav_sins.params.kalman_params.sigma_R[7][0] = *R_euler; //roll,pitch,yaw (rad)
+  nav_sins.params.kalman_params.sigma_R[8][0] = *R_zihr; // zihr
 
-  kalman_params.sigma_Qm[0][0] = *Qm_acc; //acc
-  kalman_params.sigma_Qm[1][0] = *Qm_gyr; //gyr
-  kalman_params.sigma_Qm[2][0] = *Qm_acc_x; //acc_x
-  kalman_params.sigma_Qm[3][0] = *Qm_acc_y; //acc_y
-  kalman_params.sigma_Qm[4][0] = *Qm_acc_z; //acc_z
-  kalman_params.sigma_Qm[5][0] = *Qm_gyr_bias; //gyr_bias
+  nav_sins.params.kalman_params.sigma_Qm[0][0] = *Qm_acc; //acc
+  nav_sins.params.kalman_params.sigma_Qm[1][0] = *Qm_gyr; //gyr
+  nav_sins.params.kalman_params.sigma_Qm[2][0] = *Qm_acc_x; //acc_x
+  nav_sins.params.kalman_params.sigma_Qm[3][0] = *Qm_acc_y; //acc_y
+  nav_sins.params.kalman_params.sigma_Qm[4][0] = *Qm_acc_z; //acc_z
+  nav_sins.params.kalman_params.sigma_Qm[5][0] = *Qm_gyr_bias; //gyr_bias
 
-  calib_params.ba[0][0] = *acc_bias_x;
-  calib_params.ba[1][0] = *acc_bias_y;
-  calib_params.ba[2][0] = *acc_bias_z;
+  nav_sins.params.calib_params.ba[0][0] = *acc_bias_x;
+  nav_sins.params.calib_params.ba[1][0] = *acc_bias_y;
+  nav_sins.params.calib_params.ba[2][0] = *acc_bias_z;
 
-  calib_params.bw[0][0] = *gyr_bias_x;
-  calib_params.bw[1][0] = *gyr_bias_y;
-  calib_params.bw[2][0] = *gyr_bias_z;
+  nav_sins.params.calib_params.bw[0][0] = *gyr_bias_x;
+  nav_sins.params.calib_params.bw[1][0] = *gyr_bias_y;
+  nav_sins.params.calib_params.bw[2][0] = *gyr_bias_z;
 
-  calib_params.sa[0][0] = *acc_scale_x;
-  calib_params.sa[1][0] = *acc_scale_y;
-  calib_params.sa[2][0] = *acc_scale_z;
+  nav_sins.params.calib_params.sa[0][0] = *acc_scale_x;
+  nav_sins.params.calib_params.sa[1][0] = *acc_scale_y;
+  nav_sins.params.calib_params.sa[2][0] = *acc_scale_z;
 
-  calib_params.sw[0][0] = *gyr_scale_x;
-  calib_params.sw[1][0] = *gyr_scale_y;
-  calib_params.sw[2][0] = *gyr_scale_z;
+  nav_sins.params.calib_params.sw[0][0] = *gyr_scale_x;
+  nav_sins.params.calib_params.sw[1][0] = *gyr_scale_y;
+  nav_sins.params.calib_params.sw[2][0] = *gyr_scale_z;
 
-  calib_params.bm[0][0] = -3.79611/1000;
-  calib_params.bm[1][0] = 15.2098/1000;
-  calib_params.bm[2][0] = -5.45266/1000;
+  nav_sins.params.calib_params.bm[0][0] = -3.79611/1000;
+  nav_sins.params.calib_params.bm[1][0] = 15.2098/1000;
+  nav_sins.params.calib_params.bm[2][0] = -5.45266/1000;
 
-  calib_params.m_s[0][0] = 0.916692;
-  calib_params.m_s[1][0] = 0.912;
-  calib_params.m_s[2][0] = 0.9896;
+  nav_sins.params.calib_params.m_s[0][0] = 0.916692;
+  nav_sins.params.calib_params.m_s[1][0] = 0.912;
+  nav_sins.params.calib_params.m_s[2][0] = 0.9896;
 
-  calib_params.m_no[0][0] = -0.0031;
-  calib_params.m_no[1][0] = 0.0078;
-  calib_params.m_no[2][0] = 0.0018;
+  nav_sins.params.calib_params.m_no[0][0] = -0.0031;
+  nav_sins.params.calib_params.m_no[1][0] = 0.0078;
+  nav_sins.params.calib_params.m_no[2][0] = 0.0018;
 
-  nav_sins.set_init_params(init_params);
-  nav_sins.set_calib_params(calib_params);
-  nav_sins.set_kalman_params(kalman_params);
-  nav_sins.set_ref_params(ref_params);
+  CommandType<klmnfp> cmd;
+  cmd.command = 4;
+  cmd.param[0][0] = 0.941197195644872;
+  cmd.param[1][0] = 0.481544438952965;
+  cmd.param[2][0] = 252;
+  cmd.param[8][0] = M_PI;
 
-  nav_sins.command_executor(1);
+  nav_sins.command_executor(cmd);
 }
 /**
  *
@@ -184,41 +186,22 @@ void Navi6dWrapper::prepare_data_gnss(gnss::gnss_data_t &gnss_data) {
 void Navi6dWrapper::prepare_data(const baro_data_t &baro,
                                  const odometer_data_t &odo,
                                  const marg_data_t &marg) {
-  if (*en_zihr == 1) {
-    nav_sins.sensor_flags.zihr_en = true;
-  }
 
-  if (*en_odo == 1) {
-    nav_sins.sensor_data.v_odo[0][0] = odo.speed;
-    nav_sins.sensor_data.v_odo[1][0] = 0;
-    nav_sins.sensor_data.v_odo[2][0] = 0;
-    nav_sins.sensor_flags.odo_en = true;
-  }
+  nav_sins.params.ctrl_params.use_odo = *en_odo;
+  nav_sins.params.ctrl_params.use_zupt = false;
+  nav_sins.params.ctrl_params.use_zihr = false;
+  nav_sins.params.ctrl_params.use_mag_vec = false;
+  nav_sins.params.ctrl_params.use_baro_alt = *en_baro;
+  nav_sins.params.ctrl_params.use_nonhol_y = *en_nonhol;
+  nav_sins.params.ctrl_params.use_nonhol_z = *en_nonhol;
+  nav_sins.params.ctrl_params.use_yaw = false;
+  nav_sins.params.ctrl_params.use_mag_course = false;
+  nav_sins.sensor_flags.odo_en = odo.fresh;
+  nav_sins.sensor_flags.mag_en = false;
+  nav_sins.sensor_flags.alt_b_en = true;
 
-  if (*en_zupt == 1) {
-    nav_sins.sensor_flags.zupt_en = true;
-  }
-
-  if (*en_nonhol == 1) {
-    nav_sins.sensor_flags.nonhol_y_en = true;
-    nav_sins.sensor_flags.nonhol_z_en = true;
-  }
-
-  if (*en_mag == 1) {
-    nav_sins.sensor_flags.mag_en = true;
-  }
-
-  if (*en_euler == 1) {
-    if (nav_sins.glrt_det.status){
-      nav_sins.sensor_flags.course_en = true;
-    }
-  }
-  nav_sins.sensor_flags.baro_fix_en = true;
-  if (*en_baro == 1) {
-    nav_sins.sensor_flags.alt_b_en = true;
-    nav_sins.sensor_data.alt_b[0][0] = baro.alt;
-  }
-
+  nav_sins.sensor_data.alt_b[0][0] = baro.alt;
+  nav_sins.sensor_data.v_odo[0][0] = odo.speed;
   for(size_t i=0; i<3; i++) {
     nav_sins.sensor_data.fb[i][0] = marg.acc[i];
     nav_sins.sensor_data.wb[i][0] = marg.gyr[i];
