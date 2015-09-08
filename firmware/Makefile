@@ -86,12 +86,13 @@ endif
 PROJECT = ch
 
 # Imported source files and paths
-CHIBIOS = ../../chibios-git
+CHIBIOS = ../../ChibiOS-RT
+CHIBIOS_CONTRIB = $(CHIBIOS)/../ChibiOS-Contrib
 # Startup files.
 include $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC/mk/startup_stm32f4xx.mk
 # HAL-OSAL files (optional).
-include $(CHIBIOS)/community/os/hal/hal.mk
-include $(CHIBIOS)/community/os/hal/ports/STM32/STM32F4xx/platform.mk
+include $(CHIBIOS_CONTRIB)/os/hal/hal.mk
+include $(CHIBIOS_CONTRIB)/os/hal/ports/STM32/STM32F4xx/platform.mk
 include board/board.mk
 include $(CHIBIOS)/os/hal/osal/rt/osal.mk
 # RTOS files (optional).
@@ -118,10 +119,10 @@ CSRC = $(STARTUPSRC) \
        $(CHIBIOS)/os/various/syscalls.c \
        $(CHIBIOS)/os/hal/lib/streams/chprintf.c \
        $(CHIBIOS)/os/hal/lib/streams/memstreams.c \
-       $(CHIBIOS)/community/os/various/bitmap.c \
+       $(CHIBIOS_CONTRIB)/os/various/bitmap.c \
        lib/uav_utils/endianness.c \
        lib/uav_utils/cpu_load.c \
-       lib/uav_utils/crc.c \
+       lib/uav_utils/soft_crc.c \
        lib/microrl/src/microrl.c \
        lib/tlsf/tlsf.c \
        src/fault_handlers.c \
@@ -253,7 +254,7 @@ INCDIR = $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
          $(CHIBIOS)/os/various \
          $(CHIBIOS)/os/hal/lib/streams \
          $(CHIBIOS)/os/various/cpp_wrappers \
-         $(CHIBIOS)/community/os/various \
+         $(CHIBIOS_CONTRIB)/os/various \
          src/sensors \
          src/sensors/gnss \
          lib/microrl/src \
