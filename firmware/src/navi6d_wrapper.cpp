@@ -192,9 +192,9 @@ void Navi6dWrapper::debug2mavlink(void) {
     /*mavlink_out_debug_vect_struct.x = sqrt(nav_sins.navi_data.mb_c[0][0]*nav_sins.navi_data.mb_c[0][0]+
         nav_sins.navi_data.mb_c[1][0]*nav_sins.navi_data.mb_c[1][0]+
         nav_sins.navi_data.mb_c[2][0]*nav_sins.navi_data.mb_c[2][0]);*/
-    mavlink_out_debug_vect_struct.x = nav_sins.navi_data.mb_c[0][0];
-    mavlink_out_debug_vect_struct.y = nav_sins.navi_data.mb_c[1][0];
-    mavlink_out_debug_vect_struct.z = nav_sins.zupt_man.glrt_det.test_stat;
+    mavlink_out_debug_vect_struct.x = nav_sins.navi_data.debug_vector1[0][0];
+    mavlink_out_debug_vect_struct.y = nav_sins.navi_data.debug_vector1[1][0];
+    mavlink_out_debug_vect_struct.z = nav_sins.navi_data.debug_vector1[2][0];
   //mavlink_out_debug_vect_struct.x = nav_sins.glrt_det.test_stat;
   mavlink_out_debug_struct.value = nav_sins.navi_data.status;
 }
@@ -293,11 +293,42 @@ void Navi6dWrapper::update(const baro_data_t &baro,
     nav_sins.params.init_params.dT = marg.dT;
     nav_sins.params.init_params.rst_dT = 0.5;
   }
+
+
   nav_sins.params.ref_params.mag_eu_bs[0][0] = M_PI;
   nav_sins.params.ref_params.mag_eu_bs[1][0] = 0.0;
   nav_sins.params.ref_params.mag_eu_bs[2][0] = -M_PI;
+
+  nav_sins.params.ref_params.eu_vh_base[0][0] = *eu_vh_roll;
+  nav_sins.params.ref_params.eu_vh_base[1][0] = *eu_vh_pitch;
+  nav_sins.params.ref_params.eu_vh_base[2][0] = *eu_vh_yaw;
+
+  nav_sins.params.ref_params.eu_vh_base[0][0] = *eu_vh_roll;
+  nav_sins.params.ref_params.eu_vh_base[1][0] = *eu_vh_pitch;
+  nav_sins.params.ref_params.eu_vh_base[2][0] = *eu_vh_yaw;
+
+  nav_sins.params.calib_params.ba[0][0] = *acc_bias_x;
+  nav_sins.params.calib_params.ba[1][0] = *acc_bias_y;
+  nav_sins.params.calib_params.ba[2][0] = *acc_bias_z;
+
+  nav_sins.params.calib_params.bw[0][0] = *gyr_bias_x;
+  nav_sins.params.calib_params.bw[1][0] = *gyr_bias_y;
+  nav_sins.params.calib_params.bw[2][0] = *gyr_bias_z;
+
+  nav_sins.params.calib_params.sa[0][0] = *acc_scale_x;
+  nav_sins.params.calib_params.sa[1][0] = *acc_scale_y;
+  nav_sins.params.calib_params.sa[2][0] = *acc_scale_z;
+
+  nav_sins.params.calib_params.sw[0][0] = *gyr_scale_x;
+  nav_sins.params.calib_params.sw[1][0] = *gyr_scale_y;
+  nav_sins.params.calib_params.sw[2][0] = *gyr_scale_z;
+
   nav_sins.params.init_params.zupt_source = *en_zupt;
-  nav_sins.params.ref_params.glrt_gamma = 7.0;
+  nav_sins.params.ref_params.glrt_gamma = *gamma;
+  nav_sins.params.ref_params.glrt_acc_sigma = *acc_sigma;
+  nav_sins.params.ref_params.glrt_gyr_sigma = *gyr_sigma;
+  nav_sins.params.ref_params.glrt_n = *samples;
+
   /* restart sins if requested */
   if (*restart != restart_cache) {
     sins_cold_start();

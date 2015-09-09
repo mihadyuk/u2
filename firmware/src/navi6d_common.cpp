@@ -71,13 +71,13 @@ void Navi6dWrapper::read_settings(void) {
  */
 void Navi6dWrapper::sins_cold_start(void) {
 
-  nav_sins.params.ref_params.eu_vh_base[0][0] = deg2rad(*eu_vh_roll);
-  nav_sins.params.ref_params.eu_vh_base[1][0] = deg2rad(*eu_vh_pitch);
-  nav_sins.params.ref_params.eu_vh_base[2][0] = deg2rad(*eu_vh_yaw);
+  //nav_sins.params.ref_params.eu_vh_base[0][0] = deg2rad(*eu_vh_roll);
+  //nav_sins.params.ref_params.eu_vh_base[1][0] = deg2rad(*eu_vh_pitch);
+  //nav_sins.params.ref_params.eu_vh_base[2][0] = deg2rad(*eu_vh_yaw);
 
-  nav_sins.params.init_params.est_gyro_bias = true;
+  //nav_sins.params.init_params.est_gyro_bias = true;
   //init_params.sigma_Pi[0][0] = 200; //initial position STD (m)
-  nav_sins.params.init_params.sigma_Pi[3][0] = M_PI; //initial heading STD (rad)
+  //nav_sins.params.init_params.sigma_Pi[3][0] = M_PI; //initial heading STD (rad)
   nav_sins.params.init_params.dT = this->dT_cache;
   nav_sins.params.init_params.rst_dT = 0.5;
 
@@ -127,7 +127,7 @@ void Navi6dWrapper::sins_cold_start(void) {
   nav_sins.params.calib_params.m_no[2][0] = 0.0018;
 
   CommandType<klmnfp> cmd;
-  cmd.command = 4;
+  cmd.command = 1;
   cmd.param[0][0] = 0.941197195644872;
   cmd.param[1][0] = 0.481544438952965;
   cmd.param[2][0] = 252;
