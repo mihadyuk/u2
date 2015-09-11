@@ -35,15 +35,18 @@ private:
   gnss::GNSSReceiver &GNSS;
   gnss::gnss_data_t gps;
 
-  const uint32_t *en_gnss   = nullptr;
-  const uint32_t *en_odo    = nullptr;
-  const uint32_t *en_baro   = nullptr;
-  const uint32_t *en_euler  = nullptr;
-  const uint32_t *en_nonhol = nullptr;
-  const uint32_t *en_mag    = nullptr;
-  const uint32_t *en_zihr   = nullptr;
-  const uint32_t *en_gnss_v = nullptr;
-  const uint32_t *en_zupt   = nullptr;
+  const uint32_t *en_gnss    = nullptr;
+  const uint32_t *en_gnss_v  = nullptr;
+  const uint32_t *en_baro    = nullptr;
+  const uint32_t *en_odo     = nullptr;
+  const uint32_t *en_nhl_y   = nullptr;
+  const uint32_t *en_nhl_z   = nullptr;
+  const uint32_t *en_roll    = nullptr;
+  const uint32_t *en_pitch   = nullptr;
+  const uint32_t *en_yaw     = nullptr;
+  const uint32_t *en_mg_v    = nullptr;
+  const uint32_t *en_mg_yaw  = nullptr;
+  const uint32_t *zupt_src   = nullptr;
 
   const float *acc_sigma    = nullptr;
   const float *gyr_sigma    = nullptr;

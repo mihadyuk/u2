@@ -288,12 +288,65 @@ void Navi6dWrapper::update(const baro_data_t &baro,
   osalDbgCheck(ready);
 
   /* reapply new dT if needed */
-  if (this->dT_cache != marg.dT) {
+ /* if (this->dT_cache != marg.dT) {
     this->dT_cache = marg.dT;
     nav_sins.params.init_params.dT = marg.dT;
     nav_sins.params.init_params.rst_dT = 0.5;
+  }*/
+
+  /* restart sins if requested */
+  if (*restart != restart_cache) {
+    sins_cold_start();
+    restart_cache = *restart;
   }
 
+  nav_sins.params.init_params.dT = marg.dT;
+  nav_sins.params.init_params.rst_dT = 0.5;
+
+  nav_sins.params.kalman_params.sigma_R[0][0] = *R_ne_sns; //ne_sns
+  nav_sins.params.kalman_params.sigma_R[1][0] = *R_d_sns; //d_sns
+  nav_sins.params.kalman_params.sigma_R[2][0] = *R_v_n_sns; //v_n_sns
+  nav_sins.params.kalman_params.sigma_R[3][0] = *R_odo; //odo
+  nav_sins.params.kalman_params.sigma_R[4][0] = *R_nonhol; //nonhol
+  nav_sins.params.kalman_params.sigma_R[5][0] = *R_baro; //baro
+  nav_sins.params.kalman_params.sigma_R[6][0] = *R_mag; //mag
+  nav_sins.params.kalman_params.sigma_R[7][0] = *R_euler; //roll,pitch,yaw (rad)
+  nav_sins.params.kalman_params.sigma_R[8][0] = *R_zihr; // zihr
+
+  nav_sins.params.kalman_params.sigma_Qm[0][0] = *Qm_acc; //acc
+  nav_sins.params.kalman_params.sigma_Qm[1][0] = *Qm_gyr; //gyr
+  nav_sins.params.kalman_params.sigma_Qm[2][0] = *Qm_acc_x; //acc_x
+  nav_sins.params.kalman_params.sigma_Qm[3][0] = *Qm_acc_y; //acc_y
+  nav_sins.params.kalman_params.sigma_Qm[4][0] = *Qm_acc_z; //acc_z
+  nav_sins.params.kalman_params.sigma_Qm[5][0] = *Qm_gyr_bias; //gyr_bias
+
+  nav_sins.params.calib_params.ba[0][0] = *acc_bias_x;
+  nav_sins.params.calib_params.ba[1][0] = *acc_bias_y;
+  nav_sins.params.calib_params.ba[2][0] = *acc_bias_z;
+
+  nav_sins.params.calib_params.bw[0][0] = *gyr_bias_x;
+  nav_sins.params.calib_params.bw[1][0] = *gyr_bias_y;
+  nav_sins.params.calib_params.bw[2][0] = *gyr_bias_z;
+
+  nav_sins.params.calib_params.sa[0][0] = *acc_scale_x;
+  nav_sins.params.calib_params.sa[1][0] = *acc_scale_y;
+  nav_sins.params.calib_params.sa[2][0] = *acc_scale_z;
+
+  nav_sins.params.calib_params.sw[0][0] = *gyr_scale_x;
+  nav_sins.params.calib_params.sw[1][0] = *gyr_scale_y;
+  nav_sins.params.calib_params.sw[2][0] = *gyr_scale_z;
+
+  nav_sins.params.calib_params.bm[0][0] = -3.79611/1000;
+  nav_sins.params.calib_params.bm[1][0] = 15.2098/1000;
+  nav_sins.params.calib_params.bm[2][0] = -5.45266/1000;
+
+  nav_sins.params.calib_params.m_s[0][0] = 0.916692;
+  nav_sins.params.calib_params.m_s[1][0] = 0.912;
+  nav_sins.params.calib_params.m_s[2][0] = 0.9896;
+
+  nav_sins.params.calib_params.m_no[0][0] = -0.0031;
+  nav_sins.params.calib_params.m_no[1][0] = 0.0078;
+  nav_sins.params.calib_params.m_no[2][0] = 0.0018;
 
   nav_sins.params.ref_params.mag_eu_bs[0][0] = M_PI;
   nav_sins.params.ref_params.mag_eu_bs[1][0] = 0.0;
@@ -323,17 +376,12 @@ void Navi6dWrapper::update(const baro_data_t &baro,
   nav_sins.params.calib_params.sw[1][0] = *gyr_scale_y;
   nav_sins.params.calib_params.sw[2][0] = *gyr_scale_z;
 
-  nav_sins.params.init_params.zupt_source = *en_zupt;
+  nav_sins.params.init_params.zupt_source = *zupt_src;
   nav_sins.params.ref_params.glrt_gamma = *gamma;
   nav_sins.params.ref_params.glrt_acc_sigma = *acc_sigma;
   nav_sins.params.ref_params.glrt_gyr_sigma = *gyr_sigma;
   nav_sins.params.ref_params.glrt_n = *samples;
 
-  /* restart sins if requested */
-  if (*restart != restart_cache) {
-    sins_cold_start();
-    restart_cache = *restart;
-  }
 
   dbg_in_fill_gnss(this->gps);
   prepare_data_gnss(this->gps);

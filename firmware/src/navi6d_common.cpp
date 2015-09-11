@@ -8,14 +8,20 @@
 void Navi6dWrapper::read_settings(void) {
 
   param_registry.valueSearch("SINS_en_gnss",    &en_gnss);
-  param_registry.valueSearch("SINS_en_odo",     &en_odo);
-  param_registry.valueSearch("SINS_en_baro",    &en_baro);
-  param_registry.valueSearch("SINS_en_euler",   &en_euler);
-  param_registry.valueSearch("SINS_en_mag",     &en_mag);
-  param_registry.valueSearch("SINS_en_nonhol",  &en_nonhol);
-  param_registry.valueSearch("SINS_en_zihr",    &en_zihr);
   param_registry.valueSearch("SINS_en_gnss_v",  &en_gnss_v);
-  param_registry.valueSearch("SINS_en_zupt",    &en_zupt);
+
+  param_registry.valueSearch("SINS_en_odo",     &en_odo);
+  param_registry.valueSearch("SINS_en_nhl_y",   &en_nhl_y);
+  param_registry.valueSearch("SINS_en_nhl_z",   &en_nhl_z);
+
+  param_registry.valueSearch("SINS_en_baro",    &en_baro);
+  param_registry.valueSearch("SINS_en_roll",    &en_roll);
+  param_registry.valueSearch("SINS_en_pitch",   &en_pitch);
+  param_registry.valueSearch("SINS_en_yaw",     &en_yaw);
+
+  param_registry.valueSearch("SINS_en_mg_v",    &en_mg_v);
+  param_registry.valueSearch("SINS_en_mg_yaw",  &en_mg_yaw);
+  param_registry.valueSearch("SINS_zupt_src",   &zupt_src);
 
   param_registry.valueSearch("SINS_R_ne_sns",   &R_ne_sns);
   param_registry.valueSearch("SINS_R_d_sns",    &R_d_sns);
@@ -78,7 +84,7 @@ void Navi6dWrapper::sins_cold_start(void) {
   //nav_sins.params.init_params.est_gyro_bias = true;
   //init_params.sigma_Pi[0][0] = 200; //initial position STD (m)
   //nav_sins.params.init_params.sigma_Pi[3][0] = M_PI; //initial heading STD (rad)
-  nav_sins.params.init_params.dT = this->dT_cache;
+  /*nav_sins.params.init_params.dT = this->dT_cache;
   nav_sins.params.init_params.rst_dT = 0.5;
 
   nav_sins.params.kalman_params.sigma_R[0][0] = *R_ne_sns; //ne_sns
@@ -125,7 +131,7 @@ void Navi6dWrapper::sins_cold_start(void) {
   nav_sins.params.calib_params.m_no[0][0] = -0.0031;
   nav_sins.params.calib_params.m_no[1][0] = 0.0078;
   nav_sins.params.calib_params.m_no[2][0] = 0.0018;
-
+*/
   CommandType<klmnfp> cmd;
   cmd.command = 1;
   cmd.param[0][0] = 0.941197195644872;
@@ -187,21 +193,25 @@ void Navi6dWrapper::prepare_data(const baro_data_t &baro,
                                  const odometer_data_t &odo,
                                  const marg_data_t &marg) {
 
-  nav_sins.params.ctrl_params.use_odo = *en_odo;
-  nav_sins.params.ctrl_params.use_zupt = false;
-  nav_sins.params.ctrl_params.use_zihr = false;
-  nav_sins.params.ctrl_params.use_mag_vec = false;
   nav_sins.params.ctrl_params.use_baro_alt = *en_baro;
-  nav_sins.params.ctrl_params.use_nonhol_y = *en_nonhol;
-  nav_sins.params.ctrl_params.use_nonhol_z = *en_nonhol;
-  nav_sins.params.ctrl_params.use_yaw = false;
-  nav_sins.params.ctrl_params.use_mag_course = false;
+  nav_sins.params.ctrl_params.use_odo = *en_odo;
+  nav_sins.params.ctrl_params.use_nonhol_y = *en_nhl_y;
+  nav_sins.params.ctrl_params.use_nonhol_z = *en_nhl_z;
+  nav_sins.params.ctrl_params.use_roll = *en_roll;
+  nav_sins.params.ctrl_params.use_pitch = *en_pitch;
+  nav_sins.params.ctrl_params.use_yaw = *en_yaw;
+  nav_sins.params.ctrl_params.use_mag_vec = *en_mg_v;
+  nav_sins.params.ctrl_params.use_mag_course = *en_mg_yaw;
+
+
   nav_sins.sensor_flags.odo_en = odo.fresh;
-  nav_sins.sensor_flags.mag_en = false;
+
+  nav_sins.sensor_flags.mag_en = true;
   nav_sins.sensor_flags.alt_b_en = true;
 
   nav_sins.sensor_data.alt_b[0][0] = baro.alt;
   nav_sins.sensor_data.v_odo[0][0] = odo.speed;
+
   for(size_t i=0; i<3; i++) {
     nav_sins.sensor_data.fb[i][0] = marg.acc[i];
     nav_sins.sensor_data.wb[i][0] = marg.gyr[i];
