@@ -153,7 +153,8 @@ adcsample_t ADCgetCurrent(void) {
  *
  */
 adcsample_t ADCgetMainVoltage(void) {
-  return do_filter(ADC_MAIN_SUPPLY_CH - CHANNEL_OFFSET, main_supply_filter);
+  //return do_filter(ADC_MAIN_SUPPLY_CH - CHANNEL_OFFSET, main_supply_filter);
+  return samples[ADC_NUM_CHANNELS + ADC_MAIN_SUPPLY_CH - CHANNEL_OFFSET];
 }
 
 /**
