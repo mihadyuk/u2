@@ -16,6 +16,7 @@
 #include "time_keeper.hpp"
 #include "param_registry.hpp"
 #include "mav_logger.hpp"
+#include "mav_postman.hpp"
 
 /*
  ******************************************************************************
@@ -24,15 +25,14 @@
  */
 
 #define KALMAN_DEBUG_LOG          FALSE
+#define DEBIG_INDEX_SINS          42
 
 /*
  ******************************************************************************
  * EXTERNS
  ******************************************************************************
  */
-extern mavlink_debug_t                 mavlink_out_debug_struct;
-extern mavlink_debug_vect_t            mavlink_out_debug_vect_struct;
-extern mavlink_highres_imu_t           mavlink_out_highres_imu_struct;
+extern mavlink_highres_imu_t          mavlink_out_highres_imu_struct;
 
 #if KALMAN_DEBUG_LOG
 extern MavLogger mav_logger;
@@ -49,15 +49,23 @@ typedef double klmnfp;
 #define KALMAN_MEASUREMENT_SIZE   16
 
 __CCM__ static NavigatorSins<klmnfp, KALMAN_STATE_SIZE, KALMAN_MEASUREMENT_SIZE> nav_sins;
-//__CCM__ static InitParams<klmnfp> init_params;
-//__CCM__ static CalibParams<klmnfp> calib_params;
-//__CCM__ static KalmanParams<klmnfp> kalman_params;
-//__CCM__ static RefParams<klmnfp> ref_params;
 
 __CCM__ static mavlink_navi6d_debug_input_t   dbg_in_struct;
 __CCM__ static mavlink_navi6d_debug_output_t  dbg_out_struct;
 __CCM__ static mavMail dbg_in_mail;
 __CCM__ static mavMail dbg_out_mail;
+
+__CCM__ static mavlink_debug_vect_t dbg_acc_bias  = {0, 0, 0, 0, "acc_bias"};
+__CCM__ static mavlink_debug_vect_t dbg_gyr_bias  = {0, 0, 0, 0, "gyr_bias"};
+__CCM__ static mavlink_debug_vect_t dbg_acc_scale = {0, 0, 0, 0, "acc_scale"};
+__CCM__ static mavlink_debug_vect_t dbg_gyr_scale = {0, 0, 0, 0, "gyr_scale"};
+__CCM__ static mavMail mail_acc_bias;
+__CCM__ static mavMail mail_gyr_bias;
+__CCM__ static mavMail mail_acc_scale;
+__CCM__ static mavMail mail_gyr_scale;
+
+__CCM__ static mavlink_debug_t dbg_sins_stat;
+__CCM__ static mavMail mail_sins_stat;
 
 /*
  ******************************************************************************
@@ -180,23 +188,64 @@ void Navi6dWrapper::navi2mavlink(void) {
 /**
  *
  */
-void Navi6dWrapper::debug2mavlink(void) {
-  mavlink_out_debug_vect_struct.time_usec = TimeKeeper::utc();
-  /*  mavlink_out_debug_vect_struct.x = nav_sins.navi_data.a_bias[0][0];
-  mavlink_out_debug_vect_struct.y = nav_sins.navi_data.a_bias[1][0];
-  mavlink_out_debug_vect_struct.z = nav_sins.navi_data.a_bias[2][0];
-  */
-  /*   mavlink_out_debug_vect_struct.x = nav_sins.sensor_data.v_sns[0][0];
-    mavlink_out_debug_vect_struct.y = nav_sins.sensor_data.v_sns[1][0];
-    mavlink_out_debug_vect_struct.z = nav_sins.sensor_data.v_sns[2][0];*/
-    /*mavlink_out_debug_vect_struct.x = sqrt(nav_sins.navi_data.mb_c[0][0]*nav_sins.navi_data.mb_c[0][0]+
-        nav_sins.navi_data.mb_c[1][0]*nav_sins.navi_data.mb_c[1][0]+
-        nav_sins.navi_data.mb_c[2][0]*nav_sins.navi_data.mb_c[2][0]);*/
-    mavlink_out_debug_vect_struct.x = nav_sins.navi_data.debug_vector1[0][0];
-    mavlink_out_debug_vect_struct.y = nav_sins.navi_data.debug_vector1[1][0];
-    mavlink_out_debug_vect_struct.z = nav_sins.navi_data.debug_vector1[2][0];
-  //mavlink_out_debug_vect_struct.x = nav_sins.glrt_det.test_stat;
-  mavlink_out_debug_struct.value = nav_sins.navi_data.status;
+void Navi6dWrapper::debug2mavlink(float dT) {
+
+  if (*T_debug_vect != TELEMETRY_SEND_OFF) {
+    if (debug_vect_decimator < *T_debug_vect) {
+      debug_vect_decimator += dT * 1000;
+    }
+    else {
+      debug_vect_decimator = 0;
+      uint64_t time = TimeKeeper::utc();
+
+      //
+      dbg_acc_bias.time_usec = time;
+      dbg_acc_bias.x = nav_sins.navi_data.a_bias[0][0];
+      dbg_acc_bias.y = nav_sins.navi_data.a_bias[1][0];
+      dbg_acc_bias.z = nav_sins.navi_data.a_bias[2][0];
+      mail_acc_bias.fill(&dbg_acc_bias, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG_VECT);
+      mav_postman.post(mail_acc_bias);
+
+      //
+      dbg_gyr_bias.time_usec = time;
+      dbg_gyr_bias.x = nav_sins.navi_data.w_bias[0][0];
+      dbg_gyr_bias.y = nav_sins.navi_data.w_bias[1][0];
+      dbg_gyr_bias.z = nav_sins.navi_data.w_bias[2][0];
+      mail_gyr_bias.fill(&dbg_gyr_bias, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG_VECT);
+      mav_postman.post(mail_gyr_bias);
+
+      //
+      dbg_acc_scale.time_usec = time;
+      dbg_acc_scale.x = nav_sins.navi_data.a_scale[0][0];
+      dbg_acc_scale.y = nav_sins.navi_data.a_scale[1][1];
+      dbg_acc_scale.z = nav_sins.navi_data.a_scale[2][2];
+      mail_acc_scale.fill(&dbg_acc_scale, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG_VECT);
+      mav_postman.post(mail_acc_scale);
+
+      //
+      dbg_gyr_scale.time_usec = time;
+      dbg_gyr_scale.x = nav_sins.navi_data.w_scale[0][0];
+      dbg_gyr_scale.y = nav_sins.navi_data.w_scale[1][1];
+      dbg_gyr_scale.z = nav_sins.navi_data.w_scale[2][2];
+      mail_gyr_scale.fill(&dbg_gyr_scale, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG_VECT);
+      mav_postman.post(mail_gyr_scale);
+    }
+  }
+
+  if (*T_debug != TELEMETRY_SEND_OFF) {
+    if (debug_decimator < *T_debug) {
+      debug_decimator += dT * 1000;
+    }
+    else {
+      debug_decimator = 0;
+
+      dbg_sins_stat.value = nav_sins.navi_data.status;
+      dbg_sins_stat.ind = DEBIG_INDEX_SINS;
+      dbg_sins_stat.time_boot_ms = TIME_BOOT_MS;
+      mail_sins_stat.fill(&dbg_sins_stat, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG);
+      mav_postman.post(mail_sins_stat);
+    }
+  }
 }
 
 /**
@@ -301,17 +350,17 @@ void Navi6dWrapper::update(const baro_data_t &baro,
   }
 
   nav_sins.params.init_params.dT = marg.dT;
-  nav_sins.params.init_params.rst_dT = 0.5;
+  nav_sins.params.init_params.rst_dT = 0.1;
 
   nav_sins.params.kalman_params.sigma_R[0][0] = *R_ne_sns; //ne_sns
   nav_sins.params.kalman_params.sigma_R[1][0] = *R_d_sns; //d_sns
   nav_sins.params.kalman_params.sigma_R[2][0] = *R_v_n_sns; //v_n_sns
   nav_sins.params.kalman_params.sigma_R[3][0] = *R_odo; //odo
-  nav_sins.params.kalman_params.sigma_R[4][0] = *R_nonhol; //nonhol
-  nav_sins.params.kalman_params.sigma_R[5][0] = *R_baro; //baro
-  nav_sins.params.kalman_params.sigma_R[6][0] = *R_mag; //mag
-  nav_sins.params.kalman_params.sigma_R[7][0] = *R_euler; //roll,pitch,yaw (rad)
-  nav_sins.params.kalman_params.sigma_R[8][0] = *R_zihr; // zihr
+  nav_sins.params.kalman_params.sigma_R[4][0] = *R_nhl_y; //nonhol
+  nav_sins.params.kalman_params.sigma_R[5][0] = *R_nhl_z; //nonhol
+  nav_sins.params.kalman_params.sigma_R[6][0] = *R_baro; //baro
+  nav_sins.params.kalman_params.sigma_R[7][0] = *R_mag; //mag
+  nav_sins.params.kalman_params.sigma_R[8][0] = *R_euler; //roll,pitch,yaw (rad)
 
   nav_sins.params.kalman_params.sigma_Qm[0][0] = *Qm_acc; //acc
   nav_sins.params.kalman_params.sigma_Qm[1][0] = *Qm_gyr; //gyr
@@ -335,6 +384,20 @@ void Navi6dWrapper::update(const baro_data_t &baro,
   nav_sins.params.calib_params.sw[0][0] = *gyr_scale_x;
   nav_sins.params.calib_params.sw[1][0] = *gyr_scale_y;
   nav_sins.params.calib_params.sw[2][0] = *gyr_scale_z;
+
+  nav_sins.params.calib_params.no_a[0][0] = *acc_nort_0;
+  nav_sins.params.calib_params.no_a[1][0] = *acc_nort_1;
+  nav_sins.params.calib_params.no_a[2][0] = *acc_nort_2;
+  nav_sins.params.calib_params.no_a[3][0] = *acc_nort_3;
+  nav_sins.params.calib_params.no_a[4][0] = *acc_nort_4;
+  nav_sins.params.calib_params.no_a[5][0] = *acc_nort_5;
+
+  nav_sins.params.calib_params.no_w[0][0] = *gyr_nort_0;
+  nav_sins.params.calib_params.no_w[1][0] = *gyr_nort_1;
+  nav_sins.params.calib_params.no_w[2][0] = *gyr_nort_2;
+  nav_sins.params.calib_params.no_w[3][0] = *gyr_nort_3;
+  nav_sins.params.calib_params.no_w[4][0] = *gyr_nort_4;
+  nav_sins.params.calib_params.no_w[5][0] = *gyr_nort_5;
 
   nav_sins.params.calib_params.bm[0][0] = -3.79611/1000;
   nav_sins.params.calib_params.bm[1][0] = 15.2098/1000;
@@ -393,7 +456,7 @@ void Navi6dWrapper::update(const baro_data_t &baro,
 
   navi2acs();
   navi2mavlink();
-  debug2mavlink();
+  debug2mavlink(marg.dT);
 
   dbg_out_fill(nav_sins.navi_data);
   dbg_out_append_log();
