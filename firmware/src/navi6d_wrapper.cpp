@@ -67,6 +67,8 @@ __CCM__ static mavMail mail_gyr_scale;
 __CCM__ static mavlink_debug_t dbg_sins_stat;
 __CCM__ static mavMail mail_sins_stat;
 
+__CCM__ static mavlink_debug_vect_t dbg_mag_data  = {0, 0, 0, 0, "mag_data"};
+__CCM__ static mavMail mail_mag_data;
 /*
  ******************************************************************************
  * PROTOTYPES
@@ -229,6 +231,13 @@ void Navi6dWrapper::debug2mavlink(float dT) {
       dbg_gyr_scale.z = nav_sins.navi_data.w_scale[2][2];
       mail_gyr_scale.fill(&dbg_gyr_scale, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG_VECT);
       mav_postman.post(mail_gyr_scale);
+
+      dbg_mag_data.time_usec = time;
+      dbg_mag_data.x = nav_sins.navi_data.mag_head_v[0][0];
+      dbg_mag_data.y = nav_sins.navi_data.mag_mod;
+      dbg_mag_data.z = 0;
+      mail_mag_data.fill(&dbg_mag_data, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG_VECT);
+      mav_postman.post(mail_mag_data);
     }
   }
 
@@ -352,22 +361,63 @@ void Navi6dWrapper::update(const baro_data_t &baro,
   nav_sins.params.init_params.dT = marg.dT;
   nav_sins.params.init_params.rst_dT = 0.1;
 
-  nav_sins.params.kalman_params.sigma_R[0][0] = *R_ne_sns; //ne_sns
-  nav_sins.params.kalman_params.sigma_R[1][0] = *R_d_sns; //d_sns
-  nav_sins.params.kalman_params.sigma_R[2][0] = *R_v_n_sns; //v_n_sns
-  nav_sins.params.kalman_params.sigma_R[3][0] = *R_odo; //odo
-  nav_sins.params.kalman_params.sigma_R[4][0] = *R_nhl_y; //nonhol
-  nav_sins.params.kalman_params.sigma_R[5][0] = *R_nhl_z; //nonhol
-  nav_sins.params.kalman_params.sigma_R[6][0] = *R_baro; //baro
-  nav_sins.params.kalman_params.sigma_R[7][0] = *R_mag; //mag
-  nav_sins.params.kalman_params.sigma_R[8][0] = *R_euler; //roll,pitch,yaw (rad)
+  nav_sins.params.kalman_params.sigma_R.gnss_n = *R_ne_sns; //ne_sns
+  nav_sins.params.kalman_params.sigma_R.gnss_e = *R_ne_sns; //ne_sns
+  nav_sins.params.kalman_params.sigma_R.gnss_d = *R_d_sns; //d_sns
 
-  nav_sins.params.kalman_params.sigma_Qm[0][0] = *Qm_acc; //acc
-  nav_sins.params.kalman_params.sigma_Qm[1][0] = *Qm_gyr; //gyr
-  nav_sins.params.kalman_params.sigma_Qm[2][0] = *Qm_acc_x; //acc_x
-  nav_sins.params.kalman_params.sigma_Qm[3][0] = *Qm_acc_y; //acc_y
-  nav_sins.params.kalman_params.sigma_Qm[4][0] = *Qm_acc_z; //acc_z
-  nav_sins.params.kalman_params.sigma_Qm[5][0] = *Qm_gyr_bias; //gyr_bias
+  nav_sins.params.kalman_params.sigma_R.gnss_vn = *R_v_n_sns; //v_n_sns
+  nav_sins.params.kalman_params.sigma_R.gnss_ve = *R_v_n_sns; //v_n_sns
+  nav_sins.params.kalman_params.sigma_R.gnss_vd = *R_v_n_sns; //v_n_sns
+
+  nav_sins.params.kalman_params.sigma_R.v_odo_x = *R_odo; //odo
+  nav_sins.params.kalman_params.sigma_R.v_nhl_y = *R_nhl_y; //nonhol
+  nav_sins.params.kalman_params.sigma_R.v_nhl_z = *R_nhl_z; //nonhol
+
+  nav_sins.params.kalman_params.sigma_R.alt_baro = *R_baro; //baro
+
+  nav_sins.params.kalman_params.sigma_R.mag_x = *R_mag; //mag
+  nav_sins.params.kalman_params.sigma_R.mag_y = *R_mag; //mag
+  nav_sins.params.kalman_params.sigma_R.mag_z = *R_mag; //mag
+
+  nav_sins.params.kalman_params.sigma_R.roll  = *R_euler; //roll,pitch,yaw (rad)
+  nav_sins.params.kalman_params.sigma_R.pitch = *R_euler; //roll,pitch,yaw (rad)
+  nav_sins.params.kalman_params.sigma_R.yaw   = *R_euler; //roll,pitch,yaw (rad)
+
+  nav_sins.params.kalman_params.sigma_R.v_nav_static = *R_v_nav_st; //roll,pitch,yaw (rad)
+  nav_sins.params.kalman_params.sigma_R.v_veh_static = *R_v_veh_st; //roll,pitch,yaw (rad)
+  nav_sins.params.kalman_params.sigma_R.yaw_static   = *R_yaw_st; //roll,pitch,yaw (rad)
+  nav_sins.params.kalman_params.sigma_R.yaw_mag      = *R_mag_yaw; //roll,pitch,yaw (rad)
+
+  nav_sins.params.kalman_params.sigma_Qm.acc_x = *Qm_acc; //acc
+  nav_sins.params.kalman_params.sigma_Qm.acc_y = *Qm_acc; //acc
+  nav_sins.params.kalman_params.sigma_Qm.acc_z = *Qm_acc; //acc
+
+  nav_sins.params.kalman_params.sigma_Qm.gyr_x = *Qm_gyr; //gyr
+  nav_sins.params.kalman_params.sigma_Qm.gyr_y = *Qm_gyr; //gyr
+  nav_sins.params.kalman_params.sigma_Qm.gyr_z = *Qm_gyr; //gyr
+
+  nav_sins.params.kalman_params.sigma_Qm.acc_b_x = *Qm_acc_x; //acc_x
+  nav_sins.params.kalman_params.sigma_Qm.acc_b_y = *Qm_acc_y; //acc_y
+  nav_sins.params.kalman_params.sigma_Qm.acc_b_z = *Qm_acc_z; //acc_z
+
+  nav_sins.params.kalman_params.sigma_Qm.gyr_b_x = *Qm_gyr_bias; //gyr_bias
+  nav_sins.params.kalman_params.sigma_Qm.gyr_b_y = *Qm_gyr_bias; //gyr_bias
+  nav_sins.params.kalman_params.sigma_Qm.gyr_b_z = *Qm_gyr_bias; //gyr_bias
+
+  nav_sins.params.kalman_params.sigma_P.n = *P_ned;
+  nav_sins.params.kalman_params.sigma_P.e = *P_ned;
+  nav_sins.params.kalman_params.sigma_P.d = *P_ned;
+
+  nav_sins.params.kalman_params.beta.acc_b = *B_acc_b;
+  nav_sins.params.kalman_params.beta.gyr_b = *B_gyr_b;
+
+  nav_sins.params.kalman_params.sigma_P.acc_b_x = *P_acc_b;
+  nav_sins.params.kalman_params.sigma_P.acc_b_y = *P_acc_b;
+  nav_sins.params.kalman_params.sigma_P.acc_b_z = *P_acc_b;
+
+  nav_sins.params.kalman_params.sigma_P.gyr_b_x = *P_gyr_b;
+  nav_sins.params.kalman_params.sigma_P.gyr_b_y = *P_gyr_b;
+  nav_sins.params.kalman_params.sigma_P.gyr_b_z = *P_gyr_b;
 
   nav_sins.params.calib_params.ba[0][0] = *acc_bias_x;
   nav_sins.params.calib_params.ba[1][0] = *acc_bias_y;
@@ -439,7 +489,7 @@ void Navi6dWrapper::update(const baro_data_t &baro,
   nav_sins.params.calib_params.sw[1][0] = *gyr_scale_y;
   nav_sins.params.calib_params.sw[2][0] = *gyr_scale_z;
 
-  nav_sins.params.init_params.zupt_source = *zupt_src;
+  nav_sins.params.ref_params.zupt_source = *zupt_src;
   nav_sins.params.ref_params.glrt_gamma = *gamma;
   nav_sins.params.ref_params.glrt_acc_sigma = *acc_sigma;
   nav_sins.params.ref_params.glrt_gyr_sigma = *gyr_sigma;

@@ -64,6 +64,11 @@ private:
   const float *R_baro       = nullptr;
   const float *R_mag        = nullptr;
   const float *R_euler      = nullptr;
+  const float *R_mag_yaw    = nullptr;
+  const float *R_v_nav_st   = nullptr;
+  const float *R_v_veh_st   = nullptr;
+  const float *R_yaw_st     = nullptr;
+
   const float *init_lat     = nullptr;
   const float *init_lon     = nullptr;
   const float *init_alt     = nullptr;
@@ -77,6 +82,13 @@ private:
   const float *eu_vh_roll   = nullptr;
   const float *eu_vh_pitch  = nullptr;
   const float *eu_vh_yaw    = nullptr;
+
+  const float *P_ned        = nullptr;
+  const float *P_acc_b      = nullptr;
+  const float *P_gyr_b      = nullptr;
+
+  const float *B_acc_b      = nullptr;
+  const float *B_gyr_b      = nullptr;
 
   const float *acc_bias_x   = nullptr;
   const float *acc_bias_y   = nullptr;

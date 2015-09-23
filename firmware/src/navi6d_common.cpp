@@ -35,6 +35,18 @@ void Navi6dWrapper::read_settings(void) {
   param_registry.valueSearch("SINS_R_mag",      &R_mag);
   param_registry.valueSearch("SINS_R_euler",    &R_euler);
 
+  param_registry.valueSearch("SINS_R_vn_st",    &R_v_nav_st);
+  param_registry.valueSearch("SINS_R_vv_st",    &R_v_veh_st);
+  param_registry.valueSearch("SINS_R_yaw_st",   &R_yaw_st);
+  param_registry.valueSearch("SINS_R_yaw_mg",   &R_mag_yaw);
+
+  param_registry.valueSearch("SINS_P_ned",      &P_ned);
+  param_registry.valueSearch("SINS_P_acc_b",    &P_acc_b);
+  param_registry.valueSearch("SINS_P_gyr_b",    &P_gyr_b);
+
+  param_registry.valueSearch("SINS_B_acc_b",    &B_acc_b);
+  param_registry.valueSearch("SINS_B_gyr_b",    &B_gyr_b);
+
   param_registry.valueSearch("SINS_init_lat",   &init_lat);
   param_registry.valueSearch("SINS_init_lon",   &init_lon);
   param_registry.valueSearch("SINS_init_alt",   &init_alt);
@@ -167,7 +179,7 @@ void Navi6dWrapper::prepare_data(const baro_data_t &baro,
   nav_sins.params.ctrl_params.use_roll = *en_roll;
   nav_sins.params.ctrl_params.use_pitch = *en_pitch;
   nav_sins.params.ctrl_params.use_yaw = *en_yaw;
-  nav_sins.params.ctrl_params.use_mag_vec = *en_mg_v;
+  nav_sins.params.ctrl_params.use_mag = *en_mg_v;
   nav_sins.params.ctrl_params.use_mag_course = *en_mg_yaw;
 
 

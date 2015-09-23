@@ -172,6 +172,19 @@ param = [
 ("SINS_R_euler",    0.001,      0.01,       100,        "f", "default",     "NULL"),
 ("SINS_R_zihr",     0.001,      0.01,       100,        "f", "default",     "NULL"),
 
+("SINS_R_vn_st",    0.0001,     0.01,       10,         "f", "default",     "NULL"),
+("SINS_R_vv_st",    0.0001,     0.01,       10,         "f", "default",     "NULL"),
+("SINS_R_yaw_st",   0.0001,     0.001,      100,        "f", "default",     "NULL"),
+("SINS_R_yaw_mg",   0.0001,     0.001,      100,        "f", "default",     "NULL"),
+
+("SINS_P_ned",      0.1,        50,         1000,       "f", "default",     "NULL"),
+("SINS_P_acc_b",    0.01,       0.5,        5,          "f", "default",     "NULL"),
+("SINS_P_gyr_b",    0.001,      0.1,        30,         "f", "default",     "NULL"),
+
+
+("SINS_B_acc_b",    0.0,        1,          50000,      "f", "default",     "NULL"),
+("SINS_B_gyr_b",    0.0,        1,          50000,      "f", "default",     "NULL"),
+
 ("SINS_Qm_acc",     0.0000001,  0.001,      1,          "f", "default",     "NULL"),
 ("SINS_Qm_gyr",     0.0000001,  0.001,      1,          "f", "default",     "NULL"),
 ("SINS_Qm_acc_x",   0.0000001,  0.000001,   1,          "f", "default",     "NULL"),
