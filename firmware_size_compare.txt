@@ -28,3 +28,4 @@ SRAM:  used    = 93144, mcu_ram   = 114688,      utilization = 81%
 CCRAM: used    = 43880, mcu_ccram = 65536,    utilization = 66%
 FLASH: program = 393092, mcu_flash = 1048576,    utilization = 37%
 
+
