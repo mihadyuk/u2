@@ -19,7 +19,7 @@ static inline T deg2rad(T deg) {
  *
  */
 template<typename T>
-T rad2deg(T rad) {
+static inline T rad2deg(T rad) {
   return rad * static_cast<T>(RAD_TO_DEG);
 }
 
@@ -27,7 +27,7 @@ T rad2deg(T rad) {
  * Get meters from radians on earth sphere
  */
 template<typename T>
-T rad2m(T rad) {
+static inline T rad2m(T rad) {
   return rad * static_cast<T>(RAD_TO_M);
 }
 

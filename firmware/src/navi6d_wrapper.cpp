@@ -268,8 +268,8 @@ void Navi6dWrapper::navi2acs(void) {
   acs_in.ch[ACS_INPUT_pitch]= data.eu_nv[1][0];
   acs_in.ch[ACS_INPUT_yaw]  = data.eu_nv[2][0];
 
-  acs_in.ch[ACS_INPUT_lat] = data.r[0][0];
-  acs_in.ch[ACS_INPUT_lon] = data.r[1][0];
+  acs_in.ch[ACS_INPUT_lat] = rad2deg(data.r[0][0]);
+  acs_in.ch[ACS_INPUT_lon] = rad2deg(data.r[1][0]);
   acs_in.ch[ACS_INPUT_alt] = data.r[2][0];
 
   acs_in.ch[ACS_INPUT_vx] = data.v[0][0];
