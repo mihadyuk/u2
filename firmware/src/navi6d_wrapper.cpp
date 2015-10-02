@@ -46,7 +46,7 @@ extern MavLogger mav_logger;
 
 typedef double klmnfp;
 #define KALMAN_STATE_SIZE         15
-#define KALMAN_MEASUREMENT_SIZE   16
+#define KALMAN_MEASUREMENT_SIZE   11
 
 __CCM__ static NavigatorSins<klmnfp, KALMAN_STATE_SIZE, KALMAN_MEASUREMENT_SIZE> nav_sins;
 
@@ -358,142 +358,142 @@ void Navi6dWrapper::update(const baro_data_t &baro,
     restart_cache = *restart;
   }
 
-  nav_sins.params.init_params.dT = marg.dT;
-  nav_sins.params.init_params.rst_dT = 0.1;
+  nav_sins.init_params.dT = marg.dT;
+  nav_sins.init_params.rst_dT = 0.1;
 
-  nav_sins.params.kalman_params.sigma_R.gnss_n = *R_ne_sns; //ne_sns
-  nav_sins.params.kalman_params.sigma_R.gnss_e = *R_ne_sns; //ne_sns
-  nav_sins.params.kalman_params.sigma_R.gnss_d = *R_d_sns; //d_sns
+  nav_sins.kalman_params.sigma_R.gnss_n = *R_ne_sns; //ne_sns
+  nav_sins.kalman_params.sigma_R.gnss_e = *R_ne_sns; //ne_sns
+  nav_sins.kalman_params.sigma_R.gnss_d = *R_d_sns; //d_sns
 
-  nav_sins.params.kalman_params.sigma_R.gnss_vn = *R_v_n_sns; //v_n_sns
-  nav_sins.params.kalman_params.sigma_R.gnss_ve = *R_v_n_sns; //v_n_sns
-  nav_sins.params.kalman_params.sigma_R.gnss_vd = *R_v_n_sns; //v_n_sns
+  nav_sins.kalman_params.sigma_R.gnss_vn = *R_v_n_sns; //v_n_sns
+  nav_sins.kalman_params.sigma_R.gnss_ve = *R_v_n_sns; //v_n_sns
+  nav_sins.kalman_params.sigma_R.gnss_vd = *R_v_n_sns; //v_n_sns
 
-  nav_sins.params.kalman_params.sigma_R.v_odo_x = *R_odo; //odo
-  nav_sins.params.kalman_params.sigma_R.v_nhl_y = *R_nhl_y; //nonhol
-  nav_sins.params.kalman_params.sigma_R.v_nhl_z = *R_nhl_z; //nonhol
+  nav_sins.kalman_params.sigma_R.v_odo_x = *R_odo; //odo
+  nav_sins.kalman_params.sigma_R.v_nhl_y = *R_nhl_y; //nonhol
+  nav_sins.kalman_params.sigma_R.v_nhl_z = *R_nhl_z; //nonhol
 
-  nav_sins.params.kalman_params.sigma_R.alt_baro = *R_baro; //baro
+  nav_sins.kalman_params.sigma_R.alt_baro = *R_baro; //baro
 
-  nav_sins.params.kalman_params.sigma_R.mag_x = *R_mag; //mag
-  nav_sins.params.kalman_params.sigma_R.mag_y = *R_mag; //mag
-  nav_sins.params.kalman_params.sigma_R.mag_z = *R_mag; //mag
+  nav_sins.kalman_params.sigma_R.mag_x = *R_mag; //mag
+  nav_sins.kalman_params.sigma_R.mag_y = *R_mag; //mag
+  nav_sins.kalman_params.sigma_R.mag_z = *R_mag; //mag
 
-  nav_sins.params.kalman_params.sigma_R.roll  = *R_euler; //roll,pitch,yaw (rad)
-  nav_sins.params.kalman_params.sigma_R.pitch = *R_euler; //roll,pitch,yaw (rad)
-  nav_sins.params.kalman_params.sigma_R.yaw   = *R_euler; //roll,pitch,yaw (rad)
+  nav_sins.kalman_params.sigma_R.roll  = *R_euler; //roll,pitch,yaw (rad)
+  nav_sins.kalman_params.sigma_R.pitch = *R_euler; //roll,pitch,yaw (rad)
+  nav_sins.kalman_params.sigma_R.yaw   = *R_euler; //roll,pitch,yaw (rad)
 
-  nav_sins.params.kalman_params.sigma_R.v_nav_static = *R_v_nav_st; //roll,pitch,yaw (rad)
-  nav_sins.params.kalman_params.sigma_R.v_veh_static = *R_v_veh_st; //roll,pitch,yaw (rad)
-  nav_sins.params.kalman_params.sigma_R.yaw_static   = *R_yaw_st; //roll,pitch,yaw (rad)
-  nav_sins.params.kalman_params.sigma_R.yaw_mag      = *R_mag_yaw; //roll,pitch,yaw (rad)
+  nav_sins.kalman_params.sigma_R.v_nav_static = *R_v_nav_st; //roll,pitch,yaw (rad)
+  nav_sins.kalman_params.sigma_R.v_veh_static = *R_v_veh_st; //roll,pitch,yaw (rad)
+  nav_sins.kalman_params.sigma_R.yaw_static   = *R_yaw_st; //roll,pitch,yaw (rad)
+  nav_sins.kalman_params.sigma_R.yaw_mag      = *R_mag_yaw; //roll,pitch,yaw (rad)
 
-  nav_sins.params.kalman_params.sigma_Qm.acc_x = *Qm_acc; //acc
-  nav_sins.params.kalman_params.sigma_Qm.acc_y = *Qm_acc; //acc
-  nav_sins.params.kalman_params.sigma_Qm.acc_z = *Qm_acc; //acc
+  nav_sins.kalman_params.sigma_Qm.acc_x = *Qm_acc; //acc
+  nav_sins.kalman_params.sigma_Qm.acc_y = *Qm_acc; //acc
+  nav_sins.kalman_params.sigma_Qm.acc_z = *Qm_acc; //acc
 
-  nav_sins.params.kalman_params.sigma_Qm.gyr_x = *Qm_gyr; //gyr
-  nav_sins.params.kalman_params.sigma_Qm.gyr_y = *Qm_gyr; //gyr
-  nav_sins.params.kalman_params.sigma_Qm.gyr_z = *Qm_gyr; //gyr
+  nav_sins.kalman_params.sigma_Qm.gyr_x = *Qm_gyr; //gyr
+  nav_sins.kalman_params.sigma_Qm.gyr_y = *Qm_gyr; //gyr
+  nav_sins.kalman_params.sigma_Qm.gyr_z = *Qm_gyr; //gyr
 
-  nav_sins.params.kalman_params.sigma_Qm.acc_b_x = *Qm_acc_x; //acc_x
-  nav_sins.params.kalman_params.sigma_Qm.acc_b_y = *Qm_acc_y; //acc_y
-  nav_sins.params.kalman_params.sigma_Qm.acc_b_z = *Qm_acc_z; //acc_z
+  nav_sins.kalman_params.sigma_Qm.acc_b_x = *Qm_acc_x; //acc_x
+  nav_sins.kalman_params.sigma_Qm.acc_b_y = *Qm_acc_y; //acc_y
+  nav_sins.kalman_params.sigma_Qm.acc_b_z = *Qm_acc_z; //acc_z
 
-  nav_sins.params.kalman_params.sigma_Qm.gyr_b_x = *Qm_gyr_bias; //gyr_bias
-  nav_sins.params.kalman_params.sigma_Qm.gyr_b_y = *Qm_gyr_bias; //gyr_bias
-  nav_sins.params.kalman_params.sigma_Qm.gyr_b_z = *Qm_gyr_bias; //gyr_bias
+  nav_sins.kalman_params.sigma_Qm.gyr_b_x = *Qm_gyr_bias; //gyr_bias
+  nav_sins.kalman_params.sigma_Qm.gyr_b_y = *Qm_gyr_bias; //gyr_bias
+  nav_sins.kalman_params.sigma_Qm.gyr_b_z = *Qm_gyr_bias; //gyr_bias
 
-  nav_sins.params.kalman_params.sigma_P.n = *P_ned;
-  nav_sins.params.kalman_params.sigma_P.e = *P_ned;
-  nav_sins.params.kalman_params.sigma_P.d = *P_ned;
+  nav_sins.kalman_params.sigma_P.n = *P_ned;
+  nav_sins.kalman_params.sigma_P.e = *P_ned;
+  nav_sins.kalman_params.sigma_P.d = *P_ned;
 
-  nav_sins.params.kalman_params.beta.acc_b = *B_acc_b;
-  nav_sins.params.kalman_params.beta.gyr_b = *B_gyr_b;
+  nav_sins.kalman_params.Beta_inv.acc_b = *B_acc_b;
+  nav_sins.kalman_params.Beta_inv.gyr_b = *B_gyr_b;
 
-  nav_sins.params.kalman_params.sigma_P.acc_b_x = *P_acc_b;
-  nav_sins.params.kalman_params.sigma_P.acc_b_y = *P_acc_b;
-  nav_sins.params.kalman_params.sigma_P.acc_b_z = *P_acc_b;
+  nav_sins.kalman_params.sigma_P.acc_b_x = *P_acc_b;
+  nav_sins.kalman_params.sigma_P.acc_b_y = *P_acc_b;
+  nav_sins.kalman_params.sigma_P.acc_b_z = *P_acc_b;
 
-  nav_sins.params.kalman_params.sigma_P.gyr_b_x = *P_gyr_b;
-  nav_sins.params.kalman_params.sigma_P.gyr_b_y = *P_gyr_b;
-  nav_sins.params.kalman_params.sigma_P.gyr_b_z = *P_gyr_b;
+  nav_sins.kalman_params.sigma_P.gyr_b_x = *P_gyr_b;
+  nav_sins.kalman_params.sigma_P.gyr_b_y = *P_gyr_b;
+  nav_sins.kalman_params.sigma_P.gyr_b_z = *P_gyr_b;
 
-  nav_sins.params.calib_params.ba[0][0] = *acc_bias_x;
-  nav_sins.params.calib_params.ba[1][0] = *acc_bias_y;
-  nav_sins.params.calib_params.ba[2][0] = *acc_bias_z;
+  nav_sins.calib_params.ba[0][0] = *acc_bias_x;
+  nav_sins.calib_params.ba[1][0] = *acc_bias_y;
+  nav_sins.calib_params.ba[2][0] = *acc_bias_z;
 
-  nav_sins.params.calib_params.bw[0][0] = *gyr_bias_x;
-  nav_sins.params.calib_params.bw[1][0] = *gyr_bias_y;
-  nav_sins.params.calib_params.bw[2][0] = *gyr_bias_z;
+  nav_sins.calib_params.bw[0][0] = *gyr_bias_x;
+  nav_sins.calib_params.bw[1][0] = *gyr_bias_y;
+  nav_sins.calib_params.bw[2][0] = *gyr_bias_z;
 
-  nav_sins.params.calib_params.sa[0][0] = *acc_scale_x;
-  nav_sins.params.calib_params.sa[1][0] = *acc_scale_y;
-  nav_sins.params.calib_params.sa[2][0] = *acc_scale_z;
+  nav_sins.calib_params.sa[0][0] = *acc_scale_x;
+  nav_sins.calib_params.sa[1][0] = *acc_scale_y;
+  nav_sins.calib_params.sa[2][0] = *acc_scale_z;
 
-  nav_sins.params.calib_params.sw[0][0] = *gyr_scale_x;
-  nav_sins.params.calib_params.sw[1][0] = *gyr_scale_y;
-  nav_sins.params.calib_params.sw[2][0] = *gyr_scale_z;
+  nav_sins.calib_params.sw[0][0] = *gyr_scale_x;
+  nav_sins.calib_params.sw[1][0] = *gyr_scale_y;
+  nav_sins.calib_params.sw[2][0] = *gyr_scale_z;
 
-  nav_sins.params.calib_params.no_a[0][0] = *acc_nort_0;
-  nav_sins.params.calib_params.no_a[1][0] = *acc_nort_1;
-  nav_sins.params.calib_params.no_a[2][0] = *acc_nort_2;
-  nav_sins.params.calib_params.no_a[3][0] = *acc_nort_3;
-  nav_sins.params.calib_params.no_a[4][0] = *acc_nort_4;
-  nav_sins.params.calib_params.no_a[5][0] = *acc_nort_5;
+  nav_sins.calib_params.no_a[0][0] = *acc_nort_0;
+  nav_sins.calib_params.no_a[1][0] = *acc_nort_1;
+  nav_sins.calib_params.no_a[2][0] = *acc_nort_2;
+  nav_sins.calib_params.no_a[3][0] = *acc_nort_3;
+  nav_sins.calib_params.no_a[4][0] = *acc_nort_4;
+  nav_sins.calib_params.no_a[5][0] = *acc_nort_5;
 
-  nav_sins.params.calib_params.no_w[0][0] = *gyr_nort_0;
-  nav_sins.params.calib_params.no_w[1][0] = *gyr_nort_1;
-  nav_sins.params.calib_params.no_w[2][0] = *gyr_nort_2;
-  nav_sins.params.calib_params.no_w[3][0] = *gyr_nort_3;
-  nav_sins.params.calib_params.no_w[4][0] = *gyr_nort_4;
-  nav_sins.params.calib_params.no_w[5][0] = *gyr_nort_5;
+  nav_sins.calib_params.no_w[0][0] = *gyr_nort_0;
+  nav_sins.calib_params.no_w[1][0] = *gyr_nort_1;
+  nav_sins.calib_params.no_w[2][0] = *gyr_nort_2;
+  nav_sins.calib_params.no_w[3][0] = *gyr_nort_3;
+  nav_sins.calib_params.no_w[4][0] = *gyr_nort_4;
+  nav_sins.calib_params.no_w[5][0] = *gyr_nort_5;
 
-  nav_sins.params.calib_params.bm[0][0] = -3.79611/1000;
-  nav_sins.params.calib_params.bm[1][0] = 15.2098/1000;
-  nav_sins.params.calib_params.bm[2][0] = -5.45266/1000;
+  nav_sins.calib_params.bm[0][0] = -3.79611/1000;
+  nav_sins.calib_params.bm[1][0] = 15.2098/1000;
+  nav_sins.calib_params.bm[2][0] = -5.45266/1000;
 
-  nav_sins.params.calib_params.m_s[0][0] = 0.916692;
-  nav_sins.params.calib_params.m_s[1][0] = 0.912;
-  nav_sins.params.calib_params.m_s[2][0] = 0.9896;
+  nav_sins.calib_params.m_s[0][0] = 0.916692;
+  nav_sins.calib_params.m_s[1][0] = 0.912;
+  nav_sins.calib_params.m_s[2][0] = 0.9896;
 
-  nav_sins.params.calib_params.m_no[0][0] = -0.0031;
-  nav_sins.params.calib_params.m_no[1][0] = 0.0078;
-  nav_sins.params.calib_params.m_no[2][0] = 0.0018;
+  nav_sins.calib_params.m_no[0][0] = -0.0031;
+  nav_sins.calib_params.m_no[1][0] = 0.0078;
+  nav_sins.calib_params.m_no[2][0] = 0.0018;
 
-  nav_sins.params.ref_params.mag_eu_bs[0][0] = M_PI;
-  nav_sins.params.ref_params.mag_eu_bs[1][0] = 0.0;
-  nav_sins.params.ref_params.mag_eu_bs[2][0] = -M_PI;
+  nav_sins.ref_params.mag_eu_bs[0][0] = M_PI;
+  nav_sins.ref_params.mag_eu_bs[1][0] = 0.0;
+  nav_sins.ref_params.mag_eu_bs[2][0] = -M_PI;
 
-  nav_sins.params.ref_params.eu_vh_base[0][0] = *eu_vh_roll;
-  nav_sins.params.ref_params.eu_vh_base[1][0] = *eu_vh_pitch;
-  nav_sins.params.ref_params.eu_vh_base[2][0] = *eu_vh_yaw;
+  nav_sins.ref_params.eu_vh_base[0][0] = *eu_vh_roll;
+  nav_sins.ref_params.eu_vh_base[1][0] = *eu_vh_pitch;
+  nav_sins.ref_params.eu_vh_base[2][0] = *eu_vh_yaw;
 
-  nav_sins.params.ref_params.eu_vh_base[0][0] = *eu_vh_roll;
-  nav_sins.params.ref_params.eu_vh_base[1][0] = *eu_vh_pitch;
-  nav_sins.params.ref_params.eu_vh_base[2][0] = *eu_vh_yaw;
+  nav_sins.ref_params.eu_vh_base[0][0] = *eu_vh_roll;
+  nav_sins.ref_params.eu_vh_base[1][0] = *eu_vh_pitch;
+  nav_sins.ref_params.eu_vh_base[2][0] = *eu_vh_yaw;
 
-  nav_sins.params.calib_params.ba[0][0] = *acc_bias_x;
-  nav_sins.params.calib_params.ba[1][0] = *acc_bias_y;
-  nav_sins.params.calib_params.ba[2][0] = *acc_bias_z;
+  nav_sins.calib_params.ba[0][0] = *acc_bias_x;
+  nav_sins.calib_params.ba[1][0] = *acc_bias_y;
+  nav_sins.calib_params.ba[2][0] = *acc_bias_z;
 
-  nav_sins.params.calib_params.bw[0][0] = *gyr_bias_x;
-  nav_sins.params.calib_params.bw[1][0] = *gyr_bias_y;
-  nav_sins.params.calib_params.bw[2][0] = *gyr_bias_z;
+  nav_sins.calib_params.bw[0][0] = *gyr_bias_x;
+  nav_sins.calib_params.bw[1][0] = *gyr_bias_y;
+  nav_sins.calib_params.bw[2][0] = *gyr_bias_z;
 
-  nav_sins.params.calib_params.sa[0][0] = *acc_scale_x;
-  nav_sins.params.calib_params.sa[1][0] = *acc_scale_y;
-  nav_sins.params.calib_params.sa[2][0] = *acc_scale_z;
+  nav_sins.calib_params.sa[0][0] = *acc_scale_x;
+  nav_sins.calib_params.sa[1][0] = *acc_scale_y;
+  nav_sins.calib_params.sa[2][0] = *acc_scale_z;
 
-  nav_sins.params.calib_params.sw[0][0] = *gyr_scale_x;
-  nav_sins.params.calib_params.sw[1][0] = *gyr_scale_y;
-  nav_sins.params.calib_params.sw[2][0] = *gyr_scale_z;
+  nav_sins.calib_params.sw[0][0] = *gyr_scale_x;
+  nav_sins.calib_params.sw[1][0] = *gyr_scale_y;
+  nav_sins.calib_params.sw[2][0] = *gyr_scale_z;
 
-  nav_sins.params.ref_params.zupt_source = *zupt_src;
-  nav_sins.params.ref_params.glrt_gamma = *gamma;
-  nav_sins.params.ref_params.glrt_acc_sigma = *acc_sigma;
-  nav_sins.params.ref_params.glrt_gyr_sigma = *gyr_sigma;
-  nav_sins.params.ref_params.glrt_n = *samples;
+  nav_sins.ref_params.zupt_source = *zupt_src;
+  nav_sins.ref_params.glrt_gamma = *gamma;
+  nav_sins.ref_params.glrt_acc_sigma = *acc_sigma;
+  nav_sins.ref_params.glrt_gyr_sigma = *gyr_sigma;
+  nav_sins.ref_params.glrt_n = *samples;
 
 
   dbg_in_fill_gnss(this->gps);
