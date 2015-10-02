@@ -12,8 +12,8 @@
  *
  */
 typedef enum {
-  ACS_INPUT_lat,      // lattitude from GNSS (WGS-84, rad)
-  ACS_INPUT_lon,      // longitude from GNSS (WGS-84, rad)
+  ACS_INPUT_lat,      // lattitude from GNSS (WGS-84, deg)
+  ACS_INPUT_lon,      // longitude from GNSS (WGS-84, deg)
   ACS_INPUT_alt,      // altitude from GNSS (WGS-84, m)
   ACS_INPUT_alt_baro, // barometric height (m)
   ACS_INPUT_climb,    // barometric climb rate (m/s)

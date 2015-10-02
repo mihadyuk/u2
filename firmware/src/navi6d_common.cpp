@@ -172,15 +172,15 @@ void Navi6dWrapper::prepare_data(const baro_data_t &baro,
                                  const odometer_data_t &odo,
                                  const marg_data_t &marg) {
 
-  nav_sins.params.ctrl_params.use_baro_alt = *en_baro;
-  nav_sins.params.ctrl_params.use_odo = *en_odo;
-  nav_sins.params.ctrl_params.use_nonhol_y = *en_nhl_y;
-  nav_sins.params.ctrl_params.use_nonhol_z = *en_nhl_z;
-  nav_sins.params.ctrl_params.use_roll = *en_roll;
-  nav_sins.params.ctrl_params.use_pitch = *en_pitch;
-  nav_sins.params.ctrl_params.use_yaw = *en_yaw;
-  nav_sins.params.ctrl_params.use_mag = *en_mg_v;
-  nav_sins.params.ctrl_params.use_mag_course = *en_mg_yaw;
+  nav_sins.ctrl_params.use_baro_alt = *en_baro;
+  nav_sins.ctrl_params.use_odo = *en_odo;
+  nav_sins.ctrl_params.use_nonhol_y = *en_nhl_y;
+  nav_sins.ctrl_params.use_nonhol_z = *en_nhl_z;
+  nav_sins.ctrl_params.use_roll = *en_roll;
+  nav_sins.ctrl_params.use_pitch = *en_pitch;
+  nav_sins.ctrl_params.use_yaw = *en_yaw;
+  nav_sins.ctrl_params.use_mag = *en_mg_v;
+  nav_sins.ctrl_params.use_mag_course = *en_mg_yaw;
 
 
   nav_sins.sensor_flags.odo_en = odo.fresh;
