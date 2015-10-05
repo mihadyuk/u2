@@ -87,12 +87,9 @@ static void log_append(void) {
  *
  */
 void acs_input2mavlink(const ACSInput &acs_in) {
-  double tmp;
 
-  tmp = acs_in.ch[ACS_INPUT_lat];
-  mavlink_out_global_position_int_struct.lat = rad2deg(tmp) * DEG_TO_MAVLINK;
-  tmp = acs_in.ch[ACS_INPUT_lon];
-  mavlink_out_global_position_int_struct.lon = rad2deg(tmp) * DEG_TO_MAVLINK;
+  mavlink_out_global_position_int_struct.lat = acs_in.ch[ACS_INPUT_lat] * DEG_TO_MAVLINK;
+  mavlink_out_global_position_int_struct.lon = acs_in.ch[ACS_INPUT_lon] * DEG_TO_MAVLINK;
   mavlink_out_global_position_int_struct.alt = acs_in.ch[ACS_INPUT_alt] * 1000;
   mavlink_out_global_position_int_struct.hdg = acs_in.ch[ACS_INPUT_yaw];
   mavlink_out_global_position_int_struct.vx = round(100 * acs_in.ch[ACS_INPUT_vx]);
@@ -119,8 +116,8 @@ void acs_input2mavlink(const ACSInput &acs_in) {
  */
 void gps2acs_in(const gnss::gnss_data_t &gps, ACSInput &acs_in) {
 
-  acs_in.ch[ACS_INPUT_lat] = deg2rad(gps.latitude);
-  acs_in.ch[ACS_INPUT_lon] = deg2rad(gps.longitude);
+  acs_in.ch[ACS_INPUT_lat] = gps.latitude;
+  acs_in.ch[ACS_INPUT_lon] = gps.longitude;
   acs_in.ch[ACS_INPUT_alt] = gps.altitude;
   acs_in.ch[ACS_INPUT_cog] = deg2rad(gps.course);
 }

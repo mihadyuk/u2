@@ -2,7 +2,7 @@
 
 #include "mavlink_local.hpp"
 #include "waypoint_db.hpp"
-#include "crc.h"
+#include "soft_crc.h"
 
 /*
  ******************************************************************************

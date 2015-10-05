@@ -13,10 +13,10 @@ using namespace chibios_rt;
  * DEFINES
  ******************************************************************************
  */
-#define PARAM_POST_TIMEOUT    MS2ST(500)
+#define PARAM_POST_TIMEOUT    MS2ST(1500)
 #define CHECK_FRESH_PERIOD    MS2ST(50)
 #if XBEE_USE_CTS_RTS
-#define SEND_PAUSE            MS2ST(200)
+#define SEND_PAUSE            MS2ST(100)
 #else
 #define SEND_PAUSE            MS2ST(33)
 #endif
@@ -61,17 +61,25 @@ static_assert(sizeof(mavlink_param_value_t::param_id) == PARAM_REGISTRY_ID_SIZE,
 static void param_value_send(const mavlink_param_value_t &m) {
 
   size_t retry = PARAM_POST_TIMEOUT / SEND_PAUSE;
+  msg_t status = MSG_RESET;
 
-  while (retry--) {
+  while (retry > 0) {
     if (param_mail.free()) {
       param_mail.fill(&m, GLOBAL_COMPONENT_ID, MAVLINK_MSG_ID_PARAM_VALUE);
-      mav_postman.postAhead(param_mail);
-      return;
+      status = mav_postman.post(param_mail);
+      if (MSG_OK == status)
+        return;
     }
     else
       osalThreadSleep(SEND_PAUSE);
+
+    retry--;
   }
-  param_send_drop++;
+
+  if (0 == retry) {
+    param_mail.release();
+    param_send_drop++;
+  }
 }
 
 /**

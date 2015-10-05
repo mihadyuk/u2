@@ -202,7 +202,7 @@ int main(void) {
   /* give power to all needys */
   ADCInitLocal();
   gps_power_on();
-  xbee_reset_clear();
+  //xbee_reset_clear();
   nvram_power_on();
   osalThreadSleepMilliseconds(10);
 

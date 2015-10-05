@@ -1,5 +1,5 @@
-#ifndef CRC_H_
-#define CRC_H_
+#ifndef SOFT_CRC_H_
+#define SOFT_CRC_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -10,4 +10,4 @@ extern "C" {
 }
 #endif
 
-#endif /* CRC_H_ */
+#endif /* SOFT_CRC_H_ */

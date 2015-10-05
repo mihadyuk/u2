@@ -493,7 +493,7 @@
                                 PIN_OTYPE_PUSHPULL(GPIOD_USART2_RTS) |        \
                                 PIN_OTYPE_PUSHPULL(GPIOD_USART2_TX) |         \
                                 PIN_OTYPE_PUSHPULL(GPIOD_USART2_RX) |         \
-                                PIN_OTYPE_PUSHPULL(GPIOD_XBEE_RESET) |        \
+                                PIN_OTYPE_OPENDRAIN(GPIOD_XBEE_RESET) |       \
                                 PIN_OTYPE_PUSHPULL(GPIOD_TO_XBEE) |           \
                                 PIN_OTYPE_PUSHPULL(GPIOD_FROM_XBEE) |         \
                                 PIN_OTYPE_PUSHPULL(GPIOD_5V_ENABLE) |         \
@@ -525,7 +525,7 @@
                                 PIN_PUPDR_PULLUP(GPIOD_USART2_RTS) |          \
                                 PIN_PUPDR_PULLUP(GPIOD_USART2_TX) |           \
                                 PIN_PUPDR_PULLUP(GPIOD_USART2_RX) |           \
-                                PIN_PUPDR_FLOATING(GPIOD_XBEE_RESET) |        \
+                                PIN_PUPDR_PULLUP(GPIOD_XBEE_RESET) |          \
                                 PIN_PUPDR_PULLUP(GPIOD_TO_XBEE) |             \
                                 PIN_PUPDR_PULLUP(GPIOD_FROM_XBEE) |           \
                                 PIN_PUPDR_PULLDOWN(GPIOD_5V_ENABLE) |         \
@@ -541,7 +541,7 @@
                                 PIN_ODR_HIGH(GPIOD_USART2_RTS) |              \
                                 PIN_ODR_HIGH(GPIOD_USART2_TX) |               \
                                 PIN_ODR_HIGH(GPIOD_USART2_RX) |               \
-                                PIN_ODR_LOW(GPIOD_XBEE_RESET) |               \
+                                PIN_ODR_HIGH(GPIOD_XBEE_RESET) |              \
                                 PIN_ODR_HIGH(GPIOD_TO_XBEE) |                 \
                                 PIN_ODR_HIGH(GPIOD_FROM_XBEE) |               \
                                 PIN_ODR_LOW(GPIOD_5V_ENABLE) |                \

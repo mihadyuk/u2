@@ -37,7 +37,7 @@ public:
   bool takeoff(void);
   MissionState update(void);
   void setHome(void);
-  void setHome(float lat, float lon, float alt);
+  void setHome(float lat, float lon, float alt); /* (deg), (deg), (deg) */
   uint16_t getCurrentMission(void) const;
 
   void forceGoHome(void);

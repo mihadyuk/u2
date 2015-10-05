@@ -34,5 +34,28 @@
 			<field type="uint8_t"  name="kalman_state_size"></field>
 			<field type="uint8_t"  name="kalman_meas_size"></field>
 		</message>
+		<message id="152" name="TILTMETER_MEASUREMENT">
+			<description>All measurements from Glonasha based tilt meter combined in single message.</description>
+			<field type="uint64_t" name="time_usec">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
+			<field type="uint32_t" name="time_boot_ms">Timestamp (milliseconds since system boot)</field>
+			<field type="int32_t"  name="lat">Latitude (WGS84), in degrees * 1E7</field>
+			<field type="int32_t"  name="lon">Longitude (WGS84), in degrees * 1E7</field>
+			<field type="int32_t"  name="alt">Altitude (WGS84), in meters * 1000 (positive for up)</field>
+			<field type="uint16_t" name="eph">GPS HDOP horizontal dilution of position in cm (m*100). If unknown, set to: UINT16_MAX</field>
+			<field type="uint16_t" name="epv">GPS VDOP vertical dilution of position in cm (m*100). If unknown, set to: UINT16_MAX</field>
+			<field type="int16_t"  name="vx">Ground X Speed (Latitude), expressed as m/s * 100</field>
+            <field type="int16_t"  name="vy">Ground Y Speed (Longitude), expressed as m/s * 100</field>
+            <field type="int16_t"  name="vz">Ground Z Speed (Altitude), expressed as m/s * 100</field>
+			<field type="uint8_t"  name="satellites">Number of satellites used in solution. If unknown, set to 255</field>
+			<field type="uint8_t"  name="gnss_fix_type">GNSS fix type</field>
+
+			<field type="float"    name="roll">Roll angle (rad, -pi..+pi)</field>
+			<field type="float"    name="pitch">Pitch angle (rad, -pi..+pi)</field>
+			<field type="float"    name="yaw">Yaw angle (rad, -pi..+pi)</field>
+			<field type="float"    name="rollspeed">Roll angular speed (rad/s)</field>
+			<field type="float"    name="pitchspeed">Pitch angular speed (rad/s)</field>
+			<field type="float"    name="yawspeed">Yaw angular speed (rad/s)</field>
+			<field type="uint8_t"  name="tilt_fix_type">Tilt measurement fix type</field>
+		</message>
 	</messages>
 </mavlink>

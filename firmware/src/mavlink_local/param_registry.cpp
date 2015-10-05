@@ -7,7 +7,7 @@
 #include "param_registry.hpp"
 #include "pack_unpack.h"
 #include "array_len.hpp"
-#include "crc.h"
+#include "soft_crc.h"
 
 /*
  ******************************************************************************

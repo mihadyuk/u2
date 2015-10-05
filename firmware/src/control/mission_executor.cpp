@@ -208,7 +208,8 @@ bool MissionExecutor::wp_reached(const NavOut<double> &nav_out) {
  */
 void MissionExecutor::navigate(void) {
 
-  NavIn<double> nav_in(acs_in.ch[ACS_INPUT_lat], acs_in.ch[ACS_INPUT_lon]);
+  NavIn<double> nav_in(deg2rad(acs_in.ch[ACS_INPUT_lat]),
+                       deg2rad(acs_in.ch[ACS_INPUT_lon]));
   NavOut<double> nav_out = navigator.update(nav_in);
 
   navout2acsin(nav_out);
@@ -262,8 +263,8 @@ void MissionExecutor::artificial_takeoff_point(void) {
 
   memset(&prev, 0, sizeof(prev));
 
-  prev.x = rad2deg(acs_in.ch[ACS_INPUT_lat]);
-  prev.y = rad2deg(acs_in.ch[ACS_INPUT_lon]);
+  prev.x = acs_in.ch[ACS_INPUT_lat];
+  prev.y = acs_in.ch[ACS_INPUT_lon];
   prev.z = acs_in.ch[ACS_INPUT_alt];
   prev.command = MAV_CMD_NAV_TAKEOFF;
   prev.frame = MAV_FRAME_GLOBAL;
@@ -343,8 +344,8 @@ void MissionExecutor::setHome(float lat, float lon, float alt) {
 
   memset(&home, 0, sizeof(home));
 
-  home.x = rad2deg(lat);
-  home.y = rad2deg(lon);
+  home.x = lat;
+  home.y = lon;
   home.z = alt;
   home.command = MAV_CMD_NAV_WAYPOINT;
   home.frame = MAV_FRAME_GLOBAL;
