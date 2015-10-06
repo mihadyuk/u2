@@ -75,7 +75,7 @@ private:
   DrivetrainImpact impact;
   Futaba futaba;
   MissionExecutor mission;
-  Navigator navigator;
+  //Navigator navigator;
   StabVM stabilizer;
   chibios_rt::Mailbox<mavlink_message_t*, 3> command_mailbox;
   SubscribeLink command_link, set_mode_link;
