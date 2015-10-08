@@ -137,10 +137,16 @@ void ExtiPnc::stop(void){
  */
 void ExtiPnc::adis(bool flag){
   osalDbgCheck(ready);
+#if defined(BOARD_BEZVODIATEL)
   if (flag)
     extChannelEnable(&EXTD1, GPIOE_ADIS_INT);
   else
     extChannelDisable(&EXTD1, GPIOE_ADIS_INT);
+#elif defined(BOARD_MNU)
+  (void)flag;
+#else
+#error "Unknown board"
+#endif
 }
 
 /**
@@ -148,10 +154,19 @@ void ExtiPnc::adis(bool flag){
  */
 void ExtiPnc::mpu6050(bool flag){
   osalDbgCheck(ready);
+#if defined(BOARD_BEZVODIATEL)
   if (flag)
     extChannelEnable(&EXTD1, GPIOE_MPU9150_INT);
   else
     extChannelDisable(&EXTD1, GPIOE_MPU9150_INT);
+#elif defined(BOARD_MNU)
+  if (flag)
+    extChannelEnable(&EXTD1, GPIOG_MPU9150_INT);
+  else
+    extChannelDisable(&EXTD1, GPIOG_MPU9150_INT);
+#else
+#error "Unknown board"
+#endif
 }
 
 /**
@@ -159,10 +174,16 @@ void ExtiPnc::mpu6050(bool flag){
  */
 void ExtiPnc::lsm303(bool flag){
   osalDbgCheck(ready);
+#if defined(BOARD_BEZVODIATEL)
   if (flag)
     extChannelEnable(&EXTD1, GPIOE_MAG_INT);
   else
     extChannelDisable(&EXTD1, GPIOE_MAG_INT);
+#elif defined(BOARD_MNU)
+  (void)flag;
+#else
+#error "Unknown board"
+#endif
 }
 
 /**
@@ -170,10 +191,19 @@ void ExtiPnc::lsm303(bool flag){
  */
 void ExtiPnc::pps(bool flag){
   osalDbgCheck(ready);
+#if defined(BOARD_BEZVODIATEL)
   if (flag)
     extChannelEnable(&EXTD1, GPIOA_GPS_PPS);
   else
     extChannelDisable(&EXTD1, GPIOA_GPS_PPS);
+#elif defined(BOARD_MNU)
+  if (flag)
+    extChannelEnable(&EXTD1, GPIOB_UBLOX_PPS);
+  else
+    extChannelDisable(&EXTD1, GPIOB_UBLOX_PPS);
+#else
+#error "Unknown board"
+#endif
 }
 
 /**
@@ -181,8 +211,16 @@ void ExtiPnc::pps(bool flag){
  */
 void ExtiPnc::bmp085(bool flag) {
   osalDbgCheck(ready);
+#if defined(BOARD_BEZVODIATEL)
   if (flag)
     extChannelEnable(&EXTD1, GPIOE_BMP085_EOC);
   else
     extChannelDisable(&EXTD1, GPIOE_BMP085_EOC);
+#elif defined(BOARD_MNU)
+  (void)flag;
+#else
+#error "Unknown board"
+#endif
 }
+
+

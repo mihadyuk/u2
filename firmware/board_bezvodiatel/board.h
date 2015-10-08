@@ -20,17 +20,21 @@
 /*
  * Human readable aliases for different peripheral drivers.
  */
-#define I2CD_SLOW               I2CD1
-#define I2CD_FAST               I2CD2
+#define FRAM_I2CD               I2CD1
+#define BMP085_I2CD             I2CD1
+#define TMP75_I2CD              I2CD1
+
+#define MPU6050_I2CD            I2CD2
+#define LSM303_I2CD             I2CD2
 
 #define XBEESD                  SD3
+#define XBEE_BAUDRATE           115200
+#define XBEE_USE_CTS_RTS        TRUE
+
 #define GPSSD                   SD1
 
 #define ADIS_SPI                SPID1
 #define UEXT_SPI                SPID2
-
-#define XBEE_BAUDRATE           115200
-#define XBEE_USE_CTS_RTS        TRUE
 
 /*
  * Board identifier.

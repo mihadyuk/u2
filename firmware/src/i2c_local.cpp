@@ -39,6 +39,16 @@ static const I2CConfig i2cfg = {
  *
  */
 void I2CInitLocal(void){
-  i2cStart(&I2CD_FAST, &i2cfg);
-  i2cStart(&I2CD_SLOW, &i2cfg);
+
+#if defined(BOARD_BEZVODIATEL)
+  i2cStart(&I2CD1, &i2cfg);
+  i2cStart(&I2CD2, &i2cfg);
+#elif defined(BOARD_MNU)
+  i2cStart(&I2CD2, &i2cfg);
+  i2cStart(&I2CD3, &i2cfg);
+#else
+#error "Unknown board"
+#endif
 }
+
+

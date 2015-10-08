@@ -89,8 +89,8 @@ PROJECT = ch
 CHIBIOS = ../../ChibiOS-RT
 CHIBIOS_CONTRIB = $(CHIBIOS)/../ChibiOS-Contrib
 
-#include board_mnu/board.mk
-include board_bezvodiatel/board.mk
+include board_mnu/board.mk
+#include board_bezvodiatel/board.mk
 
 # Startup files.
 include $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC/mk/startup_stm32f4xx.mk
@@ -205,7 +205,7 @@ SENSORSRC = src/i2c_local.cpp \
 		src/sensors/mpxv.cpp \
 		src/sensors/pps.cpp \
 		src/sensors/calibrator.cpp \
-          
+
 CLISRC = src/cli/cli.cpp \
 		src/cli/cli_cmd.cpp \
 		src/param_cli.cpp \

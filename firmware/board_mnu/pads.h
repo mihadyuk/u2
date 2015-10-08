@@ -6,8 +6,14 @@
 static inline void nvram_power_on(void)       {palClearPad(GPIOH,   GPIOH_NVRAM_PWR);}
 static inline void nvram_power_off(void)      {palSetPad(GPIOH,     GPIOH_NVRAM_PWR);}
 
+static inline void adis_reset_assert(void)    {;}
+static inline void adis_reset_clear(void)     {;}
+
 static inline void mpu6050_power_on(void)     {palClearPad(GPIOH,   GPIOH_MPU6050_PWR);}
 static inline void mpu6050_power_off(void)    {palSetPad(GPIOH,     GPIOH_MPU6050_PWR);}
+
+static inline void microsd_power_on(void)    {palSetPad(GPIOG,   GPIOG_MMC_NRST);}
+static inline void microsd_power_off(void)   {palClearPad(GPIOG, GPIOG_MMC_NRST);}
 
 static inline void red_led_on(void)           {palSetPad(GPIOI,     GPIOI_LED_R);}
 static inline void red_led_off(void)          {palClearPad(GPIOI,   GPIOI_LED_R);}

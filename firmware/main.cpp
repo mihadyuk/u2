@@ -103,7 +103,7 @@ TlmSender tlm_sender;
 static LinkMgr link_mgr;
 MavLogger mav_logger;
 Marg marg;
-BMP085 bmp_085(&I2CD_SLOW, BMP085_I2C_ADDR);
+BMP085 bmp_085(&BMP085_I2CD, BMP085_I2C_ADDR);
 __CCM__ static baro_data_t abs_press;
 __CCM__ static MaxSonar maxsonar;
 __CCM__ static odometer_data_t odo_data;

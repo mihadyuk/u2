@@ -57,8 +57,15 @@ static const uint16_t supported_models[] = {16480};
  */
 static const SPIConfig spicfg = {
   NULL,
+#if defined(BOARD_BEZVODIATEL)
   GPIOA,
   GPIOA_ADIS_NSS,
+#elif defined(BOARD_MNU)
+  GPIOI,
+  GPIOI_ADIS_NSS,
+#else
+#error "Unknown board"
+#endif
   SPI_CR1_BR_1 | SPI_CR1_CPOL | SPI_CR1_CPHA | SPI_CR1_DFF // (84MHz/8, CPHA=1, CPOL=1, 16bit, MSb first).
 };
 

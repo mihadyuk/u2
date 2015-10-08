@@ -63,8 +63,7 @@ void __early_init(void) {
 bool sdc_lld_is_card_inserted(SDCDriver *sdcp) {
 
   (void)sdcp;
-  /* TODO: Fill the implementation.*/
-  return TRUE;
+  return false;
 }
 
 /**
@@ -73,8 +72,7 @@ bool sdc_lld_is_card_inserted(SDCDriver *sdcp) {
 bool sdc_lld_is_write_protected(SDCDriver *sdcp) {
 
   (void)sdcp;
-  /* TODO: Fill the implementation.*/
-  return FALSE;
+  return false;
 }
 #endif /* HAL_USE_SDC */
 
@@ -111,3 +109,18 @@ bool FPGAReady(void) {
   return PAL_LOW == palReadPad(GPIOC, GPIOC_FPGA_IO3);
 }
 
+#if HAL_USE_USB
+
+unsigned int usb_lld_plug_state(void) {
+  return palReadPad(GPIOA, GPIOA_USB_PRESENT);
+}
+
+void usb_lld_connect_bus_workaround(void) {
+  ;
+}
+
+void usb_lld_disconnect_bus_workaround(void) {
+  ;
+}
+
+#endif /* HAL_USE_USB */
