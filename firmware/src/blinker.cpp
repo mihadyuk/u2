@@ -158,19 +158,19 @@ static THD_FUNCTION(BootBlinkThread, arg) {
 
   while (!chThdShouldTerminateX()) {
     red_led_on();
-    blue_led_off();
+    warning_led_off();
     PAUSE();
 
     red_led_off();
-    blue_led_on();
+    warning_led_on();
     PAUSE();
 
-    blue_led_off();
+    warning_led_off();
     red_led_off();
     PAUSE();
   }
 
-  blue_led_off();
+  warning_led_off();
   red_led_off();
   chThdExit(MSG_OK);
 }

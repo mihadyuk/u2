@@ -19,6 +19,7 @@ public:
   void stop(void);
   void sleep(void);
   static void extiISR(EXTDriver *extp, expchannel_t channel);
+  static void vtimerISR(void *p);
 
 private:
   msg_t set_gain(uint8_t val);
@@ -26,6 +27,8 @@ private:
   msg_t start_single_measurement(void);
   msg_t get_prev_measurement(float *result, int16_t *result_raw);
   msg_t stop_sleep_code(void);
+  void enable_interrupts(void);
+  void disable_interrupts(void);
   void thermo_comp(float *result);
   void iron_comp(float *result);
   float mag_sens(void);

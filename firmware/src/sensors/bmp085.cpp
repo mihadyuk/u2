@@ -251,10 +251,6 @@ float BMP085::climb(float alt) {
  */
 BMP085::BMP085(I2CDriver* i2cdp, i2caddr_t addr):
 I2CSensor(i2cdp, addr)
-//measure_type(MEASURE_NONE),
-//up(0),  ut(0),
-//ac1(0), ac2(0), ac3(0), b1(0), b2(0), mb(0), mc(0), md(0),
-//ac4(0), ac5(0), ac6(0)
 {
   state = SENSOR_STATE_STOP;
 }

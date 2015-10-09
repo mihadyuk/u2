@@ -74,33 +74,69 @@ static void pps_cb(EXTDriver *extp, expchannel_t channel){
 /**
  *
  */
+#if defined(BOARD_BEZVODIATEL)
+
 static const EXTConfig extcfg = {
   {
     {EXT_CH_MODE_RISING_EDGE  | EXT_MODE_GPIOA, pps_cb},
     {EXT_CH_MODE_FALLING_EDGE | EXT_MODE_GPIOE, Adis::extiISR},
     {EXT_CH_MODE_DISABLED, NULL},
     {EXT_CH_MODE_RISING_EDGE  | EXT_MODE_GPIOE, MPU6050::extiISR},
-    {EXT_CH_MODE_RISING_EDGE  | EXT_MODE_GPIOE, BMP085::extiISR},//4
+    {EXT_CH_MODE_RISING_EDGE  | EXT_MODE_GPIOE, BMP085::extiISR},           //4
     {EXT_CH_MODE_FALLING_EDGE | EXT_MODE_GPIOE, LSM303_mag::extiISR},
     {EXT_CH_MODE_DISABLED, NULL},
     {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},//8
+    {EXT_CH_MODE_DISABLED, NULL},                                           //8
     {EXT_CH_MODE_DISABLED, NULL},
     {EXT_CH_MODE_DISABLED, NULL},
     {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},//12
+    {EXT_CH_MODE_DISABLED, NULL},                                           //12
     {EXT_CH_MODE_DISABLED, NULL},
     {EXT_CH_MODE_DISABLED, NULL},
     {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},//16
+    {EXT_CH_MODE_DISABLED, NULL},                                           //16
     {EXT_CH_MODE_RISING_EDGE, rtcalarm_cb},
     {EXT_CH_MODE_DISABLED, NULL},
     {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},                                           //20
     {EXT_CH_MODE_DISABLED, NULL},
     {EXT_CH_MODE_RISING_EDGE, rtcwakeup_cb},
   }
 };
+
+#elif defined(BOARD_MNU)
+
+static const EXTConfig extcfg = {
+  {
+    {EXT_CH_MODE_DISABLED, NULL},                                           //0
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},                                           //4
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_RISING_EDGE  | EXT_MODE_GPIOG, MPU6050::extiISR},
+    {EXT_CH_MODE_DISABLED, NULL},                                           //8
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_RISING_EDGE  | EXT_MODE_GPIOB, pps_cb},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},                                           //12
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},                                           //16
+    {EXT_CH_MODE_RISING_EDGE, rtcalarm_cb},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_DISABLED, NULL},                                           //20
+    {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_RISING_EDGE, rtcwakeup_cb},
+  }
+};
+#else
+#error "Unknown board"
+#endif
+
 
 /*
  *******************************************************************************

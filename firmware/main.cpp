@@ -103,14 +103,13 @@ TlmSender tlm_sender;
 static LinkMgr link_mgr;
 MavLogger mav_logger;
 Marg marg;
-BMP085 bmp_085(&BMP085_I2CD, BMP085_I2C_ADDR);
+//BMP085 bmp_085(&BMP085_I2CD, BMP085_I2C_ADDR);
 __CCM__ static baro_data_t abs_press;
 __CCM__ static MaxSonar maxsonar;
 __CCM__ static odometer_data_t odo_data;
 __CCM__ static Odometer odometer;
 __CCM__ static marg_data_t marg_data;
 __CCM__ static PPS pps;
-__CCM__ static MPXV mpxv;
 __CCM__ static Calibrator calibrator;
 __CCM__        gnss::uBlox GNSS(&GPSSD, 9600, 57600);
 __CCM__ control::HIL hil;
@@ -149,7 +148,7 @@ static void start_services(void) {
   mission_receiver.start(MISSIONRECVRPRIO);
   link_mgr.start();      /* launch after controller to reduce memory fragmentation on thread creation */
   tlm_sender.start();
-  bmp_085.start();
+  //bmp_085.start();
   GNSS.start();
   time_keeper.start();
   mav_logger.start(NORMALPRIO);
@@ -161,7 +160,6 @@ static void start_services(void) {
   wpdb.start();
   acs.start();
   pps.start();
-  mpxv.start();
   blinker.start();
   navi6d.start();
 }
@@ -176,7 +174,7 @@ static void stop_services(void) {
   mav_logger.stop();
   time_keeper.stop();
   GNSS.stop();
-  bmp_085.stop();
+  //bmp_085.stop();
   tlm_sender.stop();
   link_mgr.stop();
   mission_receiver.stop();
@@ -190,7 +188,14 @@ int main(void) {
   blinker.bootIndication();
 
   endianness_test();
+
+#if defined(BOARD_BEZVODIATEL)
   osalThreadSleepMilliseconds(300);
+#elif defined(BOARD_MNU)
+  while (!FPGAReady()) {;}
+#else
+#error "board unsupported"
+#endif
 
   /* enable softreset on panic */
   setGlobalFlag(GlobalFlags.allow_softreset);
@@ -232,8 +237,7 @@ int main(void) {
     marg.get(marg_data, MS2ST(200));
     odometer.update(odo_data, marg_data.dT);
     speedometer2acs_in(odo_data, acs_in);
-    mpxv.get();
-    bmp_085.get(abs_press);
+    //bmp_085.get(abs_press);
     baro2acs_in(abs_press, acs_in);
 
     if (MAV_STATE_CALIBRATING == mavlink_system_info_struct.state) {

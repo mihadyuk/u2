@@ -5,7 +5,7 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -O0 -ggdb -fomit-frame-pointer -falign-functions=16
+  USE_OPT = -O2 -ggdb -fomit-frame-pointer -falign-functions=16
 endif
 
 # C specific options here (added to USE_OPT).
@@ -202,9 +202,13 @@ SENSORSRC = src/i2c_local.cpp \
 		src/sensors/odometer.cpp \
 		src/sensors/adc_local.cpp \
 		src/sensors/pwr_mgr.cpp \
-		src/sensors/mpxv.cpp \
 		src/sensors/pps.cpp \
 		src/sensors/calibrator.cpp \
+
+
+#src/sensors/mpxv.cpp \
+
+
 
 CLISRC = src/cli/cli.cpp \
 		src/cli/cli_cmd.cpp \
@@ -315,7 +319,7 @@ AOPT =
 TOPT = -mthumb -DTHUMB
 
 # Common warning flags
-WARN = -Wall -Wextra -Wdouble-promotion -Wformat -Wundef #-Wconversion -Werror
+WARN = -Wall -Wextra -Wdouble-promotion -Wformat #-Wconversion -Werror
 
 # Define C warning options here
 CWARN = $(WARN) -Wstrict-prototypes

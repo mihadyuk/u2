@@ -104,7 +104,7 @@ void ACS::loop_active_navigate_mission(float dT) {
   switch (mi_status) {
   case MissionState::completed:
     this->nav_substate = NavigateSubstate::loiter;
-    blue_led_off();
+    warning_led_off();
     break;
 
   /**/
@@ -116,7 +116,7 @@ void ACS::loop_active_navigate_mission(float dT) {
   /**/
   case MissionState::navigate:
     stabilizer.update(dT, auto_bytecode);
-    blue_led_toggle();
+    warning_led_toggle();
     break;
 
   /**/
@@ -223,7 +223,7 @@ void ACS::loop_active_navigate_loiter(float dT) {
 void ACS::loop_active_navigate_land(float dT) {
   (void)dT;
 
-  blue_led_off();
+  warning_led_off();
   nav_substate = NavigateSubstate::mission;
   mavlink_system_info_struct.state = MAV_STATE_STANDBY;
 }
