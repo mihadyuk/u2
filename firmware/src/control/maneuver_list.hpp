@@ -6,6 +6,7 @@
 #include "matrix_math.hpp"
 #include "e_frame.hpp"
 #include "geometry.hpp"
+#include "pads.h"
 
 namespace control {
 namespace maneuver {
@@ -40,7 +41,7 @@ void updateMnrCircle(ManeuverPart<T> &part,
                      T radius,
                      T (&prevNE)[2][1],
                      T (&trgtNE)[2][1]) {
-  size_t partsCount = static_cast<size_t>(round(turns)*2 + 2);
+  size_t partsCount = static_cast<size_t>(round(turns))*2 + 2;
 
   T lineVector[2][1];
   m_minus<T, 2, 1>(lineVector, prevNE, trgtNE);
@@ -64,10 +65,15 @@ void updateMnrCircle(ManeuverPart<T> &part,
     part.arc.deltaCourse = M_PI;
 
     size_t semiCircleNumber = partNumber % 2;
-    if (0 == semiCircleNumber)
+    if (1 == semiCircleNumber) {
       part.arc.startCourse = lineCourse;
-    else
+
+      red_led_toggle();
+    } else {
       part.arc.startCourse = wrap_2pi(lineCourse + static_cast<T>(M_PI));
+
+      green_led_toggle();
+    }
 
   } else if (0 == partNumber) {
     /* line from previous waypoint to the circle's border */
@@ -77,6 +83,8 @@ void updateMnrCircle(ManeuverPart<T> &part,
     m_mul_s<T, 2, 1>(normedLineVector, normedLineVector, fabs(radius));
     m_plus<T, 2, 1>(part.line.finish, trgtNE, normedLineVector);
 
+    blue_led_toggle();
+
   } else if ((partsCount - 1) == partNumber) {
     /* line from the circle's border to the circle's center */
     part.type = ManeuverPartType::line;
@@ -84,6 +92,8 @@ void updateMnrCircle(ManeuverPart<T> &part,
     m_copy<T, 2, 1>(part.line.finish, trgtNE);
     m_mul_s<T, 2, 1>(normedLineVector, normedLineVector, fabs(radius));
     m_plus<T, 2, 1>(part.line.start, trgtNE, normedLineVector);
+
+    blue_led_toggle();
 
   } else {
     part.type = ManeuverPartType::unknown;
