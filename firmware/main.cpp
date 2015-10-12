@@ -59,7 +59,6 @@ Giovanni
 #include "exti_local.hpp"
 #include "marg.hpp"
 #include "mav_logger.hpp"
-#include "adc_local.hpp"
 #include "pwr_mgr.hpp"
 #include "fir_test.hpp"
 #include "maxsonar.hpp"
@@ -70,6 +69,7 @@ Giovanni
 #include "hil.hpp"
 #include "navi6d_wrapper.hpp"
 #include "ahrs_starlino.hpp"
+#include "adc_local.hpp"
 
 using namespace chibios_rt;
 
@@ -119,6 +119,7 @@ __CCM__ static AHRSStarlino ahrs_starlino;
 __CCM__ static Navi6dWrapper navi6d(acs_in, GNSS);
 #endif
 __CCM__ static TimeKeeper time_keeper(GNSS);
+ADCLocal ADCLocal;
 
 /**
  * C++11 stub for std::function
@@ -205,7 +206,7 @@ int main(void) {
     osalThreadSleepMilliseconds(200);
 
   /* give power to all needys */
-  ADCInitLocal();
+  ADCLocal.start();
   gps_power_on();
   //xbee_reset_clear();
   nvram_power_on();
@@ -256,6 +257,7 @@ int main(void) {
   stop_services();
 
 DEATH:
+  ADCLocal.stop();
   blinker.stop();
   gps_power_off();
   xbee_reset_assert();

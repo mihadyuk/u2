@@ -201,14 +201,8 @@ SENSORSRC = src/i2c_local.cpp \
 		src/sensors/maxsonar.cpp \
 		src/sensors/odometer.cpp \
 		src/sensors/adc_local.cpp \
-		src/sensors/pwr_mgr.cpp \
 		src/sensors/pps.cpp \
 		src/sensors/calibrator.cpp \
-
-
-#src/sensors/mpxv.cpp \
-
-
 
 CLISRC = src/cli/cli.cpp \
 		src/cli/cli_cmd.cpp \

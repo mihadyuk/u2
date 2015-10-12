@@ -17,6 +17,8 @@
 extern mavlink_sys_status_t   mavlink_out_sys_status_struct;
 extern mavlink_system_info_t  mavlink_system_info_struct;
 
+extern ADCLocal ADCLocal;
+
 /*
  ******************************************************************************
  * DEFINES
@@ -146,10 +148,10 @@ void PwrMgrInit(void){
 bool PwrMgr6vGood(void) {
   const int32_t len = 16;
   int32_t tmp;
-  filters::AlphaBeta<int32_t, len> voltage_filter(ADCget6v());
+  filters::AlphaBeta<int32_t, len> voltage_filter(ADCLocal.get6v());
 
   for (size_t i=0; i<len*2; i++) {
-    tmp = voltage_filter(ADCget6v());
+    tmp = voltage_filter(ADCLocal.get6v());
     osalThreadSleepMilliseconds(1);
   }
 
@@ -163,7 +165,7 @@ main_battery_state PwrMgrMainBatteryStartCheck(void) {
   int32_t mv;
 
   for (size_t i=0; i<256; i++) {
-    mv = comp_main_voltage(ADCgetMainVoltage());
+    mv = comp_main_voltage(ADCLocal.getMainVoltage());
   }
 
   return translate_voltage(mv);
@@ -173,10 +175,10 @@ main_battery_state PwrMgrMainBatteryStartCheck(void) {
  * Process ADC data.
  */
 main_battery_state PwrMgrUpdate(void) {
-  uint32_t main_current = get_comp_main_current(ADCgetCurrent());
+  uint32_t main_current = get_comp_main_current(ADCLocal.getCurrent());
   (void)main_current;
 
-  uint16_t mv = comp_main_voltage(ADCgetMainVoltage());
+  uint16_t mv = comp_main_voltage(ADCLocal.getMainVoltage());
 
   mavlink_out_sys_status_struct.current_battery = -1;
   mavlink_out_sys_status_struct.voltage_battery = mv;

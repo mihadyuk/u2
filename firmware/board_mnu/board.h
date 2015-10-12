@@ -49,7 +49,7 @@
 #define XBEE_BAUDRATE               115200
 #define XBEE_USE_CTS_RTS            TRUE
 
-#define ADIS_SPI                    SPID1 // fake spi port for debug only
+#define ADIS_SPI                    SPID1 // fake spi port for compileability only
 
 /*
  * Board voltages.

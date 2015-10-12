@@ -38,7 +38,9 @@ typedef enum {
 
 /* update period for boards without hardware interrupt line from LSM303
  * to EXTI controller */
-#define LSM303_UPDATE_PERIOD    MS2ST(10)
+#if defined(BOARD_MNU)
+  #define LSM303_UPDATE_PERIOD    MS2ST(10)
+#endif
 
 /*
  ******************************************************************************
@@ -71,7 +73,9 @@ static const float mag_sens_array[8] = {
 
 static bool mag_data_fresh = true;
 
-static virtual_timer_t lsm303_vtp;
+#if defined(BOARD_MNU)
+  static virtual_timer_t lsm303_vtp;
+#endif
 
 /*
  ******************************************************************************
@@ -87,10 +91,12 @@ static virtual_timer_t lsm303_vtp;
 void LSM303_mag::vtimerISR(void *p) {
   (void)p;
 
+#if defined(BOARD_MNU)
   osalSysLockFromISR();
   chVTSetI(&lsm303_vtp, LSM303_UPDATE_PERIOD, vtimerISR, nullptr);
   mag_data_fresh = true;
   osalSysUnlockFromISR();
+#endif
 }
 
 /**
