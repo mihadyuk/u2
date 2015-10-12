@@ -25,7 +25,7 @@
 //#define LEAD_ACID_LOW           1920 // mV
 //#define LEAD_ACID_CRITICAL      1750 // mV
 
-#define MAIN_VOLTAGE_IGNORE       400  // mV, sensor not connected at all
+#define MAIN_VOLTAGE_IGNORE       1000  // mV, sensor not connected at all
 
 /**
  * @brief   Battery chemistry supported types
