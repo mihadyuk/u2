@@ -111,7 +111,13 @@ __CCM__ static Odometer odometer;
 __CCM__ static marg_data_t marg_data;
 __CCM__ static PPS pps;
 __CCM__ static Calibrator calibrator;
-__CCM__        gnss::uBlox GNSS(&GPSSD, 9600, 57600);
+#if defined(BOARD_BEZVODIATEL)
+__CCM__ gnss::uBlox GNSS(&GPSSD, 9600, 57600);
+#elif defined(BOARD_MNU)
+__CCM__ gnss::mtkgps GNSS(&GPSSD, 9600, 57600);
+#else
+#error "board unsupported"
+#endif
 __CCM__ control::HIL hil;
 #if USE_STARLINO_AHRS
 __CCM__ static AHRSStarlino ahrs_starlino;
@@ -184,6 +190,40 @@ static void stop_services(void) {
   mission_receiver.stop();
 }
 
+#if defined(BOARD_MNU)
+
+enum GNSSReceiver {
+  navi = 0,
+  navi_nmea,
+  it530,
+  unused,
+};
+
+static void gnss_select(GNSSReceiver receiver) {
+  switch(receiver) {
+  case GNSSReceiver::navi:
+    palClearPad(GPIOB, GPIOB_FPGA_IO1);
+    palClearPad(GPIOB, GPIOB_FPGA_IO2);
+    break;
+  case GNSSReceiver::navi_nmea:
+    palSetPad(GPIOB, GPIOB_FPGA_IO1);
+    palClearPad(GPIOB, GPIOB_FPGA_IO2);
+    break;
+  case GNSSReceiver::it530:
+    palClearPad(GPIOB, GPIOB_FPGA_IO1);
+    palSetPad(GPIOB, GPIOB_FPGA_IO2);
+    break;
+  case GNSSReceiver::unused:
+    palSetPad(GPIOB, GPIOB_FPGA_IO1);
+    palSetPad(GPIOB, GPIOB_FPGA_IO2);
+    break;
+  }
+}
+#endif // defined(BOARD_MNU)
+
+/**
+ *
+ */
 int main(void) {
 
   halInit();
@@ -210,7 +250,15 @@ int main(void) {
 
   /* give power to all needys */
   adc_local.start();
+
+#if defined(BOARD_BEZVODIATEL)
   gps_power_on();
+#elif defined(BOARD_MNU)
+  gnss_select(it530);
+#else
+#error "board unsupported"
+#endif
+
   //xbee_reset_clear();
   nvram_power_on();
   osalThreadSleepMilliseconds(10);
