@@ -1,6 +1,8 @@
 #ifndef ADC_LOCAL_HPP_
 #define ADC_LOCAL_HPP_
 
+#include "alpha_beta.hpp"
+
 class ADCLocal {
 public:
   void start(void);

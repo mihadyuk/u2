@@ -5,17 +5,18 @@
 
 class PowerMonitor {
 public:
-  void PowerMonitor(void);
+  PowerMonitor(ADCLocal &adc);
   void start(void);
   void stop(void);
   void update(power_monitor_data_t &result);
+  void warmup_filters(power_monitor_data_t &result);
 private:
-  main_battery_health translate_voltage(uint16_t mv);
-  uint16_t comp_main_voltage(uint16_t raw);
-  uint16_t comp_secondary_voltage(uint16_t raw);
+  uint32_t adc2millivolts(adcsample_t raw_p, adcsample_t raw_n);
+  main_battery_health millivolts2healt(uint32_t mv);
   bool ready = false;
+  ADCLocal &adc;
   uint32_t const *cells, *chemistry;
-  uint32_t const *adc_sv_gain, *adc_mv_gain;
+  uint32_t const *second_v, *main_v;
 };
 
 #endif /* POWER_MONITOR_HPP_ */

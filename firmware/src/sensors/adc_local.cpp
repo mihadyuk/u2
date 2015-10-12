@@ -17,18 +17,7 @@
  ******************************************************************************
  */
 #define ADC_NUM_CHANNELS          16
-#define ADC_BUF_DEPTH             8
-
-
-/* human readable names */
-#define ADC_PRESS_DIFF_CH         ADC_CHANNEL_IN10
-#define ADC_MPXV_TEMP_CH          ADC_CHANNEL_IN11
-#define ADC_CURRENT_SENS_CH       ADC_CHANNEL_IN12
-#define ADC_MAIN_SUPPLY_CH        ADC_CHANNEL_IN13
-#define ADC_6V_SUPPLY_CH          ADC_CHANNEL_IN14
-#define ADC_RESERVED_CH           ADC_CHANNEL_IN15
-
-#define CHANNEL_OFFSET            10
+#define ADC_BUF_DEPTH             16
 
 /*
  ******************************************************************************
@@ -96,10 +85,6 @@ static const ADCConversionGroup adccg = {
     ADC_SQR3_SQ1_N(ADC_CHANNEL_IN0)
 };
 
-static filters::AlphaBeta<int32_t, 128> temp_filter;
-static filters::AlphaBeta<int32_t, 128> mpxv_filter;
-static filters::AlphaBeta<int32_t, 128> main_supply_filter;
-
 /*
  *******************************************************************************
  *******************************************************************************
@@ -124,20 +109,6 @@ static void adc_eeror_cb(ADCDriver *adcp, adcerror_t err) {
   (void)err;
 
   errors++;
-}
-
-/**
- *
- */
-static adcsample_t do_filter(size_t offset, filters::AlphaBetaBase<int32_t> &filter) {
-  size_t idx;
-
-  for (size_t i=0; i<ADC_BUF_DEPTH; i++) {
-    idx = i * ADC_NUM_CHANNELS + offset;
-    filter(samples[idx]);
-  }
-
-  return filter.get();
 }
 
 /*
@@ -190,7 +161,3 @@ adcsample_t ADCLocal::getChannel(size_t N, filters::AlphaBetaBase<int32_t> &filt
 adcsample_t ADCLocal::getChannel(size_t N) {
   return samples[N];
 }
-
-
-
-

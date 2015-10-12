@@ -59,7 +59,8 @@ Giovanni
 #include "exti_local.hpp"
 #include "marg.hpp"
 #include "mav_logger.hpp"
-#include "pwr_mgr.hpp"
+#include "adc_local.hpp"
+#include "power_monitor.hpp"
 #include "fir_test.hpp"
 #include "maxsonar.hpp"
 #include "pps.hpp"
@@ -69,7 +70,6 @@ Giovanni
 #include "hil.hpp"
 #include "navi6d_wrapper.hpp"
 #include "ahrs_starlino.hpp"
-#include "adc_local.hpp"
 
 using namespace chibios_rt;
 
@@ -119,7 +119,8 @@ __CCM__ static AHRSStarlino ahrs_starlino;
 __CCM__ static Navi6dWrapper navi6d(acs_in, GNSS);
 #endif
 __CCM__ static TimeKeeper time_keeper(GNSS);
-ADCLocal ADCLocal;
+ADCLocal adc_local;
+PowerMonitor power_monitor(adc_local);
 
 /**
  * C++11 stub for std::function
@@ -135,6 +136,8 @@ void std::__throw_bad_function_call(void) {
  * GLOBAL VARIABLES
  ******************************************************************************
  */
+
+static power_monitor_data_t power_monitor_data;
 
 /*
  *******************************************************************************
@@ -206,7 +209,7 @@ int main(void) {
     osalThreadSleepMilliseconds(200);
 
   /* give power to all needys */
-  ADCLocal.start();
+  adc_local.start();
   gps_power_on();
   //xbee_reset_clear();
   nvram_power_on();
@@ -221,18 +224,21 @@ int main(void) {
   ParametersInit();   /* read parameters from EEPROM via I2C */
   SanityControlInit();
 
-  PwrMgrInit();
-  if (main_battery_state::GOOD != PwrMgrMainBatteryStartCheck())
+  power_monitor.start();
+  power_monitor.warmup_filters(power_monitor_data);
+  if (main_battery_health::GOOD != power_monitor_data.health)
     goto DEATH;
+#if defined(BOARD_BEZVODIATEL)
   if (PwrMgr6vGood())
     pwr5v_power_on();
+#endif
 
   start_services();
 
   mavlink_system_info_struct.state = MAV_STATE_STANDBY;
   while (true) {
-    main_battery_state mbs = PwrMgrUpdate();
-    if (main_battery_state::CRITICAL == mbs)
+    power_monitor.update(power_monitor_data);
+    if (main_battery_health::CRITICAL == power_monitor_data.health)
       break; // break main cycle
 
     marg.get(marg_data, MS2ST(200));
@@ -250,14 +256,14 @@ int main(void) {
       navi6d.update(abs_press, odo_data, marg_data);
       hil.update(acs_in); /* must be called _before_ ACS */
       acs_input2mavlink(acs_in);
-      acs.update(marg_data.dT, mbs);
+      acs.update(marg_data.dT, power_monitor_data.health);
     }
   }
 
   stop_services();
 
 DEATH:
-  ADCLocal.stop();
+  adc_local.stop();
   blinker.stop();
   gps_power_off();
   xbee_reset_assert();

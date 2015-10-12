@@ -14,11 +14,14 @@ enum class main_battery_health {
  *
  */
 struct power_monitor_data_t {
-  float main_voltage;       // V
-  float secondary_voltage;  // V
-  float main_current;       // A
-  float consumed_power;     // Ah
+  float main_voltage;         // V
+  float second_voltage;       // V
+  float main_current;         // A
+  float second_current;       // A
+  float consumed_power;       // Ah
+  float cell_voltage[8];      // V
   main_battery_health health;
+  uint32_t presence_vector;
 };
 
 #endif /* POWER_MONITOR_DATA_HPP_ */
