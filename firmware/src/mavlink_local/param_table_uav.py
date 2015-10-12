@@ -135,16 +135,16 @@ param = [
 ("ADC_car_I_k",     -1000000,   0,          1000000,    "i", "default",     "k coefficient for calculation from ADC values to uA using formulae y=kx+b\\nfor ground rover"),
 ("ADC_car_I_b",     -1000000,   0,          1000000,    "i", "default",     "b coefficient for calculation from ADC values to uA using formulae y=kx+b\\nfor ground rover"),
 #// secondary voltage. на столько надо умножить, чтобы получить uV
-("ADC_SV_gain",     0,          0,          122400,     "u", "default",     "NULL"),
+("ADC_second_v",    0,          0,          122400,     "u", "default",     "Multiplier for achieving uV from raw ADC value"),
 #// main voltage. на столько надо умножить, чтобы получить uV
-("ADC_MV_gain",     0,          0,          122400,     "u", "default",     "NULL"),
+("ADC_main_v",      0,          0,          122400,     "u", "default",     "Multiplier for achieving uV from raw ADC value"),
 ("ADC_plane_I_k",   -1000000,   0,          1000000,    "i", "default",     "k coefficient for calculation from ADC values to uA using formulae y=kx+b\\nfor fixed wing"),
 ("ADC_plane_I_b",   -1000000,   0,          1000000,    "i", "default",     "b coefficient for calculation from ADC values to uA using formulae y=kx+b\\nfor fixed wing"),
 ("ADC_mpxv_shift",  0,          128,        255,        "u", "default",     "Offset cancelation. Uses AD5200."),
 
 #/**** Bttery parameters ****/
-("BAT_cap",         0,          3000,       11000,      "u", "default",     "Battery capacitance (mAh)"),
-("BAT_fill",        0,          0,          100,        "u", "default",     "Start battery filling in percents"),
+("BAT_cells",       1,          2,          8,          "u", "default",     "Battery cell count"),
+("BAT_chemistry",   0,          0,          1,          "u", "default",     "Battery chemistry type for critical threshold calculation"),
 
 # Fusion algorithm settings
 ("SINS_restart",    0,          1,          0xFFFF,     "u", "default",     "Change this value to enforce sins restart"),

@@ -191,7 +191,6 @@ static void stop_services(void) {
 }
 
 #if defined(BOARD_MNU)
-
 enum GNSSReceiver {
   navi = 0,
   navi_nmea,
@@ -236,7 +235,9 @@ int main(void) {
 #if defined(BOARD_BEZVODIATEL)
   osalThreadSleepMilliseconds(300);
 #elif defined(BOARD_MNU)
-  while (!FPGAReady()) {;}
+  while (! FPGAReady()) {
+    osalThreadSleepMilliseconds(10);
+  }
 #else
 #error "board unsupported"
 #endif

@@ -1,5 +1,6 @@
 #include "main.h"
 
+#include "mavlink_local.hpp"
 #include "adc_local.hpp"
 #include "power_monitor.hpp"
 #include "param_registry.hpp"
@@ -9,6 +10,8 @@
  * EXTERNS
  ******************************************************************************
  */
+
+extern mavlink_sys_status_t   mavlink_out_sys_status_struct;
 
 /*
  ******************************************************************************
@@ -56,7 +59,9 @@ typedef enum {
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-
+/*
+ * voltage constrains (mV per cell)
+ */
 static const uint32_t voltage_constrains[BAT_CHEMISTRY_ENUM_END][2] = {
     {3400, 3250},   // LiPo
     {1920, 1750}    // Lead acid
@@ -102,9 +107,9 @@ main_battery_health PowerMonitor::millivolts2healt(uint32_t mv) {
     return main_battery_health::GOOD;
   }
   else {
-    if (voltage_constrains[*chemistry][1] < cell_mv)
+    if (cell_mv < voltage_constrains[*chemistry][1])
       return main_battery_health::CRITICAL;
-    else if (voltage_constrains[*chemistry][0] < cell_mv)
+    else if (cell_mv < voltage_constrains[*chemistry][0])
       return main_battery_health::LOW;
     else
       return main_battery_health::GOOD;
@@ -161,6 +166,9 @@ void PowerMonitor::update(power_monitor_data_t &result) {
 
   result.health = millivolts2healt(mV);
   result.main_voltage = mV / 1000.0f;
+
+  mavlink_out_sys_status_struct.current_battery = -1;
+  mavlink_out_sys_status_struct.voltage_battery = mV;
 }
 
 /**

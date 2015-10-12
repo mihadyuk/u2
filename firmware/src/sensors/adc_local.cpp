@@ -134,6 +134,7 @@ void ADCLocal::start(void) {
 void ADCLocal::stop(void) {
   (void)adc_cb;
 
+  adcStopConversion(&ADCD1);
   adcStop(&ADCD1);
 
   ready = true;
