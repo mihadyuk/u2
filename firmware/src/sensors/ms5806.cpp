@@ -51,6 +51,38 @@ extern mavlink_vfr_hud_t          mavlink_out_vfr_hud_struct;
  */
 
 /**
+ * @brief   CRC calculator copypasted from app note.
+ */
+unsigned char MS5806::crc4(uint16_t n_prom[]) {
+  int cnt; // simple counter unsigned
+  int n_rem; // crc reminder unsigned
+  int crc_read; // original value of the crc
+  unsigned char n_bit;
+
+  n_rem = 0x00;
+  crc_read=n_prom[7]; //save read CRC
+  n_prom[7]=(0xFF00 & (n_prom[7])); //CRC byte is replaced by 0
+
+  for (cnt = 0; cnt < 16; cnt++){  // operation is performed on bytes
+    // choose LSB or MSB
+    if (cnt%2==1) n_rem ^= (unsigned short) ((n_prom[cnt>>1]) & 0x00FF);
+    else n_rem ^= (unsigned short) (n_prom[cnt>>1]>>8);
+
+    for (n_bit = 8; n_bit > 0; n_bit--) {
+      if (n_rem & (0x8000)) { n_rem = (n_rem << 1) ^ 0x3000;
+      }
+      else {
+        n_rem = (n_rem << 1);
+      }
+    }
+  }
+
+  n_rem= (0x000F & (n_rem >> 12)); // // final 4-bit reminder is CRC code
+  n_prom[7]=crc_read; // restore the crc_read to its original place
+  return (n_rem ^ 0x00);
+}
+
+/**
  * Calculate compensated pressure value using black magic from datasheet.
  */
 void MS5806::calc_pressure(baro_abs_data_t &result) {
@@ -125,6 +157,7 @@ bool MS5806::acquire_data(uint8_t *rxbuf) {
  */
 bool MS5806::hw_init_full(void) {
   msg_t status;
+  uint8_t my_crc;
 
   for (size_t i=0; i<MS5806_CAL_WORDS; i++) {
     txbuf[0] = CMD_PROM_RD;
@@ -134,6 +167,8 @@ bool MS5806::hw_init_full(void) {
   }
 
   toggle_endiannes16((uint8_t *)C, sizeof(C));
+  my_crc = crc4(C);
+  osalDbgCheck(my_crc == (C[7] & 0xF));
 
   return OSAL_SUCCESS;
 }
