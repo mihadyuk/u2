@@ -88,8 +88,8 @@ msg_t I2CSensor::transmit(const uint8_t *txbuf, size_t txbytes,
   i2cAcquireBus(this->i2cdp);
   status = i2cMasterTransmitTimeout(this->i2cdp, this->addr,
               txbuf, txbytes, rxbuf, rxbytes, calc_timeout(txbytes, rxbytes));
-  i2cReleaseBus(this->i2cdp);
   error_handler(status);
+  i2cReleaseBus(this->i2cdp);
 
   return status;
 }
@@ -104,8 +104,8 @@ msg_t I2CSensor::receive(uint8_t *rxbuf, size_t rxbytes){
   i2cAcquireBus(this->i2cdp);
   status = i2cMasterReceiveTimeout(this->i2cdp, this->addr,
                           rxbuf, rxbytes, calc_timeout(0, rxbytes));
-  i2cReleaseBus(this->i2cdp);
   error_handler(status);
+  i2cReleaseBus(this->i2cdp);
 
   return status;
 }

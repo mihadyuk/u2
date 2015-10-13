@@ -70,6 +70,7 @@ Giovanni
 #include "hil.hpp"
 #include "navi6d_wrapper.hpp"
 #include "ahrs_starlino.hpp"
+#include "ms5806.hpp"
 
 using namespace chibios_rt;
 
@@ -80,7 +81,9 @@ using namespace chibios_rt;
  * EXTERNS
  ******************************************************************************
  */
+
 extern mavlink_system_info_t   mavlink_system_info_struct;
+extern mavlink_system_time_t   mavlink_out_system_time_struct;
 
 /* reset all global flags */
 GlobalFlags_t GlobalFlags = {0,0,0,0,0,0,0,0,
@@ -103,6 +106,7 @@ TlmSender tlm_sender;
 static LinkMgr link_mgr;
 MavLogger mav_logger;
 Marg marg;
+MS5806 ms5806(&MS5806_I2CD, ms5806addr);
 //BMP085 bmp_085(&BMP085_I2CD, BMP085_I2C_ADDR);
 __CCM__ static baro_data_t abs_press;
 __CCM__ static MaxSonar maxsonar;
@@ -111,6 +115,7 @@ __CCM__ static Odometer odometer;
 __CCM__ static marg_data_t marg_data;
 __CCM__ static PPS pps;
 __CCM__ static Calibrator calibrator;
+__CCM__ static power_monitor_data_t power_monitor_data;
 #if defined(BOARD_BEZVODIATEL)
 __CCM__ gnss::uBlox GNSS(&GPSSD, 9600, 57600);
 #elif defined(BOARD_MNU)
@@ -143,8 +148,6 @@ void std::__throw_bad_function_call(void) {
  ******************************************************************************
  */
 
-static power_monitor_data_t power_monitor_data;
-
 /*
  *******************************************************************************
  *******************************************************************************
@@ -159,6 +162,7 @@ static void start_services(void) {
   link_mgr.start();      /* launch after controller to reduce memory fragmentation on thread creation */
   tlm_sender.start();
   //bmp_085.start();
+  ms5806.start();
   GNSS.start();
   time_keeper.start();
   mav_logger.start(NORMALPRIO);
@@ -185,6 +189,7 @@ static void stop_services(void) {
   time_keeper.stop();
   GNSS.stop();
   //bmp_085.stop();
+  ms5806.stop();
   tlm_sender.stop();
   link_mgr.stop();
   mission_receiver.stop();
@@ -249,7 +254,6 @@ int main(void) {
   else
     osalThreadSleepMilliseconds(200);
 
-  /* give power to all needys */
   adc_local.start();
 
 #if defined(BOARD_BEZVODIATEL)
@@ -260,6 +264,7 @@ int main(void) {
 #error "board unsupported"
 #endif
 
+  /* give power to all needys */
   //xbee_reset_clear();
   nvram_power_on();
   osalThreadSleepMilliseconds(10);
@@ -286,6 +291,10 @@ int main(void) {
 
   mavlink_system_info_struct.state = MAV_STATE_STANDBY;
   while (true) {
+
+    mavlink_out_system_time_struct.time_boot_ms = TIME_BOOT_MS;
+    mavlink_out_system_time_struct.time_unix_usec = TimeKeeper::utc();
+
     power_monitor.update(power_monitor_data);
     if (main_battery_health::CRITICAL == power_monitor_data.health)
       break; // break main cycle
@@ -294,6 +303,7 @@ int main(void) {
     odometer.update(odo_data, marg_data.dT);
     speedometer2acs_in(odo_data, acs_in);
     //bmp_085.get(abs_press);
+    ms5806.get(abs_press);
     baro2acs_in(abs_press, acs_in);
 
     if (MAV_STATE_CALIBRATING == mavlink_system_info_struct.state) {

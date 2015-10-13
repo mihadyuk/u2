@@ -42,6 +42,7 @@
 
 #define MPU6050_I2CD                I2CD3
 #define LSM303_I2CD                 I2CD3
+#define MS5806_I2CD                 I2CD3
 
 #define GPSSD                       SD2
 
