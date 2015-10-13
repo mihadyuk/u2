@@ -492,6 +492,7 @@ param = [
 ("T_scal_imu",      SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 ("T_scal_press",    SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 ("T_sys_status",    SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
+("T_system_time",   SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 ("T_vfr_hud",       SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 
 #/* Timezone. */
