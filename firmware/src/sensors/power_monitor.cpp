@@ -23,7 +23,7 @@ extern mavlink_sys_status_t   mavlink_out_sys_status_struct;
 #define ADC_MAIN_VOLTAGE_N_CHANNEL    ADC_CHANNEL_IN11
 
 //#define LIPO_LOW                3400 // mV
-//#define LIPO_CRITICAL           3250 // mV
+//#define LIPO_CRITICAL           3200 // mV
 //
 //#define LEAD_ACID_LOW           1920 // mV
 //#define LEAD_ACID_CRITICAL      1750 // mV
@@ -63,7 +63,7 @@ typedef enum {
  * voltage constrains (mV per cell)
  */
 static const uint32_t voltage_constrains[BAT_CHEMISTRY_ENUM_END][2] = {
-    {3400, 3250},   // LiPo
+    {3400, 3200},   // LiPo
     {1920, 1750}    // Lead acid
 };
 

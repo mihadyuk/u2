@@ -114,7 +114,7 @@ __CCM__ static Calibrator calibrator;
 #if defined(BOARD_BEZVODIATEL)
 __CCM__ gnss::uBlox GNSS(&GPSSD, 9600, 57600);
 #elif defined(BOARD_MNU)
-__CCM__ gnss::mtkgps GNSS(&GPSSD, 9600, 57600);
+__CCM__ gnss::mtkgps GNSS(&GPSSD, 115200, 115200);
 #else
 #error "board unsupported"
 #endif
