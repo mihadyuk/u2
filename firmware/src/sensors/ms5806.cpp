@@ -1,6 +1,9 @@
 #include <cstring>
+#include <cmath>
 
 #include "main.h"
+#include "pack_unpack.h"
+#include "mavlink_local.hpp"
 
 #include "ms5806.hpp"
 
@@ -22,14 +25,16 @@
 #define CMD_ADC_4096    0x08 // ADC OSR=4096
 #define CMD_PROM_RD     0xA0 // Prom read command
 
-#define PRESS_CONV_TIME_MS      10
-#define TEMP_CONV_TIME_MS       10
+#define PRESS_CONV_TIME      MS2ST(10)
+#define TEMP_CONV_TIME       MS2ST(10)
 
 /*
  ******************************************************************************
  * EXTERNS
  ******************************************************************************
  */
+extern mavlink_scaled_pressure_t  mavlink_out_scaled_pressure_struct;
+extern mavlink_vfr_hud_t          mavlink_out_vfr_hud_struct;
 
 /*
  ******************************************************************************
@@ -47,22 +52,33 @@
 
 /**
  * Calculate compensated pressure value using black magic from datasheet.
- *
- * @ut[in]    uncompensated temperature value.
- * @up[in]    uncompensated pressure value.
- *
- * @return    compensated pressure in Pascals.
  */
-void MS5806::calc_pressure(void) {
+void MS5806::calc_pressure(baro_abs_data_t &result) {
+  int64_t D1; // P
+  int64_t D2; // T
 
-}
+  int64_t dT;
+  int64_t temp;
+  int64_t off;
+  int64_t sens;
+  int64_t P;
 
-/**
- *
- */
-void MS5806::pickle(baro_data_t &result) {
 
- (void)result;
+  D1 = rxbuf_p[0] * 65536 + rxbuf_p[1] * 256 + rxbuf_p[2];
+  D2 = rxbuf_t[0] * 65536 + rxbuf_t[1] * 256 + rxbuf_t[2];
+
+  dT = D2 - (int32_t)C[5] * (1<<8);
+  temp = 2000 + dT*C[6] / (1<<23);
+
+  off  = (int64_t)C[2] * (1<<17) + C[4]*dT / (1<<6);
+  sens = (int64_t)C[1] * (1<<16) + C[3]*dT / (1<<7);
+  P = ((D1 * sens) / (1<<21) - off) / (1<<15);
+
+  result.temperature = temp / 100.0;
+  result.P = P;
+  result.delta = P - Pprev;
+  result.dT = 0.02;
+  Pprev = P;
 }
 
 /**
@@ -70,9 +86,9 @@ void MS5806::pickle(baro_data_t &result) {
  */
 bool MS5806::start_t_measurement(void) {
 
-  uint8_t cmd = CMD_ADC_CONV | CMD_ADC_D2 | CMD_ADC_4096;
+  txbuf[0] = CMD_ADC_CONV | CMD_ADC_D2 | CMD_ADC_4096;
 
-  if (MSG_OK != transmit(&cmd, 1, nullptr, 0))
+  if (MSG_OK != transmit(txbuf, 1, nullptr, 0))
     return OSAL_FAILED;
   else
     return OSAL_SUCCESS;
@@ -83,9 +99,9 @@ bool MS5806::start_t_measurement(void) {
  */
 bool MS5806::start_p_measurement(void) {
 
-  uint8_t cmd = CMD_ADC_CONV | CMD_ADC_D1 | CMD_ADC_4096;
+  txbuf[0] = CMD_ADC_CONV | CMD_ADC_D1 | CMD_ADC_4096;
 
-  if (MSG_OK != transmit(&cmd, 1, nullptr, 0))
+  if (MSG_OK != transmit(txbuf, 1, nullptr, 0))
     return OSAL_FAILED;
   else
     return OSAL_SUCCESS;
@@ -96,9 +112,9 @@ bool MS5806::start_p_measurement(void) {
  */
 bool MS5806::acquire_data(uint8_t *rxbuf) {
 
-  uint8_t cmd = CMD_ADC_READ;
+  txbuf[0] = CMD_ADC_READ;
 
-  if (MSG_OK != transmit(&cmd, 1, rxbuf, 3))
+  if (MSG_OK != transmit(txbuf, 1, rxbuf, 3))
     return OSAL_FAILED;
   else
     return OSAL_SUCCESS;
@@ -108,15 +124,16 @@ bool MS5806::acquire_data(uint8_t *rxbuf) {
  *
  */
 bool MS5806::hw_init_full(void) {
-  uint8_t cmd;
   msg_t status;
 
   for (size_t i=0; i<MS5806_CAL_WORDS; i++) {
-    cmd = CMD_PROM_RD;
-    cmd |= i << 1;
-    status = transmit(&cmd, 1, (uint8_t*)&C[i], 2);
+    txbuf[0] = CMD_PROM_RD;
+    txbuf[0] |= i << 1;
+    status = transmit(txbuf, 1, (uint8_t*)&C[i], 2);
     osalDbgCheck(MSG_OK == status);
   }
+
+  toggle_endiannes16((uint8_t *)C, sizeof(C));
 
   return OSAL_SUCCESS;
 }
@@ -131,36 +148,32 @@ bool MS5806::hw_init_fast(void){
 /**
  *
  */
-static THD_WORKING_AREA(ms5806ThreadWA, 256);
+__CCM__ static THD_WORKING_AREA(ms5806ThreadWA, 256);
 THD_FUNCTION(ms5806Thread, arg) {
   chRegSetThreadName("ms5806");
   MS5806 *sensor = (MS5806 *)arg;
   systime_t starttime;
-  baro_data_t result;
+  baro_abs_data_t result;
 
   while (!chThdShouldTerminateX()) {
     if (SENSOR_STATE_READY == sensor->state) {
       starttime = chVTGetSystemTime();
       sensor->acquire_data(sensor->rxbuf_p);
       sensor->start_t_measurement();
-      chThdSleepUntilWindowed(starttime, starttime + MS2ST(TEMP_CONV_TIME_MS));
+      chThdSleepUntilWindowed(starttime, starttime + TEMP_CONV_TIME);
 
-      starttime += MS2ST(TEMP_CONV_TIME_MS);
+      starttime += TEMP_CONV_TIME;
       sensor->acquire_data(sensor->rxbuf_t);
       sensor->start_p_measurement();
-      chThdSleepUntilWindowed(starttime, starttime + MS2ST(PRESS_CONV_TIME_MS));
+      chThdSleepUntilWindowed(starttime, starttime + PRESS_CONV_TIME);
 
-      sensor->calc_pressure();
-      sensor->pickle(result);
+      sensor->calc_pressure(result);
       osalSysLock();
       sensor->cache = result;
       osalSysUnlock();
-      osalThreadSleepMilliseconds(TEMP_CONV_TIME_MS + PRESS_CONV_TIME_MS);
-
-      //sensor->baro2mavlink();
     }
     else {
-      osalThreadSleepMilliseconds(TEMP_CONV_TIME_MS + PRESS_CONV_TIME_MS);
+      osalThreadSleep(TEMP_CONV_TIME + PRESS_CONV_TIME);
     }
   }
 
@@ -246,7 +259,7 @@ void MS5806::sleep(void) {
 /**
  *
  */
-sensor_state_t MS5806::get(baro_data_t &result) {
+sensor_state_t MS5806::get(baro_abs_data_t &result) {
   osalDbgCheck(state == SENSOR_STATE_READY);
 
   result = cache;
