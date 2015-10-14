@@ -25,7 +25,7 @@
  */
 
 #define KALMAN_DEBUG_LOG          FALSE
-#define DEBIG_INDEX_SINS          42
+#define DEBUG_INDEX_SINS          42
 
 /*
  ******************************************************************************
@@ -249,7 +249,7 @@ void Navi6dWrapper::debug2mavlink(float dT) {
       debug_decimator = 0;
 
       dbg_sins_stat.value = nav_sins.navi_data.status;
-      dbg_sins_stat.ind = DEBIG_INDEX_SINS;
+      dbg_sins_stat.ind = DEBUG_INDEX_SINS;
       dbg_sins_stat.time_boot_ms = TIME_BOOT_MS;
       mail_sins_stat.fill(&dbg_sins_stat, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG);
       mav_postman.post(mail_sins_stat);
