@@ -5,7 +5,7 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -O2 -ggdb -fomit-frame-pointer -falign-functions=16
+  USE_OPT = -O0 -ggdb -fomit-frame-pointer -falign-functions=16
 endif
 
 # C specific options here (added to USE_OPT).
@@ -198,6 +198,7 @@ SENSORSRC = src/i2c_local.cpp \
 		src/sensors/gnss/gnss_receiver.cpp \
 		src/sensors/gnss/gnss_cli.cpp \
 		src/sensors/ms5806.cpp \
+		src/sensors/npa700.cpp \
 		src/sensors/pmu.cpp \
 		src/sensors/maxsonar.cpp \
 		src/sensors/odometer.cpp \

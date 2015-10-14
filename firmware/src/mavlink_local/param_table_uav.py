@@ -130,6 +130,8 @@ param = [
 #// coefficients for thermal compensation
 ("PMU_above_msl",   -200,       255,        4000,       "i", "default",     "Height of barometric sensor above sea level in meters"),
 ("PMU_reserved1",   -2000000,   0,          2000000,    "i", "default",     "NULL"),
+("PMU_npa700_mid",  8000,       8192,       8384,       "u", "default",     "Mid point of sensor in raw values"),
+("PMU_npa700_sens", 5,          5.3402502,  6,          "f", "default",     "Sensor sensitivity Pa/raw"),
 
 #/**** ADC coefficients ****/
 ("ADC_car_I_k",     -1000000,   0,          1000000,    "i", "default",     "k coefficient for calculation from ADC values to uA using formulae y=kx+b\\nfor ground rover"),

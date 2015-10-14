@@ -1,4 +1,5 @@
 #include <cmath>
+#include <cstdlib>
 
 #include "main.h"
 #include "mavlink_local.hpp"
@@ -15,6 +16,7 @@
  * EXTERNS
  ******************************************************************************
  */
+extern mavlink_raw_pressure_t     mavlink_out_raw_pressure_struct;
 extern mavlink_scaled_pressure_t  mavlink_out_scaled_pressure_struct;
 extern mavlink_vfr_hud_t          mavlink_out_vfr_hud_struct;
 
@@ -52,7 +54,21 @@ static double press2msl(uint32_t pval, int32_t height) {
 /**
  *
  */
-static void baro2mavlink(const baro_data_t &data) {
+static float press2airspeed(int32_t press_diff){
+
+  float p = abs(press_diff);
+  float v = sqrtf((2*p) / 1.225f);
+
+  if (press_diff < 0)
+    return -v;
+  else
+    return v;
+}
+
+/**
+ *
+ */
+static void baro2mavlink(const baro_data_t &data, const baro_diff_data_t &diff) {
 
   mavlink_out_vfr_hud_struct.alt = data.alt;
   mavlink_out_vfr_hud_struct.climb = data.climb;
@@ -61,6 +77,8 @@ static void baro2mavlink(const baro_data_t &data) {
   mavlink_out_scaled_pressure_struct.press_abs = data.p_abs;
   mavlink_out_scaled_pressure_struct.press_diff = data.p_diff;
   mavlink_out_scaled_pressure_struct.time_boot_ms = TIME_BOOT_MS;
+
+  mavlink_out_raw_pressure_struct.press_diff1 = diff.raw;
 }
 
 /*
@@ -81,9 +99,9 @@ void PMUGet(const baro_abs_data_t &abs, const baro_diff_data_t &diff,
   result.climb = 0;
 
   result.p_diff = diff.P;
-  result.airspeed = 0;
+  result.airspeed = press2airspeed(diff.P);
 
-  baro2mavlink(result);
+  baro2mavlink(result, diff);
 }
 
 

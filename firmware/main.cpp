@@ -71,6 +71,7 @@ Giovanni
 #include "navi6d_wrapper.hpp"
 #include "ahrs_starlino.hpp"
 #include "ms5806.hpp"
+#include "npa700.hpp"
 #include "pmu.hpp"
 
 using namespace chibios_rt;
@@ -109,6 +110,7 @@ MavLogger mav_logger;
 Marg marg;
 
 MS5806 ms5806(&MS5806_I2CD, ms5806addr);
+NPA700 npa700(&NPA700_I2CD, npa700addr);
 //BMP085 bmp_085(&BMP085_I2CD, BMP085_I2C_ADDR);
 __CCM__ static baro_abs_data_t abs_press;
 __CCM__ static baro_diff_data_t diff_press;
@@ -168,6 +170,7 @@ static void start_services(void) {
   tlm_sender.start();
   //bmp_085.start();
   ms5806.start();
+  npa700.start();
   GNSS.start();
   time_keeper.start();
   mav_logger.start(NORMALPRIO);
@@ -194,6 +197,7 @@ static void stop_services(void) {
   time_keeper.stop();
   GNSS.stop();
   //bmp_085.stop();
+  npa700.stop();
   ms5806.stop();
   tlm_sender.stop();
   link_mgr.stop();
@@ -310,6 +314,7 @@ int main(void) {
 
     //bmp_085.get(abs_press);
     ms5806.get(abs_press);
+    npa700.get(diff_press);
     PMUGet(abs_press, diff_press, 252, baro_data);
     baro2acs_in(baro_data, acs_in);
 
