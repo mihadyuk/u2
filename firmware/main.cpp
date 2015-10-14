@@ -71,6 +71,7 @@ Giovanni
 #include "navi6d_wrapper.hpp"
 #include "ahrs_starlino.hpp"
 #include "ms5806.hpp"
+#include "pmu.hpp"
 
 using namespace chibios_rt;
 
@@ -106,10 +107,13 @@ TlmSender tlm_sender;
 static LinkMgr link_mgr;
 MavLogger mav_logger;
 Marg marg;
+
 MS5806 ms5806(&MS5806_I2CD, ms5806addr);
 //BMP085 bmp_085(&BMP085_I2CD, BMP085_I2C_ADDR);
 __CCM__ static baro_abs_data_t abs_press;
-__CCM__ static baro_data_t baro_alt;
+__CCM__ static baro_diff_data_t diff_press;
+__CCM__ static baro_data_t baro_data;
+
 __CCM__ static MaxSonar maxsonar;
 __CCM__ static odometer_data_t odo_data;
 __CCM__ static Odometer odometer;
@@ -303,9 +307,11 @@ int main(void) {
     marg.get(marg_data, MS2ST(200));
     odometer.update(odo_data, marg_data.dT);
     speedometer2acs_in(odo_data, acs_in);
+
     //bmp_085.get(abs_press);
     ms5806.get(abs_press);
-    baro2acs_in(baro_alt, acs_in);
+    PMUGet(abs_press, diff_press, 252, baro_data);
+    baro2acs_in(baro_data, acs_in);
 
     if (MAV_STATE_CALIBRATING == mavlink_system_info_struct.state) {
       CalibratorState cs = calibrator.update(marg_data);
@@ -313,7 +319,7 @@ int main(void) {
         mavlink_system_info_struct.state = MAV_STATE_STANDBY;
     }
     else {
-      navi6d.update(baro_alt, odo_data, marg_data);
+      navi6d.update(baro_data, odo_data, marg_data);
       hil.update(acs_in); /* must be called _before_ ACS */
       acs_input2mavlink(acs_in);
       acs.update(marg_data.dT, power_monitor_data.health);

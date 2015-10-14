@@ -5,27 +5,28 @@
  *
  */
 struct baro_data_t {
-  uint32_t  p;              /* Pascals */
+  uint32_t  p_abs;          /* Pascals */
   uint32_t  p_msl_adjusted; /* Pascals */
   float     alt;            /* m */
   float     climb;          /* m/s */
+  uint32_t  p_diff;         /* Pascals */
+  float     airspeed;       /* m/s */
  };
 
 /**
  *
  */
 struct baro_abs_data_t {
-  uint32_t  P;            /* Pascals */
-  float     temperature;  /* Celsius */
-  int32_t   delta;        /* Pascals */
-  float     dT;           /* Secondst */
+  uint32_t  P;      /* Pascals */
+  float     temp;   /* Celsius */
 };
 
 /**
  *
  */
 struct baro_diff_data_t {
-  uint32_t  Pdiff;    /* Pascals */
+  uint32_t  P;      /* Pascals */
+  float     temp;   /* Celsius */
 };
 
 #endif /* BARO_DATA_H_ */

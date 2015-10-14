@@ -198,6 +198,7 @@ SENSORSRC = src/i2c_local.cpp \
 		src/sensors/gnss/gnss_receiver.cpp \
 		src/sensors/gnss/gnss_cli.cpp \
 		src/sensors/ms5806.cpp \
+		src/sensors/pmu.cpp \
 		src/sensors/maxsonar.cpp \
 		src/sensors/odometer.cpp \
 		src/sensors/adc_local.cpp \
