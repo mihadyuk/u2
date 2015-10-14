@@ -1,3 +1,5 @@
+#pragma GCC optimize "-O2"
+
 #include <cstring>
 
 #include "main.h"
@@ -128,7 +130,7 @@ void MS5806::calc_pressure(baro_abs_data_t &result) {
   // main formula
   P = ((D1 * sens) / (1<<21) - off) / (1<<15);
 
-  result.temp = temp;
+  result.temp = 0.01 * temp;
   result.P = P;
 }
 
