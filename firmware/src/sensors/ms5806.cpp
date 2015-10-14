@@ -1,5 +1,4 @@
 #include <cstring>
-#include <cmath>
 
 #include "main.h"
 #include "pack_unpack.h"
@@ -33,8 +32,6 @@
  * EXTERNS
  ******************************************************************************
  */
-extern mavlink_scaled_pressure_t  mavlink_out_scaled_pressure_struct;
-extern mavlink_vfr_hud_t          mavlink_out_vfr_hud_struct;
 
 /*
  ******************************************************************************
@@ -65,20 +62,21 @@ unsigned char MS5806::crc4(uint16_t n_prom[]) {
 
   for (cnt = 0; cnt < 16; cnt++){  // operation is performed on bytes
     // choose LSB or MSB
-    if (cnt%2==1) n_rem ^= (unsigned short) ((n_prom[cnt>>1]) & 0x00FF);
-    else n_rem ^= (unsigned short) (n_prom[cnt>>1]>>8);
+    if (cnt%2==1)
+      n_rem ^= (unsigned short) ((n_prom[cnt>>1]) & 0x00FF);
+    else
+      n_rem ^= (unsigned short) (n_prom[cnt>>1]>>8);
 
     for (n_bit = 8; n_bit > 0; n_bit--) {
-      if (n_rem & (0x8000)) { n_rem = (n_rem << 1) ^ 0x3000;
-      }
-      else {
+      if (n_rem & (0x8000))
+        n_rem = (n_rem << 1) ^ 0x3000;
+      else
         n_rem = (n_rem << 1);
-      }
     }
   }
 
-  n_rem= (0x000F & (n_rem >> 12)); // // final 4-bit reminder is CRC code
-  n_prom[7]=crc_read; // restore the crc_read to its original place
+  n_rem = (0x000F & (n_rem >> 12)); // // final 4-bit reminder is CRC code
+  n_prom[7] = crc_read; // restore the crc_read to its original place
   return (n_rem ^ 0x00);
 }
 
@@ -91,26 +89,47 @@ void MS5806::calc_pressure(baro_abs_data_t &result) {
 
   int64_t dT;
   int64_t temp;
-  int64_t off;
-  int64_t sens;
+  int64_t off,  off2;
+  int64_t sens, sens2;
   int64_t P;
-
+  int64_t T2;
 
   D1 = rxbuf_p[0] * 65536 + rxbuf_p[1] * 256 + rxbuf_p[2];
   D2 = rxbuf_t[0] * 65536 + rxbuf_t[1] * 256 + rxbuf_t[2];
 
-  dT = D2 - (int32_t)C[5] * (1<<8);
+  // first order compensation (when temperature > 20C)
+  dT = D2 - (int64_t)C[5] * (1<<8);
   temp = 2000 + dT*C[6] / (1<<23);
-
   off  = (int64_t)C[2] * (1<<17) + C[4]*dT / (1<<6);
   sens = (int64_t)C[1] * (1<<16) + C[3]*dT / (1<<7);
+
+  // second oreder compensation
+  off2 = 0;
+  sens2 = 0;
+  T2 = 0;
+
+  if (temp < 2000) {
+    T2 = dT*dT / (1<<31);
+    int64_t temp2000 = (temp - 2000) * (temp - 2000);
+    off2  += (61 * temp2000) / (1<<4);
+    sens2 += 2 * temp2000;
+  }
+
+  if (temp < -1500) {
+    int64_t temp1500 = (temp + 1500) * (temp + 1500);
+    off2 += 20 * temp1500;
+    sens2 += 12 * temp1500;
+  }
+
+  sens -= sens2;
+  off  -= off2;
+  temp -= T2;
+
+  // main formula
   P = ((D1 * sens) / (1<<21) - off) / (1<<15);
 
-  result.temperature = temp / 100.0;
+  result.temp = temp;
   result.P = P;
-  result.delta = P - Pprev;
-  result.dT = 0.02;
-  Pprev = P;
 }
 
 /**
