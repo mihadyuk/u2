@@ -100,7 +100,7 @@ void MS5806::calc_pressure(baro_abs_data_t &result) {
   D2 = rxbuf_t[0] * 65536 + rxbuf_t[1] * 256 + rxbuf_t[2];
 
   // first order compensation (when temperature > 20C)
-  dT = D2 - (int64_t)C[5] * (1<<8);
+  dT   = D2 - (int64_t)C[5] * (1<<8);
   temp = 2000 + dT*C[6] / (1<<23);
   off  = (int64_t)C[2] * (1<<17) + C[4]*dT / (1<<6);
   sens = (int64_t)C[1] * (1<<16) + C[3]*dT / (1<<7);
@@ -322,3 +322,4 @@ sensor_state_t MS5806::get(baro_abs_data_t &result) {
 
   return this->state;
 }
+

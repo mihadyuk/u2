@@ -4,7 +4,7 @@
 #include "i2c_sensor.hpp"
 #include "baro_data.hpp"
 
-#define ms5806addr        0b1110111
+#define MS5806_I2C_ADDR   0b1110111
 
 /* buffers depth */
 #define MS5806_RX_DEPTH   4

@@ -3,10 +3,10 @@
 
 #include "i2c_sensor.hpp"
 
-#define npa700addr    0b00101000
+#define NPA700_I2C_ADDR     0b00101000
 
 /* buffers depth */
-#define NPA700_RX_DEPTH 4
+#define NPA700_RX_DEPTH     4
 
 
 class NPA700: private I2CSensor {

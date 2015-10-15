@@ -66,7 +66,7 @@ endif
 # Stack size to the allocated to the Cortex-M main/exceptions stack. This
 # stack is used for processing interrupts and exceptions.
 ifeq ($(USE_EXCEPTIONS_STACKSIZE),)
-  USE_EXCEPTIONS_STACKSIZE = 0x2000
+  USE_EXCEPTIONS_STACKSIZE = 0x200
 endif
 
 # Enables the use of FPU on Cortex-M4 (no, softfp, hard).
@@ -89,8 +89,8 @@ PROJECT = ch
 CHIBIOS = ../../ChibiOS-RT
 CHIBIOS_CONTRIB = $(CHIBIOS)/../ChibiOS-Contrib
 
-include board_mnu/board.mk
-#include board_bezvodiatel/board.mk
+#include board_mnu/board.mk
+include board_bezvodiatel/board.mk
 
 # Startup files.
 include $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC/mk/startup_stm32f4xx.mk
@@ -198,6 +198,7 @@ SENSORSRC = src/i2c_local.cpp \
 		src/sensors/gnss/gnss_receiver.cpp \
 		src/sensors/gnss/gnss_cli.cpp \
 		src/sensors/ms5806.cpp \
+		src/sensors/bmp085.cpp \
 		src/sensors/npa700.cpp \
 		src/sensors/pmu.cpp \
 		src/sensors/maxsonar.cpp \

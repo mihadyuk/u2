@@ -109,9 +109,15 @@ static LinkMgr link_mgr;
 MavLogger mav_logger;
 Marg marg;
 
-MS5806 ms5806(&MS5806_I2CD, ms5806addr);
-NPA700 npa700(&NPA700_I2CD, npa700addr);
-//BMP085 bmp_085(&BMP085_I2CD, BMP085_I2C_ADDR);
+#if defined(BOARD_BEZVODIATEL)
+BMP085 bmp_085(&BMP085_I2CD, BMP085_I2C_ADDR);
+#elif defined(BOARD_MNU)
+MS5806 ms5806(&MS5806_I2CD, MS5806_I2C_ADDR);
+NPA700 npa700(&NPA700_I2CD, NPA700_I2C_ADDR);
+#else
+#error "board unsupported"
+#endif
+
 __CCM__ static baro_abs_data_t abs_press;
 __CCM__ static baro_diff_data_t diff_press;
 __CCM__ static baro_data_t baro_data;
@@ -168,9 +174,14 @@ static void start_services(void) {
   mission_receiver.start(MISSIONRECVRPRIO);
   link_mgr.start();      /* launch after controller to reduce memory fragmentation on thread creation */
   tlm_sender.start();
-  //bmp_085.start();
+#if defined(BOARD_BEZVODIATEL)
+  bmp_085.start();
+#elif defined(BOARD_MNU)
   ms5806.start();
   npa700.start();
+#else
+#error "board unsupported"
+#endif
   GNSS.start();
   time_keeper.start();
   mav_logger.start(NORMALPRIO);
@@ -196,9 +207,14 @@ static void stop_services(void) {
   mav_logger.stop();
   time_keeper.stop();
   GNSS.stop();
-  //bmp_085.stop();
-  npa700.stop();
+#if defined(BOARD_BEZVODIATEL)
+  bmp_085.stop();
+#elif defined(BOARD_MNU)
   ms5806.stop();
+  npa700.stop();
+#else
+#error "board unsupported"
+#endif
   tlm_sender.stop();
   link_mgr.stop();
   mission_receiver.stop();
@@ -274,7 +290,7 @@ int main(void) {
 #endif
 
   /* give power to all needys */
-  //xbee_reset_clear();
+  xbee_reset_clear();
   nvram_power_on();
   osalThreadSleepMilliseconds(10);
 
@@ -291,9 +307,9 @@ int main(void) {
   power_monitor.warmup_filters(power_monitor_data);
   if (main_battery_health::GOOD != power_monitor_data.health)
     goto DEATH;
+
 #if defined(BOARD_BEZVODIATEL)
-  if (PwrMgr6vGood())
-    pwr5v_power_on();
+  pwr5v_power_on();
 #endif
 
   start_services();
@@ -312,9 +328,15 @@ int main(void) {
     odometer.update(odo_data, marg_data.dT);
     speedometer2acs_in(odo_data, acs_in);
 
-    //bmp_085.get(abs_press);
+#if defined(BOARD_BEZVODIATEL)
+    bmp_085.get(abs_press);
+#elif defined(BOARD_MNU)
     ms5806.get(abs_press);
     npa700.get(diff_press);
+#else
+#error "board unsupported"
+#endif
+
     PMUGet(abs_press, diff_press, 252, baro_data);
     baro2acs_in(baro_data, acs_in);
 

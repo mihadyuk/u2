@@ -39,15 +39,6 @@ typedef enum {
   BAT_CHEMISTRY_ENUM_END,
 } bat_chemistry_t;
 
-/**
- *
- */
-//struct constrain {
-//  constrain(uint32_t low, uint32_t critical) : low(low), critical(critical) {;}
-//  const uint32_t low;
-//  const uint32_t critical;
-//};
-
 /*
  ******************************************************************************
  * PROTOTYPES
