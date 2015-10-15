@@ -6,7 +6,6 @@
 #include "matrix_math.hpp"
 #include "e_frame.hpp"
 #include "geometry.hpp"
-#include "pads.h"
 
 namespace control {
 namespace maneuver {
@@ -19,7 +18,7 @@ void missionItemWGS84toNE(T (&localNE)[2][1],
                      {deg2rad<T>(wp.y)},
                      {deg2rad<T>(wp.z)}};
   T wpLocalNED[3][1];
-  geo2lv(wpLocalNED, wpWGS84, currWGS84);
+  geo2lv<T>(wpLocalNED, wpWGS84, currWGS84);
   get_sub<T, 2, 1, 3, 1>(localNE, wpLocalNED, 0, 0);
 }
 
@@ -37,11 +36,11 @@ void updateMnrLine(ManeuverPart<T> &part,
 template <typename T>
 void updateMnrCircle(ManeuverPart<T> &part,
                      size_t partNumber,
-                     T turns,
+                     T repeats,
                      T radius,
                      T (&prevNE)[2][1],
                      T (&trgtNE)[2][1]) {
-  size_t partsCount = static_cast<size_t>(round(turns))*2 + 2;
+  size_t partsCount = static_cast<size_t>(round(fabs(repeats)))*2 + 2;
 
   T lineVector[2][1];
   m_minus<T, 2, 1>(lineVector, prevNE, trgtNE);
@@ -54,8 +53,8 @@ void updateMnrCircle(ManeuverPart<T> &part,
     /* semicircles */
     T cwSign = sign<T>(radius);
     T lineCourse = atan2(normedLineVector[1][0],
-                         normedLineVector[0][0])
-                 + cwSign*static_cast<T>(M_PI_2);
+                         normedLineVector[0][0]) +
+                   cwSign*static_cast<T>(M_PI_2);
     lineCourse = wrap_2pi(lineCourse);
 
     part.type = ManeuverPartType::arc;
@@ -67,12 +66,9 @@ void updateMnrCircle(ManeuverPart<T> &part,
     size_t semiCircleNumber = partNumber % 2;
     if (1 == semiCircleNumber) {
       part.arc.startCourse = lineCourse;
-
-      red_led_toggle();
     } else {
-      part.arc.startCourse = wrap_2pi(lineCourse + static_cast<T>(M_PI));
-
-      green_led_toggle();
+      part.arc.startCourse = wrap_2pi(lineCourse +
+                                      static_cast<T>(M_PI));
     }
 
   } else if (0 == partNumber) {
@@ -83,8 +79,6 @@ void updateMnrCircle(ManeuverPart<T> &part,
     m_mul_s<T, 2, 1>(normedLineVector, normedLineVector, fabs(radius));
     m_plus<T, 2, 1>(part.line.finish, trgtNE, normedLineVector);
 
-    blue_led_toggle();
-
   } else if ((partsCount - 1) == partNumber) {
     /* line from the circle's border to the circle's center */
     part.type = ManeuverPartType::line;
@@ -93,13 +87,24 @@ void updateMnrCircle(ManeuverPart<T> &part,
     m_mul_s<T, 2, 1>(normedLineVector, normedLineVector, fabs(radius));
     m_plus<T, 2, 1>(part.line.start, trgtNE, normedLineVector);
 
-    blue_led_toggle();
-
   } else {
     part.type = ManeuverPartType::unknown;
     part.finale = true;
+
   }
 
+}
+
+template <typename T>
+void updateMnrStadium(ManeuverPart<T> &part,
+                      size_t partNumber,
+                      T repeats,
+                      T radius,
+                      T width,
+                      T hight,
+                      T (&prevNE)[2][1],
+                      T (&trgtNE)[2][1]) {
+  //TODO
 }
 
 template <typename T>

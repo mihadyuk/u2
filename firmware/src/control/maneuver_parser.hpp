@@ -5,6 +5,8 @@
 #include "maneuver_list.hpp"
 #include "mavlink_local.hpp"
 
+#define DEFAULT_MNR_RADIUS 1.0
+
 namespace control {
 
 template <typename T>
@@ -33,10 +35,20 @@ public:
       case MAV_CMD_NAV_LOITER_TURNS:
         maneuver::updateMnrCircle<T>(ret,
                                      mnrPartNumber,
-                                     trgt.param1,   /* turns count */
+                                     trgt.param1,   /* repeats count */
                                      trgt.param3,   /* turns radius */
                                      prevNE,
                                      trgtNE);
+        break;
+      case MAV_CMD_NAV_STADIUM:
+        maneuver::updateMnrStadium<T>(ret,
+                                      mnrPartNumber,
+                                      trgt.param1,        /* repeats count */
+                                      DEFAULT_MNR_RADIUS, /* turn radius */
+                                      trgt.param2,        /* stadium width */
+                                      trgt.param3,        /* stadium height */
+                                      prevNE,
+                                      trgtNE);
         break;
       default:
         maneuver::updateMnrUnknown<T>(ret);
