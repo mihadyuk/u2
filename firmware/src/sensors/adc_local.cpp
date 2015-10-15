@@ -19,6 +19,16 @@
 #define ADC_NUM_CHANNELS          16
 #define ADC_BUF_DEPTH             16
 
+#if 0
+// channel numbering cheatsheet
+#define ADC_PRESS_DIFF_CH         ADC_CHANNEL_IN10
+#define ADC_MPXV_TEMP_CH          ADC_CHANNEL_IN11
+#define ADC_CURRENT_SENS_CH       ADC_CHANNEL_IN12
+#define ADC_MAIN_SUPPLY_CH        ADC_CHANNEL_IN13
+#define ADC_6V_SUPPLY_CH          ADC_CHANNEL_IN14
+#define ADC_RESERVED_CH           ADC_CHANNEL_IN15
+#endif
+
 /*
  ******************************************************************************
  * PROTOTYPES
