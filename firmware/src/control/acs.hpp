@@ -8,7 +8,7 @@
 #include "mission_executor.hpp"
 #include "navigator.hpp"
 #include "stab_vm.hpp"
-#include "pwr_mgr.hpp"
+#include "power_monitor_data.hpp"
 
 namespace control {
 
@@ -44,7 +44,7 @@ class ACS {
 public:
   ACS(Drivetrain &drivetrain, ACSInput &acs_in);
   void start(void);
-  void update(float dT, main_battery_state mbs);
+  void update(float dT, main_battery_health mbh);
   void stop(void);
 private:
   void loop_active(float dT, FutabaResult fr);

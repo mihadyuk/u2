@@ -60,7 +60,7 @@ Giovanni
 #include "marg.hpp"
 #include "mav_logger.hpp"
 #include "adc_local.hpp"
-#include "pwr_mgr.hpp"
+#include "power_monitor.hpp"
 #include "fir_test.hpp"
 #include "maxsonar.hpp"
 #include "pps.hpp"
@@ -70,6 +70,9 @@ Giovanni
 #include "hil.hpp"
 #include "navi6d_wrapper.hpp"
 #include "ahrs_starlino.hpp"
+#include "ms5806.hpp"
+#include "npa700.hpp"
+#include "pmu.hpp"
 
 using namespace chibios_rt;
 
@@ -80,7 +83,9 @@ using namespace chibios_rt;
  * EXTERNS
  ******************************************************************************
  */
+
 extern mavlink_system_info_t   mavlink_system_info_struct;
+extern mavlink_system_time_t   mavlink_out_system_time_struct;
 
 /* reset all global flags */
 GlobalFlags_t GlobalFlags = {0,0,0,0,0,0,0,0,
@@ -103,16 +108,34 @@ TlmSender tlm_sender;
 static LinkMgr link_mgr;
 MavLogger mav_logger;
 Marg marg;
-BMP085 bmp_085(&I2CD_SLOW, BMP085_I2C_ADDR);
-__CCM__ static baro_data_t abs_press;
+
+#if defined(BOARD_BEZVODIATEL)
+BMP085 bmp_085(&BMP085_I2CD, BMP085_I2C_ADDR);
+#elif defined(BOARD_MNU)
+MS5806 ms5806(&MS5806_I2CD, MS5806_I2C_ADDR);
+NPA700 npa700(&NPA700_I2CD, NPA700_I2C_ADDR);
+#else
+#error "board unsupported"
+#endif
+
+__CCM__ static baro_abs_data_t abs_press;
+__CCM__ static baro_diff_data_t diff_press;
+__CCM__ static baro_data_t baro_data;
+
 __CCM__ static MaxSonar maxsonar;
 __CCM__ static odometer_data_t odo_data;
 __CCM__ static Odometer odometer;
 __CCM__ static marg_data_t marg_data;
 __CCM__ static PPS pps;
-__CCM__ static MPXV mpxv;
 __CCM__ static Calibrator calibrator;
-__CCM__        gnss::uBlox GNSS(&GPSSD, 9600, 57600);
+__CCM__ static power_monitor_data_t power_monitor_data;
+#if defined(BOARD_BEZVODIATEL)
+__CCM__ gnss::uBlox GNSS(&GPSSD, 9600, 57600);
+#elif defined(BOARD_MNU)
+__CCM__ gnss::mtkgps GNSS(&GPSSD, 115200, 115200);
+#else
+#error "board unsupported"
+#endif
 __CCM__ control::HIL hil;
 #if USE_STARLINO_AHRS
 __CCM__ static AHRSStarlino ahrs_starlino;
@@ -120,6 +143,8 @@ __CCM__ static AHRSStarlino ahrs_starlino;
 __CCM__ static Navi6dWrapper navi6d(acs_in, GNSS);
 #endif
 __CCM__ static TimeKeeper time_keeper(GNSS);
+ADCLocal adc_local;
+PowerMonitor power_monitor(adc_local);
 
 /**
  * C++11 stub for std::function
@@ -149,7 +174,14 @@ static void start_services(void) {
   mission_receiver.start(MISSIONRECVRPRIO);
   link_mgr.start();      /* launch after controller to reduce memory fragmentation on thread creation */
   tlm_sender.start();
+#if defined(BOARD_BEZVODIATEL)
   bmp_085.start();
+#elif defined(BOARD_MNU)
+  ms5806.start();
+  npa700.start();
+#else
+#error "board unsupported"
+#endif
   GNSS.start();
   time_keeper.start();
   mav_logger.start(NORMALPRIO);
@@ -161,7 +193,6 @@ static void start_services(void) {
   wpdb.start();
   acs.start();
   pps.start();
-  mpxv.start();
   blinker.start();
   navi6d.start();
 }
@@ -176,12 +207,52 @@ static void stop_services(void) {
   mav_logger.stop();
   time_keeper.stop();
   GNSS.stop();
+#if defined(BOARD_BEZVODIATEL)
   bmp_085.stop();
+#elif defined(BOARD_MNU)
+  ms5806.stop();
+  npa700.stop();
+#else
+#error "board unsupported"
+#endif
   tlm_sender.stop();
   link_mgr.stop();
   mission_receiver.stop();
 }
 
+#if defined(BOARD_MNU)
+enum GNSSReceiver {
+  navi = 0,
+  navi_nmea,
+  it530,
+  unused,
+};
+
+static void gnss_select(GNSSReceiver receiver) {
+  switch(receiver) {
+  case GNSSReceiver::navi:
+    palClearPad(GPIOB, GPIOB_FPGA_IO1);
+    palClearPad(GPIOB, GPIOB_FPGA_IO2);
+    break;
+  case GNSSReceiver::navi_nmea:
+    palSetPad(GPIOB, GPIOB_FPGA_IO1);
+    palClearPad(GPIOB, GPIOB_FPGA_IO2);
+    break;
+  case GNSSReceiver::it530:
+    palClearPad(GPIOB, GPIOB_FPGA_IO1);
+    palSetPad(GPIOB, GPIOB_FPGA_IO2);
+    break;
+  case GNSSReceiver::unused:
+    palSetPad(GPIOB, GPIOB_FPGA_IO1);
+    palSetPad(GPIOB, GPIOB_FPGA_IO2);
+    break;
+  }
+}
+#endif // defined(BOARD_MNU)
+
+/**
+ *
+ */
 int main(void) {
 
   halInit();
@@ -190,7 +261,16 @@ int main(void) {
   blinker.bootIndication();
 
   endianness_test();
+
+#if defined(BOARD_BEZVODIATEL)
   osalThreadSleepMilliseconds(300);
+#elif defined(BOARD_MNU)
+  while (! FPGAReady()) {
+    osalThreadSleepMilliseconds(10);
+  }
+#else
+#error "board unsupported"
+#endif
 
   /* enable softreset on panic */
   setGlobalFlag(GlobalFlags.allow_softreset);
@@ -199,10 +279,18 @@ int main(void) {
   else
     osalThreadSleepMilliseconds(200);
 
-  /* give power to all needys */
-  ADCInitLocal();
+  adc_local.start();
+
+#if defined(BOARD_BEZVODIATEL)
   gps_power_on();
-  //xbee_reset_clear();
+#elif defined(BOARD_MNU)
+  gnss_select(it530);
+#else
+#error "board unsupported"
+#endif
+
+  /* give power to all needys */
+  xbee_reset_clear();
   nvram_power_on();
   osalThreadSleepMilliseconds(10);
 
@@ -215,26 +303,42 @@ int main(void) {
   ParametersInit();   /* read parameters from EEPROM via I2C */
   SanityControlInit();
 
-  PwrMgrInit();
-  if (main_battery_state::GOOD != PwrMgrMainBatteryStartCheck())
+  power_monitor.start();
+  power_monitor.warmup_filters(power_monitor_data);
+  if (main_battery_health::GOOD != power_monitor_data.health)
     goto DEATH;
-  if (PwrMgr6vGood())
-    pwr5v_power_on();
+
+#if defined(BOARD_BEZVODIATEL)
+  pwr5v_power_on();
+#endif
 
   start_services();
 
   mavlink_system_info_struct.state = MAV_STATE_STANDBY;
   while (true) {
-    main_battery_state mbs = PwrMgrUpdate();
-    if (main_battery_state::CRITICAL == mbs)
+
+    mavlink_out_system_time_struct.time_boot_ms = TIME_BOOT_MS;
+    mavlink_out_system_time_struct.time_unix_usec = TimeKeeper::utc();
+
+    power_monitor.update(power_monitor_data);
+    if (main_battery_health::CRITICAL == power_monitor_data.health)
       break; // break main cycle
 
     marg.get(marg_data, MS2ST(200));
     odometer.update(odo_data, marg_data.dT);
     speedometer2acs_in(odo_data, acs_in);
-    mpxv.get();
+
+#if defined(BOARD_BEZVODIATEL)
     bmp_085.get(abs_press);
-    baro2acs_in(abs_press, acs_in);
+#elif defined(BOARD_MNU)
+    ms5806.get(abs_press);
+    npa700.get(diff_press);
+#else
+#error "board unsupported"
+#endif
+
+    PMUGet(abs_press, diff_press, 252, baro_data);
+    baro2acs_in(baro_data, acs_in);
 
     if (MAV_STATE_CALIBRATING == mavlink_system_info_struct.state) {
       CalibratorState cs = calibrator.update(marg_data);
@@ -242,16 +346,17 @@ int main(void) {
         mavlink_system_info_struct.state = MAV_STATE_STANDBY;
     }
     else {
-      navi6d.update(abs_press, odo_data, marg_data);
+      navi6d.update(baro_data, odo_data, marg_data);
       hil.update(acs_in); /* must be called _before_ ACS */
       acs_input2mavlink(acs_in);
-      acs.update(marg_data.dT, mbs);
+      acs.update(marg_data.dT, power_monitor_data.health);
     }
   }
 
   stop_services();
 
 DEATH:
+  adc_local.stop();
   blinker.stop();
   gps_power_off();
   xbee_reset_assert();

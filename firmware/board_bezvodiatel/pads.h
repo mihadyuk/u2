@@ -38,9 +38,14 @@ static inline void green_led_toggle(void)     {palTogglePad(GPIOB,GPIOB_LED_G);}
 
 static inline void normal_led_on(void)        {green_led_on();}
 static inline void normal_led_off(void)       {green_led_off();}
+static inline void normal_led_toggle(void)    {green_led_toggle();}
+
 static inline void warning_led_on(void)       {blue_led_on();}
 static inline void warning_led_off(void)      {blue_led_off();}
+static inline void warning_led_toggle(void)   {blue_led_toggle();}
+
 static inline void error_led_on(void)         {red_led_on();}
 static inline void error_led_off(void)        {red_led_off();}
+static inline void error_led_toggle(void)     {red_led_toggle();}
 
 #endif /* PADS_H_ */

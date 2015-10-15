@@ -259,7 +259,7 @@ static void command_long_handler(const mavlink_message_t *recv_msg) {
 /**
  * Receive messages with parameters and transmit parameters by requests.
  */
-static THD_WORKING_AREA(ParametersThreadWA, 512);
+static THD_WORKING_AREA(ParametersThreadWA, 640);
 static THD_FUNCTION(ParametersThread, arg){
   chRegSetThreadName("ParamWorker");
 

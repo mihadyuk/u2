@@ -3,7 +3,6 @@
 
 #include "nvram_fs.hpp"
 
-#define FRAM_I2CD               I2CD_SLOW
 #define FRAM_I2C_ADDR           0b1010000
 #define FRAM_SIZE               (1024 * 32)
 

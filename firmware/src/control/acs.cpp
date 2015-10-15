@@ -226,9 +226,9 @@ void ACS::stop(void) {
 /**
  *
  */
-void ACS::update(float dT, main_battery_state mbs) {
+void ACS::update(float dT, main_battery_health mbh) {
 
-  if (main_battery_state::LOW == mbs)
+  if (main_battery_health::LOW == mbh)
     drivetrain.disarm();
 
   acs_in.ch[ACS_INPUT_trgt_speed] = *this->trgt_speed;

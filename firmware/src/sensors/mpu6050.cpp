@@ -165,21 +165,6 @@ void MPU6050::acc_egg_comp(float *result) {
 /**
  *
  */
-static void toggle_endiannes16(uint8_t *data, const size_t len) {
-
-  osalDbgCheck(0 == (len % 2));
-  uint8_t tmp;
-
-  for (size_t i=0; i<len; i+=2){
-    tmp = data[i];
-    data[i] = data[i+1];
-    data[i+1] = tmp;
-  }
-}
-
-/**
- *
- */
 void MPU6050::pickle_gyr(float *result) {
 
   int16_t raw[3];

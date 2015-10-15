@@ -66,7 +66,7 @@ endif
 # Stack size to the allocated to the Cortex-M main/exceptions stack. This
 # stack is used for processing interrupts and exceptions.
 ifeq ($(USE_EXCEPTIONS_STACKSIZE),)
-  USE_EXCEPTIONS_STACKSIZE = 0x2000
+  USE_EXCEPTIONS_STACKSIZE = 0x200
 endif
 
 # Enables the use of FPU on Cortex-M4 (no, softfp, hard).
@@ -88,12 +88,15 @@ PROJECT = ch
 # Imported source files and paths
 CHIBIOS = ../../ChibiOS-RT
 CHIBIOS_CONTRIB = $(CHIBIOS)/../ChibiOS-Contrib
+
+#include board_mnu/board.mk
+include board_bezvodiatel/board.mk
+
 # Startup files.
 include $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC/mk/startup_stm32f4xx.mk
 # HAL-OSAL files (optional).
 include $(CHIBIOS_CONTRIB)/os/hal/hal.mk
 include $(CHIBIOS_CONTRIB)/os/hal/ports/STM32/STM32F4xx/platform.mk
-include board/board.mk
 include $(CHIBIOS)/os/hal/osal/rt/osal.mk
 # RTOS files (optional).
 include $(CHIBIOS)/os/rt/rt.mk
@@ -103,8 +106,8 @@ include $(CHIBIOS)/os/various/cpp_wrappers/chcpp.mk
 include $(CHIBIOS)/os/various/fatfs_bindings/fatfs.mk
 
 # Define linker script file here
-#LDSCRIPT= $(STARTUPLD)/STM32F407xG.ld
-LDSCRIPT= STM32F407xG_ccm_noload.ld
+LDSCRIPT= $(STARTUPLD)/STM32F407xG.ld
+#LDSCRIPT= STM32F407xG_ccm_noload.ld
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -194,15 +197,17 @@ SENSORSRC = src/i2c_local.cpp \
 		src/sensors/gnss/mtkgps.cpp \
 		src/sensors/gnss/gnss_receiver.cpp \
 		src/sensors/gnss/gnss_cli.cpp \
+		src/sensors/ms5806.cpp \
 		src/sensors/bmp085.cpp \
+		src/sensors/npa700.cpp \
+		src/sensors/pmu.cpp \
 		src/sensors/maxsonar.cpp \
 		src/sensors/odometer.cpp \
 		src/sensors/adc_local.cpp \
-		src/sensors/pwr_mgr.cpp \
-		src/sensors/mpxv.cpp \
 		src/sensors/pps.cpp \
 		src/sensors/calibrator.cpp \
-          
+		src/sensors/power_monitor.cpp
+
 CLISRC = src/cli/cli.cpp \
 		src/cli/cli_cmd.cpp \
 		src/param_cli.cpp \
