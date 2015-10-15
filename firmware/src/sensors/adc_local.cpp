@@ -20,7 +20,7 @@
 #define ADC_BUF_DEPTH             16
 
 #if 0
-// channel numbering cheatsheet
+// channel numbering cheatsheet for bezvodiatel board
 #define ADC_PRESS_DIFF_CH         ADC_CHANNEL_IN10
 #define ADC_MPXV_TEMP_CH          ADC_CHANNEL_IN11
 #define ADC_CURRENT_SENS_CH       ADC_CHANNEL_IN12

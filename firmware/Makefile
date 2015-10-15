@@ -106,8 +106,8 @@ include $(CHIBIOS)/os/various/cpp_wrappers/chcpp.mk
 include $(CHIBIOS)/os/various/fatfs_bindings/fatfs.mk
 
 # Define linker script file here
-#LDSCRIPT= $(STARTUPLD)/STM32F407xG.ld
-LDSCRIPT= STM32F407xG_ccm_noload.ld
+LDSCRIPT= $(STARTUPLD)/STM32F407xG.ld
+#LDSCRIPT= STM32F407xG_ccm_noload.ld
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.

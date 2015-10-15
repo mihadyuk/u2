@@ -19,8 +19,19 @@ extern mavlink_sys_status_t   mavlink_out_sys_status_struct;
  ******************************************************************************
  */
 
-#define ADC_MAIN_VOLTAGE_P_CHANNEL    ADC_CHANNEL_IN10
-#define ADC_MAIN_VOLTAGE_N_CHANNEL    ADC_CHANNEL_IN11
+#if defined(BOARD_BEZVODIATEL)
+  #define ADC_MPXV_PRESS        ADC_CHANNEL_IN10
+  #define ADC_MPXV_TEMP         ADC_CHANNEL_IN11
+  #define ADC_MAIN_CURRENT      ADC_CHANNEL_IN12
+  #define ADC_MAIN_VOLTAGE      ADC_CHANNEL_IN13
+  #define ADC_6V_VOLTAGE        ADC_CHANNEL_IN14
+  #define ADC_RESERVED          ADC_CHANNEL_IN15
+#elif defined(BOARD_MNU)
+  #define ADC_MAIN_VOLTAGE_P    ADC_CHANNEL_IN10
+  #define ADC_MAIN_VOLTAGE_N    ADC_CHANNEL_IN11
+#else
+#error "board unsupported"
+#endif
 
 //#define LIPO_LOW                3400 // mV
 //#define LIPO_CRITICAL           3200 // mV
@@ -59,7 +70,9 @@ static const uint32_t voltage_constrains[BAT_CHEMISTRY_ENUM_END][2] = {
 };
 
 static filters::AlphaBeta<int32_t, 128> main_voltage_p_filter;
+#if defined(BOARD_MNU)
 static filters::AlphaBeta<int32_t, 128> main_voltage_n_filter;
+#endif
 
 /*
  *******************************************************************************
@@ -94,7 +107,7 @@ main_battery_health PowerMonitor::millivolts2healt(uint32_t mv) {
 
   osalDbgCheck(*chemistry < BAT_CHEMISTRY_ENUM_END);
 
-  if (mv < MAIN_VOLTAGE_IGNORE) {
+  if ((mv < MAIN_VOLTAGE_IGNORE) || (1 == *ignore)) {
     return main_battery_health::GOOD;
   }
   else {
@@ -127,6 +140,7 @@ adc(adc)
 void PowerMonitor::start(void) {
   param_registry.valueSearch("BAT_cells",     &cells);
   param_registry.valueSearch("BAT_chemistry", &chemistry);
+  param_registry.valueSearch("BAT_ignore",    &ignore);
   param_registry.valueSearch("ADC_second_v",  &second_v);
   param_registry.valueSearch("ADC_main_v",    &main_v);
 
@@ -151,8 +165,16 @@ void PowerMonitor::update(power_monitor_data_t &result) {
 
   osalDbgCheck(ready);
 
-  p = adc.getChannel(ADC_MAIN_VOLTAGE_P_CHANNEL, main_voltage_p_filter);
-  n = adc.getChannel(ADC_MAIN_VOLTAGE_N_CHANNEL, main_voltage_n_filter);
+#if defined(BOARD_BEZVODIATEL)
+  p = adc.getChannel(ADC_MAIN_VOLTAGE, main_voltage_p_filter);
+  n = 0;
+#elif defined(BOARD_MNU)
+  p = adc.getChannel(ADC_MAIN_VOLTAGE_P, main_voltage_p_filter);
+  n = adc.getChannel(ADC_MAIN_VOLTAGE_N, main_voltage_n_filter);
+#else
+#error "board unsupported"
+#endif
+
   mV = adc2millivolts(p, n);
 
   result.health = millivolts2healt(mV);

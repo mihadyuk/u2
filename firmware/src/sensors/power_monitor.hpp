@@ -15,7 +15,7 @@ private:
   main_battery_health millivolts2healt(uint32_t mv);
   bool ready = false;
   ADCLocal &adc;
-  uint32_t const *cells, *chemistry;
+  uint32_t const *cells, *chemistry, *ignore;
   uint32_t const *second_v, *main_v;
 };
 

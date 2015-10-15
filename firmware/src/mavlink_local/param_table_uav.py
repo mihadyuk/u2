@@ -147,6 +147,7 @@ param = [
 #/**** Bttery parameters ****/
 ("BAT_cells",       1,          2,          8,          "u", "default",     "Battery cell count"),
 ("BAT_chemistry",   0,          0,          1,          "u", "default",     "Battery chemistry type for critical threshold calculation"),
+("BAT_ignore",      0,          0,          1,          "u", "default",     "Ignore battery voltage check"),
 
 # Fusion algorithm settings
 ("SINS_restart",    0,          1,          0xFFFF,     "u", "default",     "Change this value to enforce sins restart"),
