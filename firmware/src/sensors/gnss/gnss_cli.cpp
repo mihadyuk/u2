@@ -3,6 +3,7 @@
 #include "main.h"
 
 #include "ublox.hpp"
+#include "mtkgps.hpp"
 #include "cli.hpp"
 
 using namespace chibios_rt;
@@ -19,7 +20,14 @@ using namespace chibios_rt;
  ******************************************************************************
  */
 extern memory_heap_t ThdHeap;
+
+#if defined(BOARD_BEZVODIATEL)
 extern gnss::uBlox GNSS;
+#elif defined(BOARD_MNU)
+extern gnss::mtkgps GNSS;
+#else
+#error "board unsupported"
+#endif
 
 /*
  ******************************************************************************

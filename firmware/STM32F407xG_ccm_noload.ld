@@ -48,6 +48,9 @@ REGION_ALIAS("DATA_RAM", ram0);
 /* RAM region to be used for BSS segment.*/
 REGION_ALIAS("BSS_RAM", ram0);
 
+/* RAM region to be used for the default heap.*/
+REGION_ALIAS("HEAP_RAM", ram0);
+
 INCLUDE rules.ld
 
 /* Redefine .ram4 section without NOLOAD attribute for automatic 

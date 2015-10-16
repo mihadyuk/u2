@@ -87,6 +87,7 @@ static int64_t timer_skew = RTC_TIMER_SKEW_DEFAULT;
 static drift_estimate_t drift_est;
 
 bool TimeKeeper::ready = false;
+bool TimeKeeper::time_verified = false;
 
 /*
  * GPT configuration.
@@ -179,8 +180,13 @@ THD_FUNCTION(TimeKeeper::TimekeeperThread, arg) {
     if ((gps.fresh) && (gps.fix > 0) && (0 == gps.msec)) {
       int64_t tmp = 1000000;
       tmp *= mktime(&gps.time);
+
       osalSysLock();
       time_gps_us = tmp;
+      if (! time_verified) {
+        time_verified = true;
+        unix_usec = time_gps_us;
+      }
       osalSysUnlock();
 
       /* now correct time in internal RTC (if needed) */

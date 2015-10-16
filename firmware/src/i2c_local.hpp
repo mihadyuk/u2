@@ -1,6 +1,6 @@
-#ifndef I2C_LOCAL_BD_H_
-#define I2C_LOCAL_BD_H_
+#ifndef I2C_LOCAL_HPP_
+#define I2C_LOCAL_HPP_
 
 void I2CInitLocal(void);
 
-#endif /* I2C_LOCAL_BD_H_ */
+#endif /* I2C_LOCAL_HPP_ */

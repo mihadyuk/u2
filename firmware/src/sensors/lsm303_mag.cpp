@@ -10,8 +10,8 @@
  ******************************************************************************
  */
 
-/* Swaps Y Z axis for specially LSM303DLHC. LSM303DLH and HMC5843 does not need
-   this hack */
+/* Swap Y Z axis specially for LSM303DLHC.
+ * LSM303DLH and HMC5843 do not need this hack */
 #define LSM_SWAP_Y_Z          TRUE
 
 #define LSM_REG_CRA           0x00
@@ -35,6 +35,12 @@ typedef enum {
   LSM_MAG_GAIN_330,
   LSM_MAG_GAIN_230
 } mag_sens_t;
+
+/* update period for boards without hardware interrupt line from LSM303
+ * to EXTI controller */
+#if defined(BOARD_MNU)
+  #define LSM303_UPDATE_PERIOD    MS2ST(10)
+#endif
 
 /*
  ******************************************************************************
@@ -67,6 +73,10 @@ static const float mag_sens_array[8] = {
 
 static bool mag_data_fresh = true;
 
+#if defined(BOARD_MNU)
+  static virtual_timer_t lsm303_vtp;
+#endif
+
 /*
  ******************************************************************************
  ******************************************************************************
@@ -74,6 +84,46 @@ static bool mag_data_fresh = true;
  ******************************************************************************
  ******************************************************************************
  */
+
+/**
+ *
+ */
+void LSM303_mag::vtimerISR(void *p) {
+  (void)p;
+
+#if defined(BOARD_MNU)
+  osalSysLockFromISR();
+  chVTSetI(&lsm303_vtp, LSM303_UPDATE_PERIOD, vtimerISR, nullptr);
+  mag_data_fresh = true;
+  osalSysUnlockFromISR();
+#endif
+}
+
+/**
+ *
+ */
+void LSM303_mag::enable_interrupts(void) {
+#if defined(BOARD_BEZVODIATEL)
+  Exti.lsm303(true);
+#elif defined(BOARD_MNU)
+  chVTSet(&lsm303_vtp, LSM303_UPDATE_PERIOD, vtimerISR, nullptr);
+#else
+#error "Unknown board"
+#endif
+}
+
+/**
+ *
+ */
+void LSM303_mag::disable_interrupts(void) {
+#if defined(BOARD_BEZVODIATEL)
+  Exti.lsm303(false);
+#elif defined(BOARD_MNU)
+  chVTReset(&lsm303_vtp);
+#else
+#error "Unknown board"
+#endif
+}
 
 /**
  * @brief   convert parrots to Gauss.
@@ -156,7 +206,7 @@ bool LSM303_mag::hw_init_full(void){
   if (MSG_OK != i2cret)
     return OSAL_FAILED;
 
-  Exti.lsm303(true);
+  enable_interrupts();
 
   return OSAL_SUCCESS;
 }
@@ -294,6 +344,8 @@ msg_t LSM303_mag::stop_sleep_code(void) {
  */
 void LSM303_mag::stop(void){
 
+  disable_interrupts();
+
   if ((this->state == SENSOR_STATE_STOP) || (this->state == SENSOR_STATE_DEAD))
     return;
   else {
@@ -339,3 +391,4 @@ void LSM303_mag::extiISR(EXTDriver *extp, expchannel_t channel) {
 
   mag_data_fresh = true;
 }
+

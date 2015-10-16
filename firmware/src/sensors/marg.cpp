@@ -211,10 +211,10 @@ sensor_state_registry_t Marg::param_update(void) {
  *
  */
 Marg::Marg(void) :
-    mpu6050(&I2CD_FAST, MPU6050_I2C_ADDR),
-    ak8975(&I2CD_FAST, AK8975_I2C_ADDR),
-    lsm303mag(&I2CD_FAST, LSM303_MAG_I2C_ADDR),
-    lsm303acc(&I2CD_FAST, LSM303_ACC_I2C_ADDR)
+    mpu6050(&MPU6050_I2CD,  MPU6050_I2C_ADDR),
+    ak8975(&MPU6050_I2CD,   AK8975_I2C_ADDR),
+    lsm303mag(&LSM303_I2CD, LSM303_MAG_I2C_ADDR),
+    lsm303acc(&LSM303_I2CD, LSM303_ACC_I2C_ADDR)
 {
   return;
 }

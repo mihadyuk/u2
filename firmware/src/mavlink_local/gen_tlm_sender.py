@@ -26,6 +26,7 @@ names_uav = [
     ["scal_imu",    "scaled_imu"],
     ["scal_press",  "scaled_pressure"],
     ["sys_status",  "sys_status"],
+    ["system_time", "system_time"],
     ["vfr_hud",     "vfr_hud"],
 ]
 

@@ -97,6 +97,27 @@ static inline size_t unpack64to8ne(uint64_t v, uint8_t *buf){
   return sizeof(v);
 }
 
+static inline void toggle_endiannes16(uint8_t *data, const size_t len) {
+  uint8_t tmp;
+
+  for (size_t i=0; i<len; i+=2){
+    tmp = data[i];
+    data[i] = data[i+1];
+    data[i+1] = tmp;
+  }
+}
+
+static inline void toggle_endiannes32(uint8_t *data, const size_t len) {
+  uint8_t tmp;
+
+  for (size_t i=0; i<len; i+=4) {
+    tmp = data[i];
+    data[i+3] = tmp;
+    tmp = data[i+1];
+    data[i+2] = tmp;
+  }
+}
+
 #define pack8to16be     pack8to16fe
 #define pack8to32be     pack8to32fe
 #define pack8to64be     pack8to64fe

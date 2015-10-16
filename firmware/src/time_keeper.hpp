@@ -25,6 +25,7 @@ private:
   thread_t *worker = nullptr;
   gnss::GNSSReceiver &GNSS;
   static bool ready;
+  static bool time_verified;
 };
 
 #include "cli.hpp"

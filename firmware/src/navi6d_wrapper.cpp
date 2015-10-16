@@ -25,7 +25,7 @@
  */
 
 #define KALMAN_DEBUG_LOG          FALSE
-#define DEBIG_INDEX_SINS          42
+#define DEBUG_INDEX_SINS          42
 
 /*
  ******************************************************************************
@@ -55,10 +55,10 @@ __CCM__ static mavlink_navi6d_debug_output_t  dbg_out_struct;
 __CCM__ static mavMail dbg_in_mail;
 __CCM__ static mavMail dbg_out_mail;
 
-__CCM__ static mavlink_debug_vect_t dbg_acc_bias  = {0, 0, 0, 0, "acc_bias"};
-__CCM__ static mavlink_debug_vect_t dbg_gyr_bias  = {0, 0, 0, 0, "gyr_bias"};
-__CCM__ static mavlink_debug_vect_t dbg_acc_scale = {0, 0, 0, 0, "acc_scale"};
-__CCM__ static mavlink_debug_vect_t dbg_gyr_scale = {0, 0, 0, 0, "gyr_scale"};
+__CCM__ static mavlink_debug_vect_t dbg_acc_bias;
+__CCM__ static mavlink_debug_vect_t dbg_gyr_bias;
+__CCM__ static mavlink_debug_vect_t dbg_acc_scale;
+__CCM__ static mavlink_debug_vect_t dbg_gyr_scale;
 __CCM__ static mavMail mail_acc_bias;
 __CCM__ static mavMail mail_gyr_bias;
 __CCM__ static mavMail mail_acc_scale;
@@ -67,8 +67,9 @@ __CCM__ static mavMail mail_gyr_scale;
 __CCM__ static mavlink_debug_t dbg_sins_stat;
 __CCM__ static mavMail mail_sins_stat;
 
-__CCM__ static mavlink_debug_vect_t dbg_mag_data  = {0, 0, 0, 0, "mag_data"};
+__CCM__ static mavlink_debug_vect_t dbg_mag_data;
 __CCM__ static mavMail mail_mag_data;
+
 /*
  ******************************************************************************
  * PROTOTYPES
@@ -249,7 +250,7 @@ void Navi6dWrapper::debug2mavlink(float dT) {
       debug_decimator = 0;
 
       dbg_sins_stat.value = nav_sins.navi_data.status;
-      dbg_sins_stat.ind = DEBIG_INDEX_SINS;
+      dbg_sins_stat.ind = DEBUG_INDEX_SINS;
       dbg_sins_stat.time_boot_ms = TIME_BOOT_MS;
       mail_sins_stat.fill(&dbg_sins_stat, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG);
       mav_postman.post(mail_sins_stat);
@@ -325,6 +326,15 @@ void Navi6dWrapper::start(void) {
 
   read_settings();
   restart_cache = *restart + 1; // enforce sins restart in first update call
+
+  /* we need to initialize names of fields manually because CCM RAM section
+   * set to NOLOAD in chibios linker scripts */
+  const size_t N = sizeof(mavlink_debug_vect_t::name);
+  strncpy(dbg_acc_bias.name,  "acc_bias",  N);
+  strncpy(dbg_gyr_bias.name,  "gyr_bias",  N);
+  strncpy(dbg_acc_scale.name, "acc_scale", N);
+  strncpy(dbg_gyr_scale.name, "gyr_scale", N);
+  strncpy(dbg_mag_data.name,  "mag_data",  N);
 
   ready = true;
 }
