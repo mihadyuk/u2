@@ -99,7 +99,7 @@ const GlobalParam_t ParamRegistry::param_db[] = {
 {"ADC_mpxv_shift", {.u32 = 0}, {.u32 = 128}, {.u32 = 255}, &gp_val[84], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, "Offset cancelation. Uses AD5200."},
 {"BAT_cells", {.u32 = 1}, {.u32 = 2}, {.u32 = 8}, &gp_val[85], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, "Battery cell count"},
 {"BAT_chemistry", {.u32 = 0}, {.u32 = 0}, {.u32 = 1}, &gp_val[86], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, "Battery chemistry type for critical threshold calculation"},
-{"BAT_ignore", {.u32 = 0}, {.u32 = 0}, {.u32 = 1}, &gp_val[87], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, "Ignore battery voltage check"},
+{"BAT_ignore", {.u32 = 0}, {.u32 = 1}, {.u32 = 1}, &gp_val[87], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, "Ignore battery voltage check"},
 {"SINS_restart", {.u32 = 0}, {.u32 = 1}, {.u32 = 65535}, &gp_val[88], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, "Change this value to enforce sins restart"},
 {"SINS_en_gnss", {.u32 = 0}, {.u32 = 1}, {.u32 = 1}, &gp_val[89], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, NULL},
 {"SINS_en_baro", {.u32 = 0}, {.u32 = 1}, {.u32 = 1}, &gp_val[90], PARAM_DEFAULT, MAVLINK_TYPE_UINT32_T, NULL},
