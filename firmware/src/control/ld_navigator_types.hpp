@@ -44,6 +44,40 @@ struct ManeuverPart {
     finale = true;
     type = ManeuverPartType::unknown;
   }
+  void fillLine(T (&start)[2][1], T (&finish)[2][1], bool finale) {
+    type = ManeuverPartType::line;
+    this->finale = finale;
+    m_copy<T, 2, 1>(line.start, start);
+    m_copy<T, 2, 1>(line.finish, finish);
+  }
+  void fillLine(T startNorth, T startEast,
+                T finishNorth, T finishEast, bool finale) {
+    type = ManeuverPartType::line;
+    this->finale = finale;
+    line.start[0][0] = startNorth;
+    line.start[1][0] = startEast;
+    line.finish[0][0] = finishNorth;
+    line.finish[1][0] = finishEast;
+  }
+  void fillArc(T (&center)[2][1], T radius,
+               T startCourse, T deltaCourse, bool finale) {
+    type = ManeuverPartType::arc;
+    this->finale = finale;
+    m_copy<T, 2, 1>(line.center, center);
+    arc.radius = radius;
+    arc.startCourse = startCourse;
+    arc.deltaCourse = deltaCourse;
+  }
+  void fillArc(T centerNorth, T centerEast, T radius,
+               T startCourse, T deltaCourse, bool finale) {
+    type = ManeuverPartType::arc;
+    this->finale = finale;
+    line.center[0][0] = centerNorth;
+    line.center[1][0] = centerEast;
+    arc.radius = radius;
+    arc.startCourse = startCourse;
+    arc.deltaCourse = deltaCourse;
+  }
   bool finale;            /* is last part in maneuver */
   ManeuverPartType type;  /* type of maneuver part */
   union {

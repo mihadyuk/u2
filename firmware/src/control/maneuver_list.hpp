@@ -11,21 +11,9 @@ namespace control {
 namespace maneuver {
 
 template <typename T>
-void missionItemWGS84toNE(T (&localNE)[2][1],
-                          T (&currWGS84)[3][1],
-                          const mavlink_mission_item_t &wp) {
-  T wpWGS84[3][1] = {{deg2rad<T>(wp.x)},
-                     {deg2rad<T>(wp.y)},
-                     {deg2rad<T>(wp.z)}};
-  T wpLocalNED[3][1];
-  geo2lv<T>(wpLocalNED, wpWGS84, currWGS84);
-  get_sub<T, 2, 1, 3, 1>(localNE, wpLocalNED, 0, 0);
-}
-
-template <typename T>
-void updateMnrLine(ManeuverPart<T> &part,
-                   T (&prevNE)[2][1],
-                   T (&trgtNE)[2][1]) {
+void lineMnr(ManeuverPart<T> &part,
+             T (&prevNE)[2][1],
+             T (&trgtNE)[2][1]) {
 
   part.type = ManeuverPartType::line;
   part.finale = true;
@@ -34,13 +22,13 @@ void updateMnrLine(ManeuverPart<T> &part,
 }
 
 template <typename T>
-void updateMnrCircle(ManeuverPart<T> &part,
-                     size_t partNumber,
-                     T repeats,
-                     T radius,
-                     T (&prevNE)[2][1],
-                     T (&trgtNE)[2][1]) {
-  size_t partsCount = static_cast<size_t>(round(fabs(repeats)))*2 + 2;
+void circleMnr(ManeuverPart<T> &part,
+               uint32_t partNumber,
+               T repeats,
+               T radius,
+               T (&prevNE)[2][1],
+               T (&trgtNE)[2][1]) {
+  uint32_t partsCount = static_cast<uint32_t>(round(fabs(repeats)))*2 + 2;
 
   T lineVector[2][1];
   m_minus<T, 2, 1>(lineVector, prevNE, trgtNE);
@@ -54,7 +42,7 @@ void updateMnrCircle(ManeuverPart<T> &part,
     T cwSign = sign<T>(radius);
     T lineCourse = atan2(normedLineVector[1][0],
                          normedLineVector[0][0]) +
-                   cwSign*static_cast<T>(M_PI_2);
+                             cwSign*static_cast<T>(M_PI_2);
     lineCourse = wrap_2pi(lineCourse);
 
     part.type = ManeuverPartType::arc;
@@ -96,29 +84,7 @@ void updateMnrCircle(ManeuverPart<T> &part,
 }
 
 template <typename T>
-void updateMnrStadium(ManeuverPart<T> &part,
-                      size_t partNumber,
-                      T repeats,
-                      T radius,
-                      T width,
-                      T hight,
-                      T (&prevNE)[2][1],
-                      T (&trgtNE)[2][1]) {
-  //TODO
-}
-
-template <typename T>
-void updateMnrThreePoints(ManeuverPart<T> &part,
-                          size_t partNumber,
-                          T radius,
-                          T (&prevNE)[2][1],
-                          T (&trgtNE)[2][1],
-                          T (&thirdNE)[2][1]) {
-  //TODO
-}
-
-template <typename T>
-void updateMnrUnknown(ManeuverPart<T> &part) {
+void unknownMnr(ManeuverPart<T> &part) {
   part.type = ManeuverPartType::unknown;
   part.finale = true;
 }

@@ -4,7 +4,7 @@
 <include>common.xml</include>
         <enums>
           <enum name="MAV_CMD">
-               <entry value="40001" name="MAV_CMD_NAV_STADIUM">
+               <entry value="23" name="MAV_CMD_NAV_STADIUM">
                     <description>Stadium maneuver</description>
                     <param index="1">Repeats, If positive - clockwise, else counter-clockwise</param>
                     <param index="2">Width</param>
@@ -14,7 +14,7 @@
                     <param index="6">Longitude</param>
                     <param index="7">Altitude</param>
                </entry>
-               <entry value="40002" name="MAV_CMD_NAV_INFINITY">
+               <entry value="24" name="MAV_CMD_NAV_INFINITY">
                     <description>Infinity maneuver</description>
                     <param index="1">Repeats, If positive - clockwise, else counter-clockwise</param>
                     <param index="2">Radius</param>
