@@ -265,9 +265,9 @@ void MissionExecutor::navigate(void) {
     navigator.loadLine(line);
   }
 #else
-  double curr_wgs84[3][1] = {{deg2rad(acs_in.ch[ACS_INPUT_lat])},
-                             {deg2rad(acs_in.ch[ACS_INPUT_lon])},
-                             {acs_in.ch[ACS_INPUT_alt]}};
+  double curr_wgs84[3][1] = {{deg2rad(acs_in.chd[ACS_DOUBLE_INPUT_lat])},
+                             {deg2rad(acs_in.chd[ACS_DOUBLE_INPUT_lon])},
+                             {static_cast<double>(acs_in.ch[ACS_INPUT_alt])}};
   ManeuverPart<double> part = mnr_parser.update(curr_wgs84);
   LdNavOut<double> nav_out = ld_navigator.update(part);
   navout2acsin(nav_out);
