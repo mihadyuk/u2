@@ -63,7 +63,7 @@ struct ManeuverPart {
                T startCourse, T deltaCourse, bool finale) {
     type = ManeuverPartType::arc;
     this->finale = finale;
-    m_copy<T, 2, 1>(line.center, center);
+    m_copy<T, 2, 1>(arc.center, center);
     arc.radius = radius;
     arc.startCourse = startCourse;
     arc.deltaCourse = deltaCourse;
@@ -72,11 +72,15 @@ struct ManeuverPart {
                T startCourse, T deltaCourse, bool finale) {
     type = ManeuverPartType::arc;
     this->finale = finale;
-    line.center[0][0] = centerNorth;
-    line.center[1][0] = centerEast;
+    arc.center[0][0] = centerNorth;
+    arc.center[1][0] = centerEast;
     arc.radius = radius;
     arc.startCourse = startCourse;
     arc.deltaCourse = deltaCourse;
+  }
+  void fillUnknown() {
+    type = ManeuverPartType::unknown;
+    finale = true;
   }
   bool finale;            /* is last part in maneuver */
   ManeuverPartType type;  /* type of maneuver part */

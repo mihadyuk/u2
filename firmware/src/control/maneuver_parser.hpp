@@ -35,6 +35,8 @@ private:
                             T (&currWGS84)[3][1],
                             const mavlink_mission_item_t &wp);
   void rotateMnrPart(ManeuverPart<T> &part, T ang);
+  void flipNorthMnrPart(ManeuverPart<T> &part);
+  void flipEastMnrPart(ManeuverPart<T> &part);
   void moveMnrPart(ManeuverPart<T> &part, T (&deltaNE)[2][1]);
   void updateLineMnr(ManeuverPart<T> &part);
   void updateCircleMnr(ManeuverPart<T> &part);
@@ -79,9 +81,9 @@ template <typename T>
 void ManeuverParser<T>::missionItemWGS84toNE(T (&localNE)[2][1],
                                              T (&currWGS84)[3][1],
                                              const mavlink_mission_item_t &wp) {
-  T wpWGS84[3][1] = {{deg2rad<T>(wp.x)},
-                     {deg2rad<T>(wp.y)},
-                     {deg2rad<T>(wp.z)}};
+  T wpWGS84[3][1] = {{deg2rad<T>(static_cast<T>(wp.x))},
+                     {deg2rad<T>(static_cast<T>(wp.y))},
+                     {deg2rad<T>(static_cast<T>(wp.z))}};
   T wpLocalNED[3][1];
   geo2lv<T>(wpLocalNED, wpWGS84, currWGS84);
   get_sub<T, 2, 1, 3, 1>(localNE, wpLocalNED, 0, 0);
@@ -93,7 +95,7 @@ void ManeuverParser<T>::rotateMnrPart(ManeuverPart<T> &part, T ang) {
   T sinAng = sin(ang);
   T cosAng = cos(ang);
   T dcm[2][2] = {{cosAng, -sinAng},
-      {sinAng,  cosAng}};
+                 {sinAng,  cosAng}};
   T tmp[2][1];
 
   switch (part.type) {
@@ -111,6 +113,40 @@ void ManeuverParser<T>::rotateMnrPart(ManeuverPart<T> &part, T ang) {
     default:
       break;
   }
+}
+
+template <typename T>
+void ManeuverParser<T>::flipNorthMnrPart(ManeuverPart<T> &part) {
+  switch (part.type) {
+    case ManeuverPartType::line:
+      part.line.start[0][1] *= static_cast<T>(-1.0);
+      part.line.finish[0][1] *= static_cast<T>(-1.0);
+      break;
+    case ManeuverPartType::arc:
+      part.arc.center[0][1] *= static_cast<T>(-1.0);
+      part.arc.radius *= static_cast<T>(-1.0);
+      part.arc.startCourse = static_cast<T>(2.0*M_PI) - part.arc.startCourse;
+      break;
+    default:
+      break;
+  }
+}
+
+template <typename T>
+void ManeuverParser<T>::flipEastMnrPart(ManeuverPart<T> &part) {
+  switch (part.type) {
+      case ManeuverPartType::line:
+        part.line.start[0][0] *= static_cast<T>(-1.0);
+        part.line.finish[0][0] *= static_cast<T>(-1.0);
+        break;
+      case ManeuverPartType::arc:
+        part.arc.center[0][0] *= static_cast<T>(-1.0);
+        part.arc.radius *= static_cast<T>(-1.0);
+        part.arc.startCourse = static_cast<T>(M_PI) - part.arc.startCourse;
+        break;
+      default:
+        break;
+    }
 }
 
 template <typename T>
@@ -146,7 +182,7 @@ void ManeuverParser<T>::updateLineMnr(ManeuverPart<T> &part) {
 template <typename T>
 void ManeuverParser<T>::updateCircleMnr(ManeuverPart<T> &part) {
 
-  uint32_t partsCount = static_cast<uint32_t>(round(fabs(trgt.MNR_REPEATS_COUNT)*2 + 2));
+  uint32_t partsCount = round(fabs(trgt.MNR_REPEATS_COUNT)*2 + 2);
 
   T lineVector[2][1];
   m_minus<T, 2, 1>(lineVector, prevNE, trgtNE);
@@ -160,143 +196,112 @@ void ManeuverParser<T>::updateCircleMnr(ManeuverPart<T> &part) {
     T cwSign = sign<T>(trgt.MNR_TURN_RADIUS);
     T lineCourse = atan2(normedLineVector[1][0],
                          normedLineVector[0][0]) +
-                             cwSign*static_cast<T>(M_PI_2);
+                   cwSign*static_cast<T>(M_PI_2);
     lineCourse = wrap_2pi(lineCourse);
 
-    part.type = ManeuverPartType::arc;
-    part.finale = false;
-    part.arc.radius = trgt.MNR_TURN_RADIUS;
-    m_copy<T, 2, 1>(part.arc.center, trgtNE);
-    part.arc.deltaCourse = M_PI;
+    part.fillArc(trgtNE, trgt.MNR_TURN_RADIUS, lineCourse, M_PI, false);
 
-    uint32_t semiCircleNumber = mnrPartNumber % 2;
-    if (1 == semiCircleNumber) {
-      part.arc.startCourse = lineCourse;
-    } else {
-      part.arc.startCourse = wrap_2pi(lineCourse +
-                                      static_cast<T>(M_PI));
-    }
+    if (mnrPartNumber % 2)
+      part.arc.startCourse = wrap_2pi(lineCourse + static_cast<T>(M_PI));
 
   } else if (0 == mnrPartNumber) {
     /* line from previous waypoint to the circle's border */
-    part.type = ManeuverPartType::line;
-    part.finale = false;
-    m_copy<T, 2, 1>(part.line.start, prevNE);
-    m_mul_s<T, 2, 1>(normedLineVector, normedLineVector, fabs(trgt.MNR_TURN_RADIUS));
-    m_plus<T, 2, 1>(part.line.finish, trgtNE, normedLineVector);
+    part.fillLine(prevNE, trgtNE, false);
+    m_mul_s<T, 2, 1>(normedLineVector,
+                     normedLineVector,
+                     fabs(trgt.MNR_TURN_RADIUS));
+    m_plus<T, 2, 1>(part.line.finish,
+                    trgtNE,
+                    normedLineVector);
 
   } else if ((partsCount - 1) == mnrPartNumber) {
     /* line from the circle's border to the circle's center */
-    part.type = ManeuverPartType::line;
-    part.finale = true;
-    m_copy<T, 2, 1>(part.line.finish, trgtNE);
-    m_mul_s<T, 2, 1>(normedLineVector, normedLineVector, fabs(trgt.MNR_TURN_RADIUS));
-    m_plus<T, 2, 1>(part.line.start, trgtNE, normedLineVector);
+    part.fillLine(trgtNE, trgtNE, true);
+    m_mul_s<T, 2, 1>(normedLineVector,
+                     normedLineVector,
+                     fabs(trgt.MNR_TURN_RADIUS));
+    m_plus<T, 2, 1>(part.line.start,
+                    trgtNE,
+                    normedLineVector);
 
   } else {
-    part.type = ManeuverPartType::unknown;
-    part.finale = true;
+    part.fillUnknown();
 
   }
 
 }
 
-template <typename T>
-void ManeuverParser<T>::updateThreePointsMnr(ManeuverPart<T> &part) {;}
+//template <typename T>
+//void ManeuverParser<T>::updateThreePointsMnr(ManeuverPart<T> &part) {}
 
 template <typename T>
 void ManeuverParser<T>::updateInfinityMnr(ManeuverPart<T> &part) {
 
-  uint32_t partsCount = static_cast<uint32_t>(round(fabs(trgt.MNR_REPEATS_COUNT)*5 + 1));
+  uint32_t partsCount = round(fabs(trgt.MNR_REPEATS_COUNT)*5 + 1);
 
   if (0 == mnrPartNumber) {
     /* line from previous waypoint to the infinity's center */
-    part.type = ManeuverPartType::line;
-    part.finale = false;
-    m_copy<T, 2, 1>(part.line.start, prevNE);
-    m_copy<T, 2, 1>(part.line.finish, trgtNE);
+    part.fillLine(prevNE, trgtNE, false);
 
   } else if (mnrPartNumber > (partsCount - 1)) {
     /* out of maneuver parts range */
-    part.type = ManeuverPartType::unknown;
-    part.finale = true;
+    part.fillUnknown();
 
   } else {
     /* maneuver parts */
     T distToArcCenter = trgt.MNR_HEIGHT/2.0 - trgt.MNR_RADIUS;
     T arm = sqrt(distToArcCenter*distToArcCenter -
-                 trgt.MNR_RADIUS*trgt.MNR_RADIUS);
-    T ang = asin(trgt.MNR_RADIUS/distToArcCenter);
+                 static_cast<T>(trgt.MNR_RADIUS)*static_cast<T>(trgt.MNR_RADIUS));
+    T ang = asin(static_cast<T>(trgt.MNR_RADIUS)/static_cast<T>(distToArcCenter));
 
-    uint32_t normedPartNumber = mnrPartNumber % 5;
-    switch (normedPartNumber) {
+    switch (mnrPartNumber % 5) {
       case 1:
-        part.type = ManeuverPartType::line;
-        part.finale = false;
-        m_zeros<T, 2, 1>(part.line.start);
-        part.line.finish[0][0] = arm*cos(ang);
-        part.line.finish[1][0] = arm*-sin(ang);
+        part.fillLine(0.0, 0.0, arm*cos(ang), -arm*sin(ang), false);
         break;
       case 2:
-        part.type = ManeuverPartType::arc;
-        part.finale = false;
-        part.arc.center[0][0] = distToArcCenter;
-        part.arc.center[1][0] = 0;
-        part.arc.radius = fabs(trgt.MNR_RADIUS);
-        part.arc.startCourse = wrap_2pi(-ang);
-        part.arc.deltaCourse = wrap_2pi(static_cast<T>(M_PI) + 2.0*ang);
+        part.fillArc(distToArcCenter, 0.0, fabs(trgt.MNR_RADIUS),
+                     wrap_2pi(-ang),
+                     wrap_2pi(static_cast<T>(M_PI) + static_cast<T>(2.0)*ang),
+                     false);
         break;
       case 3:
-        part.type = ManeuverPartType::line;
-        part.finale = false;
-        part.line.start[0][0] = arm*cos(ang);
-        part.line.start[1][0] = arm*sin(ang);
-        part.line.finish[0][0] = arm*-cos(ang);
-        part.line.finish[1][0] = arm*-sin(ang);
+        part.fillLine(arm*cos(ang), arm*sin(ang),
+                      -arm*cos(ang), -arm*sin(ang),
+                      false);
         break;
       case 4:
-        part.type = ManeuverPartType::arc;
-        part.finale = false;
-        part.arc.center[0][0] = -distToArcCenter;
-        part.arc.center[1][0] = 0;
-        part.arc.radius = -fabs(trgt.MNR_RADIUS);
-        part.arc.startCourse = wrap_2pi(static_cast<T>(M_PI) + ang);
-        part.arc.deltaCourse = wrap_2pi(static_cast<T>(M_PI) + 2.0*ang);
+        part.fillArc(-distToArcCenter, 0.0, -fabs(trgt.MNR_RADIUS),
+                     wrap_2pi(static_cast<T>(M_PI) + ang),
+                     wrap_2pi(static_cast<T>(M_PI) + static_cast<T>(2.0)*ang),
+                     false);
         break;
       case 0:
-        part.type = ManeuverPartType::line;
-        part.finale = false;
-        m_zeros<T, 2, 1>(part.line.finish);
-        part.line.start[0][0] = arm*-cos(ang);
-        part.line.start[1][0] = arm*sin(ang);
+        part.fillLine(-arm*cos(ang), arm*sin(ang), 0.0, 0.0, false);
         break;
       default:
         break;
     }
 
-    if (sign<float>(trgt.MNR_REPEATS_COUNT) < 0.0) {
-      rotateMnrPart(part, deg2rad<T>(trgt.MNR_ROTATE_ANG) +
-                    static_cast<T>(M_PI));
-    } else {
+    if (sign(trgt.MNR_REPEATS_COUNT) < 0.0)
+      rotateMnrPart(part, deg2rad(trgt.MNR_ROTATE_ANG) + M_PI);
+    else
       rotateMnrPart(part, deg2rad<T>(trgt.MNR_ROTATE_ANG));
-    }
+
     moveMnrPart(part, trgtNE);
 
   }
 
-  if ((partsCount - 1) == mnrPartNumber) {
+  if ((partsCount - 1) == mnrPartNumber)
     part.finale = true;
-  }
 
 }
 
-template <typename T>
-void ManeuverParser<T>::updateStadiumMnr(ManeuverPart<T> &part) {;}
+//template <typename T>
+//void ManeuverParser<T>::updateStadiumMnr(ManeuverPart<T> &part) {}
 
 template <typename T>
 void ManeuverParser<T>::updateUnknownMnr(ManeuverPart<T> &part) {
-  part.type = ManeuverPartType::unknown;
-  part.finale = true;
+  part.fillUnknown();
 }
 
 template <typename T>
@@ -312,7 +317,7 @@ ManeuverPart<T> ManeuverParser<T>::update(T (&currWGS84)[3][1]) {
       updateLineMnr(ret);
       break;
     case MAV_CMD_NAV_SPLINE_WAYPOINT:
-      updateThreePointsMnr(ret);
+      //updateThreePointsMnr(ret);
       break;
     case MAV_CMD_NAV_LOITER_TURNS:
       updateCircleMnr(ret);
@@ -321,7 +326,7 @@ ManeuverPart<T> ManeuverParser<T>::update(T (&currWGS84)[3][1]) {
       updateInfinityMnr(ret);
       break;
     case MAV_CMD_NAV_STADIUM:
-      updateStadiumMnr(ret);
+      //updateStadiumMnr(ret);
       break;
     default:
       updateUnknownMnr(ret);
