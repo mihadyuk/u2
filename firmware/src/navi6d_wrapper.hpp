@@ -73,6 +73,8 @@ private:
   const float *init_lon     = nullptr;
   const float *init_alt     = nullptr;
   const float *init_yaw     = nullptr;
+  const float *c_alg_t      = nullptr;
+  const float *f_alg_t      = nullptr;
   const float *Qm_acc       = nullptr;
   const float *Qm_gyr       = nullptr;
   const float *Qm_acc_x     = nullptr;
