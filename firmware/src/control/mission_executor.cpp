@@ -4,7 +4,9 @@
 #include "waypoint_db.hpp"
 #include "mav_dbg.hpp"
 #include "navigator_types.hpp"
+#include "time_keeper.hpp"
 #include "mav_logger.hpp"
+#include "mav_postman.hpp"
 
 using namespace chibios_rt;
 using namespace control;
@@ -22,6 +24,8 @@ using namespace control;
 #define JUMP_SEQ      param1
 
 #define PID_TUNE_DEBUG      TRUE
+
+#define MISSION_EXECUTOR_DEBUG TRUE
 
 /*
  ******************************************************************************
@@ -52,6 +56,11 @@ extern MavLogger mav_logger;
 #if PID_TUNE_DEBUG
 __CCM__ static mavMail pid_tune_mail;
 __CCM__ static mavlink_debug_vect_t mavlink_out_debug_vect_struct = {0, 0, 0, 0, "PID_TUNE"};
+#endif
+
+#if MISSION_EXECUTOR_DEBUG
+__CCM__ static mavlink_debug_vect_t dbg_msn_exec;
+__CCM__ static mavMail mail_msn_exec;
 #endif
 
 /*
@@ -233,11 +242,21 @@ void MissionExecutor::navout2mavlink(const LdNavOut<double> &nav_out) {
 #endif
 }
 
-/**
- * @brief   Detects waypoint reachable status.
- * @details Kind of hack. It increases effective radius if
- *          crosstrack error more than R/1.5
- */
+void MissionExecutor::debug2mavlink() {
+#if MISSION_EXECUTOR_DEBUG
+
+  uint64_t time = TimeKeeper::utc();
+  dbg_msn_exec.time_usec = time;
+  dbg_msn_exec.x = static_cast<float>(mnr_parser.debugPartNumber());
+  dbg_msn_exec.y = acs_in.ch[ACS_INPUT_dZm];
+  dbg_msn_exec.z = acs_in.ch[ACS_INPUT_dYaw];
+
+  mail_msn_exec.fill(&dbg_msn_exec, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG_VECT);
+  mav_postman.post(mail_msn_exec);
+
+#endif
+}
+
 bool MissionExecutor::wp_reached(const LdNavOut<double> &nav_out,
                                  const ManeuverPart<double> &part) {
   return nav_out.crossed && part.finale;
@@ -272,6 +291,11 @@ void MissionExecutor::navigate(void) {
   LdNavOut<double> nav_out = ld_navigator.update(part);
   navout2acsin(nav_out);
   navout2mavlink(nav_out);
+
+#if MISSION_EXECUTOR_DEBUG
+  debug2mavlink();
+#endif
+
   if (wp_reached(nav_out, part)) {
     broadcast_mission_item_reached(trgt.seq);
     load_next_mission_item();
@@ -307,6 +331,12 @@ mnr_parser(prev, trgt, third) {
 void MissionExecutor::start(void) {
   chTMObjectInit(&this->tmp_nav);
   state = MissionState::idle;
+
+#if MISSION_EXECUTOR_DEBUG
+  const size_t N = sizeof(mavlink_debug_vect_t::name);
+  strncpy(dbg_msn_exec.name,  "msn_exec",  N);
+#endif
+
 }
 
 /**

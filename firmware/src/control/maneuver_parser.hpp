@@ -28,6 +28,7 @@ public:
                  const mavlink_mission_item_t &third);
   void loadNextPart();
   void resetPartCounter();
+  uint32_t debugPartNumber();
   ManeuverPart<T> update(T (&currWGS84)[3][1]);
 
 private:
@@ -75,6 +76,11 @@ void ManeuverParser<T>::loadNextPart() {
 template <typename T>
 void ManeuverParser<T>::resetPartCounter() {
   mnrPartNumber = 0;
+}
+
+template <typename T>
+uint32_t ManeuverParser<T>::debugPartNumber() {
+  return mnrPartNumber;
 }
 
 template <typename T>
