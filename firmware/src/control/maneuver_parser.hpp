@@ -188,7 +188,7 @@ void ManeuverParser<T>::updateLineMnr(ManeuverPart<T> &part) {
 template <typename T>
 void ManeuverParser<T>::updateCircleMnr(ManeuverPart<T> &part) {
 
-  uint32_t partsCount = round(fabs(trgt.MNR_REPEATS_COUNT)*2 + 2);
+  uint32_t partsCount = round(fabs(trgt.MNR_REPEATS_COUNT)*4 + 2);
 
   T lineVector[2][1];
   m_minus<T, 2, 1>(lineVector, prevNE, trgtNE);
@@ -198,17 +198,34 @@ void ManeuverParser<T>::updateCircleMnr(ManeuverPart<T> &part) {
   m_norm<T, 2>(normedLineVector);
 
   if (mnrPartNumber > 0 && mnrPartNumber < (partsCount - 1)) {
-    /* semicircles */
+    /* quarter circle */
     T cwSign = sign<T>(trgt.MNR_TURN_RADIUS);
     T lineCourse = atan2(normedLineVector[1][0],
                          normedLineVector[0][0]) +
                    cwSign*static_cast<T>(M_PI_2);
     lineCourse = wrap_2pi(lineCourse);
 
-    part.fillArc(trgtNE, trgt.MNR_TURN_RADIUS, lineCourse, M_PI, false);
+    part.fillArc(trgtNE, trgt.MNR_TURN_RADIUS, 0.0, M_PI_2, false);
 
-    if (mnrPartNumber % 2)
-      part.arc.startCourse = wrap_2pi(lineCourse + static_cast<T>(M_PI));
+    switch (mnrPartNumber % 4) {
+      case 0:
+        part.arc.startCourse = wrap_2pi(lineCourse +
+                                        static_cast<T>(3.0*M_PI_2));
+        break;
+      case 1:
+        part.arc.startCourse = lineCourse;
+        break;
+      case 2:
+        part.arc.startCourse = wrap_2pi(lineCourse +
+                                        static_cast<T>(M_PI_2));
+        break;
+      case 3:
+        part.arc.startCourse = wrap_2pi(lineCourse +
+                                        static_cast<T>(M_PI));
+        break;
+      default:
+        break;
+    }
 
   } else if (0 == mnrPartNumber) {
     /* line from previous waypoint to the circle's border */
