@@ -74,9 +74,9 @@ private:
                  + cwSign*static_cast<T>(M_PI_2);
     lineCourse = wrap_2pi(lineCourse);
 
-    T deltaCourse = wrap_2pi(cwSign*(lineCourse - arc.startCourse));
+    T deltaCourse = wrap_pi(cwSign*(lineCourse - arc.startCourse));
     bool crossed = false;
-    if (deltaCourse >= arc.deltaCourse)
+    if (fabs(deltaCourse) >= arc.deltaCourse)
       crossed = true;
 
     return LdNavOut<T>(dZ, normcOfCenterToCurrVector, lineCourse, crossed);
