@@ -84,6 +84,7 @@ private:
   void debug2mavlink();
   LdNavigator<double> ld_navigator;
   ManeuverParser<double> mnr_parser;
+  uint8_t send_debug_vect_decimator;
 
 #endif
 

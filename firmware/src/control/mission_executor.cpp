@@ -17,6 +17,7 @@ using namespace control;
  ******************************************************************************
  */
 
+#define MSN_EXEC_DEBUG_VECT_DECIMATOR 10
 // some convenient aliases
 #define WP_RADIUS     param2
 
@@ -248,8 +249,8 @@ void MissionExecutor::debug2mavlink() {
   uint64_t time = TimeKeeper::utc();
   dbg_msn_exec.time_usec = time;
   dbg_msn_exec.x = static_cast<float>(mnr_parser.debugPartNumber());
-  dbg_msn_exec.y = acs_in.ch[ACS_INPUT_dZm];
-  dbg_msn_exec.z = acs_in.ch[ACS_INPUT_dYaw];
+  dbg_msn_exec.y = acs_in.ch[ACS_INPUT_dYaw];
+  dbg_msn_exec.z = acs_in.ch[ACS_INPUT_dZm];
 
   mail_msn_exec.fill(&dbg_msn_exec, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG_VECT);
   mav_postman.post(mail_msn_exec);
@@ -293,7 +294,11 @@ void MissionExecutor::navigate(void) {
   navout2mavlink(nav_out);
 
 #if MISSION_EXECUTOR_DEBUG
-  debug2mavlink();
+  if (0 == send_debug_vect_decimator)
+    debug2mavlink();
+  send_debug_vect_decimator++;
+  if (send_debug_vect_decimator >= MSN_EXEC_DEBUG_VECT_DECIMATOR)
+    send_debug_vect_decimator = 0;
 #endif
 
   if (wp_reached(nav_out, part)) {
@@ -303,6 +308,7 @@ void MissionExecutor::navigate(void) {
   } else if (mnr_part_reached(nav_out)) {
     mnr_parser.loadNextPart();
   }
+
 #endif
 }
 
@@ -318,11 +324,18 @@ void MissionExecutor::navigate(void) {
 MissionExecutor::MissionExecutor(ACSInput &acs_in) :
 state(MissionState::uninit),
 acs_in(acs_in),
-mnr_parser(prev, trgt, third) {
+mnr_parser(prev, trgt, third),
+send_debug_vect_decimator(0) {
 
   /* fill home point with invalid data. This denotes it uninitialized. */
   memset(&home, 0xFF, sizeof(home));
   home.seq = -1;
+
+#if MISSION_EXECUTOR_DEBUG
+  const size_t N = sizeof(mavlink_debug_vect_t::name);
+  strncpy(dbg_msn_exec.name,  "msn_exec",  N);
+#endif
+
 }
 
 /**
@@ -331,11 +344,6 @@ mnr_parser(prev, trgt, third) {
 void MissionExecutor::start(void) {
   chTMObjectInit(&this->tmp_nav);
   state = MissionState::idle;
-
-#if MISSION_EXECUTOR_DEBUG
-  const size_t N = sizeof(mavlink_debug_vect_t::name);
-  strncpy(dbg_msn_exec.name,  "msn_exec",  N);
-#endif
 
 }
 
