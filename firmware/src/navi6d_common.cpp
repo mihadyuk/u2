@@ -115,7 +115,7 @@ void Navi6dWrapper::sins_cold_start(void) {
 
   CommandType<klmnfp> cmd;
 
-  cmd.command = *restart;
+  cmd.command = static_cast<command_t>(*restart);
 
   cmd.param[0][0] = deg2rad(*init_lat);
   cmd.param[1][0] = deg2rad(*init_lon);
