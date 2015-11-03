@@ -10,7 +10,7 @@
 #include "mavlink_local.hpp"
 
 #define MAX_MNR_REPEATS 255
-#define DEFAULT_MNR_RADIUS 0.5
+#define MNR_DEFAULT_RADIUS 0.5
 #define MNR_REPEATS_COUNT param1
 #define MNR_TURN_RADIUS param3
 #define MNR_WIDTH param2
@@ -208,10 +208,6 @@ void ManeuverParser<T>::updateCircleMnr(ManeuverPart<T> &part) {
     part.fillArc(trgtNE, trgt.MNR_TURN_RADIUS, 0.0, M_PI_2, false);
 
     switch (mnrPartNumber % 4) {
-      case 0:
-        part.arc.startCourse = wrap_2pi(lineCourse +
-                                        static_cast<T>(3.0*M_PI_2));
-        break;
       case 1:
         part.arc.startCourse = lineCourse;
         break;
@@ -222,6 +218,10 @@ void ManeuverParser<T>::updateCircleMnr(ManeuverPart<T> &part) {
       case 3:
         part.arc.startCourse = wrap_2pi(lineCourse +
                                         static_cast<T>(M_PI));
+        break;
+      case 0:
+        part.arc.startCourse = wrap_2pi(lineCourse +
+                                        static_cast<T>(3.0*M_PI_2));
         break;
       default:
         break;
@@ -260,7 +260,7 @@ void ManeuverParser<T>::updateCircleMnr(ManeuverPart<T> &part) {
 template <typename T>
 void ManeuverParser<T>::updateInfinityMnr(ManeuverPart<T> &part) {
 
-  uint32_t partsCount = round(fabs(trgt.MNR_REPEATS_COUNT)*5 + 1);
+  uint32_t partsCount = round(fabs(trgt.MNR_REPEATS_COUNT)*7 + 1);
 
   if (0 == mnrPartNumber) {
     /* line from previous waypoint to the infinity's center */
@@ -274,42 +274,58 @@ void ManeuverParser<T>::updateInfinityMnr(ManeuverPart<T> &part) {
     /* maneuver parts */
     T distToArcCenter = trgt.MNR_HEIGHT/2.0 - trgt.MNR_RADIUS;
     T arm = sqrt(distToArcCenter*distToArcCenter -
-                 static_cast<T>(trgt.MNR_RADIUS)*static_cast<T>(trgt.MNR_RADIUS));
-    T ang = asin(static_cast<T>(trgt.MNR_RADIUS)/static_cast<T>(distToArcCenter));
+                 static_cast<T>(trgt.MNR_RADIUS*trgt.MNR_RADIUS));
+    T ang = asin(static_cast<T>(trgt.MNR_RADIUS)/distToArcCenter);
 
-    switch (mnrPartNumber % 5) {
+    switch (mnrPartNumber % 7) {
       case 1:
-        part.fillLine(0.0, 0.0, arm*cos(ang), -arm*sin(ang), false);
+        part.fillLine(0.0, 0.0, arm, 0.0, false);
+        rotateMnrPart(part, ang);
         break;
       case 2:
-        part.fillArc(distToArcCenter, 0.0, fabs(trgt.MNR_RADIUS),
-                     wrap_2pi(-ang),
-                     wrap_2pi(static_cast<T>(M_PI) + static_cast<T>(2.0)*ang),
+        part.fillArc(distToArcCenter, 0.0,
+                     -fabs(trgt.MNR_RADIUS),
+                     wrap_2pi(ang),
+                     static_cast<T>(M_PI_2) + ang,
                      false);
         break;
       case 3:
-        part.fillLine(arm*cos(ang), arm*sin(ang),
-                      -arm*cos(ang), -arm*sin(ang),
-                      false);
+        part.fillArc(distToArcCenter, 0.0,
+                     -fabs(trgt.MNR_RADIUS),
+                     3.0*M_PI_2,
+                     static_cast<T>(M_PI_2) + ang,
+                     false);
         break;
       case 4:
-        part.fillArc(-distToArcCenter, 0.0, -fabs(trgt.MNR_RADIUS),
-                     wrap_2pi(static_cast<T>(M_PI) + ang),
-                     wrap_2pi(static_cast<T>(M_PI) + static_cast<T>(2.0)*ang),
+        part.fillLine(arm, 0.0, -arm, 0.0, false);
+        rotateMnrPart(part, -ang);
+        break;
+      case 5:
+        part.fillArc(-distToArcCenter, 0.0,
+                     fabs(trgt.MNR_RADIUS),
+                     wrap_2pi(-ang + static_cast<T>(M_PI)),
+                     static_cast<T>(M_PI_2) + ang,
+                     false);
+        break;
+      case 6:
+        part.fillArc(-distToArcCenter, 0.0,
+                     fabs(trgt.MNR_RADIUS),
+                     3.0*M_PI_2,
+                     static_cast<T>(M_PI_2) + ang,
                      false);
         break;
       case 0:
-        part.fillLine(-arm*cos(ang), arm*sin(ang), 0.0, 0.0, false);
+        part.fillLine(-arm, 0.0, 0.0, 0.0, false);
+        rotateMnrPart(part, ang);
         break;
       default:
         break;
     }
 
     if (sign(trgt.MNR_REPEATS_COUNT) < 0.0)
-      rotateMnrPart(part, deg2rad(trgt.MNR_ROTATE_ANG) + M_PI);
-    else
-      rotateMnrPart(part, deg2rad<T>(trgt.MNR_ROTATE_ANG));
+      flipNorthMnrPart(part);
 
+    rotateMnrPart(part, deg2rad<T>(trgt.MNR_ROTATE_ANG));
     moveMnrPart(part, trgtNE);
 
   }
@@ -319,8 +335,109 @@ void ManeuverParser<T>::updateInfinityMnr(ManeuverPart<T> &part) {
 
 }
 
-//template <typename T>
-//void ManeuverParser<T>::updateStadiumMnr(ManeuverPart<T> &part) {}
+template <typename T>
+void ManeuverParser<T>::updateStadiumMnr(ManeuverPart<T> &part) {
+
+  uint32_t partsCount = round(fabs(trgt.MNR_REPEATS_COUNT)*9 + 2);
+
+  T lineVector[2][1];
+  m_minus<T, 2, 1>(lineVector, prevNE, trgtNE);
+
+  T normedLineVector[2][1];
+  m_copy<T, 2, 1>(normedLineVector, lineVector);
+  m_norm<T, 2>(normedLineVector);
+
+  if (mnrPartNumber > 0 && mnrPartNumber < (partsCount - 1)) {
+    /* maneuver parts */
+    T northOffset = trgt.MNR_HEIGHT/2.0 - MNR_DEFAULT_RADIUS;
+    T eastOffset = trgt.MNR_WIDTH/2.0 - MNR_DEFAULT_RADIUS;
+    T semiWidth = trgt.MNR_WIDTH/2.0;
+    T semiHeight = trgt.MNR_HEIGHT/2.0;
+    switch (mnrPartNumber % 9) {
+      case 1:
+        part.fillLine(0.0, -semiWidth,
+                      northOffset, -semiWidth,
+                      false);
+        break;
+      case 2:
+        part.fillArc(northOffset, -eastOffset,
+                     MNR_DEFAULT_RADIUS,
+                     0.0, M_PI_2,
+                     false);
+        break;
+      case 3:
+        part.fillLine(-eastOffset, semiHeight,
+                      eastOffset, semiHeight,
+                      false);
+        break;
+      case 4:
+        part.fillArc(northOffset, eastOffset,
+                     MNR_DEFAULT_RADIUS,
+                     M_PI_2, M_PI_2,
+                     false);
+        break;
+      case 5:
+        part.fillLine(northOffset, semiWidth,
+                      -northOffset, semiWidth,
+                      false);
+        break;
+      case 6:
+        part.fillArc(-northOffset, eastOffset,
+                     MNR_DEFAULT_RADIUS,
+                     M_PI, M_PI_2,
+                     false);
+        break;
+      case 7:
+        part.fillLine(-semiHeight, eastOffset,
+                      -semiHeight, -eastOffset,
+                      false);
+        break;
+      case 8:
+        part.fillArc(-northOffset, -eastOffset,
+                     MNR_DEFAULT_RADIUS,
+                     3.0*M_PI_2, M_PI_2,
+                     false);
+        break;
+      case 0:
+        part.fillLine(-northOffset, -semiWidth,
+                      0.0, -semiWidth,
+                      false);
+        break;
+      default:
+        break;
+    }
+
+    if (sign(trgt.MNR_REPEATS_COUNT) < 0.0)
+      flipEastMnrPart(part);
+
+    rotateMnrPart(part, deg2rad<T>(trgt.MNR_ROTATE_ANG));
+    moveMnrPart(part, trgtNE);
+
+  } else if (0 == mnrPartNumber) {
+    /* line from previous waypoint to the stadium's border */
+    part.fillLine(prevNE, trgtNE, false);
+    m_mul_s<T, 2, 1>(normedLineVector,
+                     normedLineVector,
+                     trgt.MNR_WIDTH/2.0);
+    m_plus<T, 2, 1>(part.line.finish,
+                    trgtNE,
+                    normedLineVector);
+
+  } else if ((partsCount - 1) == mnrPartNumber) {
+    /* line from the stadium's border to the stadium's center */
+    part.fillLine(trgtNE, trgtNE, true);
+    m_mul_s<T, 2, 1>(normedLineVector,
+                     normedLineVector,
+                     trgt.MNR_WIDTH/2.0);
+    m_plus<T, 2, 1>(part.line.start,
+                    trgtNE,
+                    normedLineVector);
+  } else {
+    part.fillUnknown();
+
+  }
+
+}
 
 template <typename T>
 void ManeuverParser<T>::updateUnknownMnr(ManeuverPart<T> &part) {
@@ -341,6 +458,7 @@ ManeuverPart<T> ManeuverParser<T>::update(T (&currWGS84)[3][1]) {
       break;
     case MAV_CMD_NAV_SPLINE_WAYPOINT:
       //updateThreePointsMnr(ret);
+      updateUnknownMnr(ret);
       break;
     case MAV_CMD_NAV_LOITER_TURNS:
       updateCircleMnr(ret);
@@ -349,7 +467,7 @@ ManeuverPart<T> ManeuverParser<T>::update(T (&currWGS84)[3][1]) {
       updateInfinityMnr(ret);
       break;
     case MAV_CMD_NAV_STADIUM:
-      //updateStadiumMnr(ret);
+      updateStadiumMnr(ret);
       break;
     default:
       updateUnknownMnr(ret);
