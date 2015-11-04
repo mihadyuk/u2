@@ -2,7 +2,7 @@
 #define ENGINE_HPP_
 
 #include "drivetrain_impact.hpp"
-#include "drivetrain/drivetrain_pwm.hpp"
+#include "drivetrain/pwm_base.hpp"
 
 namespace control {
 

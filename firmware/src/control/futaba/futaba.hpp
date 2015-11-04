@@ -4,6 +4,7 @@
 #include <futaba/tumbler.hpp>
 #include <futaba/receiver_mavlink.hpp>
 #include <futaba/receiver_pwm.hpp>
+#include <futaba/receiver_pwm_fpga.hpp>
 
 #include "alpha_beta.hpp"
 #include "acs_input.hpp"
@@ -23,7 +24,13 @@ private:
   void process_man_tumbler(RecevierOutput const &recv, ManualSwitch &man);
   void recevier2futaba(RecevierOutput const &recv, ACSInput &result);
 
+#if defined(BOARD_BEZVODIATEL)
   ReceiverPWM receiver_rc;
+#elif defined(BOARD_MNU)
+  ReceiverPWMFPGA receiver_rc;
+#else
+#error "unknown board"
+#endif
   ReceiverMavlink receiver_mavlink;
 
   bool ready = false;

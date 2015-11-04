@@ -1,6 +1,8 @@
 #include "main.h"
 #include "pads.h"
 
+#if defined(BOARD_MNU)
+
 #include "fpga_pwm.h"
 
 /*
@@ -77,3 +79,4 @@ void fpgapwmSet(FpgaPwm *pwmp, fpgacmd_t val, size_t N) {
   pwmp->pwm[N] = val;
 }
 
+#endif // defined(BOARD_MNU)

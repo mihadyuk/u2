@@ -1,6 +1,8 @@
 #include "main.h"
 #include "pads.h"
 
+#if defined(BOARD_MNU)
+
 #include "fpga.h"
 
 /*
@@ -26,7 +28,7 @@ FPGADriver FPGAD1;
 // sync variant
 static const SRAMConfig sram_cfg = {
     (FSMC_BCR_MWID_16 | FSMC_BCR_MTYP_PSRAM | FSMC_BCR_BURSTEN |
-        FSMC_BCR_WREN | FSMC_BCR_CBURSTRW | FSMC_BCR_WAITPOL),
+        FSMC_BCR_WREN | FSMC_BCR_CBURSTRW   | FSMC_BCR_WAITPOL),
 
     // BTR
     (0 << 24) | // DATLAT
@@ -118,3 +120,4 @@ fpgacmd_t * fpgaGetCmdSlice(const FPGADriver *fpgap, size_t N) {
   return & fpgap->memspace->cmd[N * FPGA_CMD_SIZE];
 }
 
+#endif // defined(BOARD_MNU)

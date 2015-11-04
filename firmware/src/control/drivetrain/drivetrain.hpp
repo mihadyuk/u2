@@ -2,6 +2,8 @@
 #define DRIVETRAIN_HPP_
 
 #include "drivetrain_impact.hpp"
+#include "pwm_fpga.hpp"
+#include "pwm_stm32.hpp"
 #include "servo_tree.hpp"
 #include "engine_1ch.hpp"
 #include "engine_2ch.hpp"
@@ -22,7 +24,14 @@ public:
   uint32_t capabilities(void);
 private:
   bool ready = false;
-  PWM pwm;
+
+#if defined(BOARD_BEZVODIATEL)
+  PWMStm32 pwm;
+#elif defined(BOARD_MNU)
+  PWMFPGA pwm;
+#else
+#error "unknown board"
+#endif
   Engine *engine;
   ServoTree servo;
 };

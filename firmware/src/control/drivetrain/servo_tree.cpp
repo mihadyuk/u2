@@ -47,7 +47,7 @@ using namespace control;
 /**
  *
  */
-ServoTree::ServoTree(PWM &pwm) : pwm(pwm) {
+ServoTree::ServoTree(PWMBase &pwm) : pwm(pwm) {
   return;
 }
 

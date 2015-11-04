@@ -1,6 +1,8 @@
 #include "main.h"
 #include "pads.h"
 
+#if defined(BOARD_MNU)
+
 #include "fpga_icu.h"
 
 /*
@@ -77,3 +79,4 @@ fpgacmd_t fpgaicuRead(const FpgaIcu *icup, size_t N) {
   return icup->icu[N];
 }
 
+#endif // defined(BOARD_MNU)

@@ -1,6 +1,8 @@
 #include "main.h"
 #include "pads.h"
 
+#if defined(BOARD_MNU)
+
 #include "fpga_mul.h"
 
 /*
@@ -133,3 +135,4 @@ void mulMtrxMultiply(MtrxMul *mulp, size_t op0, size_t op1, size_t res, size_t r
 }
 
 
+#endif // defined(BOARD_MNU)

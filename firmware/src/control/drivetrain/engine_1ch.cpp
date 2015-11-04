@@ -49,7 +49,7 @@ const int16_t THRUST_DISARMED_VALUE = 1500;
 /**
  *
  */
-Engine1ch::Engine1ch(PWM &pwm) : pwm(pwm)
+Engine1ch::Engine1ch(PWMBase &pwm) : pwm(pwm)
 {
   return;
 }

@@ -3,7 +3,7 @@
 
 #include "engine.hpp"
 #include "drivetrain_impact.hpp"
-#include "drivetrain/drivetrain_pwm.hpp"
+#include "drivetrain/pwm_base.hpp"
 
 namespace control {
 
@@ -12,11 +12,11 @@ namespace control {
  */
 class Engine1ch : public Engine {
 public:
-  Engine1ch(PWM &pwm);
+  Engine1ch(PWMBase &pwm);
 private:
   void start_impl(void);
   void update_impl(const DrivetrainImpact &impact);
-  PWM &pwm;
+  PWMBase &pwm;
   const uint32_t *thr_min = nullptr;
   const uint32_t *thr_mid = nullptr;
   const uint32_t *thr_max = nullptr;
