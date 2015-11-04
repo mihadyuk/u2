@@ -25,7 +25,8 @@ endif
 
 # Linker extra options here.
 ifeq ($(USE_LDOPT),)
-  USE_LDOPT = 
+  #USE_LDOPT = --specs=nano.specs
+  USE_LDOPT =
 endif
 
 # Enable this if you want link time optimizations (LTO)
@@ -299,7 +300,7 @@ endif
 # Enable loading with g++ only if you need C++ runtime support.
 # NOTE: You can use C++ even without C++ support if you are careful. C++
 #       runtime support makes code size explode.
-LD   = $(TRGT)gcc
+LD   = $(TRGT)gcc -specs=nano.specs
 #LD   = $(TRGT)g++
 CP   = $(TRGT)objcopy
 AS   = $(TRGT)gcc -x assembler-with-cpp
