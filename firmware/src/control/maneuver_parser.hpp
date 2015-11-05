@@ -125,11 +125,11 @@ template <typename T>
 void ManeuverParser<T>::flipNorthMnrPart(ManeuverPart<T> &part) {
   switch (part.type) {
     case ManeuverPartType::line:
-      part.line.start[0][1] *= static_cast<T>(-1.0);
-      part.line.finish[0][1] *= static_cast<T>(-1.0);
+      part.line.start[1][0] *= static_cast<T>(-1.0);
+      part.line.finish[1][0] *= static_cast<T>(-1.0);
       break;
     case ManeuverPartType::arc:
-      part.arc.center[0][1] *= static_cast<T>(-1.0);
+      part.arc.center[1][0] *= static_cast<T>(-1.0);
       part.arc.radius *= static_cast<T>(-1.0);
       part.arc.startCourse = static_cast<T>(2.0*M_PI) - part.arc.startCourse;
       break;
@@ -254,8 +254,76 @@ void ManeuverParser<T>::updateCircleMnr(ManeuverPart<T> &part) {
 
 }
 
-//template <typename T>
-//void ManeuverParser<T>::updateThreePointsMnr(ManeuverPart<T> &part) {}
+template <typename T>
+void ManeuverParser<T>::updateThreePointsMnr(ManeuverPart<T> &part) {
+  if (mnrPartNumber < 1) {
+
+    T trgtToPrevVect[2][1];
+    m_minus<T, 2, 1>(trgtToPrevVect, prevNE, trgtNE);
+    T trgtToThirdVect[2][1];
+    m_minus<T, 2, 1>(trgtToThirdVect, thirdNE, trgtNE);
+
+    T trgtToPrevCrs = atan2(trgtToPrevVect[1][0],
+                            trgtToPrevVect[0][0]);
+    T trgtToThirdCrs = atan2(trgtToThirdVect[1][0],
+                             trgtToThirdVect[0][0]);
+    T deltaCrs = wrap_pi(trgtToThirdCrs - trgtToPrevCrs);
+
+    T lineStart[2][1];
+    m_copy<T, 2, 1>(lineStart, trgtToPrevVect);
+    m_norm<T, 2>(trgtToPrevVect);
+
+    T alpha = deltaCrs/2;
+    T cosAlpha = cos(alpha);
+    T sinAlpha = sin(alpha);
+
+    T radius;
+    if (deltaCrs >= static_cast<T>(0.0))
+      radius = -fabs(trgt.MNR_RADIUS);
+    else
+      radius = fabs(trgt.MNR_RADIUS);
+
+    switch (mnrPartNumber) {
+      case 0: {
+        T lineFinish[2][1];
+        m_mul_s<T, 2, 1>(lineFinish,
+                         trgtToPrevVect,
+                         -radius*cosAlpha/sinAlpha);
+
+        part.fillLine(lineStart, lineFinish, false);
+        break;
+      }
+      case 1: {
+        T C[2][2] = {{cosAlpha, -sinAlpha},
+                     {sinAlpha,  cosAlpha}};
+
+        T trgtToArcCenter[2][1];
+        m_mul<T, 2, 2, 1>(trgtToArcCenter, C, trgtToPrevVect);
+        T arcCenter[2][1];
+        m_mul_s<T, 2, 1>(arcCenter,
+                         trgtToArcCenter,
+                         -radius/sinAlpha);
+
+        T startCrs = atan2(-trgtToPrevVect[1][0],
+                           -trgtToPrevVect[0][0]);
+        startCrs = wrap_2pi(sign(radius)*startCrs);
+        T dCrs = static_cast<T>(2.0)*(static_cast<T>(M_PI_2) - fabs(alpha));
+        dCrs = wrap_2pi(dCrs);
+
+        part.fillArc(arcCenter, radius, startCrs, dCrs, true);
+        break;
+      }
+      default:
+        break;
+    }
+
+    moveMnrPart(part, trgtNE);
+
+  } else {
+    part.fillUnknown();
+  }
+
+}
 
 template <typename T>
 void ManeuverParser<T>::updateInfinityMnr(ManeuverPart<T> &part) {
@@ -353,6 +421,7 @@ void ManeuverParser<T>::updateStadiumMnr(ManeuverPart<T> &part) {
     T eastOffset = trgt.MNR_WIDTH/2.0 - MNR_DEFAULT_RADIUS;
     T semiWidth = trgt.MNR_WIDTH/2.0;
     T semiHeight = trgt.MNR_HEIGHT/2.0;
+
     switch (mnrPartNumber % 9) {
       case 1:
         part.fillLine(0.0, -semiWidth,
@@ -454,21 +523,24 @@ ManeuverPart<T> ManeuverParser<T>::update(T (&currWGS84)[3][1]) {
   ManeuverPart<T> ret;
   switch (trgt.command) {
     case MAV_CMD_NAV_WAYPOINT:
-      updateLineMnr(ret);
+      if (trgt.MNR_RADIUS)
+        updateThreePointsMnr(ret);
+      else
+        updateLineMnr(ret);
       break;
-    case MAV_CMD_NAV_SPLINE_WAYPOINT:
-      //updateThreePointsMnr(ret);
-      updateUnknownMnr(ret);
-      break;
+
     case MAV_CMD_NAV_LOITER_TURNS:
       updateCircleMnr(ret);
       break;
+
     case MAV_CMD_NAV_INFINITY:
       updateInfinityMnr(ret);
       break;
+
     case MAV_CMD_NAV_STADIUM:
       updateStadiumMnr(ret);
       break;
+
     default:
       updateUnknownMnr(ret);
       break;
