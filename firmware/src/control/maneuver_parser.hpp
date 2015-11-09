@@ -28,6 +28,8 @@ public:
                  const mavlink_mission_item_t &third);
   void loadNextPart();
   void resetPartCounter();
+  void savePartNumber();
+  void loadSavedPartNumber();
   uint32_t debugPartNumber();
   ManeuverPart<T> update(T (&currWGS84)[3][1]);
 
@@ -55,6 +57,7 @@ private:
   T thirdNE[2][1];
 
   uint32_t mnrPartNumber;
+  uint32_t savedMnrPartNumber;
 };
 
 template <typename T>
@@ -62,7 +65,7 @@ ManeuverParser<T>::ManeuverParser(const mavlink_mission_item_t &prev,
                                   const mavlink_mission_item_t &trgt,
                                   const mavlink_mission_item_t &third) :
                                   prev(prev), trgt(trgt), third(third),
-                                  mnrPartNumber(0) {
+                                  mnrPartNumber(0), savedMnrPartNumber(0) {
   memset(prevNE, 0, sizeof(prevNE)/sizeof(T));
   memset(trgtNE, 0, sizeof(trgtNE)/sizeof(T));
   memset(thirdNE, 0, sizeof(thirdNE)/sizeof(T));
@@ -76,6 +79,16 @@ void ManeuverParser<T>::loadNextPart() {
 template <typename T>
 void ManeuverParser<T>::resetPartCounter() {
   mnrPartNumber = 0;
+}
+
+template <typename T>
+void ManeuverParser<T>::savePartNumber() {
+  savedMnrPartNumber = mnrPartNumber;
+}
+
+template <typename T>
+void ManeuverParser<T>::loadSavedPartNumber() {
+  mnrPartNumber = savedMnrPartNumber;
 }
 
 template <typename T>
@@ -188,7 +201,7 @@ void ManeuverParser<T>::updateLineMnr(ManeuverPart<T> &part) {
 template <typename T>
 void ManeuverParser<T>::updateCircleMnr(ManeuverPart<T> &part) {
 
-  uint32_t partsCount = round(fabs(trgt.MNR_REPEATS_COUNT)*4 + 2);
+  uint32_t partsCount = round(fabs(trgt.MNR_REPEATS_COUNT)*4 + 1);
 
   T lineVector[2][1];
   m_minus<T, 2, 1>(lineVector, prevNE, trgtNE);
@@ -197,8 +210,8 @@ void ManeuverParser<T>::updateCircleMnr(ManeuverPart<T> &part) {
   m_copy<T, 2, 1>(normedLineVector, lineVector);
   m_norm<T, 2>(normedLineVector);
 
-  if (mnrPartNumber > 0 && mnrPartNumber < (partsCount - 1)) {
-    /* quarter circle */
+  if (mnrPartNumber > 0 && mnrPartNumber < partsCount) {
+    // quarter circle
     T cwSign = sign<T>(trgt.MNR_TURN_RADIUS);
     T lineCourse = atan2(normedLineVector[1][0],
                          normedLineVector[0][0]) +
@@ -213,22 +226,25 @@ void ManeuverParser<T>::updateCircleMnr(ManeuverPart<T> &part) {
         break;
       case 2:
         part.arc.startCourse = wrap_2pi(lineCourse +
-                                        static_cast<T>(M_PI_2));
+                                        cwSign*static_cast<T>(M_PI_2));
         break;
       case 3:
         part.arc.startCourse = wrap_2pi(lineCourse +
-                                        static_cast<T>(M_PI));
+                                        cwSign*static_cast<T>(M_PI));
         break;
       case 0:
         part.arc.startCourse = wrap_2pi(lineCourse +
-                                        static_cast<T>(3.0*M_PI_2));
+                                        cwSign*static_cast<T>(3.0*M_PI_2));
         break;
       default:
         break;
     }
 
+    if ((partsCount - 1) == mnrPartNumber)
+          part.finale = true;
+
   } else if (0 == mnrPartNumber) {
-    /* line from previous waypoint to the circle's border */
+    // line from previous waypoint to the circle's border
     part.fillLine(prevNE, trgtNE, false);
     m_mul_s<T, 2, 1>(normedLineVector,
                      normedLineVector,
@@ -237,8 +253,8 @@ void ManeuverParser<T>::updateCircleMnr(ManeuverPart<T> &part) {
                     trgtNE,
                     normedLineVector);
 
-  } else if ((partsCount - 1) == mnrPartNumber) {
-    /* line from the circle's border to the circle's center */
+/*  } else if ((partsCount - 1) == mnrPartNumber) {
+    // line from the circle's border to the circle's center
     part.fillLine(trgtNE, trgtNE, true);
     m_mul_s<T, 2, 1>(normedLineVector,
                      normedLineVector,
@@ -246,7 +262,7 @@ void ManeuverParser<T>::updateCircleMnr(ManeuverPart<T> &part) {
     m_plus<T, 2, 1>(part.line.start,
                     trgtNE,
                     normedLineVector);
-
+*/
   } else {
     part.fillUnknown();
 
@@ -256,7 +272,7 @@ void ManeuverParser<T>::updateCircleMnr(ManeuverPart<T> &part) {
 
 template <typename T>
 void ManeuverParser<T>::updateThreePointsMnr(ManeuverPart<T> &part) {
-  if (mnrPartNumber < 1) {
+  if (mnrPartNumber < 2) {
 
     T trgtToPrevVect[2][1];
     m_minus<T, 2, 1>(trgtToPrevVect, prevNE, trgtNE);
