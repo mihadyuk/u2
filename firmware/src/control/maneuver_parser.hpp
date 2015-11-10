@@ -276,22 +276,28 @@ void ManeuverParser<T>::updateThreePointsMnr(ManeuverPart<T> &part) {
 
     T trgtToPrevVect[2][1];
     m_minus<T, 2, 1>(trgtToPrevVect, prevNE, trgtNE);
+    T distTrgtToPrev = m_vec_norm<T, 2>(trgtToPrevVect);
     T trgtToThirdVect[2][1];
     m_minus<T, 2, 1>(trgtToThirdVect, thirdNE, trgtNE);
+    T distTrgtToThird = m_vec_norm<T, 2>(trgtToThirdVect);
 
     T trgtToPrevCrs = atan2(trgtToPrevVect[1][0],
                             trgtToPrevVect[0][0]);
     T trgtToThirdCrs = atan2(trgtToThirdVect[1][0],
                              trgtToThirdVect[0][0]);
+
     T deltaCrs = wrap_pi(trgtToThirdCrs - trgtToPrevCrs);
+    // Check if previous, target and third waypoints are on the one line
+    if (static_cast<T>(0.0) == deltaCrs) {
+      part.fillLine(prevNE, trgtNE, true);
+      return;
+    }
 
     T lineStart[2][1];
     m_copy<T, 2, 1>(lineStart, trgtToPrevVect);
     m_norm<T, 2>(trgtToPrevVect);
 
     T alpha = deltaCrs/2;
-    T cosAlpha = cos(alpha);
-    T sinAlpha = sin(alpha);
 
     T radius;
     if (deltaCrs >= static_cast<T>(0.0))
@@ -302,14 +308,24 @@ void ManeuverParser<T>::updateThreePointsMnr(ManeuverPart<T> &part) {
     switch (mnrPartNumber) {
       case 0: {
         T lineFinish[2][1];
+        T arm = -radius/tan(alpha);
+        // Check if arc's arm more than distance between waypoints
+        if (arm > distTrgtToPrev ||
+            arm > distTrgtToThird) {
+          part.fillLine(prevNE, trgtNE, true);
+          return;
+        }
+
         m_mul_s<T, 2, 1>(lineFinish,
                          trgtToPrevVect,
-                         -radius*cosAlpha/sinAlpha);
+                         arm);
 
         part.fillLine(lineStart, lineFinish, false);
         break;
       }
       case 1: {
+        T cosAlpha = cos(alpha);
+        T sinAlpha = sin(alpha);
         T C[2][2] = {{cosAlpha, -sinAlpha},
                      {sinAlpha,  cosAlpha}};
 
