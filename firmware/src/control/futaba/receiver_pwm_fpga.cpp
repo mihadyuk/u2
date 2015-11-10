@@ -1,6 +1,7 @@
 #include "main.h"
+#include "fpga_icu.h"
 
-#include "receiver_pwm.hpp"
+#include "receiver_pwm_fpga.hpp"
 #include "param_registry.hpp"
 #include "mavlink_local.hpp"
 
@@ -26,8 +27,6 @@ using namespace control;
 #define MAX_VALID_VALUE       2200
 #define MIN_VALID_VALUE       800
 
-#define CHANNEL_TIMEOUT       MS2ST(200)
-
 /*
  ******************************************************************************
  * EXTERNS
@@ -47,44 +46,6 @@ extern mavlink_rc_channels_scaled_t   mavlink_out_rc_channels_scaled_struct;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-
-static uint16_t  cache[CHANNEL_CNT];
-static systime_t timestamp[CHANNEL_CNT]; // timestamp array for timeout detection
-
-/**
- *
- */
-void futaba_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p) {
-  (void)eicup;
-  (void)channel;
-  (void)p;
-
-  cache[channel] = w;
-  timestamp[channel] = chVTGetSystemTimeX();
-}
-
-/**
- *
- */
-static const EICUChannelConfig futabacfg = {
-    EICU_INPUT_ACTIVE_HIGH,
-    EICU_INPUT_PULSE,
-    futaba_cb
-};
-
-/**
- *
- */
-static const EICUConfig eicucfg = {
-    (1000 * 1000),      /* EICU clock frequency (Hz).*/
-    {
-        &futabacfg,
-        &futabacfg,
-        &futabacfg,
-        &futabacfg,
-    },
-    0
-};
 
 /*
  ******************************************************************************
@@ -123,37 +84,13 @@ static void receiver2mavlink(const uint16_t *pwm, size_t channels) {
 }
 
 /**
- * retval   true == timeout
- *          fasle == OK
- */
-static bool is_timeout(int32_t map, systime_t timeout) {
-  bool ret;
-
-  osalSysLock();
-  if ((chVTGetSystemTimeX() - timestamp[map]) >= timeout) {
-    ret = true;
-    /* prevent false positive when system timer overflows */
-    timestamp[map] = chVTGetSystemTimeX() - timeout;
-  }
-  else {
-    ret = false;
-  }
-  osalSysUnlock();
-
-  return ret;
-}
-
-/**
  *
  */
-uint16_t ReceiverPWM::get_ch(size_t chnum, bool *data_valid) const {
+uint16_t ReceiverPWMFPGA::get_ch(size_t chnum, bool *data_valid) const {
 
-  uint16_t ret = cache[chnum];
+  uint16_t ret = fpgaicuRead(&FPGAICUD1, chnum);
 
   if ((ret > MAX_VALID_VALUE) || (ret < MIN_VALID_VALUE))
-    *data_valid = false;
-
-  if (is_timeout(chnum, CHANNEL_TIMEOUT))
     *data_valid = false;
 
   return ret;
@@ -167,10 +104,9 @@ uint16_t ReceiverPWM::get_ch(size_t chnum, bool *data_valid) const {
 /**
  *
  */
-void ReceiverPWM::start(void) {
+void ReceiverPWMFPGA::start(void) {
 
-  eicuStart(&EICUD4, &eicucfg);
-  eicuEnable(&EICUD4);
+  fpgaicuStart(&FPGAICUD1, &FPGAD1);
 
   ready = true;
 }
@@ -178,7 +114,7 @@ void ReceiverPWM::start(void) {
 /**
  *
  */
-void ReceiverPWM::stop(void) {
+void ReceiverPWMFPGA::stop(void) {
 
   ready = false;
 
@@ -189,12 +125,12 @@ void ReceiverPWM::stop(void) {
 /**
  *
  */
-void ReceiverPWM::update(RecevierOutput &result) {
+void ReceiverPWMFPGA::update(RecevierOutput &result) {
   bool data_valid = true;
 
   osalDbgCheck(ready);
 
-  receiver2mavlink(cache, CHANNEL_CNT);
+  receiver2mavlink(FPGAICUD1.icu, CHANNEL_CNT);
 
   /* fill all with valid values */
   for (size_t i=0; i<ArrayLen(result.ch); i++)

@@ -25,7 +25,7 @@ endif
 
 # Linker extra options here.
 ifeq ($(USE_LDOPT),)
-  USE_LDOPT = 
+  USE_LDOPT =
 endif
 
 # Enable this if you want link time optimizations (LTO)
@@ -89,8 +89,8 @@ PROJECT = ch
 CHIBIOS = ../../ChibiOS
 CHIBIOS_CONTRIB = $(CHIBIOS)/../ChibiOS-Contrib
 
-include board_mnu/board.mk
-#include board_bezvodiatel/board.mk
+#include board_mnu/board.mk
+include board_bezvodiatel/board.mk
 
 # Startup files.
 include $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC/mk/startup_stm32f4xx.mk
@@ -132,11 +132,15 @@ CSRC = $(STARTUPSRC) \
        src/mavlink_local/mav_codec.c \
        benchmark/memcpy_bench.c \
        src/usbcfg.c \
+       src/fpga/fpga.c \
+       src/fpga/fpga_pwm.c \
+       src/fpga/fpga_icu.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
 CONTROLSRC =\
-		src/control/drivetrain/drivetrain_pwm.cpp \
+		src/control/drivetrain/pwm_stm32.cpp \
+		src/control/drivetrain/pwm_fpga.cpp \
 		src/control/drivetrain/servo_tree.cpp \
 		src/control/drivetrain/drivetrain.cpp \
 		src/control/drivetrain/engine.cpp \
@@ -146,6 +150,7 @@ CONTROLSRC =\
 		src/control/futaba/receiver.cpp \
 		src/control/futaba/receiver_ppm.cpp \
 		src/control/futaba/receiver_pwm.cpp \
+		src/control/futaba/receiver_pwm_fpga.cpp \
 		src/control/futaba/receiver_synth.cpp \
 		src/control/futaba/receiver_mavlink.cpp \
 		src/control/acs.cpp \
@@ -273,6 +278,7 @@ INCDIR = $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
          src/kinematic \
          src/cli \
          src/control \
+         src/fpga \
          lib/navi6d \
          lib/mavlink/C/lapwing \
          benchmark \
@@ -299,7 +305,7 @@ endif
 # Enable loading with g++ only if you need C++ runtime support.
 # NOTE: You can use C++ even without C++ support if you are careful. C++
 #       runtime support makes code size explode.
-LD   = $(TRGT)gcc
+LD   = $(TRGT)gcc -specs=nano.specs
 #LD   = $(TRGT)g++
 CP   = $(TRGT)objcopy
 AS   = $(TRGT)gcc -x assembler-with-cpp

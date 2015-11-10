@@ -5,6 +5,7 @@
 #include "engine_2ch.hpp"
 #include "putinrange.hpp"
 #include "param_registry.hpp"
+#include "pwm_stm32.hpp"
 
 using namespace control;
 
@@ -77,7 +78,7 @@ void Engine2ch::write_thrust_pwm(int32_t thrpwm) {
 /**
  *
  */
-Engine2ch::Engine2ch(PWM &pwm) :
+Engine2ch::Engine2ch(PWMBase &pwm) :
 pwm(pwm)
 {
   return;

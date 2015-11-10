@@ -73,6 +73,11 @@ Giovanni
 #include "ms5806.hpp"
 #include "npa700.hpp"
 #include "pmu.hpp"
+#if defined(BOARD_MNU)
+  #include "fpga.h"
+  #include "fpga_pwm.h"
+  #include "fpga_icu.h"
+#endif
 
 using namespace chibios_rt;
 
@@ -265,9 +270,10 @@ int main(void) {
 #if defined(BOARD_BEZVODIATEL)
   osalThreadSleepMilliseconds(300);
 #elif defined(BOARD_MNU)
-  while (! FPGAReady()) {
-    osalThreadSleepMilliseconds(10);
-  }
+  fpgaObjectInit(&FPGAD1);
+  fpgapwmObjectInit(&FPGAPWMD1);
+  fpgaicuObjectInit(&FPGAICUD1);
+  fpgaStart(&FPGAD1);
 #else
 #error "board unsupported"
 #endif

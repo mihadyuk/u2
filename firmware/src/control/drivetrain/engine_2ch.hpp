@@ -3,19 +3,18 @@
 
 #include "engine.hpp"
 #include "drivetrain_impact.hpp"
-#include "drivetrain/drivetrain_pwm.hpp"
 
 namespace control {
 
 class Engine2ch : public Engine {
 public:
-  Engine2ch(PWM &pwm);
+  Engine2ch(PWMBase &pwm);
 private:
   void start_impl(void);
   void update_impl(const DrivetrainImpact &impact);
   int32_t float2pwm(float thr);
   void write_thrust_pwm(int32_t thrpwm);
-  PWM &pwm;
+  PWMBase &pwm;
   const uint32_t *thr_dz  = nullptr;
 };
 

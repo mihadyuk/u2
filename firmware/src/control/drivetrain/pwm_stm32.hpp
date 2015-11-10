@@ -1,7 +1,7 @@
-#ifndef DRIVETRAIN_PWM_HPP_
-#define DRIVETRAIN_PWM_HPP_
+#ifndef PWM_STM32_HPP_
+#define PWM_STM32_HPP_
 
-#define DRIVETRAIN_PWM_CHANNELS   4
+#include "pwm_base.hpp"
 
 //#define DRIVETRAIN_PWM_CLK        8000000 /* 1MHz clock */
 //#define DRIVETRAIN_PWM_PERIOD     2000   /* 20000 == 50Hz pulse generation */
@@ -14,27 +14,14 @@ namespace control {
 /**
  *
  */
-typedef enum {
-  PWM_CH_AIL = 0,
-  PWM_CH_ELE = 1,
-  PWM_CH_RUD = 2,
-  PWM_CH_THR = 3,
-  PWM_CH_THR_REVERSE = 0, // for simple PWM to brushed motor
-} pwm_ch_t;
-
-/**
- *
- */
-class PWM {
+class PWMStm32 : public PWMBase {
 public:
-  PWM(void);
+  PWMStm32(void);
   void start(void);
   void stop(void);
   void update(uint16_t pwm, size_t channel);
-private:
-  bool ready = false;
 };
 
 } /* namespace */
 
-#endif /* DRIVETRAIN_PWM_HPP_ */
+#endif /* PWM_STM32_HPP_ */
