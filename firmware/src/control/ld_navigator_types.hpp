@@ -16,7 +16,7 @@ struct LdNavOut {
     dz(dz), dist(dist), crs(crs), crossed(crossed) {;}
   T dz;         /* cross track error (m) */
   T dist;       /* distance to target point (m) */
-  T crs;        /* course to target point (rad) */
+  T crs;        /* course to target point (rad), [0; 2*M_PI] */
   bool crossed; /* is mission part crossed  */
 };
 
@@ -29,9 +29,9 @@ struct ManeuverLine {
 template <typename T>
 struct ManeuverArc {
   T center[2][1]; /* north (m), east (m) coordinates */
-  T radius;       /* arc radius (m) */
-  T startCourse;  /* course (rad) on arc start */
-  T deltaCourse;  /* course change (rad) on arc */
+  T radius;       /* arc radius (m), if positive - clockwise, else counter-clockwise */
+  T startCourse;  /* course (rad) on arc start, [0, 2*M_PI] */
+  T deltaCourse;  /* course change (rad) on arc, [0; M_PI] */
 };
 
 /**

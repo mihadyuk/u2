@@ -66,9 +66,9 @@ ManeuverParser<T>::ManeuverParser(const mavlink_mission_item_t &prev,
                                   const mavlink_mission_item_t &third) :
                                   prev(prev), trgt(trgt), third(third),
                                   mnrPartNumber(0), savedMnrPartNumber(0) {
-  memset(prevNE, 0, sizeof(prevNE)/sizeof(T));
-  memset(trgtNE, 0, sizeof(trgtNE)/sizeof(T));
-  memset(thirdNE, 0, sizeof(thirdNE)/sizeof(T));
+  memset(prevNE, 0, sizeof(prevNE));
+  memset(trgtNE, 0, sizeof(trgtNE));
+  memset(thirdNE, 0, sizeof(thirdNE));
 }
 
 template <typename T>
