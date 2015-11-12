@@ -57,7 +57,7 @@ void fpgaicuStart(FpgaIcu *icup, const FPGADriver *fpgap) {
 
   osalDbgCheck(fpgap->state == FPGA_READY);
 
-  icup->icu = fpgaGetCmdSlice(fpgap, FPGA_CMD_SLICE_PWM) + 16;
+  icup->icu = fpgaGetCmdSlice(fpgap, FPGA_CMD_SLICE_ICU);
   icup->state = FPGAICU_READY;
 }
 
