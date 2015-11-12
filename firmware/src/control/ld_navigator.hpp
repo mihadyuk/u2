@@ -14,7 +14,7 @@ class LdNavigator {
 public:
   LdNavigator(void) {;}
 
-  LdNavOut<T> update(ManeuverPart<T>& part) {
+  LdNavOut<T> update(MnrPart<T>& part) {
     if (ManeuverPartType::line == part.type) {
       return updateOnLine(part.line);
     } else if (ManeuverPartType::arc == part.type) {

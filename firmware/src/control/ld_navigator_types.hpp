@@ -22,25 +22,59 @@ struct LdNavOut {
 
 template <typename T>
 struct ManeuverLine {
-  T start[2][1];  /* north (m), east (m) coordinates */
-  T finish[2][1]; /* north (m), east (m) coordinates */
+  T start[2][1];  /* local north (m), east (m) coordinates */
+  T finish[2][1]; /* local north (m), east (m) coordinates */
+
+  void fill(T (&start)[2][1], T (&finish)[2][1]) {
+    m_copy<T, 2, 1>(this->start, start);
+    m_copy<T, 2, 1>(this->finish, finish);
+  }
+  void fill(T startNorth, T startEast,
+            T finishNorth, T finishEast) {
+    this->start[0][0] = startNorth;
+    this->start[1][0] = startEast;
+    this->finish[0][0] = finishNorth;
+    this->finish[1][0] = finishEast;
+  }
+  void clear() {
+    memset(this, 0, sizeof(ManeuverLine<T>));
+  }
 };
 
 template <typename T>
 struct ManeuverArc {
-  T center[2][1]; /* north (m), east (m) coordinates */
+  T center[2][1]; /* local north (m), east (m) coordinates */
   T radius;       /* arc radius (m), if positive - clockwise, else counter-clockwise */
   T startCourse;  /* course (rad) on arc start, [0, 2*M_PI] */
   T deltaCourse;  /* course change (rad) on arc, [0; M_PI] */
+
+  void fill(T (&center)[2][1], T radius,
+            T startCourse, T deltaCourse) {
+    m_copy<T, 2, 1>(this->center, center);
+    this->radius = radius;
+    this->startCourse = startCourse;
+    this->deltaCourse = deltaCourse;
+  }
+  void fill(T centerNorth, T centerEast, T radius,
+            T startCourse, T deltaCourse) {
+    this->center[0][0] = centerNorth;
+    this->center[1][0] = centerEast;
+    this->radius = radius;
+    this->startCourse = startCourse;
+    this->deltaCourse = deltaCourse;
+  }
+  void clear() {
+    memset(this, 0, sizeof(ManeuverArc<T>));
+  }
 };
 
 /**
- * @brief Mission part: line or arc.
+ * @brief Maneuver part: line or arc.
  */
 template <typename T>
-struct ManeuverPart {
-  ManeuverPart(void) {
-    memset(this, 0, sizeof(ManeuverPart));
+struct MnrPart {
+  MnrPart(void) {
+    memset(this, 0, sizeof(MnrPart<T>));
     finale = true;
     type = ManeuverPartType::unknown;
   }

@@ -77,7 +77,7 @@ private:
 #else
 
   bool wp_reached(const LdNavOut<double> &nav_out,
-                  const ManeuverPart<double> &part);
+                  const MnrPart<double> &part);
   bool mnr_part_reached(const LdNavOut<double> &nav_out);
   void navout2mavlink(const LdNavOut<double> &nav_out);
   void navout2acsin(const LdNavOut<double> &nav_out);

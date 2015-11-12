@@ -31,22 +31,22 @@ public:
   void savePartNumber();
   void loadSavedPartNumber();
   uint32_t debugPartNumber();
-  ManeuverPart<T> update(T (&currWGS84)[3][1]);
+  MnrPart<T> update(T (&currWGS84)[3][1]);
 
 private:
   void missionItemWGS84toNE(T (&localNE)[2][1],
                             T (&currWGS84)[3][1],
                             const mavlink_mission_item_t &wp);
-  void rotateMnrPart(ManeuverPart<T> &part, T ang);
-  void flipNorthMnrPart(ManeuverPart<T> &part);
-  void flipEastMnrPart(ManeuverPart<T> &part);
-  void moveMnrPart(ManeuverPart<T> &part, T (&deltaNE)[2][1]);
-  void updateLineMnr(ManeuverPart<T> &part);
-  void updateCircleMnr(ManeuverPart<T> &part);
-  void updateThreePointsMnr(ManeuverPart<T> &part);
-  void updateInfinityMnr(ManeuverPart<T> &part);
-  void updateStadiumMnr(ManeuverPart<T> &part);
-  void updateUnknownMnr(ManeuverPart<T> &part);
+  void rotateMnrPart(MnrPart<T> &part, T ang);
+  void flipNorthMnrPart(MnrPart<T> &part);
+  void flipEastMnrPart(MnrPart<T> &part);
+  void moveMnrPart(MnrPart<T> &part, T (&deltaNE)[2][1]);
+  void updateLineMnr(MnrPart<T> &part);
+  void updateCircleMnr(MnrPart<T> &part);
+  void updateThreePointsMnr(MnrPart<T> &part);
+  void updateInfinityMnr(MnrPart<T> &part);
+  void updateStadiumMnr(MnrPart<T> &part);
+  void updateUnknownMnr(MnrPart<T> &part);
 
   const mavlink_mission_item_t &prev;
   const mavlink_mission_item_t &trgt;
@@ -109,7 +109,7 @@ void ManeuverParser<T>::missionItemWGS84toNE(T (&localNE)[2][1],
 }
 
 template <typename T>
-void ManeuverParser<T>::rotateMnrPart(ManeuverPart<T> &part, T ang) {
+void ManeuverParser<T>::rotateMnrPart(MnrPart<T> &part, T ang) {
 
   T sinAng = sin(ang);
   T cosAng = cos(ang);
@@ -135,7 +135,7 @@ void ManeuverParser<T>::rotateMnrPart(ManeuverPart<T> &part, T ang) {
 }
 
 template <typename T>
-void ManeuverParser<T>::flipNorthMnrPart(ManeuverPart<T> &part) {
+void ManeuverParser<T>::flipNorthMnrPart(MnrPart<T> &part) {
   switch (part.type) {
     case ManeuverPartType::line:
       part.line.start[1][0] *= static_cast<T>(-1.0);
@@ -152,7 +152,7 @@ void ManeuverParser<T>::flipNorthMnrPart(ManeuverPart<T> &part) {
 }
 
 template <typename T>
-void ManeuverParser<T>::flipEastMnrPart(ManeuverPart<T> &part) {
+void ManeuverParser<T>::flipEastMnrPart(MnrPart<T> &part) {
   switch (part.type) {
       case ManeuverPartType::line:
         part.line.start[0][0] *= static_cast<T>(-1.0);
@@ -169,7 +169,7 @@ void ManeuverParser<T>::flipEastMnrPart(ManeuverPart<T> &part) {
 }
 
 template <typename T>
-void ManeuverParser<T>::moveMnrPart(ManeuverPart<T> &part,
+void ManeuverParser<T>::moveMnrPart(MnrPart<T> &part,
                                     T (&deltaNE)[2][1]) {
   switch (part.type) {
     case ManeuverPartType::arc:
@@ -191,7 +191,7 @@ void ManeuverParser<T>::moveMnrPart(ManeuverPart<T> &part,
 }
 
 template <typename T>
-void ManeuverParser<T>::updateLineMnr(ManeuverPart<T> &part) {
+void ManeuverParser<T>::updateLineMnr(MnrPart<T> &part) {
   part.type = ManeuverPartType::line;
   part.finale = true;
   m_copy<T, 2, 1>(part.line.start, prevNE);
@@ -199,7 +199,7 @@ void ManeuverParser<T>::updateLineMnr(ManeuverPart<T> &part) {
 }
 
 template <typename T>
-void ManeuverParser<T>::updateCircleMnr(ManeuverPart<T> &part) {
+void ManeuverParser<T>::updateCircleMnr(MnrPart<T> &part) {
 
   uint32_t partsCount = round(fabs(trgt.MNR_REPEATS_COUNT)*4 + 1);
 
@@ -271,7 +271,7 @@ void ManeuverParser<T>::updateCircleMnr(ManeuverPart<T> &part) {
 }
 
 template <typename T>
-void ManeuverParser<T>::updateThreePointsMnr(ManeuverPart<T> &part) {
+void ManeuverParser<T>::updateThreePointsMnr(MnrPart<T> &part) {
   if (mnrPartNumber < 2) {
 
     T trgtToPrevVect[2][1];
@@ -358,7 +358,7 @@ void ManeuverParser<T>::updateThreePointsMnr(ManeuverPart<T> &part) {
 }
 
 template <typename T>
-void ManeuverParser<T>::updateInfinityMnr(ManeuverPart<T> &part) {
+void ManeuverParser<T>::updateInfinityMnr(MnrPart<T> &part) {
 
   uint32_t partsCount = round(fabs(trgt.MNR_REPEATS_COUNT)*7 + 1);
 
@@ -436,7 +436,7 @@ void ManeuverParser<T>::updateInfinityMnr(ManeuverPart<T> &part) {
 }
 
 template <typename T>
-void ManeuverParser<T>::updateStadiumMnr(ManeuverPart<T> &part) {
+void ManeuverParser<T>::updateStadiumMnr(MnrPart<T> &part) {
 
   uint32_t partsCount = round(fabs(trgt.MNR_REPEATS_COUNT)*9 + 2);
 
@@ -541,18 +541,18 @@ void ManeuverParser<T>::updateStadiumMnr(ManeuverPart<T> &part) {
 }
 
 template <typename T>
-void ManeuverParser<T>::updateUnknownMnr(ManeuverPart<T> &part) {
+void ManeuverParser<T>::updateUnknownMnr(MnrPart<T> &part) {
   part.fillUnknown();
 }
 
 template <typename T>
-ManeuverPart<T> ManeuverParser<T>::update(T (&currWGS84)[3][1]) {
+MnrPart<T> ManeuverParser<T>::update(T (&currWGS84)[3][1]) {
 
   missionItemWGS84toNE(prevNE, currWGS84, prev);
   missionItemWGS84toNE(trgtNE, currWGS84, trgt);
   missionItemWGS84toNE(thirdNE, currWGS84, third);
 
-  ManeuverPart<T> ret;
+  MnrPart<T> ret;
   switch (trgt.command) {
     case MAV_CMD_NAV_WAYPOINT:
       if (trgt.MNR_RADIUS)

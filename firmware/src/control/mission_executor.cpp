@@ -259,7 +259,7 @@ void MissionExecutor::debug2mavlink() {
 }
 
 bool MissionExecutor::wp_reached(const LdNavOut<double> &nav_out,
-                                 const ManeuverPart<double> &part) {
+                                 const MnrPart<double> &part) {
   return nav_out.crossed && part.finale;
 }
 
@@ -288,7 +288,7 @@ void MissionExecutor::navigate(void) {
   double curr_wgs84[3][1] = {{deg2rad(acs_in.chd[ACS_DOUBLE_INPUT_lat])},
                              {deg2rad(acs_in.chd[ACS_DOUBLE_INPUT_lon])},
                              {static_cast<double>(acs_in.ch[ACS_INPUT_alt])}};
-  ManeuverPart<double> part = mnr_parser.update(curr_wgs84);
+  MnrPart<double> part = mnr_parser.update(curr_wgs84);
   LdNavOut<double> nav_out = ld_navigator.update(part);
   navout2acsin(nav_out);
   navout2mavlink(nav_out);
