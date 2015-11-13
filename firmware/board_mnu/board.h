@@ -856,7 +856,7 @@
                                      PIN_MODE_INPUT(GPIOG_MPU9150_INT) |      \
                                      PIN_MODE_INPUT(GPIOG_FPGA_IO7) |         \
                                      PIN_MODE_ALTERNATE(GPIOG_UART6_RX) |     \
-                                     PIN_MODE_INPUT(GPIOG_FPGA_IO8) |         \
+                                     PIN_MODE_OUTPUT(GPIOG_FPGA_IO8) |        \
                                      PIN_MODE_INPUT(GPIOG_PIN11) |            \
                                      PIN_MODE_ALTERNATE(GPIOG_UART6_RTS) |    \
                                      PIN_MODE_INPUT(GPIOG_FPGA_IO9) |         \
@@ -888,7 +888,7 @@
                                      PIN_OSPEED_2M(GPIOG_MPU9150_INT) |       \
                                      PIN_OSPEED_100M(GPIOG_FPGA_IO7) |        \
                                      PIN_OSPEED_2M(GPIOG_UART6_RX) |          \
-                                     PIN_OSPEED_100M(GPIOG_FPGA_IO8) |        \
+                                     PIN_OSPEED_2M(GPIOG_FPGA_IO8) |          \
                                      PIN_OSPEED_100M(GPIOG_PIN11) |           \
                                      PIN_OSPEED_2M(GPIOG_UART6_RTS) |         \
                                      PIN_OSPEED_100M(GPIOG_FPGA_IO9) |        \
