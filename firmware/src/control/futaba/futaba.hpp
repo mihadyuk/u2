@@ -35,7 +35,6 @@ private:
 
   bool ready = false;
   const uint32_t *timeout  = nullptr;
-  const uint32_t *override = nullptr;
   const int32_t  *map_man  = nullptr; /* -1 denotes "unused" */
 
   Tumbler3<int, 1000, 1500, 2000, 150> manual_switch;
