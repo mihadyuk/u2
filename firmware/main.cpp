@@ -262,10 +262,10 @@ enum ModemType {
 static void modem_select(ModemType type) {
   switch(type) {
   case ModemType::xbee:
-    palSetPad(GPIOG, GPIOG_FPGA_IO8);
+    palClearPad(GPIOG, GPIOG_FPGA_IO8);
     break;
   case ModemType::mors:
-    palClearPad(GPIOG, GPIOG_FPGA_IO8);
+    palSetPad(GPIOG, GPIOG_FPGA_IO8);
     break;
   }
 }
@@ -306,7 +306,7 @@ int main(void) {
 #if defined(BOARD_BEZVODIATEL)
   gps_power_on();
 #elif defined(BOARD_MNU)
-  gnss_select(it530);
+  gnss_select(navi_nmea);
   modem_select(mors);
 #else
 #error "board unsupported"
