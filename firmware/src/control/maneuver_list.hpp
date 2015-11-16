@@ -240,6 +240,114 @@ void infinityManeuver(ManeuverPart<T> &part,
 
 }
 
+template <typename T>
+void stadiumManeuver(ManeuverPart<T> &part,
+                     uint32_t partNumber, float repeats, float radius, float height, float width, float angle,
+                     T (&localPrev)[2][1], T (&localTrgt)[2][1]) {
+
+  uint32_t partsCount = round(fabs(repeats)*9 + 2);
+
+  T lineVector[2][1];
+  m_minus<T, 2, 1>(lineVector, localPrev, localTrgt);
+
+  T normedLineVector[2][1];
+  m_copy<T, 2, 1>(normedLineVector, lineVector);
+  m_norm<T, 2>(normedLineVector);
+
+  if (partNumber > 0 &&
+      partNumber < (partsCount - 1)) {
+    /* maneuver parts */
+    T northOffset = height/2.0 - radius;
+    T eastOffset = width/2.0 - radius;
+    T semiWidth = width/2.0;
+    T semiHeight = height/2.0;
+
+    switch (partNumber % 9) {
+      case 1:
+        part.fillLine(0.0, -semiWidth,
+                      northOffset, -semiWidth,
+                      false);
+        break;
+      case 2:
+        part.fillArc(northOffset, -eastOffset,
+                     radius,
+                     0.0, M_PI_2,
+                     false);
+        break;
+      case 3:
+        part.fillLine(-eastOffset, semiHeight,
+                      eastOffset, semiHeight,
+                      false);
+        break;
+      case 4:
+        part.fillArc(northOffset, eastOffset,
+                     radius,
+                     M_PI_2, M_PI_2,
+                     false);
+        break;
+      case 5:
+        part.fillLine(northOffset, semiWidth,
+                      -northOffset, semiWidth,
+                      false);
+        break;
+      case 6:
+        part.fillArc(-northOffset, eastOffset,
+                     radius,
+                     M_PI, M_PI_2,
+                     false);
+        break;
+      case 7:
+        part.fillLine(-semiHeight, eastOffset,
+                      -semiHeight, -eastOffset,
+                      false);
+        break;
+      case 8:
+        part.fillArc(-northOffset, -eastOffset,
+                     radius,
+                     3.0*M_PI_2, M_PI_2,
+                     false);
+        break;
+      case 0:
+        part.fillLine(-northOffset, -semiWidth,
+                      0.0, -semiWidth,
+                      false);
+        break;
+      default:
+        break;
+    }
+
+    if (sign(repeats) < 0.0)
+      part.flipEast();
+
+    part.rotate(deg2rad<T>(angle));
+    part.move(localTrgt);
+
+  } else if (0 == partNumber) {
+    /* line from previous waypoint to the stadium's border */
+    part.fillLine(localPrev, localTrgt, false);
+    m_mul_s<T, 2, 1>(normedLineVector,
+                     normedLineVector,
+                     width/2.0);
+    m_plus<T, 2, 1>(part.line.finish,
+                    localTrgt,
+                    normedLineVector);
+
+  } else if ((partsCount - 1) == partNumber) {
+    /* line from the stadium's border to the stadium's center */
+    part.fillLine(localTrgt, localTrgt, true);
+    m_mul_s<T, 2, 1>(normedLineVector,
+                     normedLineVector,
+                     width/2.0);
+    m_plus<T, 2, 1>(part.line.start,
+                    localTrgt,
+                    normedLineVector);
+  } else {
+    part.fillUnknown();
+
+  }
+
+}
+
 } /* namespace control */
 
 #endif /* MANEUVER_LIST_HPP_ */
