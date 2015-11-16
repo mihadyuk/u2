@@ -23,7 +23,7 @@ public:
   void rotate(T angle);
   void flipNorth();
   void flipEast();
-  void move(T (&delta)[2][1]);
+  void move(T (&localDelta)[2][1]);
 
   ManeuverPartType type; /* type of maneuver part */
   bool finale;           /* is last part in maneuver */
@@ -89,10 +89,10 @@ void ManeuverPart<T>::fillUnknown() {
 
 template <typename T>
 void ManeuverPart<T>::rotate(T angle) {
-  T sinAng = sin(angle);
-  T cosAng = cos(angle);
-  T dcm[2][2] = {{cosAng, -sinAng},
-                 {sinAng,  cosAng}};
+  T sinAngle = sin(angle);
+  T cosAngle = cos(angle);
+  T dcm[2][2] = {{cosAngle, -sinAngle},
+                 {sinAngle,  cosAngle}};
   T tmp[2][1];
 
   switch (type) {
@@ -153,15 +153,15 @@ void ManeuverPart<T>::flipEast() {
 }
 
 template <typename T>
-void ManeuverPart<T>::move(T (&delta)[2][1]) {
+void ManeuverPart<T>::move(T (&localDelta)[2][1]) {
   switch (type) {
     case ManeuverPartType::arc: {
-      m_plus<T, 2, 1>(arc.center, arc.center, delta);
+      m_plus<T, 2, 1>(arc.center, arc.center, localDelta);
       break;
     }
     case ManeuverPartType::line: {
-      m_plus<T, 2, 1>(line.start, line.start, delta);
-      m_plus<T, 2, 1>(line.finish, line.finish, delta);
+      m_plus<T, 2, 1>(line.start, line.start, localDelta);
+      m_plus<T, 2, 1>(line.finish, line.finish, localDelta);
       break;
     }
     default:
