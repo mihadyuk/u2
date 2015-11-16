@@ -253,6 +253,22 @@ static void gnss_select(GNSSReceiver receiver) {
     break;
   }
 }
+
+enum ModemType {
+  xbee = 0,
+  mors
+};
+
+static void modem_select(ModemType type) {
+  switch(type) {
+  case ModemType::xbee:
+    palSetPad(GPIOG, GPIOG_FPGA_IO8);
+    break;
+  case ModemType::mors:
+    palClearPad(GPIOG, GPIOG_FPGA_IO8);
+    break;
+  }
+}
 #endif // defined(BOARD_MNU)
 
 /**
@@ -291,6 +307,7 @@ int main(void) {
   gps_power_on();
 #elif defined(BOARD_MNU)
   gnss_select(it530);
+  modem_select(mors);
 #else
 #error "board unsupported"
 #endif

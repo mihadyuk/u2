@@ -270,7 +270,6 @@ param = [
 
 # Radio control settings
 ("RC_timeout",      500,        2000,       10000,      "u", "default",     "NULL"),
-("RC_override",     0,          0,          3,          "u", "default",     "NULL"),
 ("RC_map_man",     -1,          0,          3,          "i", "default",     "NULL"),
 
 # PID settings

@@ -16,8 +16,9 @@ typedef uint16_t        fpgacmd_t;  /* fpga talks with stm32 using 16-bit words 
 #define FPGA_MTRX_MAX_COL   32
 
 /* numbers of command slices for differ peripherals */
-#define FPGA_CMD_SLICE_MUL    0
-#define FPGA_CMD_SLICE_PWM    1
+#define FPGA_CMD_SLICE_PWM    0
+#define FPGA_CMD_SLICE_ICU    1
+#define FPGA_CMD_SLICE_MUL    2
 
 
 /**

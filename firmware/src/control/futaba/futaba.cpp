@@ -114,7 +114,6 @@ Futaba::Futaba(void) {
 void Futaba::start(void) {
 
   param_registry.valueSearch("RC_timeout",  &timeout);
-  param_registry.valueSearch("RC_override", &override);
   param_registry.valueSearch("RC_map_man",  &map_man);
 
   receiver_rc.start();
