@@ -202,6 +202,7 @@ void ACS::start(void) {
   futaba.start();
   stabilizer.start();
   drivetrain.start();
+  mission.start();
   mav_postman.subscribe(MAVLINK_MSG_ID_COMMAND_LONG, &command_link);
   mav_postman.subscribe(MAVLINK_MSG_ID_SET_MODE, &set_mode_link);
 
@@ -218,6 +219,7 @@ void ACS::stop(void) {
   mav_postman.unsubscribe(MAVLINK_MSG_ID_COMMAND_LONG, &command_link);
   command_mailbox.reset();
 
+  mission.stop();
   drivetrain.stop();
   stabilizer.stop();
   futaba.stop();
