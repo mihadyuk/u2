@@ -35,7 +35,7 @@ public:
 
 private:
   void missionItemWGS84toNE(T (&localNE)[2][1],
-                            T (&currWGS84)[3][1],
+                            const T (&currWGS84)[3][1],
                             const mavlink_mission_item_t &wp);
   void rotateMnrPart(MnrPart<T> &part, T ang);
   void flipNorthMnrPart(MnrPart<T> &part);
@@ -98,11 +98,11 @@ uint32_t ManeuverParser<T>::debugPartNumber() {
 
 template <typename T>
 void ManeuverParser<T>::missionItemWGS84toNE(T (&localNE)[2][1],
-                                             T (&currWGS84)[3][1],
+                                             const T (&currWGS84)[3][1],
                                              const mavlink_mission_item_t &wp) {
-  T wpWGS84[3][1] = {{deg2rad<T>(static_cast<T>(wp.x))},
-                     {deg2rad<T>(static_cast<T>(wp.y))},
-                     {deg2rad<T>(static_cast<T>(wp.z))}};
+  const T wpWGS84[3][1] = {{deg2rad<T>(static_cast<T>(wp.x))},
+                           {deg2rad<T>(static_cast<T>(wp.y))},
+                           {deg2rad<T>(static_cast<T>(wp.z))}};
   T wpLocalNED[3][1];
   geo2lv<T>(wpLocalNED, wpWGS84, currWGS84);
   get_sub<T, 2, 1, 3, 1>(localNE, wpLocalNED, 0, 0);
