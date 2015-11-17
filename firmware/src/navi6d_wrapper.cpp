@@ -507,7 +507,7 @@ void Navi6dWrapper::update(const baro_data_t &baro,
   nav_sins.ref_params.glrt_acc_sigma = *acc_sigma;
   nav_sins.ref_params.glrt_gyr_sigma = *gyr_sigma;
   nav_sins.ref_params.glrt_n = *samples;
-
+  nav_sins.init_params.fog_en = false;
 
   dbg_in_fill_gnss(this->gps);
   prepare_data_gnss(this->gps);
