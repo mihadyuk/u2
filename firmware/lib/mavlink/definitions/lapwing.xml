@@ -2,6 +2,30 @@
 <!-- MESSAGE IDs 150 - 240: Space for custom messages in individual projectname_messages.xml files -->
 <mavlink>
 <include>common.xml</include>
+        <enums>
+          <enum name="MAV_CMD">
+               <entry value="23" name="MAV_CMD_NAV_STADIUM">
+                    <description>Stadium maneuver</description>
+                    <param index="1">Repeats, If positive - clockwise, else counter-clockwise</param>
+                    <param index="2">Width</param>
+                    <param index="3">Height</param>
+                    <param index="4">Angle</param>
+                    <param index="5">Latitude</param>
+                    <param index="6">Longitude</param>
+                    <param index="7">Altitude</param>
+               </entry>
+               <entry value="24" name="MAV_CMD_NAV_INFINITY">
+                    <description>Infinity maneuver</description>
+                    <param index="1">Repeats, If positive - clockwise, else counter-clockwise</param>
+                    <param index="2">Radius</param>
+                    <param index="3">Height</param>
+                    <param index="4">Angle</param>
+                    <param index="5">Latitude</param>
+                    <param index="6">Longitude</param>
+                    <param index="7">Altitude</param>
+               </entry>
+          </enum>
+        </enums>
 	<messages>
 		<message id="150" name="NAVI6D_DEBUG_INPUT">
 			<description>Navi6d input data.</description>

@@ -45,7 +45,7 @@ extern MavLogger mav_logger;
  */
 
 typedef double klmnfp;
-#define KALMAN_STATE_SIZE         15
+#define KALMAN_STATE_SIZE         12
 #define KALMAN_MEASUREMENT_SIZE   10
 
 __CCM__ static NavigatorSins<klmnfp, KALMAN_STATE_SIZE, KALMAN_MEASUREMENT_SIZE> nav_sins;
@@ -264,6 +264,9 @@ void Navi6dWrapper::debug2mavlink(float dT) {
 void Navi6dWrapper::navi2acs(void) {
 
   const NaviData<klmnfp> &data = nav_sins.navi_data;
+
+  acs_in.chd[ACS_DOUBLE_INPUT_lat] = rad2deg(data.r[0][0]);
+  acs_in.chd[ACS_DOUBLE_INPUT_lon] = rad2deg(data.r[1][0]);
 
   acs_in.ch[ACS_INPUT_roll] = data.eu_nv[0][0];
   acs_in.ch[ACS_INPUT_pitch]= data.eu_nv[1][0];

@@ -63,6 +63,9 @@ void Navi6dWrapper::read_settings(void) {
   param_registry.valueSearch("SINS_eu_vh_pitch",&eu_vh_pitch);
   param_registry.valueSearch("SINS_eu_vh_yaw",  &eu_vh_yaw);
 
+  param_registry.valueSearch("SINS_c_alg_t",    &c_alg_t);
+  param_registry.valueSearch("SINS_f_alg_t",    &f_alg_t);
+
   param_registry.valueSearch("SINS_acc_bias_x", &acc_bias_x);
   param_registry.valueSearch("SINS_acc_bias_y", &acc_bias_y);
   param_registry.valueSearch("SINS_acc_bias_z", &acc_bias_z);
@@ -112,12 +115,19 @@ void Navi6dWrapper::sins_cold_start(void) {
 
   CommandType<klmnfp> cmd;
 
-  cmd.command = *restart;
+  cmd.command = static_cast<command_t>(*restart);
 
   cmd.param[0][0] = deg2rad(*init_lat);
   cmd.param[1][0] = deg2rad(*init_lon);
   cmd.param[2][0] = *init_alt;
+  cmd.param[3][0] = 0;
+  cmd.param[4][0] = 0;
+  cmd.param[5][0] = 0;
+  cmd.param[6][0] = 0;
+  cmd.param[7][0] = 0;
   cmd.param[8][0] = deg2rad(*init_yaw);
+  cmd.param[9][0] = *c_alg_t;
+  cmd.param[10][0] = *f_alg_t;
 
   nav_sins.command_executor(cmd);
 }

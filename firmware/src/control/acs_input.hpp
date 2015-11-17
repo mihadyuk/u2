@@ -12,7 +12,7 @@
  *
  */
 typedef enum {
-  ACS_INPUT_lat,      // lattitude from GNSS (WGS-84, deg)
+  ACS_INPUT_lat,      // latitude from GNSS (WGS-84, deg)
   ACS_INPUT_lon,      // longitude from GNSS (WGS-84, deg)
   ACS_INPUT_alt,      // altitude from GNSS (WGS-84, m)
   ACS_INPUT_alt_baro, // barometric height (m)
@@ -105,6 +105,13 @@ typedef enum {
   ACS_INPUT_ENUM_END,
 } state_vector_enum;
 
+typedef enum {
+  ACS_DOUBLE_INPUT_lat,      // latitude from GNSS (WGS-84, deg)
+  ACS_DOUBLE_INPUT_lon,      // longitude from GNSS (WGS-84, deg)
+
+  ACS_DOUBLE_INPUT_ENUM_END,
+} state_vector_double_enum;
+
 static_assert(ACS_INPUT_ENUM_END < 256, "Stabilizer virtual machine limit.");
 
 /**
@@ -128,6 +135,7 @@ struct ACSInput {
   }
 
   float ch[ACS_INPUT_ENUM_END];
+  double chd[ACS_DOUBLE_INPUT_ENUM_END];
   bool futaba_good = false;
   control::ManualSwitch futaba_man_switch = control::ManualSwitch::fullauto;
 };

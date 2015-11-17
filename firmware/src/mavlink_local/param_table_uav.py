@@ -151,6 +151,8 @@ param = [
 
 # Fusion algorithm settings
 ("SINS_restart",    0,          1,          0xFFFF,     "u", "default",     "Change this value to enforce sins restart"),
+("SINS_c_alg_t",    0,          5,          90,         "f", "default",     "Coarse align time"),
+("SINS_f_alg_t",    0,          15,         60,         "f", "default",     "Finale align time"),
 
 ("SINS_en_gnss",    0,          1,          1,          "u", "default",     "NULL"),
 ("SINS_en_baro",    0,          1,          1,          "u", "default",     "NULL"),
