@@ -1,22 +1,26 @@
 #include "main.h"
+#include "pads.h"
+#include "putinrange.hpp"
 
-#include "odometer.hpp"
-#include "mavlink_local.hpp"
-#include "param_registry.hpp"
+#if defined(BOARD_MNU)
+
+#include "odometer_fpga.hpp"
 
 /*
  ******************************************************************************
  * DEFINES
  ******************************************************************************
  */
+/* EICU clock frequency (about 50kHz for meaningful results).*/
+#define EICU_FREQ             (1000 * 50)
+#define SPEED_OFFSET          256
+#define PATH_OFFSET           258
 
 /*
  ******************************************************************************
  * EXTERNS
  ******************************************************************************
  */
-
-extern mavlink_vfr_hud_t              mavlink_out_vfr_hud_struct;
 
 /*
  ******************************************************************************
@@ -38,48 +42,52 @@ extern mavlink_vfr_hud_t              mavlink_out_vfr_hud_struct;
  ******************************************************************************
  */
 
-/**
- *
- */
-void Odometer::speed2mavlink(const odometer_data_t &result) {
-
-  //mavlink_out_vfr_hud_struct.groundspeed = result.speed * 100; // *100 for gps speed compare
-  //mavlink_out_vfr_hud_struct.groundspeed = result.speed * 50; // for PID tuning
-//  mavlink_out_vfr_hud_struct.groundspeed = result.path;
-  mavlink_out_vfr_hud_struct.groundspeed = result.speed;
-}
-
 /*
  ******************************************************************************
  * EXPORTED FUNCTIONS
  ******************************************************************************
  */
-/**
- *
- */
-void Odometer::start(void) {
 
-  param_registry.valueSearch("SPD_pulse2m", &pulse2m);
-  this->start_impl();
-  ready = true;
+OdometerFPGA::OdometerFPGA(const FpgaIcu *fpgaicup) :
+  fpgaicup(fpgaicup)
+{
+  return;
 }
 
 /**
  *
  */
-void Odometer::stop(void) {
+void OdometerFPGA::start_impl(void) {
 
-  ready = false;
-  this->stop_impl();
+  return;
 }
 
 /**
  *
  */
-void Odometer::update(odometer_data_t &result, float dT) {
+void OdometerFPGA::stop_impl(void) {
 
-  osalDbgCheck(ready);
-  this->update_impl(result, dT);
-  speed2mavlink(result);
+  return;
 }
 
+/**
+ *
+ */
+void OdometerFPGA::update_impl(odometer_data_t &result, float dT) {
+  float pps; /* pulse per second */
+  uint16_t last_pulse_period;
+  (void)dT;
+
+  last_pulse_period = fpgaicuRead(this->fpgaicup, SPEED_OFFSET);
+  last_pulse_period = filter_median(last_pulse_period);
+  last_pulse_period = putinrange(last_pulse_period, 500, 65000);
+  pps = static_cast<float>(EICU_FREQ) / static_cast<float>(last_pulse_period);
+
+  /* now calculate speed */
+  result.speed = *pulse2m * pps;
+  result.path  = fpgaicuRead(this->fpgaicup, PATH_OFFSET) << 16;
+  result.path |= fpgaicuRead(this->fpgaicup, PATH_OFFSET+1);
+  result.fresh = true;
+}
+
+#endif /* defined(BOARD_MNU) */

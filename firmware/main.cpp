@@ -64,7 +64,6 @@ Giovanni
 #include "fir_test.hpp"
 #include "maxsonar.hpp"
 #include "pps.hpp"
-#include "odometer.hpp"
 #include "mpxv.hpp"
 #include "calibrator.hpp"
 #include "hil.hpp"
@@ -73,10 +72,15 @@ Giovanni
 #include "ms5806.hpp"
 #include "npa700.hpp"
 #include "pmu.hpp"
-#if defined(BOARD_MNU)
+#if defined(BOARD_BEZVODIATEL)
+  #include "odometer_stm.hpp"
+#elif defined(BOARD_MNU)
   #include "fpga.h"
   #include "fpga_pwm.h"
   #include "fpga_icu.h"
+  #include "odometer_fpga.hpp"
+#else
+#error "board unsupported"
 #endif
 
 using namespace chibios_rt;
@@ -126,18 +130,19 @@ NPA700 npa700(&NPA700_I2CD, NPA700_I2C_ADDR);
 __CCM__ static baro_abs_data_t abs_press;
 __CCM__ static baro_diff_data_t diff_press;
 __CCM__ static baro_data_t baro_data;
+__CCM__ static odometer_data_t odo_data;
 
 __CCM__ static MaxSonar maxsonar;
-__CCM__ static odometer_data_t odo_data;
-__CCM__ static Odometer odometer;
 __CCM__ static marg_data_t marg_data;
 __CCM__ static PPS pps;
 __CCM__ static Calibrator calibrator;
 __CCM__ static power_monitor_data_t power_monitor_data;
 #if defined(BOARD_BEZVODIATEL)
 __CCM__ gnss::uBlox GNSS(&GPSSD, 9600, 57600);
+__CCM__ static OdometerSTM odometer;
 #elif defined(BOARD_MNU)
 __CCM__ gnss::mtkgps GNSS(&GPSSD, 115200, 115200);
+__CCM__ static OdometerFPGA odometer(&FPGAICUD1);
 #else
 #error "board unsupported"
 #endif

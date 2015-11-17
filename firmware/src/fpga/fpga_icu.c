@@ -74,7 +74,6 @@ void fpgaicuStop(FpgaIcu *icup) {
  */
 fpgacmd_t fpgaicuRead(const FpgaIcu *icup, size_t N) {
   osalDbgCheck(FPGAICU_READY == icup->state);
-  //osalDbgCheck(N < FPGA_ICU_CHANNELS);
 
   return icup->icu[N];
 }

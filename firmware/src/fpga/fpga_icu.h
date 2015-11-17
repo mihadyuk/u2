@@ -3,8 +3,6 @@
 
 #include "fpga.h"
 
-#define FPGA_ICU_CHANNELS        16
-
 /**
  * @brief   Driver state machine possible states.
  */
