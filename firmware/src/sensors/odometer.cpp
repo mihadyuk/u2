@@ -60,11 +60,6 @@ static const EICUConfig eicucfg = {
     0
 };
 
-static uint32_t total_path_prev = 0;
-static uint32_t vtp_pps = 0;
-static bool pps_fresh = false;
-static virtual_timer_t odo_vtp;
-
 /*
  ******************************************************************************
  ******************************************************************************
@@ -72,20 +67,6 @@ static virtual_timer_t odo_vtp;
  ******************************************************************************
  ******************************************************************************
  */
-
-/**
- *
- */
-void odo_vtfunc(void *p) {
-  (void)p;
-
-  osalSysLockFromISR();
-  chVTSetI(&odo_vtp, S2ST(1), odo_vtfunc, nullptr);
-  vtp_pps = Odometer::total_path - total_path_prev;
-  pps_fresh = true;
-  total_path_prev = Odometer::total_path;
-  osalSysUnlockFromISR();
-}
 
 /**
  *
@@ -182,7 +163,6 @@ void Odometer::speed2mavlink(const odometer_data_t &result) {
 void Odometer::start(void) {
 
   param_registry.valueSearch("SPD_pulse2m", &pulse2m);
-  param_registry.valueSearch("SPD_use_icu", &use_icu);
 
   capture_time = 2 * timeout;
   total_path = 0;
@@ -193,9 +173,6 @@ void Odometer::start(void) {
 
   eicuStart(&EICUD11, &eicucfg);
   eicuEnable(&EICUD11);
-
-  chVTObjectInit(&odo_vtp);
-  chVTSet(&odo_vtp, S2ST(1), odo_vtfunc, nullptr);
 
   ready = true;
 }
@@ -221,35 +198,20 @@ void Odometer::update(odometer_data_t &result, float dT) {
 
   osalDbgCheck(ready);
 
-  if (1 == *use_icu) {
-    status = check_sample(&result.path, &last_pulse_period, dT);
-    if (OSAL_FAILED == status) {
-      pps = 0;
-    }
-    else {
-      last_pulse_period = filter_median(last_pulse_period);
-      last_pulse_period = putinrange(last_pulse_period, 500, 65000);
-      pps = static_cast<float>(EICU_FREQ) / static_cast<float>(last_pulse_period);
-    }
-
-    /* now calculate speed */
-    pps = filter_alphabeta(pps);
-    result.speed = *pulse2m * pps;
-    result.fresh = true;
-  }
-  else if (0 == *use_icu) {
-    if (pps_fresh) {
-      pps_fresh = false;
-      result.speed = *pulse2m * vtp_pps;
-      result.fresh = true;
-    }
-    else {
-      result.fresh = false;
-    }
+  status = check_sample(&result.path, &last_pulse_period, dT);
+  if (OSAL_FAILED == status) {
+    pps = 0;
   }
   else {
-    osalSysHalt("incorrect value");
+    last_pulse_period = filter_median(last_pulse_period);
+    last_pulse_period = putinrange(last_pulse_period, 500, 65000);
+    pps = static_cast<float>(EICU_FREQ) / static_cast<float>(last_pulse_period);
   }
+
+  /* now calculate speed */
+  pps = filter_alphabeta(pps);
+  result.speed = *pulse2m * pps;
+  result.fresh = true;
 
   speed2mavlink(result);
 }

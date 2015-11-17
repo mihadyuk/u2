@@ -34,7 +34,6 @@ private:
   filters::AlphaBeta<float, 4> filter_alphabeta;
   filters::Median<float, 3> filter_median;
   const float *pulse2m = nullptr;
-  const uint32_t *use_icu = nullptr;
   SampleCosher sample_state;
   bool ready = false;
 };
