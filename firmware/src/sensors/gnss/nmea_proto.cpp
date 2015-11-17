@@ -33,7 +33,7 @@ using namespace gnss;
 /**
  *
  */
-static const char * const sentance_array[] = {
+static const char * const test_sentence_array[] = {
     "$PMTK001,300,3*33",
     "$PMTK251,57600*2C\r\n"
     "$PMTK300,200,0,0,0,0*2F\r\n",
@@ -88,8 +88,8 @@ bool NmeaProto::_autotest(const char *sentence) {
  *
  */
 bool NmeaProto::checksum_autotest(void) {
-  for (size_t i=0; i<ArrayLen(sentance_array); i++) {
-    if (OSAL_FAILED == _autotest(sentance_array[i]))
+  for (size_t i=0; i<ArrayLen(test_sentence_array); i++) {
+    if (OSAL_FAILED == _autotest(test_sentence_array[i]))
       return OSAL_FAILED;
   }
 
