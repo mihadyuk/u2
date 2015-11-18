@@ -69,7 +69,7 @@ static void print(uint32_t i, bool need_help){
     return;
   }
 
-  nres = snprintf(str, n, "%-15s", param_p->name);
+  nres = snprintf(str, n, "%-17s", param_p->name);
   cli_print_long(str, n, nres);
 
   switch(param_p->param_type){
