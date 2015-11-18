@@ -105,6 +105,7 @@ static THD_FUNCTION(LinkMgrThread, arg) {
         }
         else {
           usbDisconnectBus(serusbcfg.usbp);
+          chThdSleepMilliseconds(1500);
           usb_lld_disconnect_bus_workaround();
           usbStop(serusbcfg.usbp);
           sduStop(&SDU1);

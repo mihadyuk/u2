@@ -79,14 +79,19 @@ void OdometerFPGA::update_impl(odometer_data_t &result, float dT) {
   (void)dT;
 
   last_pulse_period = fpgaicuRead(this->fpgaicup, SPEED_OFFSET);
-  last_pulse_period = filter_median(last_pulse_period);
-  last_pulse_period = putinrange(last_pulse_period, 500, 65000);
-  pps = static_cast<float>(EICU_FREQ) / static_cast<float>(last_pulse_period);
 
-  /* now calculate speed */
-  result.speed = *pulse2m * pps;
-  result.path  = fpgaicuRead(this->fpgaicup, PATH_OFFSET) << 16;
-  result.path |= fpgaicuRead(this->fpgaicup, PATH_OFFSET+1);
+  if(0 != last_pulse_period) {
+    //last_pulse_period = filter_median(last_pulse_period);
+    last_pulse_period = putinrange(last_pulse_period, 500, 65000);
+    pps = static_cast<float>(EICU_FREQ) / static_cast<float>(last_pulse_period);
+    result.speed = *pulse2m * pps;
+  }
+  else {
+    result.speed = 0;
+  }
+
+  uint32_t *ptr = (uint32_t *)&this->fpgaicup->icu[PATH_OFFSET];
+  result.path  = *ptr;
   result.fresh = true;
 }
 
