@@ -231,6 +231,9 @@ static void stop_services(void) {
 }
 
 #if defined(BOARD_MNU)
+/**
+ *
+ */
 enum GNSSReceiver {
   navi = 0,
   navi_nmea,
@@ -238,6 +241,9 @@ enum GNSSReceiver {
   unused,
 };
 
+/**
+ *
+ */
 static void gnss_select(GNSSReceiver receiver) {
   switch(receiver) {
   case GNSSReceiver::navi:
@@ -259,11 +265,17 @@ static void gnss_select(GNSSReceiver receiver) {
   }
 }
 
+/**
+ *
+ */
 enum ModemType {
   xbee = 0,
   mors
 };
 
+/**
+ *
+ */
 static void modem_select(ModemType type) {
   switch(type) {
   case ModemType::xbee:
@@ -275,6 +287,25 @@ static void modem_select(ModemType type) {
   }
 }
 #endif // defined(BOARD_MNU)
+
+/**
+ *
+ */
+static void board_detect(void) {
+#if defined(BOARD_BEZVODIATEL)
+  uint32_t *uniq_id = (uint32_t *)0x1FFF7A10;
+  const uint32_t bezvodiatel_id[3] = {0x00220026, 0x31334713, 0x35303837};
+  for (size_t i=0; i<3; i++){
+    if (uniq_id[i] != bezvodiatel_id[i])
+      osalSysHalt("This firmware must be flashed in MNU board");
+  }
+#elif defined(BOARD_MNU)
+  if (OSAL_FAILED == npa700.ping())
+    osalSysHalt("This firmware must be flashed in Bezvodiatel board");
+#else
+#error "board unsupported"
+#endif
+}
 
 /**
  *
@@ -326,6 +357,7 @@ int main(void) {
 
   Exti.start();
   I2CInitLocal();
+  board_detect();
   NvramTest();
   NvramInit();
   ParametersInit();   /* read parameters from EEPROM via I2C */

@@ -15,6 +15,7 @@ public:
   sensor_state_t get(baro_diff_data_t &result);
   sensor_state_t start(void);
   sensor_state_t wakeup(void);
+  bool ping(void);
   void stop(void);
   void sleep(void);
 
