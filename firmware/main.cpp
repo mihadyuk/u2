@@ -64,7 +64,6 @@ Giovanni
 #include "fir_test.hpp"
 #include "maxsonar.hpp"
 #include "pps.hpp"
-#include "odometer.hpp"
 #include "mpxv.hpp"
 #include "calibrator.hpp"
 #include "hil.hpp"
@@ -73,10 +72,15 @@ Giovanni
 #include "ms5806.hpp"
 #include "npa700.hpp"
 #include "pmu.hpp"
-#if defined(BOARD_MNU)
+#if defined(BOARD_BEZVODIATEL)
+  #include "odometer_stm.hpp"
+#elif defined(BOARD_MNU)
   #include "fpga.h"
   #include "fpga_pwm.h"
   #include "fpga_icu.h"
+  #include "odometer_fpga.hpp"
+#else
+#error "board unsupported"
 #endif
 
 using namespace chibios_rt;
@@ -126,18 +130,19 @@ NPA700 npa700(&NPA700_I2CD, NPA700_I2C_ADDR);
 __CCM__ static baro_abs_data_t abs_press;
 __CCM__ static baro_diff_data_t diff_press;
 __CCM__ static baro_data_t baro_data;
+__CCM__ static odometer_data_t odo_data;
 
 __CCM__ static MaxSonar maxsonar;
-__CCM__ static odometer_data_t odo_data;
-__CCM__ static Odometer odometer;
 __CCM__ static marg_data_t marg_data;
 __CCM__ static PPS pps;
 __CCM__ static Calibrator calibrator;
 __CCM__ static power_monitor_data_t power_monitor_data;
 #if defined(BOARD_BEZVODIATEL)
 __CCM__ gnss::uBlox GNSS(&GPSSD, 9600, 57600);
+__CCM__ static OdometerSTM odometer;
 #elif defined(BOARD_MNU)
 __CCM__ gnss::mtkgps GNSS(&GPSSD, 115200, 115200);
+__CCM__ static OdometerFPGA odometer(&FPGAICUD1);
 #else
 #error "board unsupported"
 #endif
@@ -226,6 +231,9 @@ static void stop_services(void) {
 }
 
 #if defined(BOARD_MNU)
+/**
+ *
+ */
 enum GNSSReceiver {
   navi = 0,
   navi_nmea,
@@ -233,6 +241,9 @@ enum GNSSReceiver {
   unused,
 };
 
+/**
+ *
+ */
 static void gnss_select(GNSSReceiver receiver) {
   switch(receiver) {
   case GNSSReceiver::navi:
@@ -254,22 +265,47 @@ static void gnss_select(GNSSReceiver receiver) {
   }
 }
 
+/**
+ *
+ */
 enum ModemType {
   xbee = 0,
   mors
 };
 
+/**
+ *
+ */
 static void modem_select(ModemType type) {
   switch(type) {
   case ModemType::xbee:
-    palSetPad(GPIOG, GPIOG_FPGA_IO8);
+    palClearPad(GPIOG, GPIOG_FPGA_IO8);
     break;
   case ModemType::mors:
-    palClearPad(GPIOG, GPIOG_FPGA_IO8);
+    palSetPad(GPIOG, GPIOG_FPGA_IO8);
     break;
   }
 }
 #endif // defined(BOARD_MNU)
+
+/**
+ *
+ */
+static void board_detect(void) {
+#if defined(BOARD_BEZVODIATEL)
+  uint32_t *uniq_id = (uint32_t *)0x1FFF7A10;
+  const uint32_t bezvodiatel_id[3] = {0x00220026, 0x31334713, 0x35303837};
+  for (size_t i=0; i<3; i++){
+    if (uniq_id[i] != bezvodiatel_id[i])
+      osalSysHalt("This firmware must be flashed in MNU board");
+  }
+#elif defined(BOARD_MNU)
+  if (OSAL_FAILED == npa700.ping())
+    osalSysHalt("This firmware must be flashed in Bezvodiatel board");
+#else
+#error "board unsupported"
+#endif
+}
 
 /**
  *
@@ -306,7 +342,7 @@ int main(void) {
 #if defined(BOARD_BEZVODIATEL)
   gps_power_on();
 #elif defined(BOARD_MNU)
-  gnss_select(it530);
+  gnss_select(navi_nmea);
   modem_select(mors);
 #else
 #error "board unsupported"
@@ -321,6 +357,7 @@ int main(void) {
 
   Exti.start();
   I2CInitLocal();
+  board_detect();
   NvramTest();
   NvramInit();
   ParametersInit();   /* read parameters from EEPROM via I2C */

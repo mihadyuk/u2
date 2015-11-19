@@ -1,6 +1,5 @@
-#include <math.h>
-#include <string.h>
-#include <limits.h>
+#include <cmath>
+#include <cstring>
 
 #include "main.h"
 #include "mavlink_local.hpp"
@@ -366,7 +365,7 @@ bool ParamRegistry::loadToRam(void) {
       v = eeprombuf.v;
     }
     else{
-      /* there is not such parameter in EEPROM. Possible reasons:
+      /* there is no such parameter in EEPROM. Possible reasons:
        * 1) parameter "registry" has been changed.
        * 2) this is very first run with totally empty EEPROM
        * To correctly fix this situation we just need to

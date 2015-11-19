@@ -1,11 +1,20 @@
 #include "main.h"
-#include "mav_channel_serial.hpp"
+#include "pads.h"
+#include "putinrange.hpp"
+
+#if defined(BOARD_MNU)
+
+#include "odometer_fpga.hpp"
 
 /*
  ******************************************************************************
  * DEFINES
  ******************************************************************************
  */
+/* EICU clock frequency (about 50kHz for meaningful results).*/
+#define EICU_FREQ             (1000 * 50)
+#define SPEED_OFFSET          256
+#define PATH_OFFSET           258
 
 /*
  ******************************************************************************
@@ -39,11 +48,8 @@
  ******************************************************************************
  */
 
-/**
- *
- */
-mavChannelSerial::mavChannelSerial() :
-sdp(nullptr)
+OdometerFPGA::OdometerFPGA(const FpgaIcu *fpgaicup) :
+  fpgaicup(fpgaicup)
 {
   return;
 }
@@ -51,42 +57,43 @@ sdp(nullptr)
 /**
  *
  */
-void mavChannelSerial::start(SerialDriver *sdp){
-  chDbgCheck((NULL != sdp) && (SD_READY == sdp->state));
-  this->sdp = sdp;
-  this->ready = true;
+void OdometerFPGA::start_impl(void) {
+
+  return;
 }
 
 /**
  *
  */
-void mavChannelSerial::stop(void){
-  if (ready){
-    this->sdp = nullptr;
-    this->ready = false;
+void OdometerFPGA::stop_impl(void) {
+
+  return;
+}
+
+/**
+ *
+ */
+void OdometerFPGA::update_impl(odometer_data_t &result, float dT) {
+  float pps; /* pulse per second */
+  uint16_t last_pulse_period;
+  (void)dT;
+
+  last_pulse_period = fpgaicuRead(this->fpgaicup, SPEED_OFFSET);
+
+  if(0 != last_pulse_period) {
+    //last_pulse_period = filter_median(last_pulse_period);
+    last_pulse_period = putinrange(last_pulse_period, 500, 65000);
+    pps = static_cast<float>(EICU_FREQ) / static_cast<float>(last_pulse_period);
+    pps = filter_alphabeta(pps);
+    result.speed = *pulse2m * pps;
   }
+  else {
+    result.speed = 0;
+  }
+
+  uint32_t *ptr = (uint32_t *)&this->fpgaicup->icu[PATH_OFFSET];
+  result.path  = *ptr;
+  result.fresh = true;
 }
 
-/**
- *
- */
-msg_t mavChannelSerial::write(const uint8_t *buf, size_t len, systime_t timeout) {
-  osalDbgCheck(ready);
-  return sdWriteTimeout(sdp, buf, len, timeout);
-}
-
-/**
- *
- */
-msg_t mavChannelSerial::get(systime_t time) {
-  osalDbgCheck(ready);
-  return sdGetTimeout(sdp, time);
-}
-
-/**
- *
- */
-size_t mavChannelSerial::read(uint8_t *buf, size_t len, systime_t timeout){
-  osalDbgCheck(ready);
-  return sdReadTimeout(sdp, buf, len, timeout);
-}
+#endif /* defined(BOARD_MNU) */

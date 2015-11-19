@@ -81,6 +81,9 @@ static THD_FUNCTION(LinkMgrThread, arg) {
   plug_now = debouncer.update();
   plug_prev = !plug_now; /* provocate state updating */
   sdStart(&XBEESD, &xbee_ser_cfg);
+  /* usb will be started once and forever because of some strange bugs in
+   * stopping sequence */
+  usbStart(serusbcfg.usbp, &usbcfg);
 
   /* now track changes of flag and fork appropriate threads */
   while (!chThdShouldTerminateX()) {
@@ -98,7 +101,6 @@ static THD_FUNCTION(LinkMgrThread, arg) {
       if (plug_now != plug_prev) {
         if (1 == plug_now) {
           sduStart(&SDU1, &serusbcfg);
-          usbStart(serusbcfg.usbp, &usbcfg);
           usb_lld_connect_bus_workaround();
           usbConnectBus(serusbcfg.usbp);
           osalThreadSleepMilliseconds(500);
@@ -106,7 +108,6 @@ static THD_FUNCTION(LinkMgrThread, arg) {
         else {
           usbDisconnectBus(serusbcfg.usbp);
           usb_lld_disconnect_bus_workaround();
-          usbStop(serusbcfg.usbp);
           sduStop(&SDU1);
         }
       }

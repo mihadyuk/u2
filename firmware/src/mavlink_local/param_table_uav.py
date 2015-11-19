@@ -151,6 +151,8 @@ param = [
 
 # Fusion algorithm settings
 ("SINS_restart",    0,          1,          0xFFFF,     "u", "default",     "Change this value to enforce sins restart"),
+("SINS_c_alg_t",    0,          5,          90,         "f", "default",     "Coarse align time"),
+("SINS_f_alg_t",    0,          15,         60,         "f", "default",     "Finale align time"),
 
 ("SINS_en_gnss",    0,          1,          1,          "u", "default",     "NULL"),
 ("SINS_en_baro",    0,          1,          1,          "u", "default",     "NULL"),
@@ -164,9 +166,9 @@ param = [
 ("SINS_en_mg_yaw",  0,          1,          1,          "u", "default",     "NULL"),
 ("SINS_zupt_src",   0,          1,          2,          "u", "default",     "NULL"),
 
-("SINS_R_ne_sns",   0.001,      5,          100,        "f", "default",     "NULL"),
-("SINS_R_d_sns",    0.001,      10,         100,        "f", "default",     "NULL"),
-("SINS_R_v_n_sns",  0.001,      0.2,        100,        "f", "default",     "NULL"),
+("SINS_R_ne_sns",   0.001,      5,          10000,      "f", "default",     "NULL"),
+("SINS_R_d_sns",    0.001,      10,         10000,      "f", "default",     "NULL"),
+("SINS_R_v_n_sns",  0.001,      0.2,        10000,      "f", "default",     "NULL"),
 ("SINS_R_odo",      0.001,      0.1,        100,        "f", "default",     "NULL"),
 ("SINS_R_nhl_y",    0.001,      0.1,        100,        "f", "default",     "NULL"),
 ("SINS_R_nhl_z",    0.001,      0.1,        100,        "f", "default",     "NULL"),
@@ -514,7 +516,6 @@ param = [
 ("SPD_pulse2m",     0.0,        0.0555555,  1.0,        "f", "default",    "Multiply odometer pulses count by this coefficient to get\\ntrip in meters. Coarse value is 0.05555555"),
 ("SPD_trgt_speed",  0.0,        0,          60.0,       "f", "default",    "NULL"),
 ("SPD_speed_max",   0.0,        0,          60.0,       "f", "default",    "NULL"),
-("SPD_use_icu",     0,          0,          1,          "u", "default",    "NULL"),
 
 # GNSS settings
 ("GNSS_dyn_model",  0,          8,          8,          "u", "default",    "0 - portable, 2 - stationary, 3 - pedestrian 4 - automotive, 5 - sea,\\n 6 - airborne with <1g Acceleration, 7 - airborne with <2g Acceleration, 8 - airborne with <4g Acceleration"),

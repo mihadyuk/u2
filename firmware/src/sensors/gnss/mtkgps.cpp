@@ -180,7 +180,7 @@ THD_FUNCTION(mtkgps::nmeaRxThread, arg) {
         gga_msec = gga.msec + gga.time.tm_sec * 1000;
         if (nullptr != self->sniff_sdp) {
           chprintf((BaseSequentialStream *)self->sniff_sdp,
-              "gga_parsed = %u\n", gga.msec);
+              "---- gga_parsed = %u\n", gga.msec);
         }
         break;
       case sentence_type_t::RMC:
@@ -188,7 +188,7 @@ THD_FUNCTION(mtkgps::nmeaRxThread, arg) {
         rmc_msec = rmc.msec + rmc.time.tm_sec * 1000;
         if (nullptr != self->sniff_sdp) {
           chprintf((BaseSequentialStream *)self->sniff_sdp,
-              "rmc_parsed = %u\n", rmc.msec);
+              "---- rmc_parsed = %u\n", rmc.msec);
         }
         break;
       default:

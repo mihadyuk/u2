@@ -12,7 +12,7 @@ public:
   mavChannelSerial(void);
   void start(SerialDriver *sdp);
   void stop(void);
-  void write(const uint8_t *buf, size_t len);
+  msg_t write(const uint8_t *buf, size_t len, systime_t timeout);
   msg_t get(systime_t time);
   size_t read(uint8_t *buf, size_t len, systime_t timeout);
 protected:

@@ -208,6 +208,8 @@ SENSORSRC = src/i2c_local.cpp \
 		src/sensors/pmu.cpp \
 		src/sensors/maxsonar.cpp \
 		src/sensors/odometer.cpp \
+		src/sensors/odometer_stm.cpp \
+		src/sensors/odometer_fpga.cpp \
 		src/sensors/adc_local.cpp \
 		src/sensors/pps.cpp \
 		src/sensors/calibrator.cpp \
@@ -305,7 +307,7 @@ endif
 # Enable loading with g++ only if you need C++ runtime support.
 # NOTE: You can use C++ even without C++ support if you are careful. C++
 #       runtime support makes code size explode.
-LD   = $(TRGT)gcc -specs=nano.specs
+LD   = $(TRGT)gcc
 #LD   = $(TRGT)g++
 CP   = $(TRGT)objcopy
 AS   = $(TRGT)gcc -x assembler-with-cpp

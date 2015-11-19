@@ -87,7 +87,19 @@ bool NPA700::hw_init_full(void) {
   if (MSG_OK == status)
     return OSAL_SUCCESS;
   else
+    return OSAL_FAILED;
+}
+
+/**
+ * @brief   Just check device's presence on bus
+ */
+bool NPA700::ping(void) {
+  msg_t status = receive(rxbuf, 3);
+
+  if (MSG_OK == status)
     return OSAL_SUCCESS;
+  else
+    return OSAL_FAILED;
 }
 
 /**
