@@ -302,7 +302,7 @@
                                      PIN_PUPDR_FLOATING(GPIOA_PIN6) |         \
                                      PIN_PUPDR_FLOATING(GPIOA_PIN7) |         \
                                      PIN_PUPDR_FLOATING(GPIOA_MCU_I2C_SCL) |  \
-                                     PIN_PUPDR_PULLDOWN(GPIOA_USB_PRESENT) |  \
+                                     PIN_PUPDR_FLOATING(GPIOA_USB_PRESENT) |  \
                                      PIN_PUPDR_FLOATING(GPIOA_PIN10) |        \
                                      PIN_PUPDR_FLOATING(GPIOA_OTG_FS_DM) |    \
                                      PIN_PUPDR_FLOATING(GPIOA_OTG_FS_DP) |    \
