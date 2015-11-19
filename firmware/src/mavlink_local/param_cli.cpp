@@ -117,10 +117,7 @@ static void dump(uint32_t i) {
     return;
   }
 
-  nres = snprintf(str, n, "%s", "param ");
-  cli_print_long(str, n, nres);
-
-  nres = snprintf(str, n, "%-15s", param_p->name);
+  nres = snprintf(str, n, "%s%s", "param ", param_p->name);
   cli_print_long(str, n, nres);
 
   switch(param_p->param_type){
@@ -165,7 +162,7 @@ static void dump_all(void){
   uint32_t i = 0;
   uint32_t paramcnt = param_registry.paramCount();
 
-  for (i = 0; i < paramcnt; i++)
+  for (i=0; i<paramcnt; i++)
     dump(i);
 }
 
