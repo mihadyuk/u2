@@ -16,7 +16,7 @@ private:
   void start_impl(void);
   void stop_impl(void);
   void update_impl(odometer_data_t &result, float dT);
-
+  filters::AlphaBeta<float, 4> filter_alphabeta;
   filters::Median<float, 3> filter_median;
   const FpgaIcu *fpgaicup;
 };
