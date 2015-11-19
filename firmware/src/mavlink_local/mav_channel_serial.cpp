@@ -70,9 +70,9 @@ void mavChannelSerial::stop(void){
 /**
  *
  */
-void mavChannelSerial::write(const uint8_t *buf, size_t len) {
+msg_t mavChannelSerial::write(const uint8_t *buf, size_t len, systime_t timeout) {
   osalDbgCheck(ready);
-  sdWrite(sdp, buf, len);
+  return sdWriteTimeout(sdp, buf, len, timeout);
 }
 
 /**

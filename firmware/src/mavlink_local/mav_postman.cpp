@@ -40,6 +40,8 @@ __CCM__ static mavlink_status_t rx_status;
 __CCM__ static mavlink_message_t tx_msg;
 static uint8_t sendbuf[MAVLINK_SENDBUF_SIZE]; /* do not set CCM here. This buffer may be used to send data via DMA */
 
+static size_t dbg_drop_cnt = 0;
+
 /*
  ******************************************************************************
  ******************************************************************************
@@ -47,7 +49,7 @@ static uint8_t sendbuf[MAVLINK_SENDBUF_SIZE]; /* do not set CCM here. This buffe
  ******************************************************************************
  ******************************************************************************
  */
-#include "pads.h"
+
 /**
  *
  */
@@ -83,7 +85,8 @@ static THD_FUNCTION(TxThread, arg) {
     if (MSG_OK == txmb.fetch(&mail, MS2ST(100))) {
       if (0 != mavlink_encode(mail->msgid, mail->compid, &tx_msg,  mail->mavmsg)) {
         len = mavlink_msg_to_send_buffer(sendbuf, &tx_msg);
-        channel->write(sendbuf, len);
+        if (MSG_OK != channel->write(sendbuf, len, MS2ST(100)))
+          dbg_drop_cnt++;
       }
       mail->release();
     }
