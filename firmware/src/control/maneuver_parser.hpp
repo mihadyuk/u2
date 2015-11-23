@@ -3,7 +3,7 @@
 
 #include <math.h>
 
-#include "ld_navigator_types.hpp"
+#include "maneuver_part.hpp"
 #include "matrix_math.hpp"
 #include "e_frame.hpp"
 #include "geometry.hpp"
@@ -28,8 +28,6 @@ public:
                  const mavlink_mission_item_t &third);
   void loadNextPart();
   void resetPartCounter();
-  void savePartNumber();
-  void loadSavedPartNumber();
   uint32_t debugPartNumber();
   MnrPart<T> update(T (&currWGS84)[3][1]);
 
@@ -57,7 +55,6 @@ private:
   T thirdNE[2][1];
 
   uint32_t mnrPartNumber;
-  uint32_t savedMnrPartNumber;
 };
 
 template <typename T>
@@ -65,7 +62,7 @@ ManeuverParser<T>::ManeuverParser(const mavlink_mission_item_t &prev,
                                   const mavlink_mission_item_t &trgt,
                                   const mavlink_mission_item_t &third) :
                                   prev(prev), trgt(trgt), third(third),
-                                  mnrPartNumber(0), savedMnrPartNumber(0) {
+                                  mnrPartNumber(0) {
   memset(prevNE, 0, sizeof(prevNE));
   memset(trgtNE, 0, sizeof(trgtNE));
   memset(thirdNE, 0, sizeof(thirdNE));
@@ -79,16 +76,6 @@ void ManeuverParser<T>::loadNextPart() {
 template <typename T>
 void ManeuverParser<T>::resetPartCounter() {
   mnrPartNumber = 0;
-}
-
-template <typename T>
-void ManeuverParser<T>::savePartNumber() {
-  savedMnrPartNumber = mnrPartNumber;
-}
-
-template <typename T>
-void ManeuverParser<T>::loadSavedPartNumber() {
-  mnrPartNumber = savedMnrPartNumber;
 }
 
 template <typename T>

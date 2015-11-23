@@ -3,16 +3,18 @@
 
 #include <math.h>
 #include "ld_navigator_types.hpp"
+#include "maneuver_part.hpp"
 #include "matrix_math.hpp"
-#include "e_frame.hpp"
 #include "geometry.hpp"
 
 namespace control {
 
 template <typename T>
 void circleManeuver(ManeuverPart<T> &part,
-                    uint32_t partNumber, float repeats, float radius,
-                    T (&localPrev)[2][1], T (&localTrgt)[2][1]) {
+                    uint32_t partNumber,
+                    float repeats, float radius,
+                    const T (&localPrev)[2][1],
+                    const T (&localTrgt)[2][1]) {
 
   uint32_t partsCount = round(fabs(repeats)*4 + 1);
 
@@ -26,27 +28,24 @@ void circleManeuver(ManeuverPart<T> &part,
   if (partNumber > 0 && partNumber < partsCount) {
     // quarter circle
     T cwSign = sign<T>(radius);
-    T lineCourse = atan2(normedLineVector[1][0],
-                         normedLineVector[0][0]) +
-                   cwSign*static_cast<T>(M_PI_2);
-    lineCourse = wrap_2pi(lineCourse);
+    T tangentCourse = tangentLineCourse(normedLineVector, cwSign);
 
     part.fillArc(localTrgt, radius, 0.0, M_PI_2, false);
 
     switch (partNumber % 4) {
       case 1:
-        part.arc.startCourse = lineCourse;
+        part.arc.startCourse = tangentCourse;
         break;
       case 2:
-        part.arc.startCourse = wrap_2pi(lineCourse +
+        part.arc.startCourse = wrap_2pi(tangentCourse +
                                         cwSign*static_cast<T>(M_PI_2));
         break;
       case 3:
-        part.arc.startCourse = wrap_2pi(lineCourse +
+        part.arc.startCourse = wrap_2pi(tangentCourse +
                                         cwSign*static_cast<T>(M_PI));
         break;
       case 0:
-        part.arc.startCourse = wrap_2pi(lineCourse +
+        part.arc.startCourse = wrap_2pi(tangentCourse +
                                         cwSign*static_cast<T>(3.0*M_PI_2));
         break;
       default:
@@ -73,8 +72,11 @@ void circleManeuver(ManeuverPart<T> &part,
 
 template <typename T>
 void threePointsManeuver(ManeuverPart<T> &part,
-                         uint32_t partNumber, float radius,
-                         T (&localPrev)[2][1], T (&localTrgt)[2][1], T (&localThird)[2][1]) {
+                         uint32_t partNumber,
+                         float radius,
+                         const T (&localPrev)[2][1],
+                         const T (&localTrgt)[2][1],
+                         const T (&localThird)[2][1]) {
   if (partNumber < 2) {
 
     T trgtToPrevVect[2][1];
@@ -162,8 +164,10 @@ void threePointsManeuver(ManeuverPart<T> &part,
 
 template <typename T>
 void infinityManeuver(ManeuverPart<T> &part,
-                      uint32_t partNumber, float repeats, float radius, float height, float angle,
-                      T (&localPrev)[2][1], T (&localTrgt)[2][1]) {
+                      uint32_t partNumber,
+                      float repeats, float radius, float height, float angle,
+                      const T (&localPrev)[2][1],
+                      const T (&localTrgt)[2][1]) {
 
   uint32_t partsCount = round(fabs(repeats)*7 + 1);
 
@@ -242,8 +246,10 @@ void infinityManeuver(ManeuverPart<T> &part,
 
 template <typename T>
 void stadiumManeuver(ManeuverPart<T> &part,
-                     uint32_t partNumber, float repeats, float radius, float height, float width, float angle,
-                     T (&localPrev)[2][1], T (&localTrgt)[2][1]) {
+                     uint32_t partNumber,
+                     float repeats, float radius, float height, float width, float angle,
+                     const T (&localPrev)[2][1],
+                     const T (&localTrgt)[2][1]) {
 
   uint32_t partsCount = round(fabs(repeats)*9 + 2);
 

@@ -8,12 +8,17 @@
 #include "mavlink_local.hpp"
 
 #ifndef USE_LD_NAVIGATOR
+
 #include "navigator.hpp"
+
+#else
+
+#include "ld_navigator.hpp"
+#include "maneuver_parser.hpp"
+
 #endif
 
 #include "acs_input.hpp"
-#include "ld_navigator.hpp"
-#include "maneuver_parser.hpp"
 
 
 

@@ -1,6 +1,9 @@
 #ifndef LD_NAVIGATOR_TYPES_HPP_
 #define LD_NAVIGATOR_TYPES_HPP_
 
+#include <string.h>
+#include "matrix_math.hpp"
+
 namespace control {
 
 enum class ManeuverPartType {
@@ -11,7 +14,7 @@ enum class ManeuverPartType {
 
 template <typename T>
 struct LdNavOut {
-  LdNavOut(void) : dz(0), dist(0), crs(0) , crossed(false) {;}
+  LdNavOut(void) : dz(0), dist(0), crs(0) , crossed(true) {;}
   LdNavOut(T dz, T dist, T crs, bool crossed) :
     dz(dz), dist(dist), crs(crs), crossed(crossed) {;}
   T dz;         /* cross track error (m) */
@@ -25,7 +28,7 @@ struct ManeuverLine {
   T start[2][1];  /* local north (m), east (m) coordinates */
   T finish[2][1]; /* local north (m), east (m) coordinates */
 
-  void fill(T (&start)[2][1], T (&finish)[2][1]) {
+  void fill(const T (&start)[2][1], const T (&finish)[2][1]) {
     m_copy<T, 2, 1>(this->start, start);
     m_copy<T, 2, 1>(this->finish, finish);
   }
@@ -48,7 +51,7 @@ struct ManeuverArc {
   T startCourse;  /* course (rad) on arc start, [0, 2*M_PI] */
   T deltaCourse;  /* course change (rad) on arc, [0; M_PI] */
 
-  void fill(T (&center)[2][1], T radius,
+  void fill(const T (&center)[2][1], T radius,
             T startCourse, T deltaCourse) {
     m_copy<T, 2, 1>(this->center, center);
     this->radius = radius;
@@ -78,7 +81,7 @@ struct MnrPart {
     finale = true;
     type = ManeuverPartType::unknown;
   }
-  void fillLine(T (&start)[2][1], T (&finish)[2][1], bool finale) {
+  void fillLine(const T (&start)[2][1], const T (&finish)[2][1], bool finale) {
     type = ManeuverPartType::line;
     this->finale = finale;
     m_copy<T, 2, 1>(line.start, start);
@@ -93,7 +96,7 @@ struct MnrPart {
     line.finish[0][0] = finishNorth;
     line.finish[1][0] = finishEast;
   }
-  void fillArc(T (&center)[2][1], T radius,
+  void fillArc(const T (&center)[2][1], T radius,
                T startCourse, T deltaCourse, bool finale) {
     type = ManeuverPartType::arc;
     this->finale = finale;
