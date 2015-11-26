@@ -39,6 +39,7 @@ Giovanni
 #include "global_flags.h"
 #include "fault_handlers.h"
 #include "mavlink_local.hpp"
+#include "nmea_generic.hpp"
 #include "mtkgps.hpp"
 #include "ublox.hpp"
 #include "sanity.hpp"
@@ -141,11 +142,12 @@ __CCM__ static power_monitor_data_t power_monitor_data;
 __CCM__ gnss::uBlox GNSS(&GPSSD, 9600, 57600);
 __CCM__ static OdometerSTM odometer;
 #elif defined(BOARD_MNU)
-__CCM__ gnss::mtkgps GNSS(&GPSSD, 115200, 115200);
+__CCM__ gnss::nmea_generic GNSS(&GPSSD, 115200, 115200);
 __CCM__ static OdometerFPGA odometer(&FPGAICUD1);
 #else
 #error "board unsupported"
 #endif
+gnss::GNSSReceiver &GNSS_CLI = GNSS;
 __CCM__ control::HIL hil;
 #if USE_STARLINO_AHRS
 __CCM__ static AHRSStarlino ahrs_starlino;
