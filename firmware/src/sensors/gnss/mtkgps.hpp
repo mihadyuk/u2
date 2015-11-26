@@ -2,7 +2,7 @@
 #define MTKGPS_HPP_
 
 #include "gnss_receiver.hpp"
-#include "nmea_proto.hpp"
+#include "proto_nmea.hpp"
 
 namespace gnss {
 

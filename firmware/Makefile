@@ -196,8 +196,8 @@ SENSORSRC = src/i2c_local.cpp \
 		src/sensors/ak8975.cpp \
 		src/sensors/lsm303_acc.cpp \
 		src/sensors/lsm303_mag.cpp \
-		src/sensors/gnss/nmea_proto.cpp \
-		src/sensors/gnss/ubx_proto.cpp \
+		src/sensors/gnss/proto_nmea.cpp \
+		src/sensors/gnss/proto_ubx.cpp \
 		src/sensors/gnss/ublox.cpp \
 		src/sensors/gnss/mtkgps.cpp \
 		src/sensors/gnss/gnss_receiver.cpp \

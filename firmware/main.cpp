@@ -343,7 +343,7 @@ int main(void) {
   gps_power_on();
 #elif defined(BOARD_MNU)
   gnss_select(navi_nmea);
-  modem_select(mors);
+  modem_select(xbee);
 #else
 #error "board unsupported"
 #endif

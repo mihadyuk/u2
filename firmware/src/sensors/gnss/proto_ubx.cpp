@@ -6,7 +6,7 @@
 #include <cstdlib>
 
 #include "main.h"
-#include "ubx_proto.hpp"
+#include "proto_ubx.hpp"
 #include "array_len.hpp"
 #include "endianness.h"
 

@@ -1,7 +1,7 @@
 #include "main.h"
 
-#include "nmea_proto.hpp"
-#include "ubx_proto.hpp"
+#include "proto_nmea.hpp"
+#include "proto_ubx.hpp"
 #include "mavlink_local.hpp"
 #include "gnss_receiver.hpp"
 #include "mav_logger.hpp"

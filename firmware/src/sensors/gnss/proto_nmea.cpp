@@ -6,7 +6,7 @@
 #include <cstdlib>
 
 #include "main.h"
-#include "nmea_proto.hpp"
+#include "proto_nmea.hpp"
 #include "pads.h"
 #include "array_len.hpp"
 

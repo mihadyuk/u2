@@ -2,7 +2,7 @@
 #define UBLOX_HPP_
 
 #include "gnss_receiver.hpp"
-#include "ubx_proto.hpp"
+#include "proto_ubx.hpp"
 
 namespace gnss {
 

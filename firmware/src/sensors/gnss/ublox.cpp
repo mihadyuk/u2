@@ -2,7 +2,7 @@
 
 #include "main.h"
 
-#include "ubx_proto.hpp"
+#include "proto_ubx.hpp"
 #include "ublox.hpp"
 #include "mavlink_local.hpp"
 #include "mav_logger.hpp"
