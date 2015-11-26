@@ -1,5 +1,5 @@
-#ifndef MAV_CODEC_H_
-#define MAV_CODEC_H_
+#ifndef MAV_ENCODER_H_
+#define MAV_ENCODER_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -10,4 +10,4 @@ extern "C" {
 }
 #endif
 
-#endif /* MAV_CODEC_H_ */
+#endif /* MAV_ENCODER_H_ */

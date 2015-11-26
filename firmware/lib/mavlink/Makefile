@@ -11,7 +11,8 @@ mavlink_c: $(TOP_DIR)/C/lapwing/lapwing.h
 # C headers
 $(TOP_DIR)/C/lapwing/lapwing.h: $(TOP_DIR)/definitions/lapwing.xml $(MAVGEN_DIR)
 	cp $(TOP_DIR)/definitions/lapwing.xml $(MAVGEN_DIR)/message_definitions/v1.0
-	$(MAVGEN_DIR)/pymavlink/generator/mavgen.py --lang=C --wire-protocol=1.0 -o C $(MAVGEN_DIR)/message_definitions/v1.0/lapwing.xml
+	~/.local/bin/mavgen.py --lang=C --wire-protocol=1.0 -o C $(MAVGEN_DIR)/message_definitions/v1.0/lapwing.xml
+	#$(MAVGEN_DIR)/pymavlink/generator/mavgen.py --lang=C --wire-protocol=1.0 -o C $(MAVGEN_DIR)/message_definitions/v1.0/lapwing.xml
 	rm $(MAVGEN_DIR)/message_definitions/v1.0/lapwing.xml
 
 clean:

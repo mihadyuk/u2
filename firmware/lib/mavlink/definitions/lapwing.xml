@@ -4,7 +4,7 @@
 <include>common.xml</include>
         <enums>
           <enum name="MAV_CMD">
-               <entry value="23" name="MAV_CMD_NAV_STADIUM">
+               <entry value="3" name="MAV_CMD_NAV_STADIUM">
                     <description>Stadium maneuver</description>
                     <param index="1">Repeats, If positive - clockwise, else counter-clockwise</param>
                     <param index="2">Width</param>
@@ -14,7 +14,7 @@
                     <param index="6">Longitude</param>
                     <param index="7">Altitude</param>
                </entry>
-               <entry value="24" name="MAV_CMD_NAV_INFINITY">
+               <entry value="4" name="MAV_CMD_NAV_INFINITY">
                     <description>Infinity maneuver</description>
                     <param index="1">Repeats, If positive - clockwise, else counter-clockwise</param>
                     <param index="2">Radius</param>
@@ -80,6 +80,11 @@
 			<field type="float"    name="pitchspeed">Pitch angular speed (rad/s)</field>
 			<field type="float"    name="yawspeed">Yaw angular speed (rad/s)</field>
 			<field type="uint8_t"  name="tilt_fix_type">Tilt measurement fix type</field>
+		</message>
+		<message id="153" name="RTCM_DATA">
+			<description>Split long RTCM message in shorter blocks.</description>
+			<field type="uint8_t[55]"	name="data">Data array</field>
+			<field type="uint8_t"		name="len">Actual payload length</field>
 		</message>
 	</messages>
 </mavlink>

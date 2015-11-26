@@ -2,7 +2,7 @@
 
 #include "mav_postman.hpp"
 #include "mav_spam_list.hpp"
-#include "mav_codec.h"
+#include "mav_encoder.h"
 #include "multi_buffer.hpp"
 
 using namespace chibios_rt;
