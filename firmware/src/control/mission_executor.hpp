@@ -13,8 +13,9 @@
 
 #else
 
-#include "ld_navigator.hpp"
-#include "maneuver_parser.hpp"
+//#include "ld_navigator.hpp"
+//#include "maneuver_parser.hpp"
+#include "maneuver_executor.hpp"
 
 #endif
 
@@ -87,8 +88,9 @@ private:
   void navout2mavlink(const LdNavOut<double> &nav_out);
   void navout2acsin(const LdNavOut<double> &nav_out);
   void debug2mavlink();
-  LdNavigator<double> ld_navigator;
-  ManeuverParser<double> mnr_parser;
+//  LdNavigator<double> ld_navigator;
+//  ManeuverParser<double> mnr_parser;
+  ManeuverExecutor<double> mnr_executor;
   uint8_t send_debug_vect_decimator;
 
 #endif

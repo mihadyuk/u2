@@ -248,7 +248,8 @@ void MissionExecutor::debug2mavlink() {
 
   uint64_t time = TimeKeeper::utc();
   dbg_msn_exec.time_usec = time;
-  dbg_msn_exec.x = static_cast<float>(mnr_parser.debugPartNumber());
+//  dbg_msn_exec.x = static_cast<float>(mnr_parser.debugPartNumber());
+  dbg_msn_exec.x = static_cast<float>(mnr_executor.debugPartNumber());
   dbg_msn_exec.y = acs_in.ch[ACS_INPUT_dYaw];
   dbg_msn_exec.z = acs_in.ch[ACS_INPUT_dZm];
 
@@ -288,8 +289,9 @@ void MissionExecutor::navigate(void) {
   double curr_wgs84[3][1] = {{deg2rad(acs_in.chd[ACS_DOUBLE_INPUT_lat])},
                              {deg2rad(acs_in.chd[ACS_DOUBLE_INPUT_lon])},
                              {static_cast<double>(acs_in.ch[ACS_INPUT_alt])}};
-  MnrPart<double> part = mnr_parser.update(curr_wgs84);
-  LdNavOut<double> nav_out = ld_navigator.update(part);
+//  MnrPart<double> part = mnr_parser.update(curr_wgs84);
+//  LdNavOut<double> nav_out = ld_navigator.update(part);
+  LdNavOut<double> nav_out = mnr_executor.update(curr_wgs84);
   navout2acsin(nav_out);
   navout2mavlink(nav_out);
 
@@ -301,12 +303,17 @@ void MissionExecutor::navigate(void) {
     send_debug_vect_decimator = 0;
 #endif
 
-  if (wp_reached(nav_out, part)) {
+//  if (wp_reached(nav_out, part)) {
+//    broadcast_mission_item_reached(trgt.seq);
+//    load_next_mission_item();
+//    mnr_parser.resetPartCounter();
+//  } else if (mnr_part_reached(nav_out)) {
+//    mnr_parser.loadNextPart();
+//  }
+
+  if (mnr_executor.isManeuverCompleted()) {
     broadcast_mission_item_reached(trgt.seq);
     load_next_mission_item();
-    mnr_parser.resetPartCounter();
-  } else if (mnr_part_reached(nav_out)) {
-    mnr_parser.loadNextPart();
   }
 
 #endif
@@ -322,10 +329,11 @@ void MissionExecutor::navigate(void) {
  *
  */
 MissionExecutor::MissionExecutor(ACSInput &acs_in) :
-state(MissionState::uninit),
-acs_in(acs_in),
-mnr_parser(prev, trgt, third),
-send_debug_vect_decimator(0) {
+  state(MissionState::uninit),
+  acs_in(acs_in),
+//  mnr_parser(prev, trgt, third),
+  mnr_executor(prev, trgt, third),
+  send_debug_vect_decimator(0) {
 
   /* fill home point with invalid data. This denotes it uninitialized. */
   memset(&home, 0xFF, sizeof(home));

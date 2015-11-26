@@ -8,8 +8,7 @@
 #include "maneuver_list.hpp"
 #include "mavlink_local.hpp"
 
-#define MAX_MNR_REPEATS 255
-#define MNR_DEFAULT_RADIUS 0.5
+#define MNR_DEFAULT_RADIUS 1.0
 #define MNR_REPEATS_COUNT param1
 #define MNR_TURN_RADIUS param3
 #define MNR_WIDTH param2
@@ -27,12 +26,17 @@ public:
                    const mavlink_mission_item_t &third);
   bool isManeuverCompleted();
   LdNavOut<T> update(const T (&currWGS84)[3][1]);
+  void externalReset(); // need for reload mission
   uint32_t debugPartNumber();
 
 private:
   void parse(const T (&currWGS84)[3][1]);
   void navigate();
   void analyzeResult();
+
+  const mavlink_mission_item_t &prev;
+  const mavlink_mission_item_t &trgt;
+  const mavlink_mission_item_t &third;
 
   uint32_t partNumber;
   ManeuverPart<T> part;
@@ -42,10 +46,6 @@ private:
   T localPrev[2][1];
   T localTrgt[2][1];
   T localThird[2][1];
-
-  const mavlink_mission_item_t &prev;
-  const mavlink_mission_item_t &trgt;
-  const mavlink_mission_item_t &third;
 };
 
 template <typename T>
@@ -70,6 +70,12 @@ LdNavOut<T> ManeuverExecutor<T>::update(const T (&currWGS84)[3][1]) {
   navigate();
   analyzeResult();
   return navOut;
+}
+
+template <typename T>
+void ManeuverExecutor<T>::externalReset() {
+  maneuverCompleted = false;
+  partNumber = 0;
 }
 
 template <typename T>
@@ -108,17 +114,6 @@ void ManeuverExecutor<T>::parse(const T (&currWGS84)[3][1]) {
                      localTrgt);
       break;
     }
-    case MAV_CMD_NAV_INFINITY: {
-      infinityManeuver(part,
-                       partNumber,
-                       trgt.MNR_REPEATS_COUNT,
-                       trgt.MNR_RADIUS,
-                       trgt.MNR_HEIGHT,
-                       trgt.MNR_ROTATE_ANG,
-                       localPrev,
-                       localTrgt);
-      break;
-    }
     case MAV_CMD_NAV_STADIUM: {
       stadiumManeuver(part,
                       partNumber,
@@ -129,6 +124,17 @@ void ManeuverExecutor<T>::parse(const T (&currWGS84)[3][1]) {
                       trgt.MNR_ROTATE_ANG,
                       localPrev,
                       localTrgt);
+      break;
+    }
+    case MAV_CMD_NAV_INFINITY: {
+      infinityManeuver(part,
+                       partNumber,
+                       trgt.MNR_REPEATS_COUNT,
+                       trgt.MNR_RADIUS,
+                       trgt.MNR_HEIGHT,
+                       trgt.MNR_ROTATE_ANG,
+                       localPrev,
+                       localTrgt);
       break;
     }
     default: {

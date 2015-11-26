@@ -104,7 +104,6 @@ void threePointsManeuver(ManeuverPart<T> &part,
 
     T alpha = deltaCrs/2;
 
-    T radius;
     if (deltaCrs >= static_cast<T>(0.0))
       radius = -fabs(radius);
     else
@@ -113,7 +112,7 @@ void threePointsManeuver(ManeuverPart<T> &part,
     switch (partNumber) {
       case 0: {
         T lineFinish[2][1];
-        T arm = -radius/tan(alpha);
+        T arm = static_cast<T>(-radius)/tan(alpha);
         // Check if arc's arm more than distance between waypoints
         if (arm > distTrgtToPrev ||
             arm > distTrgtToThird) {
@@ -139,11 +138,11 @@ void threePointsManeuver(ManeuverPart<T> &part,
         T arcCenter[2][1];
         m_mul_s<T, 2, 1>(arcCenter,
                          trgtToArcCenter,
-                         -radius/sinAlpha);
+                         static_cast<T>(-radius)/sinAlpha);
 
         T startCrs = atan2(-trgtToPrevVect[1][0],
                            -trgtToPrevVect[0][0]);
-        startCrs = wrap_2pi(sign(radius)*startCrs);
+        startCrs = wrap_2pi(static_cast<T>(sign(radius))*startCrs);
         T dCrs = static_cast<T>(2.0)*(static_cast<T>(M_PI_2) - fabs(alpha));
         dCrs = wrap_2pi(dCrs);
 
@@ -270,52 +269,52 @@ void stadiumManeuver(ManeuverPart<T> &part,
 
     switch (partNumber % 9) {
       case 1:
-        part.fillLine(0.0, -semiWidth,
+        part.fillLine(0.0,         -semiWidth,
                       northOffset, -semiWidth,
                       false);
         break;
       case 2:
         part.fillArc(northOffset, -eastOffset,
                      radius,
-                     0.0, M_PI_2,
+                     0.0,          M_PI_2,
                      false);
         break;
       case 3:
-        part.fillLine(-eastOffset, semiHeight,
-                      eastOffset, semiHeight,
+        part.fillLine(semiHeight, -eastOffset,
+                      semiHeight,  eastOffset,
                       false);
         break;
       case 4:
         part.fillArc(northOffset, eastOffset,
                      radius,
-                     M_PI_2, M_PI_2,
+                     M_PI_2,      M_PI_2,
                      false);
         break;
       case 5:
         part.fillLine(northOffset, semiWidth,
-                      -northOffset, semiWidth,
+                     -northOffset, semiWidth,
                       false);
         break;
       case 6:
         part.fillArc(-northOffset, eastOffset,
                      radius,
-                     M_PI, M_PI_2,
+                     M_PI,         M_PI_2,
                      false);
         break;
       case 7:
-        part.fillLine(-semiHeight, eastOffset,
+        part.fillLine(-semiHeight,  eastOffset,
                       -semiHeight, -eastOffset,
                       false);
         break;
       case 8:
         part.fillArc(-northOffset, -eastOffset,
                      radius,
-                     3.0*M_PI_2, M_PI_2,
+                     3.0*M_PI_2,    M_PI_2,
                      false);
         break;
       case 0:
         part.fillLine(-northOffset, -semiWidth,
-                      0.0, -semiWidth,
+                       0.0,         -semiWidth,
                       false);
         break;
       default:
@@ -330,23 +329,17 @@ void stadiumManeuver(ManeuverPart<T> &part,
 
   } else if (0 == partNumber) {
     /* line from previous waypoint to the stadium's border */
-    part.fillLine(localPrev, localTrgt, false);
-    m_mul_s<T, 2, 1>(normedLineVector,
-                     normedLineVector,
-                     width/2.0);
-    m_plus<T, 2, 1>(part.line.finish,
-                    localTrgt,
-                    normedLineVector);
+    part.fillLine(0.0, 0.0, 0.0, -width/2.0, false);
+    part.rotate(deg2rad<T>(angle));
+    part.move(localTrgt);
+    m_copy<T, 2, 1>(part.line.start, localPrev);
 
   } else if ((partsCount - 1) == partNumber) {
     /* line from the stadium's border to the stadium's center */
-    part.fillLine(localTrgt, localTrgt, true);
-    m_mul_s<T, 2, 1>(normedLineVector,
-                     normedLineVector,
-                     width/2.0);
-    m_plus<T, 2, 1>(part.line.start,
-                    localTrgt,
-                    normedLineVector);
+    part.fillLine(0.0, -width/2.0, 0.0, 0.0, false);
+    part.rotate(deg2rad<T>(angle));
+    part.move(localTrgt);
+
   } else {
     part.fillUnknown();
 
