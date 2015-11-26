@@ -454,8 +454,8 @@ void ManeuverParser<T>::updateStadiumMnr(MnrPart<T> &part) {
                      false);
         break;
       case 3:
-        part.fillLine(-eastOffset, semiHeight,
-                      eastOffset, semiHeight,
+        part.fillLine(semiHeight, -eastOffset,
+                      semiHeight, eastOffset,
                       false);
         break;
       case 4:
@@ -503,23 +503,30 @@ void ManeuverParser<T>::updateStadiumMnr(MnrPart<T> &part) {
 
   } else if (0 == mnrPartNumber) {
     /* line from previous waypoint to the stadium's border */
-    part.fillLine(prevNE, trgtNE, false);
-    m_mul_s<T, 2, 1>(normedLineVector,
-                     normedLineVector,
-                     trgt.MNR_WIDTH/2.0);
-    m_plus<T, 2, 1>(part.line.finish,
-                    trgtNE,
-                    normedLineVector);
+//    part.fillLine(prevNE, trgtNE, false);
+//    m_mul_s<T, 2, 1>(normedLineVector,
+//                     normedLineVector,
+//                     trgt.MNR_WIDTH/2.0);
+//    m_plus<T, 2, 1>(part.line.finish,
+//                    trgtNE,
+//                    normedLineVector);
+    part.fillLine(0.0, 0.0, 0.0, -trgt.MNR_WIDTH/2.0, false);
+    rotateMnrPart(part, deg2rad<T>(trgt.MNR_ROTATE_ANG));
+    moveMnrPart(part, trgtNE);
+    m_copy<T, 2, 1>(part.line.start, prevNE);
 
   } else if ((partsCount - 1) == mnrPartNumber) {
     /* line from the stadium's border to the stadium's center */
-    part.fillLine(trgtNE, trgtNE, true);
-    m_mul_s<T, 2, 1>(normedLineVector,
-                     normedLineVector,
-                     trgt.MNR_WIDTH/2.0);
-    m_plus<T, 2, 1>(part.line.start,
-                    trgtNE,
-                    normedLineVector);
+//    part.fillLine(trgtNE, trgtNE, true);
+//    m_mul_s<T, 2, 1>(normedLineVector,
+//                     normedLineVector,
+//                     trgt.MNR_WIDTH/2.0);
+//    m_plus<T, 2, 1>(part.line.start,
+//                    trgtNE,
+//                    normedLineVector);
+    part.fillLine(0.0, -trgt.MNR_WIDTH/2.0, 0.0, 0.0, false);
+    rotateMnrPart(part, deg2rad<T>(trgt.MNR_ROTATE_ANG));
+    moveMnrPart(part, trgtNE);
   } else {
     part.fillUnknown();
 
