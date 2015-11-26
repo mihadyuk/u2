@@ -97,6 +97,17 @@ GNSSReceiver::GNSSReceiver(SerialDriver *sdp, uint32_t start_baudrate,
 /**
  *
  */
+void GNSSReceiver::start(void) {
+
+  osalDbgCheck(! ready);
+  osalDbgCheck(nullptr == worker);
+
+  start_impl();
+}
+
+/**
+ *
+ */
 void GNSSReceiver::stop(void) {
   ready = false;
 

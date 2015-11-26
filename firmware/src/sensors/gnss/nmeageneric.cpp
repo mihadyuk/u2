@@ -1,7 +1,7 @@
 #include "main.h"
 
+#include "nmeageneric.hpp"
 #include "mavlink_local.hpp"
-#include "nmea_generic.hpp"
 #include "mav_logger.hpp"
 #include "geometry.hpp"
 #include "time_keeper.hpp"
@@ -52,7 +52,7 @@ static const uint16_t RMC_VOID = (0xFFFF - 1);
 /**
  *
  */
-void nmea_generic::ggarmc2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc) {
+void nmeageneric::ggarmc2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc) {
 
   mavlink_out_gps_raw_int_struct.time_usec = TimeKeeper::utc();
   mavlink_out_gps_raw_int_struct.lat = gga.latitude  * DEG_TO_MAVLINK;
@@ -71,7 +71,7 @@ void nmea_generic::ggarmc2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc) 
 /**
  *
  */
-void nmea_generic::gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
+void nmeageneric::gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
                                gnss_data_t *result) {
 
   if (false == result->fresh) {
@@ -91,9 +91,20 @@ void nmea_generic::gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
 /**
  *
  */
-THD_FUNCTION(nmea_generic::nmeaRxThread, arg) {
+void nmeageneric::configure(void) {
+
+  /* start on default baudrate */
+  gps_serial_cfg = {0,0,0,0};
+  gps_serial_cfg.speed = this->start_baudrate;
+  sdStart(this->sdp, &gps_serial_cfg);
+}
+
+/**
+ *
+ */
+THD_FUNCTION(nmeageneric::nmeaRxThread, arg) {
   chRegSetThreadName("GNSS_NMEA");
-  nmea_generic *self = static_cast<nmea_generic *>(arg);
+  nmeageneric *self = static_cast<nmeageneric *>(arg);
   msg_t byte;
   sentence_type_t status;
   nmea_gga_t gga;
@@ -168,7 +179,7 @@ THD_FUNCTION(nmea_generic::nmeaRxThread, arg) {
 /**
  *
  */
-void nmea_generic::start_impl(void) {
+void nmeageneric::start_impl(void) {
 
   load_params();
 
@@ -186,15 +197,8 @@ void nmea_generic::start_impl(void) {
 /**
  *
  */
-nmea_generic::nmea_generic(SerialDriver *sdp, uint32_t start_baudrate, uint32_t working_baudrate) :
+nmeageneric::nmeageneric(SerialDriver *sdp, uint32_t start_baudrate, uint32_t working_baudrate) :
     GNSSReceiver(sdp, start_baudrate, working_baudrate) {
   return;
-}
-
-/**
- *
- */
-void nmea_generic::start(void) {
-  return start_impl();
 }
 

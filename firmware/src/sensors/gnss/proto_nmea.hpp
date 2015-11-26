@@ -1,5 +1,5 @@
-#ifndef NMEA_PROTO_HPP_
-#define NMEA_PROTO_HPP_
+#ifndef PROTO_NMEA_HPP_
+#define PROTO_NMEA_HPP_
 
 #include "string.h" // for memset
 
@@ -67,9 +67,9 @@ enum class nmea_collect_state_t {
 /**
  *
  */
-class NmeaProto {
+class ProtoNmea {
 public:
-  NmeaProto(void);
+  ProtoNmea(void);
   sentence_type_t collect(uint8_t byte);
   void unpack(nmea_rmc_t &result);
   void unpack(nmea_gga_t &result);
@@ -93,4 +93,4 @@ private:
 
 } /* namespace */
 
-#endif /* NMEA_PROTO_HPP_ */
+#endif /* PROTO_NMEA_HPP_ */

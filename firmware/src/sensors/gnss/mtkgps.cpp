@@ -61,11 +61,10 @@ static const uint8_t gps_high_baudrate[] = "$PMTK251,57600*2C\r\n";
  *
  */
 void mtkgps::configure(void) {
-  SerialConfig gps_ser_cfg = {0,0,0,0};
 
   /* start on default baudrate */
-  gps_ser_cfg.speed = this->start_baudrate;
-  sdStart(this->sdp, &gps_ser_cfg);
+  gps_serial_cfg = {0,0,0,0};
+  gps_serial_cfg.speed = this->start_baudrate;
 
   /* set only GGA, RMC output. We have to do this some times
    * because serial port contains some garbage and this garbage will
@@ -101,6 +100,13 @@ void mtkgps::configure(void) {
 /**
  *
  */
+void mtkgps::update_settings(void) {
+
+}
+
+/**
+ *
+ */
 void mtkgps::load_params(void) {
 
   param_registry.valueSearch("GNSS_fix_period", &fix_period);
@@ -115,14 +121,7 @@ void mtkgps::load_params(void) {
  *
  */
 mtkgps::mtkgps(SerialDriver *sdp, uint32_t start_baudrate, uint32_t working_baudrate) :
-    nmea_generic(sdp, start_baudrate, working_baudrate) {
+    nmeageneric(sdp, start_baudrate, working_baudrate) {
   return;
-}
-
-/**
- *
- */
-void mtkgps::start(void) {
-  start_impl();
 }
 

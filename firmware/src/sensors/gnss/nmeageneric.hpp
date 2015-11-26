@@ -1,5 +1,5 @@
-#ifndef NMEA_GENERIC_HPP_
-#define NMEA_GENERIC_HPP_
+#ifndef NMEAGENERIC_HPP_
+#define NMEAGENERIC_HPP_
 
 #include "gnss_receiver.hpp"
 #include "proto_nmea.hpp"
@@ -9,16 +9,17 @@ namespace gnss {
 /**
  *
  */
-class nmea_generic : public GNSSReceiver {
+class nmeageneric : public GNSSReceiver {
 public:
-  nmea_generic(SerialDriver *sdp, uint32_t start_baudrate,
+  nmeageneric(SerialDriver *sdp, uint32_t start_baudrate,
                                   uint32_t working_baudrate);
-  void start(void);
 protected:
+  virtual void configure(void);
   virtual void load_params(void){return;}
+  virtual void update_settings(void){return;}
   void start_impl(void);
 private:
-  NmeaProto nmea_parser;
+  ProtoNmea nmea_parser;
   static THD_FUNCTION(nmeaRxThread, arg);
   void ggarmc2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc);
   void gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
@@ -27,4 +28,4 @@ private:
 
 } // namespace
 
-#endif /* NMEA_GENERIC_HPP_ */
+#endif /* NMEAGENERIC_HPP_ */

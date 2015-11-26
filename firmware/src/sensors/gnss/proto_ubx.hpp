@@ -1,5 +1,5 @@
-#ifndef UBX_PROTO_HPP_
-#define UBX_PROTO_HPP_
+#ifndef PROTO_UBX_HPP_
+#define PROTO_UBX_HPP_
 
 #include "string.h" // for memset
 
@@ -282,9 +282,9 @@ private:
 /**
  *
  */
-class UbxProto {
+class ProtoUbx {
 public:
-  UbxProto(void);
+  ProtoUbx(void);
   ubx_msg_t collect(uint8_t byte);
   size_t packPollRequest(ubx_msg_t type, uint8_t *buf, size_t buflen);
   template <typename T> size_t pack(const T &msg, uint8_t *buf, size_t buflen);
@@ -311,7 +311,7 @@ private:
  *
  */
 template <typename T>
-void UbxProto::unpack(T &result) {
+void ProtoUbx::unpack(T &result) {
   size_t N;
   uint16_t recvd = extract_len(this->buf.data);
 
@@ -333,7 +333,7 @@ void UbxProto::unpack(T &result) {
  *
  */
 template <typename T>
-size_t UbxProto::pack(const T &msg, uint8_t *buf, size_t buflen) {
+size_t ProtoUbx::pack(const T &msg, uint8_t *buf, size_t buflen) {
   uint16_t datalen = sizeof(msg.payload);
 
   if (buflen < (UBX_OVERHEAD_TOTAL + datalen))
@@ -344,7 +344,7 @@ size_t UbxProto::pack(const T &msg, uint8_t *buf, size_t buflen) {
 
 } /* namespace */
 
-#endif /* UBX_PROTO_HPP_ */
+#endif /* PROTO_UBX_HPP_ */
 
 
 

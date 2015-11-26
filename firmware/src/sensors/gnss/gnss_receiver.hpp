@@ -24,6 +24,7 @@ public:
   GNSSReceiver(SerialDriver *sdp, uint32_t start_baudrate,
                                   uint32_t working_baudrate);
   void stop(void);
+  void start(void);
   void getCache(gnss::gnss_data_t &result);
   void subscribe(gnss::gnss_data_t* result);
   void unsubscribe(gnss::gnss_data_t* result);
@@ -35,8 +36,7 @@ protected:
   void log_append(const mavlink_gps_raw_int_t *msg);
   void acquire(void);
   void release(void);
-  virtual void configure(void){return;} // empty by default
-  virtual void update_settings(void){return;} // empty by default
+  virtual void start_impl(void) = 0;
   gnss_data_t* spamlist[GNSS_MAX_SUBSCRIBERS] = {};
   bool ready = false;
   thread_t *worker = nullptr;
@@ -48,6 +48,7 @@ protected:
   mavMail gps_raw_int_mail;
   static chibios_rt::BinarySemaphore pps_sem;
   static chibios_rt::BinarySemaphore protect_sem;
+  SerialConfig gps_serial_cfg; // empty config for derivated classes usage
 };
 
 } // namespace

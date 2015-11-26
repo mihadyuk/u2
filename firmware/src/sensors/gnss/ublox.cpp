@@ -323,14 +323,14 @@ void uBlox::get_version(void) {
  */
 void uBlox::configure(uint32_t dyn_model, uint32_t fix_period) {
 
-  SerialConfig gps_ser_cfg = {0,0,0,0};
+  gps_serial_cfg = {0,0,0,0};
 
-  gps_ser_cfg.speed = this->start_baudrate;
-  sdStart(this->sdp, &gps_ser_cfg);
+  gps_serial_cfg.speed = this->start_baudrate;
+  sdStart(this->sdp, &gps_serial_cfg);
   set_port();
   sdStop(this->sdp);
-  gps_ser_cfg.speed = this->working_baudrate;
-  sdStart(this->sdp, &gps_ser_cfg);
+  gps_serial_cfg.speed = this->working_baudrate;
+  sdStart(this->sdp, &gps_serial_cfg);
 
   get_version();
   set_fix_period(fix_period);
@@ -503,6 +503,20 @@ EXIT:
   chThdExit(MSG_OK);
 }
 
+/**
+ *
+ */
+void uBlox::start_impl(void) {
+
+  param_registry.valueSearch("GNSS_dyn_model",  &dyn_model);
+  param_registry.valueSearch("GNSS_fix_period", &fix_period);
+
+  worker = chThdCreateStatic(gnssRxThreadWA, sizeof(gnssRxThreadWA),
+                             GPSPRIO, ubxRxThread, this);
+  osalDbgCheck(nullptr != worker);
+  ready = true;
+}
+
 /*
  *******************************************************************************
  * EXPORTED FUNCTIONS
@@ -516,16 +530,3 @@ uBlox::uBlox(SerialDriver *sdp, uint32_t start_baudrate, uint32_t working_baudra
   return;
 }
 
-/**
- *
- */
-void uBlox::start(void) {
-
-  param_registry.valueSearch("GNSS_dyn_model",  &dyn_model);
-  param_registry.valueSearch("GNSS_fix_period", &fix_period);
-
-  worker = chThdCreateStatic(gnssRxThreadWA, sizeof(gnssRxThreadWA),
-                             GPSPRIO, ubxRxThread, this);
-  osalDbgCheck(nullptr != worker);
-  ready = true;
-}
