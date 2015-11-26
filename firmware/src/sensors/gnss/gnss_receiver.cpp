@@ -1,7 +1,7 @@
 #include "main.h"
 
-#include "nmea_proto.hpp"
-#include "ubx_proto.hpp"
+#include "proto_nmea.hpp"
+#include "proto_ubx.hpp"
 #include "mavlink_local.hpp"
 #include "gnss_receiver.hpp"
 #include "mav_logger.hpp"
@@ -92,6 +92,17 @@ GNSSReceiver::GNSSReceiver(SerialDriver *sdp, uint32_t start_baudrate,
     working_baudrate(working_baudrate)
 {
   return;
+}
+
+/**
+ *
+ */
+void GNSSReceiver::start(void) {
+
+  osalDbgCheck(! ready);
+  osalDbgCheck(nullptr == worker);
+
+  start_impl();
 }
 
 /**

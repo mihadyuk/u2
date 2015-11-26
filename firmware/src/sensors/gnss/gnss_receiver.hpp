@@ -10,9 +10,9 @@
 
 extern chibios_rt::EvtSource event_gnss;
 
-#define GNSS_MAX_SUBSCRIBERS      4
-
-#define GNSS_MAVLINK_HDG_UNKNOWN  65535
+#define GNSS_MAX_SUBSCRIBERS        4
+#define GNSS_THREAD_SIZE            400
+#define GNSS_MAVLINK_HDG_UNKNOWN    0xFFFF
 
 namespace gnss {
 
@@ -23,8 +23,8 @@ class GNSSReceiver {
 public:
   GNSSReceiver(SerialDriver *sdp, uint32_t start_baudrate,
                                   uint32_t working_baudrate);
-  virtual void start(void) = 0;
   void stop(void);
+  void start(void);
   void getCache(gnss::gnss_data_t &result);
   void subscribe(gnss::gnss_data_t* result);
   void unsubscribe(gnss::gnss_data_t* result);
@@ -32,10 +32,11 @@ public:
   void deleteSniffer(void);
   static void GNSS_PPS_ISR_I(void);
 protected:
-  THD_WORKING_AREA(gnssRxThreadWA, 400);
+  THD_WORKING_AREA(gnssRxThreadWA, GNSS_THREAD_SIZE);
   void log_append(const mavlink_gps_raw_int_t *msg);
   void acquire(void);
   void release(void);
+  virtual void start_impl(void) = 0;
   gnss_data_t* spamlist[GNSS_MAX_SUBSCRIBERS] = {};
   bool ready = false;
   thread_t *worker = nullptr;
@@ -47,6 +48,7 @@ protected:
   mavMail gps_raw_int_mail;
   static chibios_rt::BinarySemaphore pps_sem;
   static chibios_rt::BinarySemaphore protect_sem;
+  SerialConfig gps_serial_cfg; // empty config for derivated classes usage
 };
 
 } // namespace

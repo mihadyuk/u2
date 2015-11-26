@@ -39,6 +39,7 @@ Giovanni
 #include "global_flags.h"
 #include "fault_handlers.h"
 #include "mavlink_local.hpp"
+#include "nmeageneric.hpp"
 #include "mtkgps.hpp"
 #include "ublox.hpp"
 #include "sanity.hpp"
@@ -138,7 +139,9 @@ __CCM__ static PPS pps;
 __CCM__ static Calibrator calibrator;
 __CCM__ static power_monitor_data_t power_monitor_data;
 #if defined(BOARD_BEZVODIATEL)
+//__CCM__ gnss::nmeageneric GNSS(&GPSSD, 9600, 9600);
 __CCM__ gnss::uBlox GNSS(&GPSSD, 9600, 57600);
+//__CCM__ gnss::mtkgps GNSS(&GPSSD, 9600, 57600);
 __CCM__ static OdometerSTM odometer;
 #elif defined(BOARD_MNU)
 __CCM__ gnss::mtkgps GNSS(&GPSSD, 115200, 115200);
@@ -146,6 +149,7 @@ __CCM__ static OdometerFPGA odometer(&FPGAICUD1);
 #else
 #error "board unsupported"
 #endif
+gnss::GNSSReceiver &GNSS_CLI = GNSS;
 __CCM__ control::HIL hil;
 #if USE_STARLINO_AHRS
 __CCM__ static AHRSStarlino ahrs_starlino;
@@ -343,7 +347,7 @@ int main(void) {
   gps_power_on();
 #elif defined(BOARD_MNU)
   gnss_select(navi_nmea);
-  modem_select(mors);
+  modem_select(xbee);
 #else
 #error "board unsupported"
 #endif

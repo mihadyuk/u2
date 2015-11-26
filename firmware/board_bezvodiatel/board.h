@@ -590,7 +590,7 @@
                                 PIN_MODE_ALTERNATE(GPIOE_TIM1_PWM3) |         \
                                 PIN_MODE_ALTERNATE(GPIOE_TIM1_PWM4) |         \
                                 PIN_MODE_OUTPUT(GPIOE_SDIO_PWR))
-#define VAL_GPIOE_OTYPER       (PIN_OTYPE_PUSHPULL(GPIOE_GPS_ENABLE) |        \
+#define VAL_GPIOE_OTYPER       (PIN_OTYPE_OPENDRAIN(GPIOE_GPS_ENABLE) |       \
                                 PIN_OTYPE_PUSHPULL(GPIOE_ADIS_INT) |          \
                                 PIN_OTYPE_PUSHPULL(GPIOE_USB_PRESENCE) |      \
                                 PIN_OTYPE_PUSHPULL(GPIOE_MPU9150_INT) |       \
@@ -622,7 +622,7 @@
                                 PIN_OSPEED_2M(GPIOE_TIM1_PWM3) |              \
                                 PIN_OSPEED_2M(GPIOE_TIM1_PWM4) |              \
                                 PIN_OSPEED_2M(GPIOE_SDIO_PWR))
-#define VAL_GPIOE_PUPDR        (PIN_PUPDR_PULLDOWN(GPIOE_GPS_ENABLE) |        \
+#define VAL_GPIOE_PUPDR        (PIN_PUPDR_FLOATING(GPIOE_GPS_ENABLE) |        \
                                 PIN_PUPDR_PULLDOWN(GPIOE_ADIS_INT) |          \
                                 PIN_PUPDR_PULLDOWN(GPIOE_USB_PRESENCE) |      \
                                 PIN_PUPDR_PULLUP(GPIOE_MPU9150_INT) |         \

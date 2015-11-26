@@ -23,7 +23,6 @@ using namespace gnss;
  * EXTERNS
  ******************************************************************************
  */
-extern mavlink_gps_raw_int_t        mavlink_out_gps_raw_int_struct;
 
 /*
  ******************************************************************************
@@ -44,10 +43,6 @@ static const uint8_t fix_period_2hz[] = "$PMTK300,500,0,0,0,0*28\r\n";
 /* set serial port baudrate */
 static const uint8_t gps_high_baudrate[] = "$PMTK251,57600*2C\r\n";
 
-/* constants for NMEA parser needs */
-static const uint16_t GGA_VOID = 0xFFFF;
-static const uint16_t RMC_VOID = (0xFFFF - 1);
-
 /*
  ******************************************************************************
  * PROTOTYPES
@@ -65,31 +60,11 @@ static const uint16_t RMC_VOID = (0xFFFF - 1);
 /**
  *
  */
-void mtkgps::ggarmc2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc) {
-
-  mavlink_out_gps_raw_int_struct.time_usec = TimeKeeper::utc();
-  mavlink_out_gps_raw_int_struct.lat = gga.latitude  * DEG_TO_MAVLINK;
-  mavlink_out_gps_raw_int_struct.lon = gga.longitude * DEG_TO_MAVLINK;
-  mavlink_out_gps_raw_int_struct.alt = gga.altitude * 1000;
-  mavlink_out_gps_raw_int_struct.eph = gga.hdop * 100;
-  mavlink_out_gps_raw_int_struct.epv = UINT16_MAX;
-  mavlink_out_gps_raw_int_struct.fix_type = gga.fix;
-  mavlink_out_gps_raw_int_struct.satellites_visible = gga.satellites;
-  mavlink_out_gps_raw_int_struct.cog = rmc.course * 100;
-  mavlink_out_gps_raw_int_struct.vel = rmc.speed * 100;
-
-  log_append(&mavlink_out_gps_raw_int_struct);
-}
-
-/**
- *
- */
 void mtkgps::configure(void) {
-  SerialConfig gps_ser_cfg = {0,0,0,0};
 
   /* start on default baudrate */
-  gps_ser_cfg.speed = this->start_baudrate;
-  sdStart(this->sdp, &gps_ser_cfg);
+  gps_serial_cfg = {0,0,0,0};
+  gps_serial_cfg.speed = this->start_baudrate;
 
   /* set only GGA, RMC output. We have to do this some times
    * because serial port contains some garbage and this garbage will
@@ -125,105 +100,16 @@ void mtkgps::configure(void) {
 /**
  *
  */
-static void gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
-                        gnss_data_t *result) {
-
-  if (false == result->fresh) {
-    result->altitude   = gga.altitude;
-    result->latitude   = gga.latitude;
-    result->longitude  = gga.longitude;
-    result->course     = rmc.course;
-    result->speed      = rmc.speed;
-    result->speed_type = speed_t::SPEED_COURSE;
-    result->time       = rmc.time;
-    result->msec       = rmc.msec;
-    result->fix        = gga.fix;
-    result->fresh      = true; // this line must be at the very end for atomicity
-  }
-}
-
-/**
- *
- */
 void mtkgps::update_settings(void) {
-  return;
+
 }
 
 /**
  *
  */
-THD_FUNCTION(mtkgps::nmeaRxThread, arg) {
-  chRegSetThreadName("GNSS_NMEA");
-  mtkgps *self = static_cast<mtkgps *>(arg);
-  msg_t byte;
-  sentence_type_t status;
-  nmea_gga_t gga;
-  nmea_rmc_t rmc;
-  uint16_t gga_msec = GGA_VOID;
-  uint16_t rmc_msec = RMC_VOID;
+void mtkgps::load_params(void) {
 
-  osalThreadSleepSeconds(5);
-  self->configure();
-
-  while (!chThdShouldTerminateX()) {
-    self->update_settings();
-
-    byte = sdGetTimeout(self->sdp, MS2ST(100));
-    if (MSG_TIMEOUT != byte) {
-      status = self->nmea_parser.collect(byte);
-      if (nullptr != self->sniff_sdp)
-        sdPut(self->sniff_sdp, byte);
-
-      switch(status) {
-      case sentence_type_t::GGA:
-        self->nmea_parser.unpack(gga);
-        gga_msec = gga.msec + gga.time.tm_sec * 1000;
-        if (nullptr != self->sniff_sdp) {
-          chprintf((BaseSequentialStream *)self->sniff_sdp,
-              "---- gga_parsed = %u\n", gga.msec);
-        }
-        break;
-      case sentence_type_t::RMC:
-        self->nmea_parser.unpack(rmc);
-        rmc_msec = rmc.msec + rmc.time.tm_sec * 1000;
-        if (nullptr != self->sniff_sdp) {
-          chprintf((BaseSequentialStream *)self->sniff_sdp,
-              "---- rmc_parsed = %u\n", rmc.msec);
-        }
-        break;
-      default:
-        break;
-      }
-
-      /* */
-      if (gga_msec == rmc_msec) {
-
-        self->ggarmc2mavlink(gga, rmc);
-
-        self->acquire();
-        for (size_t i=0; i<ArrayLen(self->spamlist); i++) {
-          if (nullptr != self->spamlist[i]) {
-            gnss_unpack(gga, rmc, self->spamlist[i]);
-          }
-        }
-        self->release();
-
-        if (gga.fix == 1) {
-          event_gnss.broadcastFlags(EVMSK_GNSS_FRESH_VALID);
-        }
-
-        if (nullptr != self->sniff_sdp) {
-          chprintf((BaseSequentialStream *)self->sniff_sdp,
-              "---- gga = %u; rmc = %u\n", gga_msec, rmc_msec);
-        }
-
-        gga_msec = GGA_VOID;
-        rmc_msec = RMC_VOID;
-      }
-    }
-  }
-
-  chThdExit(MSG_OK);
+  param_registry.valueSearch("GNSS_fix_period", &fix_period);
 }
 
 /*
@@ -235,19 +121,7 @@ THD_FUNCTION(mtkgps::nmeaRxThread, arg) {
  *
  */
 mtkgps::mtkgps(SerialDriver *sdp, uint32_t start_baudrate, uint32_t working_baudrate) :
-    GNSSReceiver(sdp, start_baudrate, working_baudrate) {
+    nmeageneric(sdp, start_baudrate, working_baudrate) {
   return;
 }
 
-/**
- *
- */
-void mtkgps::start(void) {
-
-  param_registry.valueSearch("GNSS_fix_period", &fix_period);
-
-  worker = chThdCreateStatic(gnssRxThreadWA, sizeof(gnssRxThreadWA),
-                      GPSPRIO, nmeaRxThread, this);
-  osalDbgCheck(nullptr != worker);
-  ready = true;
-}

@@ -20,14 +20,7 @@ using namespace chibios_rt;
  ******************************************************************************
  */
 extern memory_heap_t ThdHeap;
-
-#if defined(BOARD_BEZVODIATEL)
-extern gnss::uBlox GNSS;
-#elif defined(BOARD_MNU)
-extern gnss::mtkgps GNSS;
-#else
-#error "board unsupported"
-#endif
+extern gnss::GNSSReceiver &GNSS_CLI;
 
 /*
  ******************************************************************************
@@ -64,13 +57,13 @@ static THD_WORKING_AREA(LoopCmdThreadWA, 1024);
 static THD_FUNCTION(LoopCmdThread, arg) {
   chRegSetThreadName("LoopCmd");
 
-  GNSS.setSniffer((SerialDriver *)arg);
+  GNSS_CLI.setSniffer((SerialDriver *)arg);
 
   while (!chThdShouldTerminateX()) {
     chThdSleepMilliseconds(100);
   }
 
-  GNSS.deleteSniffer();
+  GNSS_CLI.deleteSniffer();
   chThdExit(MSG_OK);
 }
 
