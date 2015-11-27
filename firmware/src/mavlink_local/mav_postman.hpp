@@ -6,12 +6,7 @@
 #include "mav_mail.hpp"
 #include "mav_spam_list.hpp"
 
-#if !MAVLINK_UNHANDLED_MSG_DEBUG
 #define WORKER_RX_THREAD_WA_SIZE  256
-#else
-#define WORKER_RX_THREAD_WA_SIZE  2048
-#endif
-
 #define WORKER_TX_THREAD_WA_SIZE  512
 
 class MavPostman {
