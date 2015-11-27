@@ -63,7 +63,7 @@ typedef LinkRegistry <
     MAVLINK_MSG_ID_SET_MODE
 > link_registry;
 
-__CCM__ static chibios_rt::ObjectsPool<mavlink_message_t, 8> msg_pool;
+__CCM__ static chibios_rt::ObjectsPool<mavlink_message_t, 12> msg_pool;
 
 static size_t max_delta = 0;
 static size_t malloc_cnt = 0;
