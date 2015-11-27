@@ -39,13 +39,6 @@ using namespace gnss;
 /**
  *
  */
-void msnonmea::update_settings(void) {
-
-}
-
-/**
- *
- */
 void msnonmea::subscribe_assistance(void){
   mav_postman.subscribe(MAVLINK_MSG_ID_GNSS_ASSISTANCE,  &gnss_assistance_link);
   return;
