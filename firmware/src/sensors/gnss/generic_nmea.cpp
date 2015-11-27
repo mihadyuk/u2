@@ -7,7 +7,6 @@
 #include "mav_logger.hpp"
 #include "geometry.hpp"
 #include "time_keeper.hpp"
-#include "pads.h"
 #include "chprintf.h"
 #include "array_len.hpp"
 #include "param_registry.hpp"
@@ -113,11 +112,12 @@ THD_FUNCTION(GenericNMEA::nmeaRxThread, arg) {
 
   osalThreadSleepSeconds(5);
   self->configure();
+  self->subscribe_assistance();
 
   while (!chThdShouldTerminateX()) {
     self->update_settings();
 
-    byte = sdGetTimeout(self->sdp, MS2ST(100));
+    byte = sdGetTimeout(self->sdp, MS2ST(50));
     if (MSG_TIMEOUT != byte) {
       status = self->nmea_parser.collect(byte);
       if (nullptr != self->sniff_sdp)
@@ -144,7 +144,8 @@ THD_FUNCTION(GenericNMEA::nmeaRxThread, arg) {
         break;
       }
 
-      /* */
+      /* Workaround. Prevents mixing of speed and coordinates from different
+       * measurements. */
       if (gga_msec == rmc_msec) {
 
         self->ggarmc2mavlink(gga, rmc);
@@ -170,8 +171,12 @@ THD_FUNCTION(GenericNMEA::nmeaRxThread, arg) {
         rmc_msec = RMC_VOID;
       }
     }
+
+    /* GNSS assistance. Must be implemented in derivative classes */
+    self->assist();
   }
 
+  self->release_assistance();
   chThdExit(MSG_OK);
 }
 
@@ -200,4 +205,14 @@ GenericNMEA::GenericNMEA(SerialDriver *sdp, uint32_t start_baudrate, uint32_t wo
     GNSSReceiver(sdp, start_baudrate, working_baudrate) {
   return;
 }
+
+/**
+ * @brief   Takes assistant messages (RTCM or whatever receiver accepts)
+ *          and push it to serial port
+ */
+//bool GenericNMEA::assist(const uint8_t *data, size_t len) {
+//
+//}
+
+
 
