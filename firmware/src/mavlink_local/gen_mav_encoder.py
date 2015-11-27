@@ -12,6 +12,7 @@ args = parser.parse_args()
 names = [
     "attitude",
     "attitude_quaternion",
+    "command_ack",
     "debug",
     "debug_vect",
     "global_position_int",
