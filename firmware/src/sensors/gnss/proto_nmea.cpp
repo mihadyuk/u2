@@ -203,14 +203,6 @@ sentence_type_t ProtoNmea::validate_sentence(void) {
   if ('$' != buf[0])
     return sentence_type_t::EMPTY;
 
-  for (size_t i=1; i<6; i++) {
-    if ((buf[i] < 'A') || (buf[i] > 'Z'))   /* letters from 'A' to 'Z' */
-      return sentence_type_t::EMPTY;
-  }
-
-  if (',' != buf[6])                        /* comma after GPGGA */
-    return sentence_type_t::EMPTY;
-
   if ('\n' != buf[tip-1])
     return sentence_type_t::EMPTY;
 
@@ -323,9 +315,16 @@ state(nmea_collect_state_t::START)
 sentence_type_t ProtoNmea::collect(uint8_t c) {
   sentence_type_t ret = sentence_type_t::EMPTY;
 
-  /* prevent overflow */
+  /* prevent buffer overflow */
   if ((tip >= GPS_MSG_LEN) || (maptip >= GPS_TOKEN_MAP_LEN)) {
     reset_collector();
+  }
+
+  /* NMEA message contains only printable ASCII characters */
+  if (('\r' != c) && ('\n' != c)) {
+    if ((c < 0x20) || (c > 0x7E)) {
+      reset_collector();
+    }
   }
 
   switch (state) {

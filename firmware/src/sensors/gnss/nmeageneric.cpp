@@ -1,3 +1,5 @@
+#pragma GCC optimize "-O2"
+
 #include "main.h"
 
 #include "nmeageneric.hpp"
@@ -92,11 +94,8 @@ void nmeageneric::gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
  *
  */
 void nmeageneric::configure(void) {
-
-  /* start on default baudrate */
-  gps_serial_cfg = {0,0,0,0};
-  gps_serial_cfg.speed = this->start_baudrate;
-  sdStart(this->sdp, &gps_serial_cfg);
+  osalDbgAssert(this->start_baudrate == this->working_baudrate,
+      "Generic NMEA receiver does not allow different baudrates");
 }
 
 /**

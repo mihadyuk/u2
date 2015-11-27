@@ -30,6 +30,19 @@ using namespace gnss;
  ******************************************************************************
  */
 
+/*
+Packet Type: 001 PMTK_ACK
+Packet Meaning: Acknowledge Packet
+DataFields:
+  PktType: The packet type the acknowledge responds.
+  Flag: ‘0’ = Invalid packet.
+        ‘1’ = Unsupported packet type
+        ‘2’ = Valid packet, but action failed
+        ‘3’ = Valid packet, and action succeeded
+Example:
+  $PMTK001,101,0*33<CR><LF>
+*/
+
 static const uint8_t msg_gga_rmc_only[] =
     "$PMTK314,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0*28\r\n";
 // confirmation: $PMTK001,314,3*36
@@ -61,10 +74,6 @@ static const uint8_t gps_high_baudrate[] = "$PMTK251,57600*2C\r\n";
  *
  */
 void mtkgps::configure(void) {
-
-  /* start on default baudrate */
-  gps_serial_cfg = {0,0,0,0};
-  gps_serial_cfg.speed = this->start_baudrate;
 
   /* set only GGA, RMC output. We have to do this some times
    * because serial port contains some garbage and this garbage will
