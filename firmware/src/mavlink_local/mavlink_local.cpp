@@ -26,8 +26,6 @@ __CCM__ mavlink_system_info_t   mavlink_system_info_struct;
 mavlink_attitude_t              mavlink_out_attitude_struct;
 mavlink_attitude_quaternion_t   mavlink_out_attitude_quaternion_struct;
 mavlink_command_ack_t           mavlink_out_command_ack_struct;
-//mavlink_debug_t                 mavlink_out_debug_struct;
-//mavlink_debug_vect_t            mavlink_out_debug_vect_struct;
 mavlink_global_position_int_t   mavlink_out_global_position_int_struct;
 mavlink_gps_raw_int_t           mavlink_out_gps_raw_int_struct;
 mavlink_heartbeat_t             mavlink_out_heartbeat_struct;

@@ -2,7 +2,7 @@
 #define UBLOX_HPP_
 
 #include "gnss_receiver.hpp"
-#include "ubx_proto.hpp"
+#include "proto_ubx.hpp"
 
 namespace gnss {
 
@@ -22,9 +22,10 @@ class uBlox : public GNSSReceiver {
 public:
   uBlox(SerialDriver *sdp, uint32_t start_baudrate,
                            uint32_t working_baudrate);
-  void start(void);
+protected:
+  void start_impl(void);
 private:
-  UbxProto ubx_parser;
+  ProtoUbx ubx_parser;
   static THD_FUNCTION(ubxRxThread, arg);
   void pvt2mavlink(const ubx_nav_pvt_payload &pvt);
   void get_version(void);
