@@ -200,7 +200,7 @@ SENSORSRC = src/i2c_local.cpp \
 		src/sensors/gnss/proto_ubx.cpp \
 		src/sensors/gnss/ublox.cpp \
 		src/sensors/gnss/mtkgps.cpp \
-		src/sensors/gnss/nmeageneric.cpp \
+		src/sensors/gnss/generic_nmea.cpp \
 		src/sensors/gnss/gnss_receiver.cpp \
 		src/sensors/gnss/gnss_cli.cpp \
 		src/sensors/ms5806.cpp \

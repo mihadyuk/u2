@@ -9,9 +9,9 @@ namespace gnss {
 /**
  *
  */
-class nmeageneric : public GNSSReceiver {
+class GenericNMEA : public GNSSReceiver {
 public:
-  nmeageneric(SerialDriver *sdp, uint32_t start_baudrate,
+  GenericNMEA(SerialDriver *sdp, uint32_t start_baudrate,
                                   uint32_t working_baudrate);
 protected:
   virtual void configure(void);

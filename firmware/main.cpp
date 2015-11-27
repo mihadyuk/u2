@@ -39,7 +39,7 @@ Giovanni
 #include "global_flags.h"
 #include "fault_handlers.h"
 #include "mavlink_local.hpp"
-#include "nmeageneric.hpp"
+#include "generic_nmea.hpp"
 #include "mtkgps.hpp"
 #include "ublox.hpp"
 #include "sanity.hpp"

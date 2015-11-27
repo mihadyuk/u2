@@ -2,7 +2,7 @@
 
 #include "main.h"
 
-#include "nmeageneric.hpp"
+#include "generic_nmea.hpp"
 #include "mavlink_local.hpp"
 #include "mav_logger.hpp"
 #include "geometry.hpp"
@@ -54,7 +54,7 @@ static const uint16_t RMC_VOID = (0xFFFF - 1);
 /**
  *
  */
-void nmeageneric::ggarmc2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc) {
+void GenericNMEA::ggarmc2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc) {
 
   mavlink_out_gps_raw_int_struct.time_usec = TimeKeeper::utc();
   mavlink_out_gps_raw_int_struct.lat = gga.latitude  * DEG_TO_MAVLINK;
@@ -73,7 +73,7 @@ void nmeageneric::ggarmc2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc) {
 /**
  *
  */
-void nmeageneric::gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
+void GenericNMEA::gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
                                gnss_data_t *result) {
 
   if (false == result->fresh) {
@@ -93,7 +93,7 @@ void nmeageneric::gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
 /**
  *
  */
-void nmeageneric::configure(void) {
+void GenericNMEA::configure(void) {
   osalDbgAssert(this->start_baudrate == this->working_baudrate,
       "Generic NMEA receiver does not allow different baudrates");
 }
@@ -101,9 +101,9 @@ void nmeageneric::configure(void) {
 /**
  *
  */
-THD_FUNCTION(nmeageneric::nmeaRxThread, arg) {
+THD_FUNCTION(GenericNMEA::nmeaRxThread, arg) {
   chRegSetThreadName("GNSS_NMEA");
-  nmeageneric *self = static_cast<nmeageneric *>(arg);
+  GenericNMEA *self = static_cast<GenericNMEA *>(arg);
   msg_t byte;
   sentence_type_t status;
   nmea_gga_t gga;
@@ -178,7 +178,7 @@ THD_FUNCTION(nmeageneric::nmeaRxThread, arg) {
 /**
  *
  */
-void nmeageneric::start_impl(void) {
+void GenericNMEA::start_impl(void) {
 
   load_params();
 
@@ -196,7 +196,7 @@ void nmeageneric::start_impl(void) {
 /**
  *
  */
-nmeageneric::nmeageneric(SerialDriver *sdp, uint32_t start_baudrate, uint32_t working_baudrate) :
+GenericNMEA::GenericNMEA(SerialDriver *sdp, uint32_t start_baudrate, uint32_t working_baudrate) :
     GNSSReceiver(sdp, start_baudrate, working_baudrate) {
   return;
 }

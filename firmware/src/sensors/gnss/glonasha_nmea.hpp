@@ -1,14 +1,14 @@
 #ifndef MTKGPS_HPP_
 #define MTKGPS_HPP_
 
-#include "generic_nmea.hpp"
+#include "nmeageneric.hpp"
 
 namespace gnss {
 
 /**
  *
  */
-class mtkgps : public GenericNMEA {
+class mtkgps : public nmeageneric {
 public:
   mtkgps(SerialDriver *sdp, uint32_t start_baudrate,
                             uint32_t working_baudrate);
