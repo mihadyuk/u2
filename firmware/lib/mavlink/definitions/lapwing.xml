@@ -81,7 +81,7 @@
 			<field type="float"    name="yawspeed">Yaw angular speed (rad/s)</field>
 			<field type="uint8_t"  name="tilt_fix_type">Tilt measurement fix type</field>
 		</message>
-		<message id="153" name="RTCM_DATA">
+		<message id="153" name="GNSS_ASSISTANCE">
 			<description>Split long RTCM message in shorter blocks.</description>
 			<field type="uint8_t[55]"	name="data">Data array</field>
 			<field type="uint8_t"		name="len">Actual payload length</field>

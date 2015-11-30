@@ -102,6 +102,10 @@ void GNSSReceiver::start(void) {
   osalDbgCheck(! ready);
   osalDbgCheck(nullptr == worker);
 
+  gps_serial_cfg = {0, 0, 0, 0};
+  gps_serial_cfg.speed = this->start_baudrate;
+  sdStart(this->sdp, &gps_serial_cfg);
+
   start_impl();
 }
 
@@ -114,6 +118,8 @@ void GNSSReceiver::stop(void) {
   chThdTerminate(worker);
   chThdWait(worker);
   worker = nullptr;
+
+  sdStop(this->sdp);
 }
 
 /**

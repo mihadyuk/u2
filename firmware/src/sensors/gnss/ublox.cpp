@@ -222,7 +222,7 @@ void uBlox::set_fix_period(uint16_t msec) {
 }
 
 /**
- * @brief   set solution period
+ * @brief   set communication options
  */
 void uBlox::set_port(void) {
   ubx_cfg_prt msg;
@@ -272,15 +272,11 @@ void uBlox::set_message_rate(void) {
  *
  */
 bool uBlox::device_alive(systime_t timeout) {
-
-  SerialConfig gps_ser_cfg = {this->start_baudrate,0,0,0};
   uint8_t buf[UBX_OVERHEAD_TOTAL];
   size_t len;
   ubx_msg_t recvd = ubx_msg_t::EMPTY;
   bool ret = false;
   ubx_mon_ver<0> version;
-
-  sdStart(this->sdp, &gps_ser_cfg);
 
   len = ubx_parser.packPollRequest(ubx_msg_t::MON_VER, buf, sizeof(buf));
   osalDbgCheck(len > 0 && len <= sizeof(buf));
@@ -295,7 +291,6 @@ bool uBlox::device_alive(systime_t timeout) {
     ret = false;
   }
 
-  sdStop(this->sdp);
   return ret;
 }
 
@@ -323,11 +318,8 @@ void uBlox::get_version(void) {
  */
 void uBlox::configure(uint32_t dyn_model, uint32_t fix_period) {
 
-  gps_serial_cfg = {0,0,0,0};
-
-  gps_serial_cfg.speed = this->start_baudrate;
-  sdStart(this->sdp, &gps_serial_cfg);
   set_port();
+
   sdStop(this->sdp);
   gps_serial_cfg.speed = this->working_baudrate;
   sdStart(this->sdp, &gps_serial_cfg);

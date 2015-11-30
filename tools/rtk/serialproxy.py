@@ -55,7 +55,8 @@ class SerialReader(threading.Thread):#{{{
             c = self.ser.read(bufsize)
             if len(c) != 0:
                 for port in self.portlist:
-                    self.sock.sendto(c, ("localhost", port))
+                    # self.sock.sendto(c, ("localhost", port))
+                    self.sock.sendto(c, ("10.37.61.147", port))
     #}}}
 class RtcmReceiver(threading.Thread):#{{{
     """ Inifinitely receive RTCM and send it to serial port """
@@ -74,7 +75,7 @@ class RtcmReceiver(threading.Thread):#{{{
         self.__stop.set()
 
     def mav_pack(self, buf, len_):
-        msg = mavlink.MAVLink_rtcm_data_message(buf, len_)
+        msg = mavlink.MAVLink_gnss_assistance_message(buf, len_)
         return msg.pack(self.mav)
 
     def mav_split(self, buf):
@@ -105,9 +106,11 @@ class RtcmReceiver(threading.Thread):#{{{
             except socket.timeout:
                 pass
             if len(cin) > 0:
-                self.mav_split(cin)
-                self.ser.write(cin)
+                rtcm = self.mav_split(cin)
                 cin = ''
+                for m in rtcm:
+                    self.ser.write(m)
+                    time.sleep(0.05)
     #}}}
 class SerialWriter(threading.Thread):#{{{
     def __init__(self, dev):
