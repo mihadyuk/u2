@@ -15,10 +15,6 @@
 /* Heap size for dynamic thread creation */
 #define THREAD_HEAP_SIZE    (1024 * 4)
 
-//
-/* Enable messages about unhandled mavlink messages received */
-#define MAVLINK_UNHANDLED_MSG_DEBUG     FALSE
-
 ///* Disarm halting on panic and changing it to soft reset after this amount of time */
 //#define HALT_DISARM_TMO_SEC             30
 

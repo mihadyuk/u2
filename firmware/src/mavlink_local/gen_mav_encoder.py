@@ -12,6 +12,7 @@ args = parser.parse_args()
 names = [
     "attitude",
     "attitude_quaternion",
+    "command_ack",
     "debug",
     "debug_vect",
     "global_position_int",
@@ -30,8 +31,8 @@ names = [
     "param_value",
     "raw_imu",
     "raw_pressure",
-    #"rc_channels",
-    #"rc_channels_scaled",
+    "rc_channels",
+    "rc_channels_scaled",
     "scaled_imu",
     "scaled_pressure",
     "sys_status",

@@ -1,11 +1,12 @@
+#pragma GCC optimize "-O2"
+
 #include "main.h"
 
-#include "nmeageneric.hpp"
+#include "generic_nmea.hpp"
 #include "mavlink_local.hpp"
 #include "mav_logger.hpp"
 #include "geometry.hpp"
 #include "time_keeper.hpp"
-#include "pads.h"
 #include "chprintf.h"
 #include "array_len.hpp"
 #include "param_registry.hpp"
@@ -52,7 +53,7 @@ static const uint16_t RMC_VOID = (0xFFFF - 1);
 /**
  *
  */
-void nmeageneric::ggarmc2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc) {
+void GenericNMEA::ggarmc2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc) {
 
   mavlink_out_gps_raw_int_struct.time_usec = TimeKeeper::utc();
   mavlink_out_gps_raw_int_struct.lat = gga.latitude  * DEG_TO_MAVLINK;
@@ -71,7 +72,7 @@ void nmeageneric::ggarmc2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc) {
 /**
  *
  */
-void nmeageneric::gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
+void GenericNMEA::gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
                                gnss_data_t *result) {
 
   if (false == result->fresh) {
@@ -91,20 +92,17 @@ void nmeageneric::gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
 /**
  *
  */
-void nmeageneric::configure(void) {
-
-  /* start on default baudrate */
-  gps_serial_cfg = {0,0,0,0};
-  gps_serial_cfg.speed = this->start_baudrate;
-  sdStart(this->sdp, &gps_serial_cfg);
+void GenericNMEA::configure(void) {
+  osalDbgAssert(this->start_baudrate == this->working_baudrate,
+      "Generic NMEA receiver does not allow different baudrates");
 }
 
 /**
  *
  */
-THD_FUNCTION(nmeageneric::nmeaRxThread, arg) {
+THD_FUNCTION(GenericNMEA::nmeaRxThread, arg) {
   chRegSetThreadName("GNSS_NMEA");
-  nmeageneric *self = static_cast<nmeageneric *>(arg);
+  GenericNMEA *self = static_cast<GenericNMEA *>(arg);
   msg_t byte;
   sentence_type_t status;
   nmea_gga_t gga;
@@ -114,11 +112,12 @@ THD_FUNCTION(nmeageneric::nmeaRxThread, arg) {
 
   osalThreadSleepSeconds(5);
   self->configure();
+  self->subscribe_assistance();
 
   while (!chThdShouldTerminateX()) {
     self->update_settings();
 
-    byte = sdGetTimeout(self->sdp, MS2ST(100));
+    byte = sdGetTimeout(self->sdp, MS2ST(50));
     if (MSG_TIMEOUT != byte) {
       status = self->nmea_parser.collect(byte);
       if (nullptr != self->sniff_sdp)
@@ -145,7 +144,8 @@ THD_FUNCTION(nmeageneric::nmeaRxThread, arg) {
         break;
       }
 
-      /* */
+      /* Workaround. Prevents mixing of speed and coordinates from different
+       * measurements. */
       if (gga_msec == rmc_msec) {
 
         self->ggarmc2mavlink(gga, rmc);
@@ -171,15 +171,19 @@ THD_FUNCTION(nmeageneric::nmeaRxThread, arg) {
         rmc_msec = RMC_VOID;
       }
     }
+
+    /* GNSS assistance. Must be implemented in derivative classes */
+    self->assist();
   }
 
+  self->release_assistance();
   chThdExit(MSG_OK);
 }
 
 /**
  *
  */
-void nmeageneric::start_impl(void) {
+void GenericNMEA::start_impl(void) {
 
   load_params();
 
@@ -197,8 +201,18 @@ void nmeageneric::start_impl(void) {
 /**
  *
  */
-nmeageneric::nmeageneric(SerialDriver *sdp, uint32_t start_baudrate, uint32_t working_baudrate) :
+GenericNMEA::GenericNMEA(SerialDriver *sdp, uint32_t start_baudrate, uint32_t working_baudrate) :
     GNSSReceiver(sdp, start_baudrate, working_baudrate) {
   return;
 }
+
+/**
+ * @brief   Takes assistant messages (RTCM or whatever receiver accepts)
+ *          and push it to serial port
+ */
+//bool GenericNMEA::assist(const uint8_t *data, size_t len) {
+//
+//}
+
+
 
