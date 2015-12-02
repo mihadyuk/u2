@@ -28,6 +28,7 @@ mavlink_attitude_quaternion_t   mavlink_out_attitude_quaternion_struct;
 mavlink_command_ack_t           mavlink_out_command_ack_struct;
 mavlink_global_position_int_t   mavlink_out_global_position_int_struct;
 mavlink_gps_raw_int_t           mavlink_out_gps_raw_int_struct;
+mavlink_gps_status_t            mavlink_out_gps_status_struct;
 mavlink_heartbeat_t             mavlink_out_heartbeat_struct;
 mavlink_highres_imu_t           mavlink_out_highres_imu_struct;
 mavlink_hil_state_t             mavlink_out_hil_state_struct;
