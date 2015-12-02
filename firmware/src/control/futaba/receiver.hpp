@@ -20,9 +20,9 @@ struct RecevierOutput {
   }
 
   /**
-   * @brief   Channel values (2000..1000). MSB contain flags
+   * @brief   Channel values (2000..1000). MSB denotes error.
    */
-  size_t ch[MAX_RC_CHANNELS];
+  uint16_t ch[MAX_RC_CHANNELS];
 
   /**
    * @brief   Total number of channels available in this receiver

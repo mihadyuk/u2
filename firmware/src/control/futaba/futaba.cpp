@@ -56,8 +56,8 @@ void Futaba::process_man_tumbler(RecevierOutput const &recv, ManualSwitch &man) 
   if (-1 == *map_man)
     man = ManualSwitch::fullauto;
   else {
-    uint16_t tmp = recv.ch[*map_man];
     if (recv.data_valid) {
+      uint16_t tmp = manual_switch_filter(recv.ch[*map_man]);
       man = static_cast<ManualSwitch>(manual_switch.update(tmp));
     }
   }

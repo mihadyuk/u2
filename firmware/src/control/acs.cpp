@@ -144,7 +144,7 @@ void ACS::loop_standby(float dT, FutabaResult fr) {
     break;
 
   case FutabaResult::emergency:
-    stabilizer.update(dT, standby_bytecode);
+    stabilizer.update(dT, emergency_bytecode);
     mode = MAV_MODE_FLAG_AUTO_ENABLED;
     break;
   }
