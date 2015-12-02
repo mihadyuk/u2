@@ -271,7 +271,7 @@ public:
   void reset(void) {
     tip = 0;
   }
-  size_t get_len(void) {
+  size_t get_len(void) const {
     return tip;
   }
   uint8_t data[UBX_MSG_BUF_LEN];
@@ -286,16 +286,16 @@ class ProtoUbx {
 public:
   ProtoUbx(void);
   ubx_msg_t collect(uint8_t byte);
-  size_t packPollRequest(ubx_msg_t type, uint8_t *buf, size_t buflen);
+  size_t packPollRequest(ubx_msg_t type, uint8_t *buf, size_t buflen) const;
   template <typename T> size_t pack(const T &msg, uint8_t *buf, size_t buflen);
   template <typename T> void unpack(T &result);
   void drop(void);
 private:
-  ubx_msg_t extract_rtti(uint8_t *data);
-  uint16_t extract_len(uint8_t *data);
-  void checksum(const uint8_t *data, size_t len, uint8_t *result);
-  bool checksum_ok(void);
-  size_t pack_impl(uint8_t *buf, ubx_msg_t type, uint16_t N, const void *data);
+  ubx_msg_t extract_rtti(uint8_t *data) const;
+  uint16_t extract_len(uint8_t *data) const;
+  void checksum(const uint8_t *data, size_t len, uint8_t *result) const;
+  bool checksum_ok(void) const;
+  size_t pack_impl(uint8_t *buf, ubx_msg_t type, uint16_t N, const void *data) const;
   void reset(void);
   collect_state_t state = collect_state_t::START1;
   size_t current_len = 0;
