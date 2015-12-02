@@ -60,6 +60,15 @@ __CCM__ static bool gp_gsv_fresh = false;
  */
 static void gsvfield2mavlink(const nmea_gsv_satellite_t *sat, size_t N) {
 
+  if (nullptr == sat) {
+    mavlink_out_gps_status_struct.satellite_azimuth[N]    = 0;
+    mavlink_out_gps_status_struct.satellite_elevation[N]  = 0;
+    mavlink_out_gps_status_struct.satellite_prn[N]        = 0;
+    mavlink_out_gps_status_struct.satellite_snr[N]        = 0;
+    mavlink_out_gps_status_struct.satellite_used[N]       = 0;
+    return;
+  }
+
   if (N < ArrayLen(mavlink_out_gps_status_struct.satellite_azimuth)) { // prevent overflow
     float a = sat->azimuth * 0.708333f;
     mavlink_out_gps_status_struct.satellite_azimuth[N]    = roundf(a);
@@ -98,6 +107,12 @@ static void gsv2mavlink(const nmea_gsv_t *gp, size_t P, const nmea_gsv_t *gl, si
         total++;
       }
     }
+  }
+
+  /* clean unused fields */
+  while (total < ArrayLen(mavlink_out_gps_status_struct.satellite_azimuth)) {
+    gsvfield2mavlink(nullptr, total);
+    total++;
   }
 }
 
@@ -216,11 +231,17 @@ THD_FUNCTION(GenericNMEA::nmeaRxThread, arg) {
         break;
       }
 
-      /* fill mavlink message with acquired data */
-      if (gl_gsv_fresh & gp_gsv_fresh) {
-        gsv2mavlink(gp_gsv, ArrayLen(gp_gsv), gl_gsv, ArrayLen(gl_gsv));
-        gp_gsv_fresh = false;
-        gl_gsv_fresh = false;
+      /* fill mavlink message with acquired GSV data */
+      if (gga.satellites > 0) {
+        if (gl_gsv_fresh & gp_gsv_fresh) {
+          gsv2mavlink(gp_gsv, ArrayLen(gp_gsv), gl_gsv, ArrayLen(gl_gsv));
+          gp_gsv_fresh = false;
+          gl_gsv_fresh = false;
+        }
+      }
+      else {
+        /* work around missing GSV messages */
+        memset(&mavlink_out_gps_status_struct, 0, sizeof(mavlink_out_gps_status_struct));
       }
 
       /* Workaround. Prevents mixing of speed and coordinates from different

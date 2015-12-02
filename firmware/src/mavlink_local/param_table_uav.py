@@ -485,6 +485,7 @@ param = [
 ("T_debug_vect",    SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 ("T_global_pos",    SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 ("T_gps_raw_int",   SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
+("T_gps_status",    SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 ("T_highres_imu",   SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 ("T_nav_output",    SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 ("T_mission_curr",  SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
