@@ -74,23 +74,24 @@ class RtcmReceiver(threading.Thread):#{{{
     def stop(self):
         self.__stop.set()
 
-    def mav_pack(self, buf, len_):
-        msg = mavlink.MAVLink_gnss_assistance_message(buf, len_)
+    def mav_pack(self, len_, data):
+        msg = mavlink.MAVLink_gps_inject_data_message(0, 0, len_, data)
         return msg.pack(self.mav)
 
     def mav_split(self, buf):
+        BUF_SIZE = 110
         ret = []
-        while len(buf) > 55:
-            tmp = bytearray(buf[0:55])
-            buf = buf[55:]
-            ret.append(self.mav_pack(tmp, 55))
+        while len(buf) > BUF_SIZE:
+            tmp = bytearray(buf[0:BUF_SIZE])
+            buf = buf[BUF_SIZE:]
+            ret.append(self.mav_pack(BUF_SIZE, tmp))
         if len(buf) > 0:
-            tmp = bytearray(55) # zero filled buffer
+            tmp = bytearray(BUF_SIZE) # zero filled buffer
             i = 0
             for b in buf:
                 tmp[i] = b
                 i += 1
-            ret.append(self.mav_pack(tmp, len(buf)))
+            ret.append(self.mav_pack(len(buf), tmp))
         print (len(ret))
         return ret
 
@@ -110,7 +111,7 @@ class RtcmReceiver(threading.Thread):#{{{
                 cin = ''
                 for m in rtcm:
                     self.ser.write(m)
-                    time.sleep(0.05)
+                    time.sleep(0.1)
     #}}}
 class SerialWriter(threading.Thread):#{{{
     def __init__(self, dev):

@@ -179,7 +179,7 @@ THD_FUNCTION(GenericNMEA::nmeaRxThread, arg) {
 
   osalThreadSleepSeconds(5);
   self->configure();
-  self->subscribe_assistance();
+  self->subscribe_inject();
 
   while (!chThdShouldTerminateX()) {
     self->update_settings();
@@ -273,10 +273,10 @@ THD_FUNCTION(GenericNMEA::nmeaRxThread, arg) {
     }
 
     /* GNSS assistance. Must be implemented in derivative classes */
-    self->assist();
+    self->inject();
   }
 
-  self->release_assistance();
+  self->release_inject();
   chThdExit(MSG_OK);
 }
 
@@ -305,14 +305,5 @@ GenericNMEA::GenericNMEA(SerialDriver *sdp, uint32_t start_baudrate, uint32_t wo
     GNSSReceiver(sdp, start_baudrate, working_baudrate) {
   return;
 }
-
-/**
- * @brief   Takes assistant messages (RTCM or whatever receiver accepts)
- *          and push it to serial port
- */
-//bool GenericNMEA::assist(const uint8_t *data, size_t len) {
-//
-//}
-
 
 
