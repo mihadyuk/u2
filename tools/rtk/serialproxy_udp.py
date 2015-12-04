@@ -47,8 +47,7 @@ class SerialReader(threading.Thread):#{{{
             c = self.ser.read(bufsize)
             if len(c) != 0:
                 for port in self.portlist:
-                    # self.sock.sendto(c, ("localhost", port))
-                    self.sock.sendto(c, ("10.37.61.147", port))
+                    self.sock.sendto(c, ('', port))
     #}}}
 class SerialWriter(threading.Thread):#{{{
     def __init__(self, dev):
@@ -58,7 +57,7 @@ class SerialWriter(threading.Thread):#{{{
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.settimeout(0.5)
         p = config.getint("SocketIn", "PORT_UDP_SERPROXY")
-        self.sock.bind(("", p))
+        self.sock.bind(('', p))
         print("  binding writer to", p, "port")
 
     def stop(self):
