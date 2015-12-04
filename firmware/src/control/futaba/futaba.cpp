@@ -70,7 +70,7 @@ static void scale(RecevierOutput const &recv, ACSInput &result) {
   static_assert(ACS_INPUT_futaba_raw_end - ACS_INPUT_futaba_raw_00 ==
       MAX_RC_CHANNELS, "Checker for allowing loop based conversion");
 
-  float *out = &result.ch[ACS_INPUT_futaba_raw_00];
+  double *out = &result.ch[ACS_INPUT_futaba_raw_00];
 
   if (recv.data_valid) {
     for (size_t i=0; i<MAX_RC_CHANNELS; i++) {
