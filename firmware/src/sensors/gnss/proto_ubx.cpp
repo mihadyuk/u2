@@ -92,8 +92,10 @@ UbxBuf::UbxBuf(void) : tip(0) {
 }
 
 void UbxBuf::push(uint8_t b) {
-  data[tip] = b;
-  tip++;
+  if (tip < UBX_MSG_BUF_LEN) {
+    data[tip] = b;
+    tip++;
+  }
 }
 
 /**
