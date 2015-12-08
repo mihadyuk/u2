@@ -57,7 +57,7 @@ static systime_t timestamp[CHANNEL_CNT]; // timestamp array for timeout detectio
 /**
  *
  */
-void control_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p) {
+static void control_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p) {
   (void)eicup;
   (void)p;
 
@@ -68,7 +68,7 @@ void control_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p
 /**
  *
  */
-void rssi_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p) {
+static void rssi_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p) {
   (void)eicup;
   (void)w;
   (void)p;
