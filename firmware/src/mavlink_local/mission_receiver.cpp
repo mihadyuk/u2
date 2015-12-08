@@ -206,7 +206,7 @@ static MAV_MISSION_RESULT check_wp(const mavlink_mission_item_t *wp,
     return check_do_jump(wp, total_wps);
   }
 
-#ifndef USE_LD_NAVIGATOR
+#if !USE_LD_NAVIGATOR
   /* check target radius */
   if (((wp->TARGET_RADIUS < MIN_TARGET_RADIUS_WGS84) && (wp->frame == MAV_FRAME_GLOBAL)) ||
       ((wp->TARGET_RADIUS < MIN_TARGET_RADIUS_LOCAL) && (wp->frame == MAV_FRAME_LOCAL_NED))){
