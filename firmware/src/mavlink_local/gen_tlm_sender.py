@@ -10,11 +10,11 @@ parser.add_argument('-f', '--filename', metavar='F', type=str, required=True,
 args = parser.parse_args()
 
 names_uav = [
+    # keep this list alphabetically sorted
     ["attitude",    "attitude"],
-#    ["debug",       "debug"],
-#    ["debug_vect",  "debug_vect"],
     ["global_pos",  "global_position_int"],
     ["gps_raw_int", "gps_raw_int"],
+    ["gps_status",  "gps_status"],
     ["highres_imu", "highres_imu"],
     ["mission_curr","mission_current"],
     ["nav_output",  "nav_controller_output"],

@@ -37,10 +37,11 @@ private:
   const uint32_t *timeout  = nullptr;
   const int32_t  *map_man  = nullptr; /* -1 denotes "unused" */
 
-  Tumbler3<int, 1000, 1500, 2000, 150> manual_switch;
+  Tumbler3<int, 900, 1500, 2100, 100> manual_switch;
 
   HysteresisBool<uint32_t, 10, 30, true> hyst;
-  filters::AlphaBeta<int32_t, 100> error_rate;
+  filters::AlphaBeta<int32_t, 25> error_rate;
+  filters::AlphaBeta<int32_t, 10> manual_switch_filter;
 };
 
 } /* namespace */

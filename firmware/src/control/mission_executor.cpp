@@ -214,10 +214,8 @@ bool MissionExecutor::wp_reached(const NavOut<double> &nav_out) {
 #else
 
 void MissionExecutor::navout2acsin(const LdNavOut<double> &nav_out) {
-  acs_in.ch[ACS_INPUT_dZm] = static_cast<float>(nav_out.dz);
-
-  float dYaw = acs_in.ch[ACS_INPUT_yaw] - static_cast<float>(nav_out.crs);
-  acs_in.ch[ACS_INPUT_dYaw] = wrap_pi(dYaw);
+  acs_in.ch[ACS_INPUT_dZm]  = nav_out.dz;
+  acs_in.ch[ACS_INPUT_dYaw] = wrap_pi(acs_in.ch[ACS_INPUT_yaw] - nav_out.crs);
 }
 
 void MissionExecutor::navout2mavlink(const LdNavOut<double> &nav_out) {
@@ -289,8 +287,8 @@ void MissionExecutor::navigate(float dT) {
     navigator.loadLine(line);
   }
 #else
-  double curr_wgs84[3][1] = {{deg2rad(acs_in.chd[ACS_DOUBLE_INPUT_lat])},
-                             {deg2rad(acs_in.chd[ACS_DOUBLE_INPUT_lon])},
+  double curr_wgs84[3][1] = {{deg2rad(acs_in.ch[ACS_INPUT_lat])},
+                             {deg2rad(acs_in.ch[ACS_INPUT_lon])},
                              {static_cast<double>(acs_in.ch[ACS_INPUT_alt])}};
 //  MnrPart<double> part = mnr_parser.update(curr_wgs84);
 //  LdNavOut<double> nav_out = ld_navigator.update(part);

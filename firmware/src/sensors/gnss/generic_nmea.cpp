@@ -25,6 +25,7 @@ using namespace gnss;
  ******************************************************************************
  */
 extern mavlink_gps_raw_int_t        mavlink_out_gps_raw_int_struct;
+extern mavlink_gps_status_t         mavlink_out_gps_status_struct;
 
 /*
  ******************************************************************************
@@ -35,6 +36,10 @@ extern mavlink_gps_raw_int_t        mavlink_out_gps_raw_int_struct;
 /* constants for NMEA parser needs */
 static const uint16_t GGA_VOID = 0xFFFF;
 static const uint16_t RMC_VOID = (0xFFFF - 1);
+__CCM__ static nmea_gsv_t gl_gsv[5];
+__CCM__ static nmea_gsv_t gp_gsv[5];
+__CCM__ static bool gl_gsv_fresh = false;
+__CCM__ static bool gp_gsv_fresh = false;
 
 /*
  ******************************************************************************
@@ -49,6 +54,67 @@ static const uint16_t RMC_VOID = (0xFFFF - 1);
  *******************************************************************************
  *******************************************************************************
  */
+
+/**
+ *
+ */
+static void gsvfield2mavlink(const nmea_gsv_satellite_t *sat, size_t N) {
+
+  if (nullptr == sat) {
+    mavlink_out_gps_status_struct.satellite_azimuth[N]    = 0;
+    mavlink_out_gps_status_struct.satellite_elevation[N]  = 0;
+    mavlink_out_gps_status_struct.satellite_prn[N]        = 0;
+    mavlink_out_gps_status_struct.satellite_snr[N]        = 0;
+    mavlink_out_gps_status_struct.satellite_used[N]       = 0;
+    return;
+  }
+
+  if (N < ArrayLen(mavlink_out_gps_status_struct.satellite_azimuth)) { // prevent overflow
+    float a = sat->azimuth * 0.708333f;
+    mavlink_out_gps_status_struct.satellite_azimuth[N]    = roundf(a);
+    mavlink_out_gps_status_struct.satellite_elevation[N]  = sat->elevation;
+    mavlink_out_gps_status_struct.satellite_prn[N]        = sat->id;
+    mavlink_out_gps_status_struct.satellite_snr[N]        = sat->snr;
+    mavlink_out_gps_status_struct.satellite_used[N]       = 0; // unknown
+  }
+}
+
+/**
+ *
+ */
+static void gsv2mavlink(const nmea_gsv_t *gp, size_t P, const nmea_gsv_t *gl, size_t L) {
+  size_t total = 0;
+
+  mavlink_out_gps_status_struct.satellites_visible = gp[0].sat_visible + gl[0].sat_visible;
+
+  /* first process GPS*/
+  for (size_t i=0; i<P; i++) {
+    for (size_t j=0; j<ArrayLen(gp[0].sat); j++) {
+      const nmea_gsv_satellite_t *sat = &gp[i].sat[j];
+      if (sat->id != 0) {
+        gsvfield2mavlink(sat, total);
+        total++;
+      }
+    }
+  }
+
+  /* Glonass */
+  for (size_t i=0; i<L; i++) {
+    for (size_t j=0; j<ArrayLen(gl[0].sat); j++) {
+      const nmea_gsv_satellite_t *sat = &gl[i].sat[j];
+      if (sat->id != 0) {
+        gsvfield2mavlink(sat, total);
+        total++;
+      }
+    }
+  }
+
+  /* clean unused fields */
+  while (total < ArrayLen(mavlink_out_gps_status_struct.satellite_azimuth)) {
+    gsvfield2mavlink(nullptr, total);
+    total++;
+  }
+}
 
 /**
  *
@@ -105,14 +171,15 @@ THD_FUNCTION(GenericNMEA::nmeaRxThread, arg) {
   GenericNMEA *self = static_cast<GenericNMEA *>(arg);
   msg_t byte;
   sentence_type_t status;
-  nmea_gga_t gga;
-  nmea_rmc_t rmc;
   uint16_t gga_msec = GGA_VOID;
   uint16_t rmc_msec = RMC_VOID;
+  nmea_gga_t gga;
+  nmea_rmc_t rmc;
+  nmea_gsv_t gsv;
 
   osalThreadSleepSeconds(5);
   self->configure();
-  self->subscribe_assistance();
+  self->subscribe_inject();
 
   while (!chThdShouldTerminateX()) {
     self->update_settings();
@@ -123,6 +190,7 @@ THD_FUNCTION(GenericNMEA::nmeaRxThread, arg) {
       if (nullptr != self->sniff_sdp)
         sdPut(self->sniff_sdp, byte);
 
+      /* main receiving switch */
       switch(status) {
       case sentence_type_t::GGA:
         self->nmea_parser.unpack(gga);
@@ -140,8 +208,40 @@ THD_FUNCTION(GenericNMEA::nmeaRxThread, arg) {
               "---- rmc_parsed = %u\n", rmc.msec);
         }
         break;
+
+      case sentence_type_t::GPGSV:
+        self->nmea_parser.unpack(gsv);
+        if (1 == gsv.current)
+          memset(gp_gsv, 0, sizeof(gp_gsv));
+        gp_gsv[gsv.current - 1] = gsv;
+        if (gsv.current == gsv.total)
+          gp_gsv_fresh = true;
+        break;
+
+      case sentence_type_t::GLGSV:
+        self->nmea_parser.unpack(gsv);
+        if (1 == gsv.current)
+          memset(gl_gsv, 0, sizeof(gl_gsv));
+        gl_gsv[gsv.current - 1] = gsv;
+        if (gsv.current == gsv.total)
+          gl_gsv_fresh = true;
+        break;
+
       default:
         break;
+      }
+
+      /* fill mavlink message with acquired GSV data */
+      if (gga.satellites > 0) {
+        if (gl_gsv_fresh & gp_gsv_fresh) {
+          gsv2mavlink(gp_gsv, ArrayLen(gp_gsv), gl_gsv, ArrayLen(gl_gsv));
+          gp_gsv_fresh = false;
+          gl_gsv_fresh = false;
+        }
+      }
+      else {
+        /* work around missing GSV messages */
+        memset(&mavlink_out_gps_status_struct, 0, sizeof(mavlink_out_gps_status_struct));
       }
 
       /* Workaround. Prevents mixing of speed and coordinates from different
@@ -173,10 +273,10 @@ THD_FUNCTION(GenericNMEA::nmeaRxThread, arg) {
     }
 
     /* GNSS assistance. Must be implemented in derivative classes */
-    self->assist();
+    self->inject();
   }
 
-  self->release_assistance();
+  self->release_inject();
   chThdExit(MSG_OK);
 }
 
@@ -205,14 +305,5 @@ GenericNMEA::GenericNMEA(SerialDriver *sdp, uint32_t start_baudrate, uint32_t wo
     GNSSReceiver(sdp, start_baudrate, working_baudrate) {
   return;
 }
-
-/**
- * @brief   Takes assistant messages (RTCM or whatever receiver accepts)
- *          and push it to serial port
- */
-//bool GenericNMEA::assist(const uint8_t *data, size_t len) {
-//
-//}
-
 
 

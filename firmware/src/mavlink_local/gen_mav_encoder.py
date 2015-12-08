@@ -17,6 +17,7 @@ names = [
     "debug_vect",
     "global_position_int",
     "gps_raw_int",
+    "gps_status",
     "heartbeat",
     "highres_imu",
     "hil_state",

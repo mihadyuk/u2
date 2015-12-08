@@ -67,7 +67,7 @@ static const char * const test_sentence_array[] = {
 /**
  *
  */
-bool ProtoNmea::_autotest(const char *sentence) {
+bool ProtoNmea::_autotest(const char *sentence) const {
   const char *sump = strstr(sentence, "*");
   size_t len = sump - sentence;
 
@@ -87,7 +87,7 @@ bool ProtoNmea::_autotest(const char *sentence) {
 /**
  *
  */
-bool ProtoNmea::checksum_autotest(void) {
+bool ProtoNmea::checksum_autotest(void) const {
   for (size_t i=0; i<ArrayLen(test_sentence_array); i++) {
     if (OSAL_FAILED == _autotest(test_sentence_array[i]))
       return OSAL_FAILED;
@@ -156,7 +156,7 @@ static uint8_t _from_hex(uint8_t a){
 /**
  *
  */
-uint8_t ProtoNmea::checksumFromStr(const char *str) {
+uint8_t ProtoNmea::checksumFromStr(const char *str) const {
   return (_from_hex(str[0]) << 4) | _from_hex(str[1]);
 }
 
@@ -173,7 +173,7 @@ static uint8_t _to_hex(uint8_t u8) {
 /**
  *
  */
-void ProtoNmea::checksum2str(uint8_t sum, char *str) {
+void ProtoNmea::checksum2str(uint8_t sum, char *str) const {
 
   str[0] = _to_hex(sum >> 4);
   str[1] = _to_hex(sum & 0b1111);
@@ -182,11 +182,16 @@ void ProtoNmea::checksum2str(uint8_t sum, char *str) {
 /**
  *
  */
-sentence_type_t ProtoNmea::get_name(const char *name) {
+sentence_type_t ProtoNmea::get_name(const char *name) const {
+
   if ((0 == strncmp("GNGGA", name, 5)) || (0 == strncmp("GPGGA", name, 5)))
     return sentence_type_t::GGA;
   else if ((0 == strncmp("GNRMC", name, 5)) || (0 == strncmp("GPRMC", name, 5)))
     return sentence_type_t::RMC;
+  else if (0 == strncmp("GLGSV", name, 5))
+    return sentence_type_t::GLGSV;
+  else if (0 == strncmp("GPGSV", name, 5))
+    return sentence_type_t::GPGSV;
   else
     return sentence_type_t::UNKNOWN;
 }
@@ -194,7 +199,7 @@ sentence_type_t ProtoNmea::get_name(const char *name) {
 /**
  *
  */
-sentence_type_t ProtoNmea::validate_sentence(void) {
+sentence_type_t ProtoNmea::validate_sentence(void) const {
   uint8_t sum = 0;
 
   if (tip < GPS_MIN_MSG_LEN)
@@ -223,7 +228,7 @@ sentence_type_t ProtoNmea::validate_sentence(void) {
 /**
  *
  */
-uint8_t ProtoNmea::checksum(const uint8_t *data, size_t len) {
+uint8_t ProtoNmea::checksum(const uint8_t *data, size_t len) const {
   uint8_t sum = 0;
 
   for (size_t i=0; i<len; i++) {
@@ -236,7 +241,14 @@ uint8_t ProtoNmea::checksum(const uint8_t *data, size_t len) {
 /**
  *
  */
-const char* ProtoNmea::token(char *result, size_t N) {
+size_t ProtoNmea::tokens_available(void) const {
+  return this->maptip - 1;
+}
+
+/**
+ *
+ */
+const char* ProtoNmea::token(char *result, size_t N) const {
 
   const size_t len = token_map[N+1] - (1 + token_map[N]);
   memset(result, 0, GPS_MAX_TOKEN_LEN);
@@ -396,19 +408,7 @@ sentence_type_t ProtoNmea::collect(uint8_t c) {
 /**
  *
  */
-void ProtoNmea::unpack(nmea_rmc_t &result) {
-  char tmp[GPS_MAX_TOKEN_LEN];
-
-  result.msec   = get_time(&result.time, token(tmp, 0));
-  result.speed  = knots2mps(atof(token(tmp, 6)));
-  result.course = atof(token(tmp, 7));
-  get_date(&result.time, token(tmp, 8));
-}
-
-/**
- *
- */
-void ProtoNmea::unpack(nmea_gga_t &result) {
+void ProtoNmea::unpack(nmea_gga_t &result) const {
   char tmp[GPS_MAX_TOKEN_LEN];
   double c;
 
@@ -422,6 +422,47 @@ void ProtoNmea::unpack(nmea_gga_t &result) {
   result.hdop        = atof(token(tmp, 7));
   result.altitude    = atof(token(tmp, 8));
   result.geoid       = atof(token(tmp, 10));
+}
+
+/**
+ *
+ */
+void ProtoNmea::unpack(nmea_gsv_t &result) const {
+  char tmp[GPS_MAX_TOKEN_LEN];
+
+  result.total        = atoi(token(tmp, 0));
+  result.current      = atoi(token(tmp, 1));
+  result.sat_visible  = atoi(token(tmp, 2));
+
+  // silently prevent overflow
+  size_t satcnt = (tokens_available() - 1) / 4;
+  if (satcnt > ArrayLen(result.sat))
+    satcnt = ArrayLen(result.sat);
+
+  /* reset to known state */
+  for (size_t i=0; i<ArrayLen(result.sat); i++)
+    memset(&result.sat, 0, sizeof(result.sat));
+
+  /* fill apropriate fields */
+  for (size_t i=0; i<satcnt; i++) {
+    nmea_gsv_satellite_t &sat = result.sat[i];
+    sat.id         = atoi(token(tmp, i*4 + 3));
+    sat.elevation  = atoi(token(tmp, i*4 + 4));
+    sat.azimuth    = atoi(token(tmp, i*4 + 5));
+    sat.snr        = atoi(token(tmp, i*4 + 6));
+  }
+}
+
+/**
+ *
+ */
+void ProtoNmea::unpack(nmea_rmc_t &result) const {
+  char tmp[GPS_MAX_TOKEN_LEN];
+
+  result.msec   = get_time(&result.time, token(tmp, 0));
+  result.speed  = knots2mps(atof(token(tmp, 6)));
+  result.course = atof(token(tmp, 7));
+  get_date(&result.time, token(tmp, 8));
 }
 
 /**

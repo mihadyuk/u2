@@ -48,7 +48,7 @@ SubscribeLink * LinkRegistry<Nums...>::link[];
 /* Instantiate our template. Keep parameters alphabetically sorted for convenience */
 typedef LinkRegistry <
     MAVLINK_MSG_ID_COMMAND_LONG,
-    MAVLINK_MSG_ID_GNSS_ASSISTANCE,
+    MAVLINK_MSG_ID_GPS_INJECT_DATA,
     MAVLINK_MSG_ID_HEARTBEAT,
     MAVLINK_MSG_ID_MANUAL_CONTROL,
     MAVLINK_MSG_ID_MISSION_COUNT,
