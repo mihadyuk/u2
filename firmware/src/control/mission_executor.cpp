@@ -250,8 +250,8 @@ void MissionExecutor::debug2mavlink(float dT) {
       dbg_msn_exec.time_usec = time;
       //  dbg_msn_exec.x = static_cast<float>(mnr_parser.debugPartNumber());
       dbg_msn_exec.x = static_cast<float>(mnr_executor.debugPartNumber());
-      dbg_msn_exec.y = acs_in.ch[ACS_INPUT_dYaw];
-      dbg_msn_exec.z = acs_in.ch[ACS_INPUT_dZm];
+      dbg_msn_exec.y = static_cast<float>(acs_in.ch[ACS_INPUT_dYaw]);
+      dbg_msn_exec.z = static_cast<float>(acs_in.ch[ACS_INPUT_dZm]);
 
       mail_msn_exec.fill(&dbg_msn_exec, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG_VECT);
       mav_postman.post(mail_msn_exec);
@@ -289,7 +289,7 @@ void MissionExecutor::navigate(float dT) {
 #else
   double curr_wgs84[3][1] = {{deg2rad(acs_in.ch[ACS_INPUT_lat])},
                              {deg2rad(acs_in.ch[ACS_INPUT_lon])},
-                             {static_cast<double>(acs_in.ch[ACS_INPUT_alt])}};
+                             {acs_in.ch[ACS_INPUT_alt]}};
 //  MnrPart<double> part = mnr_parser.update(curr_wgs84);
 //  LdNavOut<double> nav_out = ld_navigator.update(part);
   LdNavOut<double> nav_out = mnr_executor.update(curr_wgs84);
