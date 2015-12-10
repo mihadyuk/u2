@@ -331,7 +331,7 @@
                                 PIN_PUPDR_FLOATING(GPIOB_I2C_SLOW_SCL) |      \
                                 PIN_PUPDR_FLOATING(GPIOB_I2C_SLOW_SDA) |      \
                                 PIN_PUPDR_PULLUP(GPIOB_TACHOMETER) |          \
-                                PIN_PUPDR_PULLDOWN(GPIOB_RECEIVER_PPM) |      \
+                                PIN_PUPDR_FLOATING(GPIOB_RECEIVER_PPM) |      \
                                 PIN_PUPDR_FLOATING(GPIOB_I2C_FAST_SCL) |      \
                                 PIN_PUPDR_FLOATING(GPIOB_I2C_FAST_SDA) |      \
                                 PIN_PUPDR_PULLUP(GPIOB_SPI2_NSS_UEXT) |       \
