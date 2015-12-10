@@ -11,6 +11,7 @@
 
 #include "navi6d_wrapper.hpp"
 #include "mavlink_local.hpp"
+#include "mav_dbg.hpp"
 #include "acs_input.hpp"
 #include "geometry.hpp"
 #include "time_keeper.hpp"
@@ -301,6 +302,25 @@ void Navi6dWrapper::navi2acs(void) {
  */
 #include "navi6d_common.cpp"
 
+/**
+ *
+ */
+void Navi6dWrapper::start_time_measurement(void) {
+  chTMStartMeasurementX(&tmeas);
+}
+
+/**
+ *
+ */
+void Navi6dWrapper::stop_time_measurement(float dT) {
+
+  chTMStopMeasurementX(&tmeas);
+  if (tmeas.last / float(STM32_SYSCLK) > dT) {
+    time_overrun_cnt++;
+    mavlink_dbg_print(MAV_SEVERITY_CRITICAL, "SINS time overrun!", MAV_COMP_ID_ALL);
+  }
+}
+
 /*
  *******************************************************************************
  * EXPORTED FUNCTIONS
@@ -313,6 +333,7 @@ Navi6dWrapper::Navi6dWrapper(ACSInput &acs_in, gnss::GNSSReceiver &GNSS) :
 acs_in(acs_in),
 GNSS(GNSS)
 {
+  chTMObjectInit(&tmeas);
   return;
 }
 
@@ -354,6 +375,8 @@ void Navi6dWrapper::update(const baro_data_t &baro,
                            const odometer_data_t &odo,
                            const marg_data_t &marg) {
   osalDbgCheck(ready);
+
+  start_time_measurement();
 
   /* reapply new dT if needed */
  /* if (this->dT_cache != marg.dT) {
@@ -520,5 +543,7 @@ void Navi6dWrapper::update(const baro_data_t &baro,
 
   dbg_out_fill(nav_sins.navi_data);
   dbg_out_append_log();
+
+  stop_time_measurement(marg.dT);
 }
 
