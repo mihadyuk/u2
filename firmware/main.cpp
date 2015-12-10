@@ -414,15 +414,16 @@ int main(void) {
 
 DEATH:
   adc_local.stop();
-  blinker.stop();
   gps_power_off();
   xbee_reset_assert();
   nvram_power_off();
+  I2CStopLocal();
+
+  RCC->CFGR &= ~STM32_SW;
+
   while (true) {
-    red_led_on();
-    osalThreadSleepSeconds(1);
-    red_led_off();
-    osalThreadSleepSeconds(1);
+    red_led_toggle();
+    osalThreadSleepMilliseconds(100);
   }
 
   return 0; // warning suppressor
