@@ -71,62 +71,6 @@ struct ManeuverArc {
   }
 };
 
-/**
- * @brief Maneuver part: line or arc.
- */
-//template <typename T>
-//struct MnrPart {
-//  MnrPart(void) {
-//    memset(this, 0, sizeof(MnrPart<T>));
-//    finale = true;
-//    type = ManeuverPartType::unknown;
-//  }
-//  void fillLine(const T (&start)[2][1], const T (&finish)[2][1], bool finale) {
-//    type = ManeuverPartType::line;
-//    this->finale = finale;
-//    m_copy<T, 2, 1>(line.start, start);
-//    m_copy<T, 2, 1>(line.finish, finish);
-//  }
-//  void fillLine(T startNorth, T startEast,
-//                T finishNorth, T finishEast, bool finale) {
-//    type = ManeuverPartType::line;
-//    this->finale = finale;
-//    line.start[0][0] = startNorth;
-//    line.start[1][0] = startEast;
-//    line.finish[0][0] = finishNorth;
-//    line.finish[1][0] = finishEast;
-//  }
-//  void fillArc(const T (&center)[2][1], T radius,
-//               T startCourse, T deltaCourse, bool finale) {
-//    type = ManeuverPartType::arc;
-//    this->finale = finale;
-//    m_copy<T, 2, 1>(arc.center, center);
-//    arc.radius = radius;
-//    arc.startCourse = startCourse;
-//    arc.deltaCourse = deltaCourse;
-//  }
-//  void fillArc(T centerNorth, T centerEast, T radius,
-//               T startCourse, T deltaCourse, bool finale) {
-//    type = ManeuverPartType::arc;
-//    this->finale = finale;
-//    arc.center[0][0] = centerNorth;
-//    arc.center[1][0] = centerEast;
-//    arc.radius = radius;
-//    arc.startCourse = startCourse;
-//    arc.deltaCourse = deltaCourse;
-//  }
-//  void fillUnknown() {
-//    type = ManeuverPartType::unknown;
-//    finale = true;
-//  }
-//  bool finale;            /* is last part in maneuver */
-//  ManeuverPartType type;  /* type of maneuver part */
-//  union {
-//    ManeuverArc<T> arc;
-//    ManeuverLine<T> line;
-//  };
-//};
-
 } /* control namespace */
 
 #endif /* LD_NAVIGATOR_TYPES_HPP_ */

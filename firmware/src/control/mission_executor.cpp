@@ -18,7 +18,6 @@ using namespace control;
  ******************************************************************************
  */
 
-#define MSN_EXEC_DEBUG_VECT_DECIMATOR 10
 // some convenient aliases
 #define WP_RADIUS     param2
 
@@ -248,7 +247,6 @@ void MissionExecutor::debug2mavlink(float dT) {
       uint64_t time = TimeKeeper::utc();
 
       dbg_msn_exec.time_usec = time;
-      //  dbg_msn_exec.x = static_cast<float>(mnr_parser.debugPartNumber());
       dbg_msn_exec.x = static_cast<float>(mnr_executor.debugPartNumber());
       dbg_msn_exec.y = static_cast<float>(acs_in.ch[ACS_INPUT_dYaw]);
       dbg_msn_exec.z = static_cast<float>(acs_in.ch[ACS_INPUT_dZm]);
@@ -259,15 +257,6 @@ void MissionExecutor::debug2mavlink(float dT) {
   }
 
 }
-
-//bool MissionExecutor::wp_reached(const LdNavOut<double> &nav_out,
-//                                 const MnrPart<double> &part) {
-//  return nav_out.crossed && part.finale;
-//}
-//
-//bool MissionExecutor::mnr_part_reached(const LdNavOut<double> &nav_out) {
-//  return nav_out.crossed;
-//}
 
 #endif
 /**
@@ -290,20 +279,10 @@ void MissionExecutor::navigate(float dT) {
   double curr_wgs84[3][1] = {{deg2rad(acs_in.ch[ACS_INPUT_lat])},
                              {deg2rad(acs_in.ch[ACS_INPUT_lon])},
                              {acs_in.ch[ACS_INPUT_alt]}};
-//  MnrPart<double> part = mnr_parser.update(curr_wgs84);
-//  LdNavOut<double> nav_out = ld_navigator.update(part);
   LdNavOut<double> nav_out = mnr_executor.update(curr_wgs84);
   navout2acsin(nav_out);
   navout2mavlink(nav_out);
   debug2mavlink(dT);
-
-//  if (wp_reached(nav_out, part)) {
-//    broadcast_mission_item_reached(trgt.seq);
-//    load_next_mission_item();
-//    mnr_parser.resetPartCounter();
-//  } else if (mnr_part_reached(nav_out)) {
-//    mnr_parser.loadNextPart();
-//  }
 
   if (mnr_executor.isManeuverCompleted()) {
     broadcast_mission_item_reached(trgt.seq);
@@ -325,7 +304,6 @@ void MissionExecutor::navigate(float dT) {
 MissionExecutor::MissionExecutor(ACSInput &acs_in) :
   state(MissionState::uninit),
   acs_in(acs_in),
-//  mnr_parser(prev, trgt, third),
   mnr_executor(prev, trgt, third) {
 
   /* fill home point with invalid data. This denotes it uninitialized. */

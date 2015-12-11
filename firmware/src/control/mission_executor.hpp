@@ -4,19 +4,11 @@
 #define USE_LD_NAVIGATOR TRUE
 
 #include "mavlink_local.hpp"
-
 #if !USE_LD_NAVIGATOR
-
 #include "navigator.hpp"
-
 #else
-
-//#include "ld_navigator.hpp"
-//#include "maneuver_parser.hpp"
 #include "maneuver_executor.hpp"
-
 #endif
-
 #include "acs_input.hpp"
 
 
@@ -80,19 +72,13 @@ private:
 
 #else
 
-//  bool wp_reached(const LdNavOut<double> &nav_out,
-//                  const MnrPart<double> &part);
-//  bool mnr_part_reached(const LdNavOut<double> &nav_out);
   void navout2mavlink(const LdNavOut<double> &nav_out);
   void navout2acsin(const LdNavOut<double> &nav_out);
   void debug2mavlink(float dT);
-//  LdNavigator<double> ld_navigator;
-//  ManeuverParser<double> mnr_parser;
   ManeuverExecutor<double> mnr_executor;
 
   float debug_mnr_decimator = 0;
   const uint32_t *T_debug_mnr = nullptr;
-//  uint8_t send_debug_vect_decimator;
 
 #endif
 
