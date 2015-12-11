@@ -1,7 +1,7 @@
 #pragma GCC optimize "-O2"
 #pragma GCC optimize "-ffast-math"
 #pragma GCC optimize "-funroll-loops"
-//#pragma GCC diagnostic ignored "-Wdouble-promotion"
+#pragma GCC diagnostic ignored "-Wdouble-promotion"
 
 #include <math.h>
 #include "main.h"
