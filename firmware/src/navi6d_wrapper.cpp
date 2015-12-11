@@ -1,7 +1,7 @@
 #pragma GCC optimize "-O2"
 #pragma GCC optimize "-ffast-math"
 #pragma GCC optimize "-funroll-loops"
-//#pragma GCC diagnostic ignored "-Wdouble-promotion"
+#pragma GCC diagnostic ignored "-Wdouble-promotion"
 
 #include <math.h>
 #include "main.h"
@@ -315,9 +315,13 @@ void Navi6dWrapper::start_time_measurement(void) {
 void Navi6dWrapper::stop_time_measurement(float dT) {
 
   chTMStopMeasurementX(&tmeas);
+  time_meas_decimator += dT;
   if (tmeas.last / float(STM32_SYSCLK) > dT) {
     time_overrun_cnt++;
-    mavlink_dbg_print(MAV_SEVERITY_CRITICAL, "SINS time overrun!", MAV_COMP_ID_ALL);
+    if (time_meas_decimator > 0.25) {
+      time_meas_decimator = 0;
+      mavlink_dbg_print(MAV_SEVERITY_CRITICAL, "SINS time overrun!", MAV_COMP_ID_ALL);
+    }
   }
 }
 
