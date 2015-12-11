@@ -142,14 +142,14 @@ void Futaba::update(ACSInput &result, float dT) {
 
   osalDbgCheck(ready);
 
-//  receiver_rc.update(recv);
-//  recevier2futaba(recv, result);
-//  if (result.futaba_good == true)
-//    return;
-
-  receiver_mavlink.update(recv);
+  receiver_rc.update(recv);
   recevier2futaba(recv, result);
   if (result.futaba_good == true)
     return;
+
+//  receiver_mavlink.update(recv);
+//  recevier2futaba(recv, result);
+//  if (result.futaba_good == true)
+//    return;
 }
 
