@@ -94,6 +94,7 @@ static mavlink_message_t *uav_malloc(void) {
   }
   else {
     malloc_failed_cnt++;
+    osalSysHalt("unable to allocate memory");
   }
 
   return ret;

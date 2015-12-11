@@ -69,7 +69,7 @@ uint16_t getCpuLoad(void){
 
   systime_t i, s;
 
-  if (NULL == idle_thread){
+  if (NULL == idle_thread) {
     idle_thread = get_idle_thread();
     chDbgCheck(NULL != idle_thread);
   }

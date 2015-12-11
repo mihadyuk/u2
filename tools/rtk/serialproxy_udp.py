@@ -19,9 +19,10 @@ config.read('config.cfg')
 bufsize  = config.getint('Serial', 'bufsize')
 baudrate = config.getint('Serial', 'baudrate')
 serport  = config.get('Serial', 'port')
+hwcontrol= config.getboolean('Serial', 'hwcontrol')
 
 print("trying to open", serport, "at", baudrate, "speed...")
-ser = serial.Serial(serport, baudrate, timeout = 0.5)
+ser = serial.Serial(serport, baudrate, timeout=0.5, rtscts=hwcontrol)
 print("  success!")
 
 class SerialReader(threading.Thread):#{{{
@@ -76,6 +77,39 @@ class SerialWriter(threading.Thread):#{{{
                 pass
             if len(cin) > 0:
                 self.ser.write(cin)
+                print(cin)
+                cin = ''
+    #}}}
+class JoystickSerial(threading.Thread):#{{{
+    def __init__(self, dev):
+        threading.Thread.__init__(self)
+        self.__stop = threading.Event()
+        self.ser = dev
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.settimeout(0.5)
+        p = config.getint("SocketIn", "PORT_UDP_JOYSTICK")
+        self.sock.bind(('', p))
+        print("  binding joystick to", p, "port")
+
+    def stop(self):
+        self.__stop.set()
+
+    def run(self):
+        dbgcnt = 0
+        cin = ''
+        while True:
+            if self.__stop.is_set():
+                print("JoystickSerial: exiting")
+                self.sock.close()
+                return
+            try:
+                cin = self.sock.recv(1024)
+            except socket.timeout:
+                pass
+            if len(cin) > 0:
+                dbgcnt += 1
+                print (dbgcnt)
+                self.ser.write(cin)
                 cin = ''
     #}}}
 def main():#{{{
@@ -86,8 +120,11 @@ def main():#{{{
     writer = SerialWriter(ser)
     writer.start()
     print("starting RTCM receiver thread")
-    rtcm = rtcmproxy.RtcmProxy(ser)
-    rtcm.start()
+    # rtcm = rtcmproxy.RtcmProxy(ser)
+    # rtcm.start()
+    print("starting joystick receiver thread")
+    joy = JoystickSerial(ser)
+    joy.start()
     while True:
         try:
             time.sleep(0.5)
@@ -95,10 +132,12 @@ def main():#{{{
             print("\nKeyboard Interrupt caught")
             reader.stop()
             writer.stop()
-            rtcm.stop()
+            # rtcm.stop()
+            joy.stop()
             reader.join()
             writer.join()
-            rtcm.join()
+            # rtcm.join()
+            joy.join()
             print("closing serial port")
             ser.close()
             print("SerialProxy: stopped")

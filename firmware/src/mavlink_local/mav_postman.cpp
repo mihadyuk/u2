@@ -121,7 +121,7 @@ void MavPostman::start(mavChannel *chan){
   osalDbgAssert(nullptr != rxworker, "Can not allocate memory");
 
   txworker = chThdCreateStatic(TxThreadWA, sizeof(TxThreadWA),
-      MAVPOSTMANPRIO, TxThread, channel);
+      NORMALPRIO + 5, TxThread, channel);
   osalDbgAssert(nullptr != txworker, "Can not allocate memory");
 
   ready = true;

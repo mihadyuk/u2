@@ -15,14 +15,9 @@ Giovanni
 */
 
 // TODO: save DCM in bkp for faster startup after panic recovery
-// TODO: params in bkp
-// TODO: gyro update period in bkp
 // TODO: save mission data in bkp for recovery if panic occured during mission
 
-// TODO: cli for format, ls, rm
-
 // TODO: rewrite stab code in general case using aviation formulae.
-// TODO: probably migrate from float32 to double in coordinate calculations.
 
 // TODO: correct STOP handling in waypoint algorithm (incorrect realization in QGC)
 
@@ -31,7 +26,6 @@ Giovanni
 // TODO: Power brown out handler (using ADC comparator on power supply pin?) for sync/umout SDC.
 // TODO: One more point in dynamic pressure thermal compensation algorithm (at +60 celsius)
 // TODO: Rewrite XBee code for use DMA.
-// TODO: WDT?
 
 #include "main.h"
 
@@ -420,15 +414,16 @@ int main(void) {
 
 DEATH:
   adc_local.stop();
-  blinker.stop();
   gps_power_off();
   xbee_reset_assert();
   nvram_power_off();
+  I2CStopLocal();
+
+  RCC->CFGR &= ~STM32_SW;
+
   while (true) {
-    red_led_on();
-    osalThreadSleepSeconds(1);
-    red_led_off();
-    osalThreadSleepSeconds(1);
+    red_led_toggle();
+    osalThreadSleepMilliseconds(100);
   }
 
   return 0; // warning suppressor
