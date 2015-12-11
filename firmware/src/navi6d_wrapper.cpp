@@ -1,7 +1,7 @@
 #pragma GCC optimize "-O2"
 #pragma GCC optimize "-ffast-math"
 #pragma GCC optimize "-funroll-loops"
-#pragma GCC diagnostic ignored "-Wdouble-promotion"
+//#pragma GCC diagnostic ignored "-Wdouble-promotion"
 
 #include <math.h>
 #include "main.h"
@@ -45,8 +45,8 @@ extern MavLogger mav_logger;
  ******************************************************************************
  */
 
-typedef double klmnfp;
-#define KALMAN_STATE_SIZE         12
+typedef float klmnfp;
+#define KALMAN_STATE_SIZE         15
 #define KALMAN_MEASUREMENT_SIZE   10
 
 __CCM__ static NavigatorSins<klmnfp, KALMAN_STATE_SIZE, KALMAN_MEASUREMENT_SIZE> nav_sins;
