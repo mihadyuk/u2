@@ -93,6 +93,7 @@ void navigateOnUnknown(LdNavOut<T>& out) {
   out.dist = 0.0;
   out.crs = 0.0;
   out.crossed = true;
+  out.alt = 0.0;
 }
 
 } /* namespace */

@@ -14,12 +14,13 @@ enum class ManeuverPartType {
 
 template <typename T>
 struct LdNavOut {
-  LdNavOut(void) : dz(0), dist(0), crs(0) , crossed(true) {;}
-  LdNavOut(T dz, T dist, T crs, bool crossed) :
-    dz(dz), dist(dist), crs(crs), crossed(crossed) {;}
+  LdNavOut(void) : dz(0), dist(0), crs(0) , alt(0), crossed(true) {;}
+  LdNavOut(T dz, T dist, T crs, T alt, bool crossed) :
+    dz(dz), dist(dist), crs(crs), alt(alt), crossed(crossed) {;}
   T dz;         /* cross track error (m) */
   T dist;       /* distance to target point (m) */
   T crs;        /* course to target point (rad), [0; 2*M_PI] */
+  T alt;        /* target altitude (m, WGS-84) */
   bool crossed; /* is mission part crossed  */
 };
 

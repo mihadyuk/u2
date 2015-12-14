@@ -66,6 +66,7 @@ typedef enum {
   ACS_INPUT_dYaw,       // (rad)
   ACS_INPUT_trgt_crs,   // course to target point (rad)
   ACS_INPUT_trgt_speed, // m/s
+  ACS_INPUT_trgt_alt,   // m
 
   // raw futaba values (normalized -1..1)
   ACS_INPUT_futaba_raw_00,

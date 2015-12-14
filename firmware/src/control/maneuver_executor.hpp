@@ -8,7 +8,7 @@
 #include "maneuver_list.hpp"
 #include "mavlink_local.hpp"
 
-#define MNR_DEFAULT_RADIUS 1.0
+#define MNR_DEFAULT_RADIUS 2.0
 #define MNR_REPEATS_COUNT param1
 #define MNR_TURN_RADIUS param3
 #define MNR_WIDTH param2
@@ -88,6 +88,9 @@ void ManeuverExecutor<T>::parse(const T (&currWGS84)[3][1]) {
 
   missionItemWGS84ToLocalNE(localPrev, currWGS84, prev);
   missionItemWGS84ToLocalNE(localTrgt, currWGS84, trgt);
+
+  // set target altitude from target waypoint
+  navOut.alt = trgt.z;
 
   switch (trgt.command) {
     case MAV_CMD_NAV_WAYPOINT: {

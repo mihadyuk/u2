@@ -215,11 +215,12 @@ bool MissionExecutor::wp_reached(const NavOut<double> &nav_out) {
 void MissionExecutor::navout2acsin(const LdNavOut<double> &nav_out) {
   acs_in.ch[ACS_INPUT_dZm]  = nav_out.dz;
   acs_in.ch[ACS_INPUT_dYaw] = wrap_pi(acs_in.ch[ACS_INPUT_yaw] - nav_out.crs);
+  acs_in.ch[ACS_INPUT_trgt_alt] = nav_out.alt;
 }
 
 void MissionExecutor::navout2mavlink(const LdNavOut<double> &nav_out) {
 
-  mavlink_out_nav_controller_output_struct.wp_dist = static_cast<uint16_t>(round(nav_out.dist));
+  mavlink_out_nav_controller_output_struct.wp_dist = static_cast<uint16_t>(round(fabs(nav_out.dist)));
   mavlink_out_nav_controller_output_struct.xtrack_error = static_cast<float>(nav_out.dz);
   mavlink_out_nav_controller_output_struct.target_bearing = rad2deg(nav_out.crs);
   mavlink_out_nav_controller_output_struct.nav_bearing = rad2deg(acs_in.ch[ACS_INPUT_dYaw]);
