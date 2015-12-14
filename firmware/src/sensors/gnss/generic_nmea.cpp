@@ -143,9 +143,9 @@ void GenericNMEA::gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
 
   if (false == result->fresh) {
     result->altitude   = gga.altitude;
-    result->latitude   = gga.latitude;
-    result->longitude  = gga.longitude;
-    result->course     = rmc.course;
+    result->latitude   = deg2rad(gga.latitude);
+    result->longitude  = deg2rad(gga.longitude);
+    result->course     = deg2rad(rmc.course);
     result->speed      = rmc.speed;
     result->speed_type = speed_t::SPEED_COURSE;
     result->time       = rmc.time;

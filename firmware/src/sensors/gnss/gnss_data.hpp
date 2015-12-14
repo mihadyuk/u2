@@ -7,7 +7,6 @@ namespace gnss {
  *
  */
 enum class speed_t {
-  NONE = 0,     /* GNSS receiver does not provide speed data */
   SPEED_COURSE, /* 2 components from RMC NMEA message: speed over ground + course */
   VECTOR_3D,    /* full 3-component vector */
   BOTH
@@ -19,13 +18,18 @@ enum class speed_t {
 struct gnss_data_t {
   gnss_data_t(void) {
     memset(this, 0, sizeof(*this));
+    hdop = 1;
+    vdop = 1;
   }
-  double    latitude;   // deg
-  double    longitude;  // deg
+  double    latitude;   // rad
+  double    longitude;  // rad
   float     altitude;   // m
   float     speed;      // m/s
-  float     course;     // deg
+  float     course;     // rad
   float     v[3];       // 3 components of speed (m/s, NED)
+#warning "add dops"
+  float     hdop;
+  float     vdop;
   bool      fresh;      // sync primitive. Receiver can only set it, consumer can only clear it
   speed_t   speed_type;
   struct tm time;

@@ -283,8 +283,8 @@ void MissionExecutor::navigate(void) {
     navigator.loadLine(line);
   }
 #else
-  double curr_wgs84[3][1] = {{deg2rad(acs_in.ch[ACS_INPUT_lat])},
-                             {deg2rad(acs_in.ch[ACS_INPUT_lon])},
+  double curr_wgs84[3][1] = {{acs_in.ch[ACS_INPUT_lat]},
+                             {acs_in.ch[ACS_INPUT_lon]},
                              {static_cast<double>(acs_in.ch[ACS_INPUT_alt])}};
   MnrPart<double> part = mnr_parser.update(curr_wgs84);
   LdNavOut<double> nav_out = ld_navigator.update(part);
@@ -359,8 +359,8 @@ void MissionExecutor::artificial_takeoff_point(void) {
 
   memset(&prev, 0, sizeof(prev));
 
-  prev.x = acs_in.ch[ACS_INPUT_lat];
-  prev.y = acs_in.ch[ACS_INPUT_lon];
+  prev.x = rad2deg(acs_in.ch[ACS_INPUT_lat]);
+  prev.y = rad2deg(acs_in.ch[ACS_INPUT_lon]);
   prev.z = acs_in.ch[ACS_INPUT_alt];
   prev.command = MAV_CMD_NAV_TAKEOFF;
   prev.frame = MAV_FRAME_GLOBAL;
@@ -432,7 +432,9 @@ MissionState MissionExecutor::update(void) {
  */
 void MissionExecutor::setHome(void) {
 
-  setHome(acs_in.ch[ACS_INPUT_lat], acs_in.ch[ACS_INPUT_lon], acs_in.ch[ACS_INPUT_alt]);
+  setHome(rad2deg(acs_in.ch[ACS_INPUT_lat]),
+          rad2deg(acs_in.ch[ACS_INPUT_lon]),
+          acs_in.ch[ACS_INPUT_alt]);
 }
 
 /**

@@ -166,9 +166,8 @@ param = [
 ("SINS_en_mg_yaw",  0,          1,          1,          "u", "default",     "NULL"),
 ("SINS_zupt_src",   0,          1,          2,          "u", "default",     "NULL"),
 
-("SINS_R_ne_sns",   0.001,      5,          10000,      "f", "default",     "NULL"),
-("SINS_R_d_sns",    0.001,      10,         10000,      "f", "default",     "NULL"),
-("SINS_R_v_n_sns",  0.001,      0.2,        10000,      "f", "default",     "NULL"),
+("SINS_R_pos_sns",  0.001,      5,          10000,      "f", "default",     "NULL"),
+("SINS_R_vel_sns",  0.001,      0.2,        10000,      "f", "default",     "NULL"),
 ("SINS_R_odo",      0.001,      0.1,        100,        "f", "default",     "NULL"),
 ("SINS_R_nhl_y",    0.001,      0.1,        100,        "f", "default",     "NULL"),
 ("SINS_R_nhl_z",    0.001,      0.1,        100,        "f", "default",     "NULL"),

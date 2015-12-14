@@ -19,7 +19,6 @@ using namespace gnss;
  * DEFINES
  ******************************************************************************
  */
-#define DEG_TO_UBX    (10 * 1000 * 1000)
 
 /*
  ******************************************************************************
@@ -33,6 +32,8 @@ extern mavlink_gps_raw_int_t    mavlink_out_gps_raw_int_struct;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
+
+static const double UBX_TO_DEG = 1e-7;
 
 /*
  ******************************************************************************
@@ -352,15 +353,13 @@ void uBlox::update_settings(void) {
 static void pvt2gnss(const ubx_nav_pvt_payload &pvt, gnss_data_t *result) {
 
   result->altitude    = pvt.h / 1000.0;
-  result->latitude    = pvt.lat;
-  result->latitude    /= DEG_TO_UBX;
-  result->longitude   = pvt.lon;
-  result->longitude   /= DEG_TO_UBX;
+  result->latitude    = deg2rad(pvt.lat * UBX_TO_DEG);
+  result->longitude   = deg2rad(pvt.lon * UBX_TO_DEG);
   result->v[0]        = pvt.velN / 1000.0;
   result->v[1]        = pvt.velE / 1000.0;
   result->v[2]        = pvt.velD / 1000.0;
   result->speed       = pvt.gSpeed / 1000.0;
-  result->course      = pvt.hdg * 1e-5;
+  result->course      = deg2rad(pvt.hdg * 1e-5);
   result->speed_type  = speed_t::BOTH;
   pvt2time(pvt, &result->time);
   result->msec        = pvt.nano / 1000000;
