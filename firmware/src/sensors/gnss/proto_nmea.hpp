@@ -45,11 +45,43 @@ struct nmea_rmc_t {
 /**
  *
  */
+struct nmea_gsv_satellite_t {
+  uint8_t  id;
+  uint8_t  elevation;   // deg
+  uint16_t azimuth;     // deg
+  uint8_t  snr;
+};
+
+/**
+ *
+ */
+struct nmea_gsv_chunk_t {
+
+};
+
+/**
+ *
+ */
+struct nmea_gsv_t {
+  nmea_gsv_t(void) {
+    memset(this, 0, sizeof(*this));
+  }
+  uint8_t total;
+  uint8_t current;
+  uint8_t sat_visible;
+  nmea_gsv_satellite_t sat[4];
+};
+
+/**
+ *
+ */
 enum class sentence_type_t {
-  EMPTY,
+  EMPTY,    /* no valid message available */
   GGA,
+  GPGSV,
+  GLGSV,
   RMC,
-  UNKNOWN
+  UNKNOWN   /* unknown but valid message */
 };
 
 /**
@@ -71,19 +103,21 @@ class ProtoNmea {
 public:
   ProtoNmea(void);
   sentence_type_t collect(uint8_t byte);
-  void unpack(nmea_rmc_t &result);
-  void unpack(nmea_gga_t &result);
-  uint8_t checksum(const uint8_t *data, size_t len);
-  void checksum2str(uint8_t sum, char *str);
-  uint8_t checksumFromStr(const char *str);
+  void unpack(nmea_rmc_t &result) const;
+  void unpack(nmea_gga_t &result) const;
+  void unpack(nmea_gsv_t &result) const;
+  uint8_t checksum(const uint8_t *data, size_t len) const;
+  void checksum2str(uint8_t sum, char *str) const;
+  uint8_t checksumFromStr(const char *str) const;
   void seal(char *msg);
 private:
-  bool checksum_autotest(void);
-  bool _autotest(const char *sentence);
+  bool checksum_autotest(void) const;
+  bool _autotest(const char *sentence) const;
   void reset_collector(void);
-  const char* token(char *result, size_t number);
-  sentence_type_t validate_sentence(void);
-  sentence_type_t get_name(const char *name);
+  size_t tokens_available(void) const;
+  const char* token(char *result, size_t number) const;
+  sentence_type_t validate_sentence(void) const;
+  sentence_type_t get_name(const char *name) const;
   size_t tip;
   size_t maptip;
   nmea_collect_state_t state;

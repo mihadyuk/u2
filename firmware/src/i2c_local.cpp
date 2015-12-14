@@ -52,3 +52,18 @@ void I2CInitLocal(void){
 }
 
 
+/**
+ *
+ */
+void I2CStopLocal(void){
+
+#if defined(BOARD_BEZVODIATEL)
+  i2cStop(&I2CD1);
+  i2cStop(&I2CD2);
+#elif defined(BOARD_MNU)
+  i2cStop(&I2CD2);
+  i2cStop(&I2CD3);
+#else
+#error "Unknown board"
+#endif
+}

@@ -5,6 +5,7 @@
 #include "mav_dbg.hpp"
 #include "navigator_types.hpp"
 #include "time_keeper.hpp"
+#include "param_registry.hpp"
 #include "mav_logger.hpp"
 #include "mav_postman.hpp"
 
@@ -17,7 +18,6 @@ using namespace control;
  ******************************************************************************
  */
 
-#define MSN_EXEC_DEBUG_VECT_DECIMATOR 10
 // some convenient aliases
 #define WP_RADIUS     param2
 
@@ -25,8 +25,6 @@ using namespace control;
 #define JUMP_SEQ      param1
 
 #define PID_TUNE_DEBUG      TRUE
-
-#define MISSION_EXECUTOR_DEBUG TRUE
 
 /*
  ******************************************************************************
@@ -59,10 +57,8 @@ __CCM__ static mavMail pid_tune_mail;
 __CCM__ static mavlink_debug_vect_t mavlink_out_debug_vect_struct = {0, 0, 0, 0, "PID_TUNE"};
 #endif
 
-#if MISSION_EXECUTOR_DEBUG
 __CCM__ static mavlink_debug_vect_t dbg_msn_exec;
 __CCM__ static mavMail mail_msn_exec;
-#endif
 
 /*
  ******************************************************************************
@@ -161,7 +157,7 @@ bool MissionExecutor::load_next_mission_item(void) {
   return load_status;
 }
 
-#ifndef USE_LD_NAVIGATOR
+#if !USE_LD_NAVIGATOR
 /**
  *
  */
@@ -217,10 +213,8 @@ bool MissionExecutor::wp_reached(const NavOut<double> &nav_out) {
 #else
 
 void MissionExecutor::navout2acsin(const LdNavOut<double> &nav_out) {
-  acs_in.ch[ACS_INPUT_dZm] = static_cast<float>(nav_out.dz);
-
-  float dYaw = acs_in.ch[ACS_INPUT_yaw] - static_cast<float>(nav_out.crs);
-  acs_in.ch[ACS_INPUT_dYaw] = wrap_pi(dYaw);
+  acs_in.ch[ACS_INPUT_dZm]  = nav_out.dz;
+  acs_in.ch[ACS_INPUT_dYaw] = wrap_pi(acs_in.ch[ACS_INPUT_yaw] - nav_out.crs);
 }
 
 void MissionExecutor::navout2mavlink(const LdNavOut<double> &nav_out) {
@@ -243,36 +237,33 @@ void MissionExecutor::navout2mavlink(const LdNavOut<double> &nav_out) {
 #endif
 }
 
-void MissionExecutor::debug2mavlink() {
-#if MISSION_EXECUTOR_DEBUG
+void MissionExecutor::debug2mavlink(float dT) {
 
-  uint64_t time = TimeKeeper::utc();
-  dbg_msn_exec.time_usec = time;
-  dbg_msn_exec.x = static_cast<float>(mnr_parser.debugPartNumber());
-  dbg_msn_exec.y = acs_in.ch[ACS_INPUT_dYaw];
-  dbg_msn_exec.z = acs_in.ch[ACS_INPUT_dZm];
+  if (*T_debug_mnr != TELEMETRY_SEND_OFF) {
+    if (debug_mnr_decimator < *T_debug_mnr) {
+      debug_mnr_decimator += dT * 1000;
+    } else {
+      debug_mnr_decimator = 0;
+      uint64_t time = TimeKeeper::utc();
 
-  mail_msn_exec.fill(&dbg_msn_exec, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG_VECT);
-  mav_postman.post(mail_msn_exec);
+      dbg_msn_exec.time_usec = time;
+      dbg_msn_exec.x = static_cast<float>(mnr_executor.debugPartNumber());
+      dbg_msn_exec.y = static_cast<float>(acs_in.ch[ACS_INPUT_dYaw]);
+      dbg_msn_exec.z = static_cast<float>(acs_in.ch[ACS_INPUT_dZm]);
 
-#endif
-}
+      mail_msn_exec.fill(&dbg_msn_exec, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG_VECT);
+      mav_postman.post(mail_msn_exec);
+    }
+  }
 
-bool MissionExecutor::wp_reached(const LdNavOut<double> &nav_out,
-                                 const MnrPart<double> &part) {
-  return nav_out.crossed && part.finale;
-}
-
-bool MissionExecutor::mnr_part_reached(const LdNavOut<double> &nav_out) {
-  return nav_out.crossed;
 }
 
 #endif
 /**
  *
  */
-void MissionExecutor::navigate(void) {
-#ifndef USE_LD_NAVIGATOR
+void MissionExecutor::navigate(float dT) {
+#if !USE_LD_NAVIGATOR
   NavIn<double> nav_in(deg2rad(acs_in.ch[ACS_INPUT_lat]),
                        deg2rad(acs_in.ch[ACS_INPUT_lon]));
   NavOut<double> nav_out = navigator.update(nav_in);
@@ -285,28 +276,17 @@ void MissionExecutor::navigate(void) {
     navigator.loadLine(line);
   }
 #else
-  double curr_wgs84[3][1] = {{deg2rad(acs_in.chd[ACS_DOUBLE_INPUT_lat])},
-                             {deg2rad(acs_in.chd[ACS_DOUBLE_INPUT_lon])},
-                             {static_cast<double>(acs_in.ch[ACS_INPUT_alt])}};
-  MnrPart<double> part = mnr_parser.update(curr_wgs84);
-  LdNavOut<double> nav_out = ld_navigator.update(part);
+  double curr_wgs84[3][1] = {{deg2rad(acs_in.ch[ACS_INPUT_lat])},
+                             {deg2rad(acs_in.ch[ACS_INPUT_lon])},
+                             {acs_in.ch[ACS_INPUT_alt]}};
+  LdNavOut<double> nav_out = mnr_executor.update(curr_wgs84);
   navout2acsin(nav_out);
   navout2mavlink(nav_out);
+  debug2mavlink(dT);
 
-#if MISSION_EXECUTOR_DEBUG
-  if (0 == send_debug_vect_decimator)
-    debug2mavlink();
-  send_debug_vect_decimator++;
-  if (send_debug_vect_decimator >= MSN_EXEC_DEBUG_VECT_DECIMATOR)
-    send_debug_vect_decimator = 0;
-#endif
-
-  if (wp_reached(nav_out, part)) {
+  if (mnr_executor.isManeuverCompleted()) {
     broadcast_mission_item_reached(trgt.seq);
     load_next_mission_item();
-    mnr_parser.resetPartCounter();
-  } else if (mnr_part_reached(nav_out)) {
-    mnr_parser.loadNextPart();
   }
 
 #endif
@@ -322,20 +302,13 @@ void MissionExecutor::navigate(void) {
  *
  */
 MissionExecutor::MissionExecutor(ACSInput &acs_in) :
-state(MissionState::uninit),
-acs_in(acs_in),
-mnr_parser(prev, trgt, third),
-send_debug_vect_decimator(0) {
+  state(MissionState::uninit),
+  acs_in(acs_in),
+  mnr_executor(prev, trgt, third) {
 
   /* fill home point with invalid data. This denotes it uninitialized. */
   memset(&home, 0xFF, sizeof(home));
   home.seq = -1;
-
-#if MISSION_EXECUTOR_DEBUG
-  const size_t N = sizeof(mavlink_debug_vect_t::name);
-  strncpy(dbg_msn_exec.name,  "msn_exec",  N);
-#endif
-
 }
 
 /**
@@ -343,8 +316,14 @@ send_debug_vect_decimator(0) {
  */
 void MissionExecutor::start(void) {
   chTMObjectInit(&this->tmp_nav);
-  state = MissionState::idle;
 
+  param_registry.valueSearch("T_debug_mnr", &T_debug_mnr);
+  /* we need to initialize names of fields manually because CCM RAM section
+   * set to NOLOAD in chibios linker scripts */
+  const size_t N = sizeof(mavlink_debug_vect_t::name);
+  strncpy(dbg_msn_exec.name,  "msn_exec",  N);
+
+  state = MissionState::idle;
 }
 
 /**
@@ -398,7 +377,7 @@ bool MissionExecutor::takeoff(void) {
     if ((OSAL_SUCCESS != read_status1) || (OSAL_SUCCESS != read_status2))
       return OSAL_FAILED;
     else {
-#ifndef USE_LD_NAVIGATOR
+#if !USE_LD_NAVIGATOR
       NavLine<double> line(deg2rad(prev.x), deg2rad(prev.y), deg2rad(trgt.x), deg2rad(trgt.y));
       navigator.loadLine(line);
 #endif
@@ -411,14 +390,14 @@ bool MissionExecutor::takeoff(void) {
 /**
  *
  */
-MissionState MissionExecutor::update(void) {
+MissionState MissionExecutor::update(float dT) {
 
   osalDbgCheck(MissionState::uninit != state);
 
   switch (state) {
   case MissionState::navigate:
     chTMStartMeasurementX(&this->tmp_nav);
-    this->navigate();
+    this->navigate(dT);
     chTMStopMeasurementX(&this->tmp_nav);
     break;
 

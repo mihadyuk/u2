@@ -423,8 +423,6 @@ msg_t MPU6050::acquire_simple(float *acc, float *gyr) {
 /**
  *
  */
-time_measurement_t fir_tmu;
-
 void MPU6050::pickle_fifo(float *acc, float *gyr, const size_t sample_cnt) {
 
   float sens;
@@ -436,8 +434,6 @@ void MPU6050::pickle_fifo(float *acc, float *gyr, const size_t sample_cnt) {
     gyr_raw_data[i] = rxbuf_fifo[gyr_fifo_offset + i];
   }
 
-  if (sample_cnt == 10)
-    chTMStartMeasurementX(&fir_tmu);
   for (size_t n=0; n<sample_cnt; n++) {
     for (size_t i=0; i<3; i++){
       size_t shift = n * BYTES_IN_SAMPLE / 2 + i;
@@ -445,8 +441,6 @@ void MPU6050::pickle_fifo(float *acc, float *gyr, const size_t sample_cnt) {
       gyr[i] = fir.gyr[i](rxbuf_fifo[shift + gyr_fifo_offset]);
     }
   }
-  if (sample_cnt == 10)
-    chTMStopMeasurementX(&fir_tmu);
 
   /* acc */
   sens = this->acc_sens();
@@ -569,7 +563,6 @@ data_ready_sem(true),
 fir(fir_block)
 {
   state = SENSOR_STATE_STOP;
-  chTMObjectInit(&fir_tmu);
 }
 
 /**

@@ -17,6 +17,9 @@ using namespace control;
 /* mask with for connected/used channels */
 #define INPUT_CHANNEL_MASK    0b1011
 
+/* hack channel for pseudo RSSI */
+#define RSSI_CHANNEL          2
+
 /* middle point in uS */
 #define NORMALIZE_SHIFT       1500
 
@@ -26,7 +29,7 @@ using namespace control;
 #define MAX_VALID_VALUE       2200
 #define MIN_VALID_VALUE       800
 
-#define CHANNEL_TIMEOUT       MS2ST(200)
+#define CHANNEL_TIMEOUT       MS2ST(250)
 
 /*
  ******************************************************************************
@@ -54,9 +57,8 @@ static systime_t timestamp[CHANNEL_CNT]; // timestamp array for timeout detectio
 /**
  *
  */
-void futaba_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p) {
+static void control_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p) {
   (void)eicup;
-  (void)channel;
   (void)p;
 
   cache[channel] = w;
@@ -66,10 +68,31 @@ void futaba_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p)
 /**
  *
  */
-static const EICUChannelConfig futabacfg = {
+static void rssi_cb(EICUDriver *eicup, eicuchannel_t channel, uint32_t w, uint32_t p) {
+  (void)eicup;
+  (void)w;
+  (void)p;
+
+  cache[channel] = p;
+  timestamp[channel] = chVTGetSystemTimeX();
+}
+
+/**
+ *
+ */
+static const EICUChannelConfig controlcfg = {
     EICU_INPUT_ACTIVE_HIGH,
     EICU_INPUT_PULSE,
-    futaba_cb
+    control_cb
+};
+
+/**
+ *
+ */
+static const EICUChannelConfig rssicfg = {
+    EICU_INPUT_ACTIVE_HIGH,
+    EICU_INPUT_EDGE,
+    rssi_cb
 };
 
 /**
@@ -78,10 +101,10 @@ static const EICUChannelConfig futabacfg = {
 static const EICUConfig eicucfg = {
     (1000 * 1000),      /* EICU clock frequency (Hz).*/
     {
-        &futabacfg,
-        &futabacfg,
-        &futabacfg,
-        &futabacfg,
+        &controlcfg,
+        &controlcfg,
+        &rssicfg,
+        &controlcfg,
     },
     0
 };
@@ -126,7 +149,7 @@ static void receiver2mavlink(const uint16_t *pwm, size_t channels) {
  * retval   true == timeout
  *          fasle == OK
  */
-static bool is_timeout(int32_t map, systime_t timeout) {
+static bool is_timeout(size_t map, systime_t timeout) {
   bool ret;
 
   osalSysLock();
@@ -150,11 +173,14 @@ uint16_t ReceiverPWM::get_ch(size_t chnum, bool *data_valid) const {
 
   uint16_t ret = cache[chnum];
 
-  if ((ret > MAX_VALID_VALUE) || (ret < MIN_VALID_VALUE))
+  if ((ret > MAX_VALID_VALUE) || (ret < MIN_VALID_VALUE)) {
     *data_valid = false;
+  }
 
-  if (is_timeout(chnum, CHANNEL_TIMEOUT))
+  if (is_timeout(chnum, CHANNEL_TIMEOUT)) {
+    cache[chnum] |= 1 << 15;
     *data_valid = false;
+  }
 
   return ret;
 }

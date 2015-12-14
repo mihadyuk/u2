@@ -11,6 +11,7 @@
 
 #include "navi6d_wrapper.hpp"
 #include "mavlink_local.hpp"
+#include "mav_dbg.hpp"
 #include "acs_input.hpp"
 #include "geometry.hpp"
 #include "time_keeper.hpp"
@@ -44,8 +45,8 @@ extern MavLogger mav_logger;
  ******************************************************************************
  */
 
-typedef double klmnfp;
-#define KALMAN_STATE_SIZE         12
+typedef float klmnfp;
+#define KALMAN_STATE_SIZE         15
 #define KALMAN_MEASUREMENT_SIZE   10
 
 __CCM__ static NavigatorSins<klmnfp, KALMAN_STATE_SIZE, KALMAN_MEASUREMENT_SIZE> nav_sins;
@@ -265,9 +266,6 @@ void Navi6dWrapper::navi2acs(void) {
 
   const NaviData<klmnfp> &data = nav_sins.navi_data;
 
-  acs_in.chd[ACS_DOUBLE_INPUT_lat] = rad2deg(data.r[0][0]);
-  acs_in.chd[ACS_DOUBLE_INPUT_lon] = rad2deg(data.r[1][0]);
-
   acs_in.ch[ACS_INPUT_roll] = data.eu_nv[0][0];
   acs_in.ch[ACS_INPUT_pitch]= data.eu_nv[1][0];
   acs_in.ch[ACS_INPUT_yaw]  = data.eu_nv[2][0];
@@ -304,6 +302,29 @@ void Navi6dWrapper::navi2acs(void) {
  */
 #include "navi6d_common.cpp"
 
+/**
+ *
+ */
+void Navi6dWrapper::start_time_measurement(void) {
+  chTMStartMeasurementX(&tmeas);
+}
+
+/**
+ *
+ */
+void Navi6dWrapper::stop_time_measurement(float dT) {
+
+  chTMStopMeasurementX(&tmeas);
+  time_meas_decimator += dT;
+  if (tmeas.last / float(STM32_SYSCLK) > dT) {
+    time_overrun_cnt++;
+    if (time_meas_decimator > 0.25) {
+      time_meas_decimator = 0;
+      mavlink_dbg_print(MAV_SEVERITY_CRITICAL, "SINS time overrun!", MAV_COMP_ID_ALL);
+    }
+  }
+}
+
 /*
  *******************************************************************************
  * EXPORTED FUNCTIONS
@@ -316,6 +337,7 @@ Navi6dWrapper::Navi6dWrapper(ACSInput &acs_in, gnss::GNSSReceiver &GNSS) :
 acs_in(acs_in),
 GNSS(GNSS)
 {
+  chTMObjectInit(&tmeas);
   return;
 }
 
@@ -357,6 +379,8 @@ void Navi6dWrapper::update(const baro_data_t &baro,
                            const odometer_data_t &odo,
                            const marg_data_t &marg) {
   osalDbgCheck(ready);
+
+  start_time_measurement();
 
   /* reapply new dT if needed */
  /* if (this->dT_cache != marg.dT) {
@@ -523,5 +547,7 @@ void Navi6dWrapper::update(const baro_data_t &baro,
 
   dbg_out_fill(nav_sins.navi_data);
   dbg_out_append_log();
+
+  stop_time_measurement(marg.dT);
 }
 

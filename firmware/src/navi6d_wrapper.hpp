@@ -29,6 +29,11 @@ private:
                     const marg_data_t &marg);
   void prepare_data_gnss(gnss::gnss_data_t &gnss_data);
   void reload_settings(void);
+  void start_time_measurement(void);
+  void stop_time_measurement(float dT);
+  time_measurement_t tmeas;
+  size_t time_overrun_cnt;
+  float time_meas_decimator = 0;
   bool ready = false;
   float dT_cache = 0.01;
   float debug_vect_decimator = 0;

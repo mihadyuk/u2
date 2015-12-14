@@ -56,8 +56,8 @@ void Futaba::process_man_tumbler(RecevierOutput const &recv, ManualSwitch &man) 
   if (-1 == *map_man)
     man = ManualSwitch::fullauto;
   else {
-    uint16_t tmp = recv.ch[*map_man];
     if (recv.data_valid) {
+      uint16_t tmp = manual_switch_filter(recv.ch[*map_man]);
       man = static_cast<ManualSwitch>(manual_switch.update(tmp));
     }
   }
@@ -70,7 +70,7 @@ static void scale(RecevierOutput const &recv, ACSInput &result) {
   static_assert(ACS_INPUT_futaba_raw_end - ACS_INPUT_futaba_raw_00 ==
       MAX_RC_CHANNELS, "Checker for allowing loop based conversion");
 
-  float *out = &result.ch[ACS_INPUT_futaba_raw_00];
+  double *out = &result.ch[ACS_INPUT_futaba_raw_00];
 
   if (recv.data_valid) {
     for (size_t i=0; i<MAX_RC_CHANNELS; i++) {
@@ -147,9 +147,9 @@ void Futaba::update(ACSInput &result, float dT) {
   if (result.futaba_good == true)
     return;
 
-  receiver_mavlink.update(recv);
-  recevier2futaba(recv, result);
-  if (result.futaba_good == true)
-    return;
+//  receiver_mavlink.update(recv);
+//  recevier2futaba(recv, result);
+//  if (result.futaba_good == true)
+//    return;
 }
 

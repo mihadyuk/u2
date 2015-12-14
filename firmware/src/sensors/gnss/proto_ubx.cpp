@@ -55,7 +55,7 @@ static const uint8_t UBX_SYNC_2 = 0x62;
  *
  */
 size_t ProtoUbx::pack_impl(uint8_t *buf, ubx_msg_t type,
-                           uint16_t N, const void *data) {
+                           uint16_t N, const void *data) const {
   buf[0] = UBX_SYNC_1;
   buf[1] = UBX_SYNC_2;
   memcpy(&buf[2], &type, 2);
@@ -71,7 +71,7 @@ size_t ProtoUbx::pack_impl(uint8_t *buf, ubx_msg_t type,
 /**
  *
  */
-void ProtoUbx::checksum(const uint8_t *data, size_t len, uint8_t *result) {
+void ProtoUbx::checksum(const uint8_t *data, size_t len, uint8_t *result) const {
   uint8_t ck_a = 0;
   uint8_t ck_b = 0;
 
@@ -92,14 +92,16 @@ UbxBuf::UbxBuf(void) : tip(0) {
 }
 
 void UbxBuf::push(uint8_t b) {
-  data[tip] = b;
-  tip++;
+  if (tip < UBX_MSG_BUF_LEN) {
+    data[tip] = b;
+    tip++;
+  }
 }
 
 /**
  *
  */
-bool ProtoUbx::checksum_ok(void) {
+bool ProtoUbx::checksum_ok(void) const {
   uint8_t sum[2];
   size_t L = buf.get_len() - 4;
   this->checksum(&buf.data[2], L, sum);
@@ -109,7 +111,7 @@ bool ProtoUbx::checksum_ok(void) {
 /**
  *
  */
-ubx_msg_t ProtoUbx::extract_rtti(uint8_t *data) {
+ubx_msg_t ProtoUbx::extract_rtti(uint8_t *data) const {
   ubx_msg_t ret;
   memcpy(&ret, &data[2], sizeof(ret));
   return ret;
@@ -118,7 +120,7 @@ ubx_msg_t ProtoUbx::extract_rtti(uint8_t *data) {
 /**
  *
  */
-uint16_t ProtoUbx::extract_len(uint8_t *data) {
+uint16_t ProtoUbx::extract_len(uint8_t *data) const {
   uint16_t ret;
   memcpy(&ret, &data[4], sizeof(ret));
   return ret;
@@ -259,7 +261,7 @@ void ProtoUbx::drop(void) {
 /**
  *
  */
-size_t ProtoUbx::packPollRequest(ubx_msg_t type, uint8_t *buf, size_t buflen) {
+size_t ProtoUbx::packPollRequest(ubx_msg_t type, uint8_t *buf, size_t buflen) const {
   uint16_t datalen = 0;
 
   if (buflen < (UBX_OVERHEAD_TOTAL + datalen))

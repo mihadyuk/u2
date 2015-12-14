@@ -1,4 +1,4 @@
-//#pragma GCC optimize "-O2"
+#pragma GCC optimize "-O2"
 
 #include "main.h"
 
@@ -16,6 +16,8 @@ using namespace control;
  * DEFINES
  ******************************************************************************
  */
+
+typedef double vmfp;
 
 #define DEBUG_STAB_VM         TRUE
 
@@ -164,7 +166,7 @@ public:
  */
 class LinkInput : public Link {
 public:
-  Link* compile(const float *_target) {
+  Link* compile(const vmfp *_target) {
     vmDbgCheck(nullptr != _target);
     this->target = _target;
     return this;
@@ -177,7 +179,7 @@ public:
   }
 
 private:
-  const float *target = nullptr;
+  const vmfp *target = nullptr;
 };
 
 /**
@@ -185,7 +187,7 @@ private:
  */
 class LinkPID : public Link {
 public:
-  Link* compile(const float *_position) {
+  Link* compile(const vmfp *_position) {
     vmDbgCheck(nullptr != _position);
     this->position = _position;
     return this;
@@ -211,14 +213,14 @@ public:
   }
 
   void alcoi_pulse(float strength, float time) {
-    alcoi_target = *position + strength;
+    alcoi_target = static_cast<float>(*position) + strength;
     alcoi_time_elapsed = time;
   }
 
 private:
   float alcoi_target = 0;
   float alcoi_time_elapsed = 0;
-  const float *position = nullptr;
+  const vmfp *position = nullptr;
   PidControlSelfDerivative<float> pid;
 };
 

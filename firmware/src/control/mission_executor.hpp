@@ -1,19 +1,15 @@
 #ifndef MISSION_EXECUTOR_HPP_
 #define MISSION_EXECUTOR_HPP_
 
-#ifndef USE_LD_NAVIGATOR
-#define USE_LD_NAVIGATOR
-#endif
+#define USE_LD_NAVIGATOR TRUE
 
 #include "mavlink_local.hpp"
-
-#ifndef USE_LD_NAVIGATOR
+#if !USE_LD_NAVIGATOR
 #include "navigator.hpp"
+#else
+#include "maneuver_executor.hpp"
 #endif
-
 #include "acs_input.hpp"
-#include "ld_navigator.hpp"
-#include "maneuver_parser.hpp"
 
 
 
@@ -47,7 +43,7 @@ public:
   void start(void);
   void stop(void);
   bool takeoff(void);
-  MissionState update(void);
+  MissionState update(float dT);
   void setHome(void);
   void setHome(float lat, float lon, float alt); /* (deg), (deg), (deg) */
   uint16_t getCurrentMission(void) const;
@@ -62,12 +58,12 @@ private:
   void broadcast_mission_item_reached(uint16_t seq);
   void artificial_takeoff_point(void);
   bool load_next_mission_item(void);
-  void navigate(void);
+  void navigate(float dT);
 
   MissionState state;
   ACSInput &acs_in;
 
-#ifndef USE_LD_NAVIGATOR
+#if !USE_LD_NAVIGATOR
 
   bool wp_reached(const NavOut<double> &nav_out);
   void navout2mavlink(const NavOut<double> &nav_out);
@@ -76,15 +72,13 @@ private:
 
 #else
 
-  bool wp_reached(const LdNavOut<double> &nav_out,
-                  const MnrPart<double> &part);
-  bool mnr_part_reached(const LdNavOut<double> &nav_out);
   void navout2mavlink(const LdNavOut<double> &nav_out);
   void navout2acsin(const LdNavOut<double> &nav_out);
-  void debug2mavlink();
-  LdNavigator<double> ld_navigator;
-  ManeuverParser<double> mnr_parser;
-  uint8_t send_debug_vect_decimator;
+  void debug2mavlink(float dT);
+  ManeuverExecutor<double> mnr_executor;
+
+  float debug_mnr_decimator = 0;
+  const uint32_t *T_debug_mnr = nullptr;
 
 #endif
 
