@@ -27,6 +27,7 @@ private:
   void ggarmc2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc);
   void gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
                          gnss_data_t *result);
+  void dispatch_data(const nmea_gga_t &gga, const nmea_rmc_t &rmc);
 };
 
 } // namespace
