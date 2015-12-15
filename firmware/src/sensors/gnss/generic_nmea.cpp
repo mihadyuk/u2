@@ -150,6 +150,8 @@ void GenericNMEA::gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
   result->time       = rmc.time;
   result->msec       = rmc.msec;
   result->fix        = gga.fix;
+
+  result->fresh      = true; // must be at the very end for atomicity
 }
 
 /**
@@ -242,7 +244,7 @@ THD_FUNCTION(GenericNMEA::nmeaRxThread, arg) {
       }
 
       /* Workaround. Prevents mixing of speed and coordinates from different
-       * measurements. */
+         measurements. */
       if (gga_msec == rmc_msec) {
 
         self->ggarmc2mavlink(gga, rmc);

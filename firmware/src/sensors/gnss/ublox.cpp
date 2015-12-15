@@ -401,8 +401,6 @@ static void pvt2gnss(const ubx_nav_pvt_payload &pvt,
   result->altitude    = pvt.h / 1000.0;
   result->latitude    = deg2rad(pvt.lat * UBX_TO_DEG);
   result->longitude   = deg2rad(pvt.lon * UBX_TO_DEG);
-  result->hdop        = dop.hDOP / 100.0;
-  result->vdop        = dop.vDOP / 100.0;
   result->v[0]        = pvt.velN / 1000.0;
   result->v[1]        = pvt.velE / 1000.0;
   result->v[2]        = pvt.velD / 1000.0;
@@ -416,6 +414,10 @@ static void pvt2gnss(const ubx_nav_pvt_payload &pvt,
   else
     result->fix       = 0;
   result->samplerate  = samplerate;
+
+  result->hdop        = dop.hDOP / 100.0;
+  result->vdop        = dop.vDOP / 100.0;
+  result->pdop        = dop.pDOP / 100.0;
 }
 
 /**

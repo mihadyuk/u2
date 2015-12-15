@@ -20,6 +20,7 @@ struct gnss_data_t {
     memset(this, 0, sizeof(*this));
     hdop = 1;
     vdop = 1;
+    pdop = 1;
     fresh = false;
     samplerate = 1;
   }
@@ -29,6 +30,7 @@ struct gnss_data_t {
   float     speed;      // m/s
   float     course;     // rad
   float     v[3];       // 3 components of speed (m/s, NED)
+  float     pdop;
   float     hdop;
   float     vdop;
   float     samplerate;
