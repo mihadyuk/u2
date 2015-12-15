@@ -60,10 +60,12 @@ __CCM__ static mavlink_navi6d_debug_output_t  dbg_out_struct;
 __CCM__ static mavMail dbg_in_mail;
 __CCM__ static mavMail dbg_out_mail;
 
+__CCM__ static mavlink_debug_vect_t dbg_gps_vel;
 __CCM__ static mavlink_debug_vect_t dbg_acc_bias;
 __CCM__ static mavlink_debug_vect_t dbg_gyr_bias;
 __CCM__ static mavlink_debug_vect_t dbg_acc_scale;
 __CCM__ static mavlink_debug_vect_t dbg_gyr_scale;
+__CCM__ static mavMail mail_gps_vel;
 __CCM__ static mavMail mail_acc_bias;
 __CCM__ static mavMail mail_gyr_bias;
 __CCM__ static mavMail mail_acc_scale;
@@ -204,6 +206,14 @@ void Navi6dWrapper::debug2mavlink(float dT) {
     else {
       debug_vect_decimator = 0;
       uint64_t time = TimeKeeper::utc();
+
+      //
+      dbg_gps_vel.time_usec = time;
+      dbg_gps_vel.x = round(100 * nav_sins.sensor_data.v_sns[0][0]);
+      dbg_gps_vel.y = round(100 * nav_sins.sensor_data.v_sns[1][0]);
+      dbg_gps_vel.z = round(100 * nav_sins.sensor_data.v_sns[2][0]);
+      mail_gps_vel.fill(&dbg_gps_vel, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG_VECT);
+      mav_postman.post(mail_gps_vel);
 
       //
       dbg_acc_bias.time_usec = time;
@@ -358,6 +368,7 @@ void Navi6dWrapper::start(void) {
   /* we need to initialize names of fields manually because CCM RAM section
    * set to NOLOAD in chibios linker scripts */
   const size_t N = sizeof(mavlink_debug_vect_t::name);
+  strncpy(dbg_gps_vel.name,   "gps_vel",   N);
   strncpy(dbg_acc_bias.name,  "acc_bias",  N);
   strncpy(dbg_gyr_bias.name,  "gyr_bias",  N);
   strncpy(dbg_acc_scale.name, "acc_scale", N);
