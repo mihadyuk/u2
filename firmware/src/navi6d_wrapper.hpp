@@ -41,6 +41,7 @@ private:
   ACSInput &acs_in;
   gnss::GNSSReceiver &GNSS;
   gnss::gnss_data_t gps;
+  chibios_rt::EvtListener gnss_evl;
 
   const uint32_t *T_debug      = nullptr;
   const uint32_t *T_debug_vect = nullptr;

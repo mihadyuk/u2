@@ -34,7 +34,7 @@
 #define BAROMETERPRIO     (NORMALPRIO + 2)
 #define CMDPRIO           (NORMALPRIO - 2)
 #define MISSIONRECVRPRIO  (NORMALPRIO)
-#define GPSPRIO           (NORMALPRIO + 1)
+#define GPSPRIO           (NORMALPRIO - 1)
 #define MAVPOSTMANPRIO    (NORMALPRIO - 1)
 #define TELEMETRYDISPPRIO (NORMALPRIO + 5) // it must be high because it just schedule sending
 #define MPU6050PRIO       (ADISPRIO + 1)

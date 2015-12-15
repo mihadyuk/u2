@@ -34,9 +34,7 @@ extern MavLogger mav_logger;
  ******************************************************************************
  */
 
-chibios_rt::BinarySemaphore GNSSReceiver::pps_sem(true);
 chibios_rt::BinarySemaphore GNSSReceiver::protect_sem(false);
-
 chibios_rt::EvtSource event_gnss;
 
 /*
@@ -192,24 +190,9 @@ void GNSSReceiver::unsubscribe(gnss_data_t* result) {
   osalSysHalt("This message not subscribed");
 }
 
-
-
-/**
- *
- */
-void GNSSReceiver::getCache(gnss_data_t &result) {
-
-  osalDbgCheck(ready);
-
-  osalSysLock();
-  result = this->cache;
-  osalSysUnlock();
-}
-
 /**
  *
  */
 void GNSSReceiver::GNSS_PPS_ISR_I(void) {
-
-  pps_sem.signalI();
+  event_gnss.broadcastFlagsI(EVMSK_GNSS_PPS);
 }

@@ -141,18 +141,15 @@ void GenericNMEA::ggarmc2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc) {
 void GenericNMEA::gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
                                gnss_data_t *result) {
 
-  if (false == result->fresh) {
-    result->altitude   = gga.altitude;
-    result->latitude   = deg2rad(gga.latitude);
-    result->longitude  = deg2rad(gga.longitude);
-    result->course     = deg2rad(rmc.course);
-    result->speed      = rmc.speed;
-    result->speed_type = speed_t::SPEED_COURSE;
-    result->time       = rmc.time;
-    result->msec       = rmc.msec;
-    result->fix        = gga.fix;
-    result->fresh      = true; // this line must be at the very end for atomicity
-  }
+  result->altitude   = gga.altitude;
+  result->latitude   = deg2rad(gga.latitude);
+  result->longitude  = deg2rad(gga.longitude);
+  result->course     = deg2rad(rmc.course);
+  result->speed      = rmc.speed;
+  result->speed_type = speed_t::SPEED_COURSE;
+  result->time       = rmc.time;
+  result->msec       = rmc.msec;
+  result->fix        = gga.fix;
 }
 
 /**
@@ -252,13 +249,15 @@ THD_FUNCTION(GenericNMEA::nmeaRxThread, arg) {
 
         self->acquire();
         for (size_t i=0; i<ArrayLen(self->spamlist); i++) {
-          if (nullptr != self->spamlist[i]) {
+          gnss_data_t* p = self->spamlist[i];
+          if ((nullptr != p) && (false == p->fresh)) {
             self->gnss_unpack(gga, rmc, self->spamlist[i]);
+            p->fresh = true;
           }
         }
         self->release();
 
-        if (gga.fix == 1) {
+        if (gga.fix > 0) {
           event_gnss.broadcastFlags(EVMSK_GNSS_FRESH_VALID);
         }
 

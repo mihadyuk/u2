@@ -1,3 +1,4 @@
+
 /*
  * Some functions was moved to this file to reduce copypasta size
  * between test and main code
@@ -135,8 +136,11 @@ void Navi6dWrapper::sins_cold_start(void) {
  */
 void Navi6dWrapper::prepare_data_gnss(gnss::gnss_data_t &gnss_data) {
 
-#warning "pass this data using mailbox"
-  if ((gnss_data.fresh) && (gnss_data.fix > 0)) {
+  eventflags_t evt = this->gnss_evl.getAndClearFlags();
+
+  if (evt & EVMSK_GNSS_FRESH_VALID) {
+
+    nav_sins.gnss_sensor.set_sample_rate(gnss_data.samplerate);
     nav_sins.gnss_sensor.set_pos(gnss_data.latitude, gnss_data.longitude, gnss_data.altitude);
     nav_sins.gnss_sensor.set_dop(gnss_data.hdop, gnss_data.vdop);
 
@@ -149,14 +153,12 @@ void Navi6dWrapper::prepare_data_gnss(gnss::gnss_data_t &gnss_data) {
       nav_sins.gnss_sensor.set_vel_ned(gnss_data.v[0], gnss_data.v[1], gnss_data.v[2]);
       break;
     }
+
+    gnss_data.fresh = false;
   }
 
-#warning "correctly call this function"
-  nav_sins.gnss_sensor.set_pps();
-
-  // Important! Must be set to false after data processing
-  if (gnss_data.fresh) {
-    gnss_data.fresh = false;
+  if (evt & EVMSK_GNSS_PPS) {
+    nav_sins.gnss_sensor.set_pps();
   }
 }
 
@@ -167,15 +169,15 @@ void Navi6dWrapper::prepare_data(const baro_data_t &baro,
                                  const odometer_data_t &odo,
                                  const marg_data_t &marg) {
 
-  nav_sins.ctrl_params.use_sns = *en_gnss;
-  nav_sins.ctrl_params.use_baro_alt = *en_baro;
-  nav_sins.ctrl_params.use_odo = *en_odo;
-  nav_sins.ctrl_params.use_nonhol_y = *en_nhl_y;
-  nav_sins.ctrl_params.use_nonhol_z = *en_nhl_z;
-  nav_sins.ctrl_params.use_roll = *en_roll;
-  nav_sins.ctrl_params.use_pitch = *en_pitch;
-  nav_sins.ctrl_params.use_yaw = *en_yaw;
-  nav_sins.ctrl_params.use_mag = *en_mg_v;
+  nav_sins.ctrl_params.use_sns        = *en_gnss;
+  nav_sins.ctrl_params.use_baro_alt   = *en_baro;
+  nav_sins.ctrl_params.use_odo        = *en_odo;
+  nav_sins.ctrl_params.use_nonhol_y   = *en_nhl_y;
+  nav_sins.ctrl_params.use_nonhol_z   = *en_nhl_z;
+  nav_sins.ctrl_params.use_roll       = *en_roll;
+  nav_sins.ctrl_params.use_pitch      = *en_pitch;
+  nav_sins.ctrl_params.use_yaw        = *en_yaw;
+  nav_sins.ctrl_params.use_mag        = *en_mg_v;
   nav_sins.ctrl_params.use_mag_course = *en_mg_yaw;
 
 
