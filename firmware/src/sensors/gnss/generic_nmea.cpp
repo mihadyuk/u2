@@ -192,7 +192,7 @@ THD_FUNCTION(GenericNMEA::nmeaRxThread, arg) {
   nmea_rmc_t rmc;
   nmea_gsv_t gsv;
 
-  osalThreadSleepSeconds(5);
+  osalThreadSleepSeconds(4);
   self->configure();
   self->subscribe_inject();
 
@@ -201,22 +201,22 @@ THD_FUNCTION(GenericNMEA::nmeaRxThread, arg) {
 
     byte = sdGetTimeout(self->sdp, MS2ST(50));
     if (MSG_TIMEOUT != byte) {
-      status = self->nmea_parser.collect(byte);
+      status = self->parser.collect(byte);
       if (nullptr != self->sniff_sdp)
         sdPut(self->sniff_sdp, byte);
 
       /* main receiving switch */
       switch(status) {
       case sentence_type_t::GGA:
-        self->nmea_parser.unpack(gga);
+        self->parser.unpack(gga);
         gga_msec = gga.msec + gga.time.tm_sec * 1000;
         break;
       case sentence_type_t::RMC:
-        self->nmea_parser.unpack(rmc);
+        self->parser.unpack(rmc);
         rmc_msec = rmc.msec + rmc.time.tm_sec * 1000;
         break;
       case sentence_type_t::GPGSV:
-        self->nmea_parser.unpack(gsv);
+        self->parser.unpack(gsv);
         if (1 == gsv.current)
           memset(gp_gsv, 0, sizeof(gp_gsv));
         gp_gsv[gsv.current - 1] = gsv;
@@ -224,7 +224,7 @@ THD_FUNCTION(GenericNMEA::nmeaRxThread, arg) {
           gp_gsv_fresh = true;
         break;
       case sentence_type_t::GLGSV:
-        self->nmea_parser.unpack(gsv);
+        self->parser.unpack(gsv);
         if (1 == gsv.current)
           memset(gl_gsv, 0, sizeof(gl_gsv));
         gl_gsv[gsv.current - 1] = gsv;

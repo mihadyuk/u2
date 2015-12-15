@@ -25,7 +25,7 @@ public:
 protected:
   void start_impl(void);
 private:
-  ProtoUbx ubx_parser;
+  ProtoUbx parser;
   static THD_FUNCTION(ubxRxThread, arg);
   void get_version(void);
   void set_fix_period(uint16_t msec);

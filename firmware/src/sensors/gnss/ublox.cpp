@@ -159,14 +159,14 @@ ubx_msg_t uBlox::wait_any_timeout(const ubx_msg_t *type_list,
   while (chVTIsSystemTimeWithinX(start, end)) {
     byte = sdGetTimeout(this->sdp, MS2ST(100));
     if (MSG_TIMEOUT != byte) {
-      status = ubx_parser.collect(byte);
+      status = parser.collect(byte);
       if (ubx_msg_t::EMPTY != status) {
         for (size_t i=0; i<list_len; i++) {
           if (type_list[i] == status) {
             return status;
           }
         }
-        ubx_parser.drop(); // it is very important to drop unneeded message
+        parser.drop(); // it is very important to drop unneeded message
       }
     }
   }
@@ -200,14 +200,14 @@ ublox_ack_t uBlox::wait_ack(ubx_msg_t type, systime_t timeout) {
     goto EXIT;
     break;
   case ubx_msg_t::ACK_ACK:
-    ubx_parser.unpack(ack_ack);
+    parser.unpack(ack_ack);
     if (ack_ack.payload.acked_msg == type) {
       ret = ublox_ack_t::ACK;
       goto EXIT;
     }
     break;
   case ubx_msg_t::ACK_NACK:
-    ubx_parser.unpack(ack_nack);
+    parser.unpack(ack_nack);
     if (ack_nack.payload.nacked_msg == type) {
       ret = ublox_ack_t::NACK;
       goto EXIT;
@@ -233,7 +233,7 @@ void uBlox::write_with_confirm(const T &msg, systime_t timeout) {
   size_t len;
   ublox_ack_t ack;
 
-  len = ubx_parser.pack(msg, buf, sizeof(buf));
+  len = parser.pack(msg, buf, sizeof(buf));
   osalDbgCheck(len > 0 && len <= sizeof(buf));
   sdWrite(this->sdp, buf, len);
   if (0 != timeout) {
@@ -323,13 +323,13 @@ bool uBlox::device_alive(systime_t timeout) {
   bool ret = false;
   ubx_mon_ver<0> version;
 
-  len = ubx_parser.packPollRequest(ubx_msg_t::MON_VER, buf, sizeof(buf));
+  len = parser.packPollRequest(ubx_msg_t::MON_VER, buf, sizeof(buf));
   osalDbgCheck(len > 0 && len <= sizeof(buf));
 
   sdWrite(this->sdp, buf, len);
   recvd = wait_one_timeout(ubx_msg_t::MON_VER, timeout);
   if (ubx_msg_t::MON_VER == recvd) {
-    this->ubx_parser.unpack(version);
+    this->parser.unpack(version);
     ret = true;
   }
   else {
@@ -348,13 +348,13 @@ void uBlox::get_version(void) {
   size_t len;
   ubx_msg_t recvd = ubx_msg_t::EMPTY;
 
-  len = ubx_parser.packPollRequest(ubx_msg_t::MON_VER, buf, sizeof(buf));
+  len = parser.packPollRequest(ubx_msg_t::MON_VER, buf, sizeof(buf));
   osalDbgCheck(len > 0 && len <= sizeof(buf));
 
   sdWrite(this->sdp, buf, len);
   recvd = wait_one_timeout(ubx_msg_t::MON_VER, S2ST(1));
   if (ubx_msg_t::MON_VER == recvd) {
-    this->ubx_parser.unpack(this->ver);
+    this->parser.unpack(this->ver);
   }
 }
 
@@ -530,26 +530,26 @@ THD_FUNCTION(uBlox::ubxRxThread, arg) {
     self->update_settings();
     byte = sdGetTimeout(self->sdp, MS2ST(50));
     if (MSG_TIMEOUT != byte) {
-      status = self->ubx_parser.collect(byte);
+      status = self->parser.collect(byte);
       switch(status) {
       case ubx_msg_t::EMPTY:
         break;
       case ubx_msg_t::NAV_PVT:
-        self->ubx_parser.unpack(self->pvt);
+        self->parser.unpack(self->pvt);
         dbg_print((BaseSequentialStream *)self->sniff_sdp, self->pvt);
         iTOW_pvt = self->pvt.payload.iTOW;
         break;
       case ubx_msg_t::NAV_DOP:
-        self->ubx_parser.unpack(self->dop);
+        self->parser.unpack(self->dop);
         iTOW_dop = self->dop.payload.iTOW;
         break;
       case ubx_msg_t::NAV_SAT:
-        self->ubx_parser.unpack(self->sat);
+        self->parser.unpack(self->sat);
         self->sat2mavlink();
         break;
 
       default:
-        self->ubx_parser.drop(); // it is essential to drop unneeded message
+        self->parser.drop(); // it is essential to drop unneeded message
         break;
       }
 

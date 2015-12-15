@@ -21,8 +21,8 @@ protected:
   virtual void release_inject(void){return;}
   virtual void inject(void){return;}
   void start_impl(void);
+  ProtoNmea parser;
 private:
-  ProtoNmea nmea_parser;
   static THD_FUNCTION(nmeaRxThread, arg);
   void ggarmc2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc);
   void gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
