@@ -2,9 +2,9 @@
 #define MANEUVER_PART_HPP_
 
 #include <math.h>
-
 #include "ld_navigator_types.hpp"
 #include "matrix_math.hpp"
+#include "geometry.hpp"
 
 namespace control {
 
@@ -12,10 +12,10 @@ template <typename T>
 class ManeuverPart {
 public:
   ManeuverPart();
-  void fillLine(T (&start)[2][1], T (&finish)[2][1], bool finale);
+  void fillLine(const T (&start)[2][1], const T (&finish)[2][1], bool finale);
   void fillLine(T startNorth, T startEast,
                 T finishNorth, T finishEast, bool finale);
-  void fillArc(T (&center)[2][1], T radius,
+  void fillArc(const T (&center)[2][1], T radius,
                T startCourse, T deltaCourse, bool finale);
   void fillArc(T centerNorth, T centerEast, T radius,
                T startCourse, T deltaCourse, bool finale);
@@ -23,7 +23,7 @@ public:
   void rotate(T angle);
   void flipNorth();
   void flipEast();
-  void move(T (&localDelta)[2][1]);
+  void move(const T (&localDelta)[2][1]);
 
   ManeuverPartType type; /* type of maneuver part */
   bool finale;           /* is last part in maneuver */
@@ -40,8 +40,8 @@ ManeuverPart<T>::ManeuverPart() {
 }
 
 template <typename T>
-void ManeuverPart<T>::fillLine(T (&start)[2][1],
-                               T (&finish)[2][1],
+void ManeuverPart<T>::fillLine(const T (&start)[2][1],
+                               const T (&finish)[2][1],
                                bool finale) {
   line.fill(start, finish);
   arc.clear();
@@ -60,7 +60,7 @@ void ManeuverPart<T>::fillLine(T startNorth, T startEast,
 }
 
 template <typename T>
-void ManeuverPart<T>::fillArc(T (&center)[2][1], T radius,
+void ManeuverPart<T>::fillArc(const T (&center)[2][1], T radius,
                               T startCourse, T deltaCourse,
                               bool finale) {
   arc.fill(center, radius, startCourse, deltaCourse);
@@ -153,7 +153,7 @@ void ManeuverPart<T>::flipEast() {
 }
 
 template <typename T>
-void ManeuverPart<T>::move(T (&localDelta)[2][1]) {
+void ManeuverPart<T>::move(const T (&localDelta)[2][1]) {
   switch (type) {
     case ManeuverPartType::arc: {
       m_plus<T, 2, 1>(arc.center, arc.center, localDelta);

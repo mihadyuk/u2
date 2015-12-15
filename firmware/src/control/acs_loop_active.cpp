@@ -99,7 +99,7 @@ static const uint8_t loiter_bytecode[] = {
  */
 void ACS::loop_active_navigate_mission(float dT) {
 
-  MissionState mi_status = mission.update();
+  MissionState mi_status = mission.update(dT);
 
   switch (mi_status) {
   case MissionState::completed:
