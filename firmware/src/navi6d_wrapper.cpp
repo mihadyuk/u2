@@ -492,6 +492,22 @@ void Navi6dWrapper::update(const baro_data_t &baro,
   nav_sins.calib_params.m_no[1][0] = 0.0078;
   nav_sins.calib_params.m_no[2][0] = 0.0018;
 
+  nav_sins.calib_params.ba[0][0] = *acc_bias_x;
+  nav_sins.calib_params.ba[1][0] = *acc_bias_y;
+  nav_sins.calib_params.ba[2][0] = *acc_bias_z;
+
+  nav_sins.calib_params.bw[0][0] = *gyr_bias_x;
+  nav_sins.calib_params.bw[1][0] = *gyr_bias_y;
+  nav_sins.calib_params.bw[2][0] = *gyr_bias_z;
+
+  nav_sins.calib_params.sa[0][0] = *acc_scale_x;
+  nav_sins.calib_params.sa[1][0] = *acc_scale_y;
+  nav_sins.calib_params.sa[2][0] = *acc_scale_z;
+
+  nav_sins.calib_params.sw[0][0] = *gyr_scale_x;
+  nav_sins.calib_params.sw[1][0] = *gyr_scale_y;
+  nav_sins.calib_params.sw[2][0] = *gyr_scale_z;
+
   nav_sins.ref_params.mag_eu_bs[0][0] = M_PI;
   nav_sins.ref_params.mag_eu_bs[1][0] = 0.0;
   nav_sins.ref_params.mag_eu_bs[2][0] = -M_PI;
@@ -510,22 +526,6 @@ void Navi6dWrapper::update(const baro_data_t &baro,
   nav_sins.ref_params.glrt_gyr_sigma  = *gyr_sigma;
   nav_sins.ref_params.glrt_n          = *samples;
   nav_sins.ref_params.sns_extr_en     = true;
-
-  nav_sins.calib_params.ba[0][0] = *acc_bias_x;
-  nav_sins.calib_params.ba[1][0] = *acc_bias_y;
-  nav_sins.calib_params.ba[2][0] = *acc_bias_z;
-
-  nav_sins.calib_params.bw[0][0] = *gyr_bias_x;
-  nav_sins.calib_params.bw[1][0] = *gyr_bias_y;
-  nav_sins.calib_params.bw[2][0] = *gyr_bias_z;
-
-  nav_sins.calib_params.sa[0][0] = *acc_scale_x;
-  nav_sins.calib_params.sa[1][0] = *acc_scale_y;
-  nav_sins.calib_params.sa[2][0] = *acc_scale_z;
-
-  nav_sins.calib_params.sw[0][0] = *gyr_scale_x;
-  nav_sins.calib_params.sw[1][0] = *gyr_scale_y;
-  nav_sins.calib_params.sw[2][0] = *gyr_scale_z;
 
   dbg_in_fill_gnss(this->gps);
   prepare_data_gnss(this->gps);
