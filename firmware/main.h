@@ -42,26 +42,12 @@
 #define SHELLPRIO         (NORMALPRIO - 10)
 
 /*
- * метка времени для пакетов
+ * timestamp for mavlink messages
  */
 #if (CH_CFG_ST_FREQUENCY) >= 1000
 #define TIME_BOOT_MS ((chVTGetSystemTimeX()) / ((CH_CFG_ST_FREQUENCY) / 1000))
 #endif
 
 #define ForbiddenDestructor() osalSysHalt("Destruction forbidden.")
-
-///* stop watchdog timer in debugging mode */
-///*unlock PR register*/
-///*set 1.6384s timeout*/
-///*start watchdog*/
-/*
-#define WATCHDOG_INIT {\
-    DBGMCU->CR |= DBGMCU_CR_DBG_IWDG_STOP;\
-    IWDG->KR = 0x5555;\
-    IWDG->PR = 16;\
-    IWDG->KR = 0xCCCC;}
-
-#define WATCHDOG_RELOAD {IWDG->KR = 0xAAAA;}
-*/
 
 #endif /* MAIN_H_ */
