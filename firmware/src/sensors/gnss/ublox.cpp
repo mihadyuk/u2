@@ -268,9 +268,9 @@ void uBlox::set_port(void) {
   msg.payload.txready = 0;
   msg.payload.mode = (0b11 << 6) | (0b100 << 9);
   msg.payload.baudrate = this->working_baudrate;
-  msg.payload.inProtoMask = 1;
+  msg.payload.inProtoMask = 0b101; // rtcm + ubx
   //msg.payload.outProtoMask = 0b11; // nmea + ubx
-  msg.payload.outProtoMask = 0b1; // ubx only
+  msg.payload.outProtoMask = 0b1; // ubx
   msg.payload.flags = 0;
 
   write_with_confirm(msg, 0);
