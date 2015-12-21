@@ -25,9 +25,8 @@ public:
 protected:
   void start_impl(void);
 private:
-  ProtoUbx ubx_parser;
+  ProtoUbx parser;
   static THD_FUNCTION(ubxRxThread, arg);
-  void pvt2mavlink(const ubx_nav_pvt_payload &pvt);
   void get_version(void);
   void set_fix_period(uint16_t msec);
   void set_port(void);
@@ -41,7 +40,9 @@ private:
   template <typename T> void write_with_confirm(const T &msg, systime_t timeout);
   void configure(uint32_t dyn_model, uint32_t fix_period);
   void update_settings(void);
-  void pvtdispatch(const ubx_nav_pvt_payload &pvt);
+  void pvt_dop2mavlink(void);
+  void sat2mavlink(void);
+  void gnss_dispatch(void);
   const uint32_t *dyn_model = nullptr;
   const uint32_t *fix_period = nullptr;
   uint32_t dyn_model_cache = 8;
@@ -49,8 +50,9 @@ private:
   uint16_t nack_cnt = 0;
   uint16_t no_answer_cnt = 0;
   ubx_nav_pvt pvt;
+  ubx_nav_dop dop;
   ubx_mon_ver<5> ver;
-  ubx_nav_sat<20> sat;
+  ubx_nav_sat<32> sat;
 };
 
 } // namespace

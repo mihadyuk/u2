@@ -141,18 +141,33 @@ void GenericNMEA::ggarmc2mavlink(const nmea_gga_t &gga, const nmea_rmc_t &rmc) {
 void GenericNMEA::gnss_unpack(const nmea_gga_t &gga, const nmea_rmc_t &rmc,
                                gnss_data_t *result) {
 
-  if (false == result->fresh) {
-    result->altitude   = gga.altitude;
-    result->latitude   = gga.latitude;
-    result->longitude  = gga.longitude;
-    result->course     = rmc.course;
-    result->speed      = rmc.speed;
-    result->speed_type = speed_t::SPEED_COURSE;
-    result->time       = rmc.time;
-    result->msec       = rmc.msec;
-    result->fix        = gga.fix;
-    result->fresh      = true; // this line must be at the very end for atomicity
+  result->altitude   = gga.altitude;
+  result->latitude   = deg2rad(gga.latitude);
+  result->longitude  = deg2rad(gga.longitude);
+  result->course     = deg2rad(rmc.course);
+  result->speed      = rmc.speed;
+  result->speed_type = speed_t::SPEED_COURSE;
+  result->time       = rmc.time;
+  result->msec       = rmc.msec;
+  result->fix        = gga.fix;
+}
+
+/**
+ *
+ */
+void GenericNMEA::dispatch_data(const nmea_gga_t &gga, const nmea_rmc_t &rmc) {
+
+  this->acquire();
+
+  for (size_t i=0; i<ArrayLen(this->spamlist); i++) {
+    gnss_data_t* p = this->spamlist[i];
+    if ((nullptr != p) && (false == p->fresh)) {
+      this->gnss_unpack(gga, rmc, p);
+      p->fresh = true; // must be at the very end for atomicity
+    }
   }
+
+  this->release();
 }
 
 /**
@@ -177,7 +192,7 @@ THD_FUNCTION(GenericNMEA::nmeaRxThread, arg) {
   nmea_rmc_t rmc;
   nmea_gsv_t gsv;
 
-  osalThreadSleepSeconds(5);
+  osalThreadSleepSeconds(4);
   self->configure();
   self->subscribe_inject();
 
@@ -186,52 +201,41 @@ THD_FUNCTION(GenericNMEA::nmeaRxThread, arg) {
 
     byte = sdGetTimeout(self->sdp, MS2ST(50));
     if (MSG_TIMEOUT != byte) {
-      status = self->nmea_parser.collect(byte);
+      status = self->parser.collect(byte);
       if (nullptr != self->sniff_sdp)
         sdPut(self->sniff_sdp, byte);
 
       /* main receiving switch */
       switch(status) {
       case sentence_type_t::GGA:
-        self->nmea_parser.unpack(gga);
+        self->parser.unpack(gga);
         gga_msec = gga.msec + gga.time.tm_sec * 1000;
-        if (nullptr != self->sniff_sdp) {
-          chprintf((BaseSequentialStream *)self->sniff_sdp,
-              "---- gga_parsed = %u\n", gga.msec);
-        }
         break;
       case sentence_type_t::RMC:
-        self->nmea_parser.unpack(rmc);
+        self->parser.unpack(rmc);
         rmc_msec = rmc.msec + rmc.time.tm_sec * 1000;
-        if (nullptr != self->sniff_sdp) {
-          chprintf((BaseSequentialStream *)self->sniff_sdp,
-              "---- rmc_parsed = %u\n", rmc.msec);
-        }
         break;
-
       case sentence_type_t::GPGSV:
-        self->nmea_parser.unpack(gsv);
+        self->parser.unpack(gsv);
         if (1 == gsv.current)
           memset(gp_gsv, 0, sizeof(gp_gsv));
         gp_gsv[gsv.current - 1] = gsv;
         if (gsv.current == gsv.total)
           gp_gsv_fresh = true;
         break;
-
       case sentence_type_t::GLGSV:
-        self->nmea_parser.unpack(gsv);
+        self->parser.unpack(gsv);
         if (1 == gsv.current)
           memset(gl_gsv, 0, sizeof(gl_gsv));
         gl_gsv[gsv.current - 1] = gsv;
         if (gsv.current == gsv.total)
           gl_gsv_fresh = true;
         break;
-
       default:
         break;
       }
 
-      /* fill mavlink message with acquired GSV data */
+      /* GSV data */
       if (gga.satellites > 0) {
         if (gl_gsv_fresh & gp_gsv_fresh) {
           gsv2mavlink(gp_gsv, ArrayLen(gp_gsv), gl_gsv, ArrayLen(gl_gsv));
@@ -245,30 +249,15 @@ THD_FUNCTION(GenericNMEA::nmeaRxThread, arg) {
       }
 
       /* Workaround. Prevents mixing of speed and coordinates from different
-       * measurements. */
-      if (gga_msec == rmc_msec) {
-
+         measurements. */
+      if ((gga_msec == rmc_msec) && (GGA_VOID != gga_msec) && (RMC_VOID != rmc_msec)) {
         self->ggarmc2mavlink(gga, rmc);
-
-        self->acquire();
-        for (size_t i=0; i<ArrayLen(self->spamlist); i++) {
-          if (nullptr != self->spamlist[i]) {
-            self->gnss_unpack(gga, rmc, self->spamlist[i]);
-          }
-        }
-        self->release();
-
-        if (gga.fix == 1) {
-          event_gnss.broadcastFlags(EVMSK_GNSS_FRESH_VALID);
-        }
-
-        if (nullptr != self->sniff_sdp) {
-          chprintf((BaseSequentialStream *)self->sniff_sdp,
-              "---- gga = %u; rmc = %u\n", gga_msec, rmc_msec);
-        }
-
+        self->dispatch_data(gga, rmc);
         gga_msec = GGA_VOID;
         rmc_msec = RMC_VOID;
+
+        if (gga.fix > 0)
+          event_gnss.broadcastFlags(EVMSK_GNSS_FRESH_VALID);
       }
     }
 

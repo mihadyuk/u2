@@ -1,3 +1,4 @@
+
 /*
  * Some functions was moved to this file to reduce copypasta size
  * between test and main code
@@ -25,9 +26,8 @@ void Navi6dWrapper::read_settings(void) {
   param_registry.valueSearch("SINS_en_mg_yaw",  &en_mg_yaw);
   param_registry.valueSearch("SINS_zupt_src",   &zupt_src);
 
-  param_registry.valueSearch("SINS_R_ne_sns",   &R_ne_sns);
-  param_registry.valueSearch("SINS_R_d_sns",    &R_d_sns);
-  param_registry.valueSearch("SINS_R_v_n_sns",  &R_v_n_sns);
+  param_registry.valueSearch("SINS_R_pos_sns",  &R_pos_sns);
+  param_registry.valueSearch("SINS_R_vel_sns",  &R_vel_sns);
   param_registry.valueSearch("SINS_R_odo",      &R_odo);
   param_registry.valueSearch("SINS_R_nhl_y",    &R_nhl_y);
   param_registry.valueSearch("SINS_R_nhl_z",    &R_nhl_z);
@@ -136,42 +136,29 @@ void Navi6dWrapper::sins_cold_start(void) {
  */
 void Navi6dWrapper::prepare_data_gnss(gnss::gnss_data_t &gnss_data) {
 
-  if ((*en_gnss == 1) && (gnss_data.fresh) && (gnss_data.fix > 0)) {
-    nav_sins.sensor_data.r_sns[0][0] = deg2rad(gnss_data.latitude);
-    nav_sins.sensor_data.r_sns[1][0] = deg2rad(gnss_data.longitude);
-    nav_sins.sensor_data.r_sns[2][0] = gnss_data.altitude;
-    nav_sins.sensor_flags.sns_r_en = true;
-    nav_sins.sensor_flags.sns_h_en = true;
+  eventflags_t evt = this->gnss_evl.getAndClearFlags();
+
+  if (evt & EVMSK_GNSS_FRESH_VALID) {
+
+    nav_sins.gnss_sensor.set_sample_rate(gnss_data.samplerate);
+    nav_sins.gnss_sensor.set_pos(gnss_data.latitude, gnss_data.longitude, gnss_data.altitude);
+    nav_sins.gnss_sensor.set_dop(gnss_data.hdop, gnss_data.vdop);
 
     switch(gnss_data.speed_type) {
     case gnss::speed_t::SPEED_COURSE:
-      nav_sins.sensor_data.v_sns[0][0] = gnss_data.speed * cos(deg2rad(gnss_data.course));
-      nav_sins.sensor_data.v_sns[1][0] = gnss_data.speed * sin(deg2rad(gnss_data.course));
-      nav_sins.sensor_data.v_sns[2][0] = gnss_data.course;
-      nav_sins.sensor_flags.sns_v_n_en = true;
-      nav_sins.sensor_flags.sns_v_e_en = true;
-      nav_sins.sensor_flags.sns_v_d_en = false;
+      nav_sins.gnss_sensor.set_vel_speed_course(gnss_data.speed, gnss_data.course);
       break;
     case gnss::speed_t::VECTOR_3D:
     case gnss::speed_t::BOTH:
-      for (size_t i=0; i<3; i++) {
-        nav_sins.sensor_data.v_sns[i][0] = gnss_data.v[i];
-      }
-      nav_sins.sensor_flags.sns_v_n_en = true;
-      nav_sins.sensor_flags.sns_v_e_en = true;
-      nav_sins.sensor_flags.sns_v_d_en = true;
-      break;
-    default:
-      nav_sins.sensor_flags.sns_v_n_en = false;
-      nav_sins.sensor_flags.sns_v_e_en = false;
-      nav_sins.sensor_flags.sns_v_d_en = false;
+      nav_sins.gnss_sensor.set_vel_ned(gnss_data.v[0], gnss_data.v[1], gnss_data.v[2]);
       break;
     }
+
+    gnss_data.fresh = false;
   }
 
-  // Important! Must be set to false after data processing
-  if (gnss_data.fresh) {
-    gnss_data.fresh = false;
+  if (evt & EVMSK_GNSS_PPS) {
+    nav_sins.gnss_sensor.set_pps();
   }
 }
 
@@ -182,14 +169,15 @@ void Navi6dWrapper::prepare_data(const baro_data_t &baro,
                                  const odometer_data_t &odo,
                                  const marg_data_t &marg) {
 
-  nav_sins.ctrl_params.use_baro_alt = *en_baro;
-  nav_sins.ctrl_params.use_odo = *en_odo;
-  nav_sins.ctrl_params.use_nonhol_y = *en_nhl_y;
-  nav_sins.ctrl_params.use_nonhol_z = *en_nhl_z;
-  nav_sins.ctrl_params.use_roll = *en_roll;
-  nav_sins.ctrl_params.use_pitch = *en_pitch;
-  nav_sins.ctrl_params.use_yaw = *en_yaw;
-  nav_sins.ctrl_params.use_mag = *en_mg_v;
+  nav_sins.ctrl_params.use_sns        = *en_gnss;
+  nav_sins.ctrl_params.use_baro_alt   = *en_baro;
+  nav_sins.ctrl_params.use_odo        = *en_odo;
+  nav_sins.ctrl_params.use_nonhol_y   = *en_nhl_y;
+  nav_sins.ctrl_params.use_nonhol_z   = *en_nhl_z;
+  nav_sins.ctrl_params.use_roll       = *en_roll;
+  nav_sins.ctrl_params.use_pitch      = *en_pitch;
+  nav_sins.ctrl_params.use_yaw        = *en_yaw;
+  nav_sins.ctrl_params.use_mag        = *en_mg_v;
   nav_sins.ctrl_params.use_mag_course = *en_mg_yaw;
 
 

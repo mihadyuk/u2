@@ -90,8 +90,8 @@ void hil_gnss(int argc, const char * const * argv) {
       return;
     }
 
-    hil.override(lat, ACS_INPUT_lat);
-    hil.override(lon, ACS_INPUT_lon);
+    hil.override(deg2rad(lat), ACS_INPUT_lat);
+    hil.override(deg2rad(lon), ACS_INPUT_lon);
     hil.override(alt, ACS_INPUT_alt);
   }
   else {

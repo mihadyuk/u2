@@ -467,11 +467,12 @@ void ProtoNmea::unpack(nmea_rmc_t &result) const {
 
 /**
  * @brief   Fills checksum field and inserts CR/LF
- * @pre     Initial message must me ended with '*' sign
+ * @pre     Initial string must be started from '$' ended with '*'
  */
 void ProtoNmea::seal(char *msg) {
   char *sump = strstr(msg, "*");
-  osalDbgCheck(NULL != sump);
+  osalDbgCheck(nullptr != sump);
+
   size_t len = sump - msg;
   uint8_t sum = checksum((uint8_t *)msg + 1, len - 1);
 

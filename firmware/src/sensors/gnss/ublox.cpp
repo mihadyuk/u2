@@ -19,7 +19,6 @@ using namespace gnss;
  * DEFINES
  ******************************************************************************
  */
-#define DEG_TO_UBX    (10 * 1000 * 1000)
 
 /*
  ******************************************************************************
@@ -27,12 +26,15 @@ using namespace gnss;
  ******************************************************************************
  */
 extern mavlink_gps_raw_int_t    mavlink_out_gps_raw_int_struct;
+extern mavlink_gps_status_t     mavlink_out_gps_status_struct;
 
 /*
  ******************************************************************************
  * GLOBAL VARIABLES
  ******************************************************************************
  */
+
+static const double UBX_TO_DEG = 1e-7;
 
 /*
  ******************************************************************************
@@ -64,14 +66,49 @@ static uint16_t check_period(uint16_t period) {
 /**
  *
  */
-void uBlox::pvt2mavlink(const ubx_nav_pvt_payload &pvt) {
+static uint8_t uxb_azim_to_mavlink(int16_t azim) {
+  float a = (azim + 180) * 0.708333f;
+  return roundf(a);
+}
+
+/**
+ *
+ */
+void uBlox::sat2mavlink(void) {
+
+  memset(&mavlink_out_gps_status_struct, 0, sizeof(mavlink_out_gps_status_struct));
+
+  size_t cnt;
+  if (this->sat.payload.numSvs > ArrayLen(mavlink_out_gps_status_struct.satellite_azimuth))
+    cnt = ArrayLen(mavlink_out_gps_status_struct.satellite_azimuth);
+  else
+    cnt = this->sat.payload.numSvs;
+
+  mavlink_out_gps_status_struct.satellites_visible = this->sat.payload.numSvs;
+
+  for (size_t i=0; i<cnt; i++) {
+    mavlink_out_gps_status_struct.satellite_azimuth[i]   = uxb_azim_to_mavlink(this->sat.payload.svs[i].azim);
+    mavlink_out_gps_status_struct.satellite_elevation[i] = this->sat.payload.svs[i].elev;
+    mavlink_out_gps_status_struct.satellite_prn[i]       = this->sat.payload.svs[i].svID;
+    mavlink_out_gps_status_struct.satellite_snr[i]       = this->sat.payload.svs[i].cno;
+    mavlink_out_gps_status_struct.satellite_used[i]      = (this->sat.payload.svs[i].flags >> 3) & 1;
+  }
+}
+
+/**
+ *
+ */
+void uBlox::pvt_dop2mavlink(void) {
+
+  const ubx_nav_pvt_payload &pvt = this->pvt.payload;
+  const ubx_nav_dop_payload &dop = this->dop.payload;
 
   mavlink_out_gps_raw_int_struct.time_usec = TimeKeeper::utc();
   mavlink_out_gps_raw_int_struct.lat = pvt.lat;
   mavlink_out_gps_raw_int_struct.lon = pvt.lon;
   mavlink_out_gps_raw_int_struct.alt = pvt.h;
-  mavlink_out_gps_raw_int_struct.eph = pvt.pDOP;
-  mavlink_out_gps_raw_int_struct.epv = UINT16_MAX;
+  mavlink_out_gps_raw_int_struct.eph = dop.pDOP;
+  mavlink_out_gps_raw_int_struct.epv = dop.vDOP;
   if (pvt.fixFlags & 1)
     mavlink_out_gps_raw_int_struct.fix_type = pvt.fixType;
   else
@@ -122,14 +159,14 @@ ubx_msg_t uBlox::wait_any_timeout(const ubx_msg_t *type_list,
   while (chVTIsSystemTimeWithinX(start, end)) {
     byte = sdGetTimeout(this->sdp, MS2ST(100));
     if (MSG_TIMEOUT != byte) {
-      status = ubx_parser.collect(byte);
+      status = parser.collect(byte);
       if (ubx_msg_t::EMPTY != status) {
         for (size_t i=0; i<list_len; i++) {
           if (type_list[i] == status) {
             return status;
           }
         }
-        ubx_parser.drop(); // it is very important to drop unneeded message
+        parser.drop(); // it is very important to drop unneeded message
       }
     }
   }
@@ -163,14 +200,14 @@ ublox_ack_t uBlox::wait_ack(ubx_msg_t type, systime_t timeout) {
     goto EXIT;
     break;
   case ubx_msg_t::ACK_ACK:
-    ubx_parser.unpack(ack_ack);
+    parser.unpack(ack_ack);
     if (ack_ack.payload.acked_msg == type) {
       ret = ublox_ack_t::ACK;
       goto EXIT;
     }
     break;
   case ubx_msg_t::ACK_NACK:
-    ubx_parser.unpack(ack_nack);
+    parser.unpack(ack_nack);
     if (ack_nack.payload.nacked_msg == type) {
       ret = ublox_ack_t::NACK;
       goto EXIT;
@@ -196,7 +233,7 @@ void uBlox::write_with_confirm(const T &msg, systime_t timeout) {
   size_t len;
   ublox_ack_t ack;
 
-  len = ubx_parser.pack(msg, buf, sizeof(buf));
+  len = parser.pack(msg, buf, sizeof(buf));
   osalDbgCheck(len > 0 && len <= sizeof(buf));
   sdWrite(this->sdp, buf, len);
   if (0 != timeout) {
@@ -231,9 +268,9 @@ void uBlox::set_port(void) {
   msg.payload.txready = 0;
   msg.payload.mode = (0b11 << 6) | (0b100 << 9);
   msg.payload.baudrate = this->working_baudrate;
-  msg.payload.inProtoMask = 1;
+  msg.payload.inProtoMask = 0b101; // rtcm + ubx
   //msg.payload.outProtoMask = 0b11; // nmea + ubx
-  msg.payload.outProtoMask = 0b1; // ubx only
+  msg.payload.outProtoMask = 0b1; // ubx
   msg.payload.flags = 0;
 
   write_with_confirm(msg, 0);
@@ -258,13 +295,21 @@ void uBlox::set_dyn_model(uint32_t dyn_model) {
 }
 
 /**
- * @brief   set solution period
+ * @brief   set solution messages drop rate
  */
 void uBlox::set_message_rate(void) {
   ubx_cfg_msg msg;
 
   msg.payload.rate = 1;
   msg.payload.msg_wanted = ubx_msg_t::NAV_PVT;
+  write_with_confirm(msg, S2ST(1));
+
+  msg.payload.rate = 1;
+  msg.payload.msg_wanted = ubx_msg_t::NAV_DOP;
+  write_with_confirm(msg, S2ST(1));
+
+  msg.payload.rate = 1;
+  msg.payload.msg_wanted = ubx_msg_t::NAV_SAT;
   write_with_confirm(msg, S2ST(1));
 }
 
@@ -278,13 +323,13 @@ bool uBlox::device_alive(systime_t timeout) {
   bool ret = false;
   ubx_mon_ver<0> version;
 
-  len = ubx_parser.packPollRequest(ubx_msg_t::MON_VER, buf, sizeof(buf));
+  len = parser.packPollRequest(ubx_msg_t::MON_VER, buf, sizeof(buf));
   osalDbgCheck(len > 0 && len <= sizeof(buf));
 
   sdWrite(this->sdp, buf, len);
   recvd = wait_one_timeout(ubx_msg_t::MON_VER, timeout);
   if (ubx_msg_t::MON_VER == recvd) {
-    this->ubx_parser.unpack(version);
+    this->parser.unpack(version);
     ret = true;
   }
   else {
@@ -303,13 +348,13 @@ void uBlox::get_version(void) {
   size_t len;
   ubx_msg_t recvd = ubx_msg_t::EMPTY;
 
-  len = ubx_parser.packPollRequest(ubx_msg_t::MON_VER, buf, sizeof(buf));
+  len = parser.packPollRequest(ubx_msg_t::MON_VER, buf, sizeof(buf));
   osalDbgCheck(len > 0 && len <= sizeof(buf));
 
   sdWrite(this->sdp, buf, len);
   recvd = wait_one_timeout(ubx_msg_t::MON_VER, S2ST(1));
   if (ubx_msg_t::MON_VER == recvd) {
-    this->ubx_parser.unpack(this->ver);
+    this->parser.unpack(this->ver);
   }
 }
 
@@ -349,18 +394,18 @@ void uBlox::update_settings(void) {
 /**
  *
  */
-static void pvt2gnss(const ubx_nav_pvt_payload &pvt, gnss_data_t *result) {
+static void pvt2gnss(const ubx_nav_pvt_payload &pvt,
+                     const ubx_nav_dop_payload &dop,
+                     float samplerate, gnss_data_t *result) {
 
   result->altitude    = pvt.h / 1000.0;
-  result->latitude    = pvt.lat;
-  result->latitude    /= DEG_TO_UBX;
-  result->longitude   = pvt.lon;
-  result->longitude   /= DEG_TO_UBX;
+  result->latitude    = deg2rad(pvt.lat * UBX_TO_DEG);
+  result->longitude   = deg2rad(pvt.lon * UBX_TO_DEG);
   result->v[0]        = pvt.velN / 1000.0;
   result->v[1]        = pvt.velE / 1000.0;
   result->v[2]        = pvt.velD / 1000.0;
   result->speed       = pvt.gSpeed / 1000.0;
-  result->course      = pvt.hdg * 1e-5;
+  result->course      = deg2rad(pvt.hdg * 1e-5);
   result->speed_type  = speed_t::BOTH;
   pvt2time(pvt, &result->time);
   result->msec        = pvt.nano / 1000000;
@@ -368,23 +413,30 @@ static void pvt2gnss(const ubx_nav_pvt_payload &pvt, gnss_data_t *result) {
     result->fix       = pvt.fixType;
   else
     result->fix       = 0;
-  result->fresh       = true;
+  result->samplerate  = samplerate;
+
+  result->hdop        = dop.hDOP / 100.0;
+  result->vdop        = dop.vDOP / 100.0;
+  result->pdop        = dop.pDOP / 100.0;
 }
 
 /**
  *
  */
-void uBlox::pvtdispatch(const ubx_nav_pvt_payload &pvt) {
+void uBlox::gnss_dispatch(void) {
+
+  const ubx_nav_pvt_payload &pvt = this->pvt.payload;
+  const ubx_nav_dop_payload &dop = this->dop.payload;
+  gnss_data_t cache;
 
   acquire();
-  pvt2gnss(pvt, &this->cache);
-  cache.fresh = false;
+  pvt2gnss(pvt, dop, 1000.0 / *fix_period, &cache);
 
   for (size_t i=0; i<ArrayLen(this->spamlist); i++) {
     gnss_data_t *p = this->spamlist[i];
     if ((nullptr != p) && (false == p->fresh)) {
-      memcpy(p, &this->cache, sizeof(this->cache));
-      p->fresh = true; // this line must be at the very end for atomicity
+      memcpy(p, &cache, sizeof(cache));
+      p->fresh = true;
     }
   }
   release();
@@ -444,6 +496,8 @@ static void dbg_print(BaseSequentialStream *sdp, ubx_nav_pvt &pvt) { /*
   }
 }
 
+#define ITOW_INVALID    0
+
 /**
  *
  */
@@ -452,6 +506,8 @@ THD_FUNCTION(uBlox::ubxRxThread, arg) {
   uBlox *self = static_cast<uBlox *>(arg);
   msg_t byte = MSG_TIMEOUT;
   ubx_msg_t status = ubx_msg_t::EMPTY;
+  uint32_t iTOW_dop = ITOW_INVALID;
+  uint32_t iTOW_pvt = ITOW_INVALID;
 
   /* wait until receiver boots up */
   osalThreadSleepSeconds(2);
@@ -472,21 +528,37 @@ THD_FUNCTION(uBlox::ubxRxThread, arg) {
   /* main loop */
   while (!chThdShouldTerminateX()) {
     self->update_settings();
-    byte = sdGetTimeout(self->sdp, MS2ST(100));
+    byte = sdGetTimeout(self->sdp, MS2ST(50));
     if (MSG_TIMEOUT != byte) {
-      status = self->ubx_parser.collect(byte);
+      status = self->parser.collect(byte);
       switch(status) {
       case ubx_msg_t::EMPTY:
         break;
       case ubx_msg_t::NAV_PVT:
-        self->ubx_parser.unpack(self->pvt);
+        self->parser.unpack(self->pvt);
         dbg_print((BaseSequentialStream *)self->sniff_sdp, self->pvt);
-        self->pvt2mavlink(self->pvt.payload);
-        self->pvtdispatch(self->pvt.payload);
+        iTOW_pvt = self->pvt.payload.iTOW;
         break;
+      case ubx_msg_t::NAV_DOP:
+        self->parser.unpack(self->dop);
+        iTOW_dop = self->dop.payload.iTOW;
+        break;
+      case ubx_msg_t::NAV_SAT:
+        self->parser.unpack(self->sat);
+        self->sat2mavlink();
+        break;
+
       default:
-        self->ubx_parser.drop(); // it is essential to drop unneeded message
+        self->parser.drop(); // it is essential to drop unneeded message
         break;
+      }
+
+      /* All data collected. Now we need to pass it to cosumers */
+      if ((iTOW_dop == iTOW_pvt) && (ITOW_INVALID != iTOW_dop) && (ITOW_INVALID != iTOW_pvt)) {
+        self->pvt_dop2mavlink();
+        self->gnss_dispatch();
+        iTOW_dop = ITOW_INVALID;
+        iTOW_pvt = ITOW_INVALID;
       }
     }
   }

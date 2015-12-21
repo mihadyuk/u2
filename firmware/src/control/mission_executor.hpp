@@ -1,7 +1,7 @@
 #ifndef MISSION_EXECUTOR_HPP_
 #define MISSION_EXECUTOR_HPP_
 
-#define USE_LD_NAVIGATOR TRUE
+#define USE_LD_NAVIGATOR      TRUE
 
 #include "mavlink_local.hpp"
 #if !USE_LD_NAVIGATOR

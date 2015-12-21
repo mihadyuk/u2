@@ -41,6 +41,7 @@ private:
   ACSInput &acs_in;
   gnss::GNSSReceiver &GNSS;
   gnss::gnss_data_t gps;
+  chibios_rt::EvtListener gnss_evl;
 
   const uint32_t *T_debug      = nullptr;
   const uint32_t *T_debug_vect = nullptr;
@@ -60,9 +61,8 @@ private:
   const float *acc_sigma    = nullptr;
   const float *gyr_sigma    = nullptr;
   const float *gamma        = nullptr;
-  const float *R_ne_sns     = nullptr;
-  const float *R_d_sns      = nullptr;
-  const float *R_v_n_sns    = nullptr;
+  const float *R_pos_sns    = nullptr;
+  const float *R_vel_sns    = nullptr;
   const float *R_odo        = nullptr;
   const float *R_nhl_y      = nullptr;
   const float *R_nhl_z      = nullptr;

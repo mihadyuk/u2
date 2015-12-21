@@ -19,10 +19,10 @@ using namespace control;
  */
 
 // some convenient aliases
-#define WP_RADIUS     param2
+#define WP_RADIUS           param2
 
-#define JUMP_REPEAT   param2
-#define JUMP_SEQ      param1
+#define JUMP_REPEAT         param2
+#define JUMP_SEQ            param1
 
 #define PID_TUNE_DEBUG      TRUE
 
@@ -264,8 +264,8 @@ void MissionExecutor::debug2mavlink(float dT) {
  */
 void MissionExecutor::navigate(float dT) {
 #if !USE_LD_NAVIGATOR
-  NavIn<double> nav_in(deg2rad(acs_in.ch[ACS_INPUT_lat]),
-                       deg2rad(acs_in.ch[ACS_INPUT_lon]));
+  NavIn<double> nav_in(acs_in.ch[ACS_INPUT_lat],
+                       acs_in.ch[ACS_INPUT_lon]);
   NavOut<double> nav_out = navigator.update(nav_in);
   navout2acsin(nav_out);
   navout2mavlink(nav_out);
@@ -276,8 +276,8 @@ void MissionExecutor::navigate(float dT) {
     navigator.loadLine(line);
   }
 #else
-  double curr_wgs84[3][1] = {{deg2rad(acs_in.ch[ACS_INPUT_lat])},
-                             {deg2rad(acs_in.ch[ACS_INPUT_lon])},
+  double curr_wgs84[3][1] = {{acs_in.ch[ACS_INPUT_lat]},
+                             {acs_in.ch[ACS_INPUT_lon]},
                              {acs_in.ch[ACS_INPUT_alt]}};
   LdNavOut<double> nav_out = mnr_executor.update(curr_wgs84);
   navout2acsin(nav_out);
@@ -340,8 +340,8 @@ void MissionExecutor::artificial_takeoff_point(void) {
 
   memset(&prev, 0, sizeof(prev));
 
-  prev.x = acs_in.ch[ACS_INPUT_lat];
-  prev.y = acs_in.ch[ACS_INPUT_lon];
+  prev.x = rad2deg(acs_in.ch[ACS_INPUT_lat]);
+  prev.y = rad2deg(acs_in.ch[ACS_INPUT_lon]);
   prev.z = acs_in.ch[ACS_INPUT_alt];
   prev.command = MAV_CMD_NAV_TAKEOFF;
   prev.frame = MAV_FRAME_GLOBAL;
@@ -413,7 +413,9 @@ MissionState MissionExecutor::update(float dT) {
  */
 void MissionExecutor::setHome(void) {
 
-  setHome(acs_in.ch[ACS_INPUT_lat], acs_in.ch[ACS_INPUT_lon], acs_in.ch[ACS_INPUT_alt]);
+  setHome(rad2deg(acs_in.ch[ACS_INPUT_lat]),
+          rad2deg(acs_in.ch[ACS_INPUT_lon]),
+          acs_in.ch[ACS_INPUT_alt]);
 }
 
 /**
@@ -423,8 +425,8 @@ void MissionExecutor::setHome(float lat, float lon, float alt) {
 
   memset(&home, 0, sizeof(home));
 
-  home.x = lat;
-  home.y = lon;
+  home.x = rad2deg(lat);
+  home.y = rad2deg(lon);
   home.z = alt;
   home.command = MAV_CMD_NAV_WAYPOINT;
   home.frame = MAV_FRAME_GLOBAL;
