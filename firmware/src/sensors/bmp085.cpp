@@ -146,8 +146,8 @@ bool BMP085::acquire_p(void) {
  */
 void BMP085::picle(baro_abs_data_t &result) {
 
-  result.P = pressure_compensated;
-  result.temp = 0;
+  result.p = pressure_compensated;
+  result.t = 0;
 }
 
 /**

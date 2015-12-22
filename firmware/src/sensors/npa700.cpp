@@ -61,9 +61,9 @@ void NPA700::pickle(baro_diff_data_t &result) {
     pres -= *mid;
     pres *= *sens;
 
-    result.P = roundf(pres);
+    result.p   = roundf(pres);
     result.raw = raw;
-    result.temp = temp;
+    result.t   = temp;
   }
 }
 

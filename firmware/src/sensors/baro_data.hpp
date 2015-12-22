@@ -17,17 +17,19 @@ struct baro_data_t {
  *
  */
 struct baro_abs_data_t {
-  uint32_t  P;      /* Pascals */
-  float     temp;   /* Celsius */
+  uint32_t  p_raw;
+  uint32_t  t_raw;
+  uint32_t  p;          /* Pascals */
+  float     t;          /* Celsius */
 };
 
 /**
  *
  */
 struct baro_diff_data_t {
-  int32_t   P;      /* Pascals */
+  int32_t   p;      /* Pascals */
   uint16_t  raw;
-  float     temp;   /* Celsius */
+  float     t;      /* Celsius */
 };
 
 #endif /* BARO_DATA_H_ */
