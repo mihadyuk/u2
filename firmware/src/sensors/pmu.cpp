@@ -68,7 +68,9 @@ static float press2airspeed(int32_t press_diff){
 /**
  *
  */
-static void baro2mavlink(const baro_data_t &data, const baro_diff_data_t &diff) {
+static void baro2mavlink(const baro_data_t &data,
+                         const baro_diff_data_t &diff,
+                         const baro_abs_data_t &abs) {
 
   mavlink_out_vfr_hud_struct.alt = data.alt;
   mavlink_out_vfr_hud_struct.climb = data.climb;
@@ -79,6 +81,15 @@ static void baro2mavlink(const baro_data_t &data, const baro_diff_data_t &diff) 
   mavlink_out_scaled_pressure_struct.time_boot_ms = TIME_BOOT_MS;
 
   mavlink_out_raw_pressure_struct.press_diff1 = diff.raw;
+  osalSysLock();
+  mavlink_out_raw_pressure_struct.press_abs    = 0;
+  mavlink_out_raw_pressure_struct.press_abs   |= (abs.p_raw >> 16) & 0xFFFF;
+  mavlink_out_raw_pressure_struct.press_diff2  = 0;
+  mavlink_out_raw_pressure_struct.press_diff2 |= abs.p_raw & 0xFFFF;
+  mavlink_out_raw_pressure_struct.temperature  = 0;
+  mavlink_out_raw_pressure_struct.temperature |= (abs.t_raw >> 8) & 0xFFFF;
+  osalSysUnlock();
+
 }
 
 /*
@@ -93,15 +104,15 @@ static void baro2mavlink(const baro_data_t &data, const baro_diff_data_t &diff) 
 void PMUGet(const baro_abs_data_t &abs, const baro_diff_data_t &diff,
             const float gnss_alt, baro_data_t &result) {
 
-  result.alt = press2height(abs.P);
-  result.p_abs = abs.P;
-  result.p_msl_adjusted = press2msl(abs.P, gnss_alt);
+  result.alt = press2height(abs.p);
+  result.p_abs = abs.p;
+  result.p_msl_adjusted = press2msl(abs.p, gnss_alt);
   result.climb = 0;
 
-  result.p_diff = diff.P;
-  result.airspeed = press2airspeed(diff.P);
+  result.p_diff = diff.p;
+  result.airspeed = press2airspeed(diff.p);
 
-  baro2mavlink(result, diff);
+  baro2mavlink(result, diff, abs);
 }
 
 

@@ -26,8 +26,8 @@
 #define CMD_ADC_4096    0x08 // ADC OSR=4096
 #define CMD_PROM_RD     0xA0 // Prom read command
 
-#define PRESS_CONV_TIME      MS2ST(10)
-#define TEMP_CONV_TIME       MS2ST(10)
+#define PRESS_CONV_TIME   MS2ST(10)
+#define TEMP_CONV_TIME    MS2ST(10)
 
 /*
  ******************************************************************************
@@ -86,8 +86,8 @@ unsigned char MS5806::crc4(uint16_t n_prom[]) {
  * Calculate compensated pressure value using black magic from datasheet.
  */
 void MS5806::calc_pressure(baro_abs_data_t &result) {
-  int64_t D1; // P
-  int64_t D2; // T
+  int64_t D1; // P raw
+  int64_t D2; // T raw
 
   int64_t dT;
   int64_t temp;
@@ -105,7 +105,7 @@ void MS5806::calc_pressure(baro_abs_data_t &result) {
   off  = (int64_t)C[2] * (1<<17) + C[4]*dT / (1<<6);
   sens = (int64_t)C[1] * (1<<16) + C[3]*dT / (1<<7);
 
-  // second oreder compensation
+  // second order compensation
   off2 = 0;
   sens2 = 0;
   T2 = 0;
@@ -130,8 +130,10 @@ void MS5806::calc_pressure(baro_abs_data_t &result) {
   // main formula
   P = ((D1 * sens) / (1<<21) - off) / (1<<15);
 
-  result.temp = 0.01 * temp;
-  result.P = P;
+  result.t = 0.01 * temp;
+  result.p = P;
+  result.p_raw = rxbuf_p[0] * 65536 + rxbuf_p[1] * 256 + rxbuf_p[2];
+  result.t_raw = rxbuf_t[0] * 65536 + rxbuf_t[1] * 256 + rxbuf_t[2];
 }
 
 /**
