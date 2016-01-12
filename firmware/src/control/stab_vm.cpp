@@ -184,7 +184,7 @@ private:
  */
 class LinkPID : public Link {
 public:
-  Link* compile(const vmfp *_position, float *_dT) {
+  Link* compile(const vmfp *_position, const float *_dT) {
     vmDbgCheck(nullptr != _position);
     this->position = _position;
     this->dT = _dT;
@@ -218,7 +218,7 @@ public:
 private:
   float alcoi_target = 0;
   float alcoi_time_elapsed = 0;
-  float *dT = nullptr;
+  const float *dT = nullptr;
   const vmfp *position = nullptr;
   PidControlSelfDerivative<float> pid;
 };
