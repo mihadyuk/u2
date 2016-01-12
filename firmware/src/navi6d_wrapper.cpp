@@ -46,8 +46,9 @@ extern MavLogger mav_logger;
  ******************************************************************************
  */
 
-typedef double  klmnfp;
+typedef float klmnfp;
 typedef double sinsfp;
+
 #define KALMAN_STATE_SIZE         15
 #define KALMAN_MEASUREMENT_SIZE   10
 
