@@ -16,7 +16,6 @@ using namespace control;
 #define ALCOI_MAX_PULSE_WIDTH     2 // seconds
 
 /* convenience defines */
-#define PARAM_PULSE_LEVEL         param4
 #define PARAM_PULSE_CHANNEL       param5
 #define PARAM_PULSE_WIDTH         param6
 #define PARAM_PULSE_STRENGTH      param7
@@ -217,6 +216,8 @@ void ACS::message_handler(void) {
       /* just ignore unhandled message */
       break;
     }
+
+    mav_postman.free(recv_msg);
   }
 }
 
