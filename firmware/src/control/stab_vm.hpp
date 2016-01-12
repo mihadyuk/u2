@@ -22,7 +22,7 @@ struct AlcoiPulse {
 typedef enum {
   END,
   INPUT,
-  PID,    /* usage: PID, №, position. Target will be passed implicitly */
+  PID,    /* usage: PID, №, curren_position. Target will be passed implicitly */
   SUM,
   SCALE,
   FORK,
