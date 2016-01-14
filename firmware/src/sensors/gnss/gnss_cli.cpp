@@ -57,7 +57,7 @@ static THD_WORKING_AREA(LoopCmdThreadWA, 1024);
 static THD_FUNCTION(LoopCmdThread, arg) {
   chRegSetThreadName("LoopCmd");
 
-  GNSS_CLI.setSniffer((SerialDriver *)arg);
+  GNSS_CLI.setSniffer((BaseChannel *)arg);
 
   while (!chThdShouldTerminateX()) {
     chThdSleepMilliseconds(100);
@@ -70,14 +70,14 @@ static THD_FUNCTION(LoopCmdThread, arg) {
 /**
  *
  */
-thread_t* loop_sniff(SerialDriver *sdp) {
+thread_t* loop_sniff(BaseChannel *bchnp) {
   thread_t *loop_clicmd_tp = nullptr;
 
   loop_clicmd_tp = chThdCreateFromHeap(&ThdHeap,
                                   sizeof(LoopCmdThreadWA),
                                   CMDPRIO - 1,
                                   LoopCmdThread,
-                                  sdp);
+                                  bchnp);
 
   if (loop_clicmd_tp == nullptr)
     osalSysHalt("can not allocate memory");
@@ -91,8 +91,8 @@ thread_t* loop_sniff(SerialDriver *sdp) {
 static void print_help(void) {
   cli_println("Available commands:");
   cli_println("    sniff");
-  cli_println("    1Hz");
-  cli_println("    5Hz");
+  cli_println("    1Hz (unimplemented)");
+  cli_println("    5Hz (unimplemented)");
 }
 
 /*
@@ -104,8 +104,7 @@ static void print_help(void) {
 /**
  *
  */
-thread_t* gnss_clicmd(int argc, const char * const * argv, SerialDriver *sdp) {
-  (void)sdp;
+thread_t* gnss_clicmd(int argc, const char * const * argv, BaseChannel *bchnp) {
 
   if (0 == argc) {
     cli_println("Not enough arguments");
@@ -114,7 +113,7 @@ thread_t* gnss_clicmd(int argc, const char * const * argv, SerialDriver *sdp) {
 
   if (argc > 0) {
     if (0 == strcmp(argv[0], "sniff")) {
-      return loop_sniff(sdp);
+      return loop_sniff(bchnp);
     }
     else if (0 == strcmp(argv[0], "1hz")) {
       gnss_set_1hz();

@@ -72,7 +72,7 @@ void mavChannelSerial::stop(void){
  */
 msg_t mavChannelSerial::write(const uint8_t *buf, size_t len, systime_t timeout) {
   osalDbgCheck(ready);
-  return sdWriteTimeout(sdp, buf, len, timeout);
+  return chnWriteTimeout(sdp, buf, len, timeout);
 }
 
 /**
@@ -80,7 +80,7 @@ msg_t mavChannelSerial::write(const uint8_t *buf, size_t len, systime_t timeout)
  */
 msg_t mavChannelSerial::get(systime_t time) {
   osalDbgCheck(ready);
-  return sdGetTimeout(sdp, time);
+  return chnGetTimeout(sdp, time);
 }
 
 /**
@@ -88,5 +88,5 @@ msg_t mavChannelSerial::get(systime_t time) {
  */
 size_t mavChannelSerial::read(uint8_t *buf, size_t len, systime_t timeout){
   osalDbgCheck(ready);
-  return sdReadTimeout(sdp, buf, len, timeout);
+  return chnReadTimeout(sdp, buf, len, timeout);
 }

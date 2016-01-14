@@ -38,8 +38,8 @@ static thread_t *loop_clicmd_tp;
 /**
  *
  */
-thread_t* clear_clicmd(int argc, const char * const * argv, SerialDriver *sdp){
-  (void)sdp;
+thread_t* clear_clicmd(int argc, const char * const * argv, BaseChannel *bchnp){
+  (void)bchnp;
   (void)argc;
   (void)argv;
   cli_print("\033[2J");    // ESC seq for clear entire screen
@@ -50,8 +50,8 @@ thread_t* clear_clicmd(int argc, const char * const * argv, SerialDriver *sdp){
 /**
  *
  */
-thread_t* echo_clicmd(int argc, const char * const * argv, SerialDriver *sdp){
-  (void)sdp;
+thread_t* echo_clicmd(int argc, const char * const * argv, BaseChannel *bchnp){
+  (void)bchnp;
 
   int i = 0;
   while (i < argc)
@@ -84,8 +84,8 @@ static THD_FUNCTION(LoopCmdThread, arg) {
 /**
  *
  */
-thread_t* loop_clicmd(int argc, const char * const * argv, SerialDriver *sdp){
-  (void)sdp;
+thread_t* loop_clicmd(int argc, const char * const * argv, BaseChannel *bchnp){
+  (void)bchnp;
   (void)argc;
   (void)argv;
 
@@ -104,8 +104,8 @@ thread_t* loop_clicmd(int argc, const char * const * argv, SerialDriver *sdp){
 /**
  *
  */
-thread_t* reboot_clicmd(int argc, const char * const * argv, SerialDriver *sdp){
-  (void)sdp;
+thread_t* reboot_clicmd(int argc, const char * const * argv, BaseChannel *bchnp){
+  (void)bchnp;
   (void)argv;
   (void)argc;
   cli_print("System going to reboot now...\r\n");
@@ -117,8 +117,8 @@ thread_t* reboot_clicmd(int argc, const char * const * argv, SerialDriver *sdp){
 /**
  *
  */
-thread_t* sleep_clicmd(int argc, const char * const * argv, SerialDriver *sdp){
-  (void)sdp;
+thread_t* sleep_clicmd(int argc, const char * const * argv, BaseChannel *bchnp){
+  (void)bchnp;
   (void)argv;
   (void)argc;
 
@@ -136,8 +136,8 @@ thread_t* sleep_clicmd(int argc, const char * const * argv, SerialDriver *sdp){
 /**
  *
  */
-thread_t* selftest_clicmd(int argc, const char * const * argv, SerialDriver *sdp){
-  (void)sdp;
+thread_t* selftest_clicmd(int argc, const char * const * argv, BaseChannel *bchnp){
+  (void)bchnp;
   (void)argv;
   (void)argc;
 
@@ -148,12 +148,11 @@ thread_t* selftest_clicmd(int argc, const char * const * argv, SerialDriver *sdp
 /**
  *
  */
-thread_t* uname_clicmd(int argc, const char * const * argv, SerialDriver *sdp){
-  (void)sdp;
+thread_t* uname_clicmd(int argc, const char * const * argv, BaseChannel *bchnp){
   (void)argc;
   (void)argv;
 
-  BaseSequentialStream* chp = (BaseSequentialStream*)sdp;
+  BaseSequentialStream* chp = (BaseSequentialStream*)bchnp;
 
   chprintf(chp, "Kernel:       %s\r\n", CH_KERNEL_VERSION);
 #ifdef PORT_COMPILER_NAME
@@ -186,8 +185,8 @@ thread_t* uname_clicmd(int argc, const char * const * argv, SerialDriver *sdp){
 /**
  *
  */
-thread_t* ps_clicmd(int argc, const char * const * argv, SerialDriver *sdp){
-  (void)sdp;
+thread_t* ps_clicmd(int argc, const char * const * argv, BaseChannel *bchnp){
+  (void)bchnp;
   (void)argc;
   (void)argv;
   thread_t *curr = NULL;

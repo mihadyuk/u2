@@ -220,8 +220,8 @@ static void help(void){
 /**
  * Working with parameters from CLI.
  */
-thread_t* param_clicmd(int argc, const char * const * argv, SerialDriver *sdp){
-  (void)sdp;
+thread_t* param_clicmd(int argc, const char * const * argv, BaseChannel *bchnp){
+  (void)bchnp;
 
   int32_t i = -1;
   ParamStatus status;
