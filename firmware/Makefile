@@ -89,8 +89,8 @@ PROJECT = ch
 CHIBIOS = ../../ChibiOS-RT
 CHIBIOS_CONTRIB = $(CHIBIOS)/../ChibiOS-Contrib
 
-#include board_mnu/board.mk
-include board_bezvodiatel/board.mk
+include board_mnu/board.mk
+#include board_bezvodiatel/board.mk
 
 # Startup files.
 include $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC/mk/startup_stm32f4xx.mk
@@ -181,6 +181,7 @@ MAVSRC = \
 		src/mavlink_local/mav_spam_list.cpp \
 		src/mavlink_local/mav_mail.cpp \
 		src/mavlink_local/mav_logger.cpp \
+		src/mavlink_local/mod_telem.cpp \
 		src/mavlink_local/mav_channel_serial.cpp \
 		src/mavlink_local/mav_channel_usbserial.cpp \
 		src/mavlink_local/mission_receiver.cpp \
