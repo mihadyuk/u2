@@ -25,7 +25,7 @@
  * Board identifier.
  */
 #define BOARD_MNU
-#define BOARD_NAME                  "Monoblock"
+#define BOARD_NAME                  "Monoblock (MNU)"
 
 /*
  * Board oscillators-related settings.
