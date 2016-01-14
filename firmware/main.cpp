@@ -232,8 +232,8 @@ static void stop_services(void) {
  *
  */
 enum GNSSReceiver {
-  navi = 0,
-  navi_nmea,
+  msno = 0,
+  msno_nmea,
   it530,
   unused,
 };
@@ -243,11 +243,11 @@ enum GNSSReceiver {
  */
 static void gnss_select(GNSSReceiver receiver) {
   switch(receiver) {
-  case GNSSReceiver::navi:
+  case GNSSReceiver::msno:
     palClearPad(GPIOB, GPIOB_FPGA_IO1);
     palClearPad(GPIOB, GPIOB_FPGA_IO2);
     break;
-  case GNSSReceiver::navi_nmea:
+  case GNSSReceiver::msno_nmea:
     palSetPad(GPIOB, GPIOB_FPGA_IO1);
     palClearPad(GPIOB, GPIOB_FPGA_IO2);
     break;
