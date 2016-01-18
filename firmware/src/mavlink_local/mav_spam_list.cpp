@@ -1,5 +1,6 @@
 #include "main.h"
 
+#include "array_len.hpp"
 #include "mav_spam_list.hpp"
 
 /*
@@ -71,6 +72,9 @@ static size_t malloc_cnt = 0;
 static size_t free_cnt = 0;
 static size_t malloc_failed_cnt = 0;
 
+/* memory leak debugger */
+__CCM__ static int8_t malloc_tracker[256];
+
 /*
  ******************************************************************************
  ******************************************************************************
@@ -82,9 +86,11 @@ static size_t malloc_failed_cnt = 0;
 /**
  *
  */
-static mavlink_message_t *uav_malloc(void) {
+static mavlink_message_t *uav_malloc(uint8_t msgid) {
 
   mavlink_message_t *ret = (mavlink_message_t *)msg_pool.alloc();
+
+  malloc_tracker[msgid]++;
 
   if (nullptr != ret) {
     malloc_cnt++;
@@ -106,6 +112,7 @@ static mavlink_message_t *uav_malloc(void) {
 static void uav_free (mavlink_message_t *ptr) {
 
   free_cnt++;
+  malloc_tracker[ptr->msgid]--;
   msg_pool.free(ptr);
 }
 
@@ -114,7 +121,7 @@ static void uav_free (mavlink_message_t *ptr) {
  */
 int MavSpamList::search(uint8_t msg_id) const {
 
-  for (size_t i=0; i<link_registry::reg_len; i++){
+  for (size_t i=0; i<link_registry::reg_len; i++) {
     if (msg_id == link_registry::msg_id[i])
       return i;
   }
@@ -132,6 +139,10 @@ int MavSpamList::search(uint8_t msg_id) const {
  *
  */
 MavSpamList::MavSpamList(void) : sem(false) {
+
+  for (size_t i=0; i<ArrayLen(malloc_tracker); i++) {
+    malloc_tracker[i] = 0;
+  }
 
   for (size_t i=0; i<link_registry::reg_len; i++) {
     link_registry::link[i] = nullptr; // just to be safe
@@ -225,7 +236,7 @@ void MavSpamList::dispatch(const mavlink_message_t &msg) {
     head = link_registry::link[idx];
     while (nullptr != head) {
 
-      mavlink_message_t *msgptr = uav_malloc();
+      mavlink_message_t *msgptr = uav_malloc(msg.msgid);
       if (nullptr == msgptr) {
         break;
       }

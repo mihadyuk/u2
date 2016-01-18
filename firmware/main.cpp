@@ -75,6 +75,7 @@ Giovanni
   #include "fpga_pwm.h"
   #include "fpga_icu.h"
   #include "odometer_fpga.hpp"
+  #include "mod_telem.hpp"
 #else
 #error "board unsupported"
 #endif
@@ -115,10 +116,11 @@ MavLogger mav_logger;
 Marg marg;
 
 #if defined(BOARD_BEZVODIATEL)
-BMP085 bmp_085(&BMP085_I2CD, BMP085_I2C_ADDR);
+BMP085 bmp085(&BMP085_I2CD, BMP085_I2C_ADDR);
 #elif defined(BOARD_MNU)
 MS5806 ms5806(&MS5806_I2CD, MS5806_I2C_ADDR);
 NPA700 npa700(&NPA700_I2CD, NPA700_I2C_ADDR);
+__CCM__ static ModTelem mod_telem;
 #else
 #error "board unsupported"
 #endif
@@ -144,11 +146,7 @@ __CCM__ static OdometerFPGA odometer(&FPGAICUD1);
 #endif
 gnss::GNSSReceiver &GNSS_CLI = GNSS;
 __CCM__ control::HIL hil;
-#if USE_STARLINO_AHRS
-__CCM__ static AHRSStarlino ahrs_starlino;
-#else
 __CCM__ static Navi6dWrapper navi6d(acs_in, GNSS);
-#endif
 __CCM__ static TimeKeeper time_keeper(GNSS);
 ADCLocal adc_local;
 PowerMonitor power_monitor(adc_local);
@@ -182,10 +180,11 @@ static void start_services(void) {
   link_mgr.start();      /* launch after controller to reduce memory fragmentation on thread creation */
   tlm_sender.start();
 #if defined(BOARD_BEZVODIATEL)
-  bmp_085.start();
+  bmp085.start();
 #elif defined(BOARD_MNU)
   ms5806.start();
   npa700.start();
+  mod_telem.start(NORMALPRIO);
 #else
 #error "board unsupported"
 #endif
@@ -215,10 +214,11 @@ static void stop_services(void) {
   time_keeper.stop();
   GNSS.stop();
 #if defined(BOARD_BEZVODIATEL)
-  bmp_085.stop();
+  bmp085.stop();
 #elif defined(BOARD_MNU)
   ms5806.stop();
   npa700.stop();
+  mod_telem.stop();
 #else
 #error "board unsupported"
 #endif
@@ -232,8 +232,8 @@ static void stop_services(void) {
  *
  */
 enum GNSSReceiver {
-  navi = 0,
-  navi_nmea,
+  msno = 0,
+  msno_nmea,
   it530,
   unused,
 };
@@ -243,11 +243,11 @@ enum GNSSReceiver {
  */
 static void gnss_select(GNSSReceiver receiver) {
   switch(receiver) {
-  case GNSSReceiver::navi:
+  case GNSSReceiver::msno:
     palClearPad(GPIOB, GPIOB_FPGA_IO1);
     palClearPad(GPIOB, GPIOB_FPGA_IO2);
     break;
-  case GNSSReceiver::navi_nmea:
+  case GNSSReceiver::msno_nmea:
     palSetPad(GPIOB, GPIOB_FPGA_IO1);
     palClearPad(GPIOB, GPIOB_FPGA_IO2);
     break;
@@ -339,7 +339,7 @@ int main(void) {
 #if defined(BOARD_BEZVODIATEL)
   gps_power_on();
 #elif defined(BOARD_MNU)
-  gnss_select(navi_nmea);
+  gnss_select(it530);
   modem_select(xbee);
 #else
 #error "board unsupported"
@@ -386,7 +386,7 @@ int main(void) {
     speedometer2acs_in(odo_data, acs_in);
 
 #if defined(BOARD_BEZVODIATEL)
-    bmp_085.get(abs_press);
+    bmp085.get(abs_press);
 #elif defined(BOARD_MNU)
     ms5806.get(abs_press);
     npa700.get(diff_press);

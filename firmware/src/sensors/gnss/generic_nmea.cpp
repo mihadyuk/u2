@@ -202,8 +202,8 @@ THD_FUNCTION(GenericNMEA::nmeaRxThread, arg) {
     byte = sdGetTimeout(self->sdp, MS2ST(50));
     if (MSG_TIMEOUT != byte) {
       status = self->parser.collect(byte);
-      if (nullptr != self->sniff_sdp)
-        sdPut(self->sniff_sdp, byte);
+      if (nullptr != self->sniff_chnp)
+        chnPutTimeout(self->sniff_chnp, byte, TIME_IMMEDIATE);
 
       /* main receiving switch */
       switch(status) {

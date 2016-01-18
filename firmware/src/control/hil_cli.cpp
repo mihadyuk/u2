@@ -108,8 +108,8 @@ void hil_gnss(int argc, const char * const * argv) {
 /**
  *
  */
-thread_t* hil_clicmd(int argc, const char * const * argv, SerialDriver *sdp) {
-  (void)sdp;
+thread_t* hil_clicmd(int argc, const char * const * argv, BaseChannel *bchnp) {
+  (void)bchnp;
 
   if (0 == argc) {
     cli_println("Not enough arguments.");

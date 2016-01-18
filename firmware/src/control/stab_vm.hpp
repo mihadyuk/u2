@@ -22,14 +22,14 @@ struct AlcoiPulse {
 typedef enum {
   END,
   INPUT,
-  PID, // usage: PID, №, position. Target will be passed implicitly
+  PID,    /* usage: PID, №, curren_position. Target will be passed implicitly */
   SUM,
   SCALE,
   FORK,
   FORK_RET,
   OUTPUT,
   NEG,    /* value negation. It is simpler than scale by -1 */
-  TERM    /* terminator */
+  TERM    /* every branch must be ended with terminator */
 } vm_opcode_enum;
 
 /**
@@ -52,6 +52,7 @@ private:
 
   DrivetrainImpact &impact;
   const ACSInput &acs_in;
+  float dT; /* needs only for PIDs */
   bool ready = false;
   time_measurement_t exec_tmo;
   const uint8_t *current_program = nullptr;

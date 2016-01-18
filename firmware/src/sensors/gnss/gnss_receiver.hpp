@@ -28,7 +28,7 @@ public:
   void start(void);
   void subscribe(gnss::gnss_data_t* result);
   void unsubscribe(gnss::gnss_data_t* result);
-  void setSniffer(SerialDriver *sdp);
+  void setSniffer(BaseChannel *bchnp);
   void deleteSniffer(void);
   static void GNSS_PPS_ISR_I(void);
 protected:
@@ -40,7 +40,7 @@ protected:
   gnss_data_t* spamlist[GNSS_MAX_SUBSCRIBERS] = {};
   bool ready = false;
   thread_t *worker = nullptr;
-  SerialDriver *sniff_sdp = nullptr;
+  BaseChannel *sniff_chnp = nullptr;
   SerialDriver *sdp = nullptr;
   const uint32_t start_baudrate;
   const uint32_t working_baudrate;

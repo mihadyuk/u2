@@ -103,7 +103,7 @@ typedef enum {
   ACS_INPUT_ENUM_END,
 } state_vector_enum;
 
-static_assert(ACS_INPUT_ENUM_END < 256, "Stabilizer virtual machine limit.");
+static_assert(ACS_INPUT_ENUM_END < 256, "Stabilizer virtual machine limit is 1 byte.");
 
 /**
  *
@@ -116,11 +116,11 @@ struct ACSInput {
     /* fill special values */
     ch[ACS_INPUT_const_two_neg]     = -2;
     ch[ACS_INPUT_const_one_neg]     = -1;
-    ch[ACS_INPUT_const_half_neg]    = -0.5f;
-    ch[ACS_INPUT_const_quarter_neg] = -0.25f;
+    ch[ACS_INPUT_const_half_neg]    = -0.5;
+    ch[ACS_INPUT_const_quarter_neg] = -0.25;
     ch[ACS_INPUT_const_zero]        = 0;
-    ch[ACS_INPUT_const_quarter]     = 0.25f;
-    ch[ACS_INPUT_const_half]        = 0.5f;
+    ch[ACS_INPUT_const_quarter]     = 0.25;
+    ch[ACS_INPUT_const_half]        = 0.5;
     ch[ACS_INPUT_const_one]         = 1;
     ch[ACS_INPUT_const_two]         = 2;
   }

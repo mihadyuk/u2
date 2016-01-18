@@ -38,9 +38,6 @@ typedef double vmfp;
 #define TOTAL_OUT_CNT         8
 #define TOTAL_INV_CNT         4
 
-/* this variable needed only for PIDs */
-static float VM_dT = 0.01;
-
 /**
  *
  */
@@ -124,18 +121,18 @@ class LinkStub: public Link {
  */
 class LinkScale : public Link {
 public:
-  void init(const float *_c) {
-    vmDbgCheck(nullptr != _c);
-    this->c = _c;
+  void init(const float *_scale) {
+    vmDbgCheck(nullptr != _scale);
+    this->scale = _scale;
   }
 
   void update(float val) {
-    vmDbgCheck((nullptr != next) && (nullptr != c));
-    next->update(*c * val);
+    vmDbgCheck((nullptr != next) && (nullptr != scale));
+    next->update(*scale * val);
   }
 
   private:
-  const float *c = nullptr;
+  const float *scale = nullptr;
 };
 
 
@@ -187,9 +184,10 @@ private:
  */
 class LinkPID : public Link {
 public:
-  Link* compile(const vmfp *_position) {
+  Link* compile(const vmfp *_position, const float *_dT) {
     vmDbgCheck(nullptr != _position);
     this->position = _position;
+    this->dT = _dT;
     return this;
   }
 
@@ -204,11 +202,11 @@ public:
   void update(float target) {
     vmDbgCheck((nullptr != next) && (nullptr != position));
     if (alcoi_time_elapsed > 0) {
-      next->update(this->pid(*position, alcoi_target, VM_dT));
-      alcoi_time_elapsed -= VM_dT;
+      next->update(this->pid(*position, alcoi_target, *dT));
+      alcoi_time_elapsed -= *dT;
     }
     else {
-      next->update(this->pid(*position, target, VM_dT));
+      next->update(this->pid(*position, target, *dT));
     }
   }
 
@@ -220,6 +218,7 @@ public:
 private:
   float alcoi_target = 0;
   float alcoi_time_elapsed = 0;
+  const float *dT = nullptr;
   const vmfp *position = nullptr;
   PidControlSelfDerivative<float> pid;
 };
@@ -462,11 +461,12 @@ void StabVM::compile(const uint8_t *bytecode) {
 
   uint8_t cmd;
   uint8_t arg0, arg1;
-  size_t chain = 0;     /* currently compiling chain */
+  size_t chain  = 0;    /* currently compiling chain */
   size_t output = 0;    /* used outputs counter */
-  size_t fork = 0;      /* used forks counter */
-  size_t inv = 0;       /* used inverters counter */
+  size_t fork   = 0;    /* used forks counter */
+  size_t inv    = 0;    /* used inverters counter */
 
+  pc = 0;
   while(true) {
     cmd = bytecode[pc];
 
@@ -502,7 +502,7 @@ void StabVM::compile(const uint8_t *bytecode) {
       arg1 = bytecode[pc+2];
       vmDbgCheck(arg0 < TOTAL_PID_CNT);
       vmDbgCheck(arg1 < ACS_INPUT_ENUM_END);
-      tip = tip->append(pid_pool[arg0].compile(&acs_in.ch[arg1]));
+      tip = tip->append(pid_pool[arg0].compile(&acs_in.ch[arg1], &this->dT));
       pc += 3;
       break;
 
@@ -606,7 +606,8 @@ void StabVM::exec(void) {
  */
 StabVM::StabVM(DrivetrainImpact &impact, const ACSInput &acs_in) :
 impact(impact),
-acs_in(acs_in)
+acs_in(acs_in),
+dT(0.01) /* do NOT set it to zero */
 {
   return;
 }
@@ -655,7 +656,10 @@ bool StabVM::verify(const uint8_t *bytecode) {
 void StabVM::update(float dT, const uint8_t *bytecode) {
 
   osalDbgCheck(ready);
-  VM_dT = dT;
+
+  /* There are no atomicity code needed because exec() and dT update
+     run in single thread.*/
+  this->dT = dT;
 
   if (bytecode != current_program) {
     destroy();

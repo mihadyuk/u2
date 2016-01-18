@@ -536,7 +536,7 @@ THD_FUNCTION(uBlox::ubxRxThread, arg) {
         break;
       case ubx_msg_t::NAV_PVT:
         self->parser.unpack(self->pvt);
-        dbg_print((BaseSequentialStream *)self->sniff_sdp, self->pvt);
+        dbg_print((BaseSequentialStream *)self->sniff_chnp, self->pvt);
         iTOW_pvt = self->pvt.payload.iTOW;
         break;
       case ubx_msg_t::NAV_DOP:

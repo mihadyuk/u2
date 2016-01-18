@@ -89,7 +89,6 @@ static void baro2mavlink(const baro_data_t &data,
   mavlink_out_raw_pressure_struct.temperature  = 0;
   mavlink_out_raw_pressure_struct.temperature |= (abs.t_raw >> 8) & 0xFFFF;
   osalSysUnlock();
-
 }
 
 /*

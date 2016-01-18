@@ -32,6 +32,7 @@ using namespace gnss;
  ******************************************************************************
  */
 
+#if 0
 /*
 Packet Type: 001 PMTK_ACK
 Packet Meaning: Acknowledge Packet
@@ -57,6 +58,7 @@ static const uint8_t fix_period_2hz[] = "$PMTK300,500,0,0,0,0*28\r\n";
 
 /* set serial port baudrate */
 static const uint8_t gps_high_baudrate[] = "$PMTK251,57600*2C\r\n";
+#endif
 
 /*
  ******************************************************************************

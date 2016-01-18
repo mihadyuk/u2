@@ -29,6 +29,6 @@ private:
 };
 
 #include "cli.hpp"
-thread_t* date_clicmd(int argc, const char * const * argv, SerialDriver *sdp);
+thread_t* date_clicmd(int argc, const char * const * argv, BaseChannel *bchnp);
 
 #endif /* TIME_KEEPER_HPP_ */

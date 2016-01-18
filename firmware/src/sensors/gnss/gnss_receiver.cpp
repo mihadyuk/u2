@@ -123,12 +123,12 @@ void GNSSReceiver::stop(void) {
 /**
  *
  */
-void GNSSReceiver::setSniffer(SerialDriver *sdp) {
+void GNSSReceiver::setSniffer(BaseChannel *bchnp) {
 
-  osalDbgCheck(nullptr != sdp);
+  osalDbgCheck(nullptr != bchnp);
   osalDbgCheck(ready);
 
-  this->sniff_sdp = sdp;
+  this->sniff_chnp = bchnp;
 }
 
 /**
@@ -138,7 +138,7 @@ void GNSSReceiver::deleteSniffer(void) {
 
   osalDbgCheck(ready);
 
-  this->sniff_sdp = nullptr;
+  this->sniff_chnp = nullptr;
 }
 
 /**

@@ -38,8 +38,8 @@ extern ParamRegistry param_registry;
  * PROTOTYPES
  *******************************************************************************
  */
-static thread_t* shellswap_clicmd(int argc, const char * const * argv, SerialDriver *sdp);
-static thread_t* help_clicmd(int argc, const char * const * argv, SerialDriver *sdp);
+static thread_t* shellswap_clicmd(int argc, const char * const * argv, BaseChannel *bchnp);
+static thread_t* help_clicmd(int argc, const char * const * argv, BaseChannel *bchnp);
 
 /*
  ******************************************************************************
@@ -82,7 +82,7 @@ static thread_t *current_cmd_tp = NULL;
 static thread_t *shell_tp = NULL;
 
 /* serial interface for shell */
-static SerialDriver *ShellSDp;
+static BaseChannel *ShellChnp;
 
 /*
  *******************************************************************************
@@ -128,9 +128,9 @@ static unsigned int execute (void* user_handle, int argc, const char * const * a
   }
   else{
     if (argc > 1)
-      current_cmd_tp = cliutils[i].func(argc - 1, &argv[1], ShellSDp);
+      current_cmd_tp = cliutils[i].func(argc - 1, &argv[1], ShellChnp);
     else
-      current_cmd_tp = cliutils[i].func(0, NULL, ShellSDp);
+      current_cmd_tp = cliutils[i].func(0, NULL, ShellChnp);
   }
   return 0;
 }
@@ -190,12 +190,12 @@ static void sigint (void* user_handle){
  * Thread function
  */
 static THD_WORKING_AREA(ShellThreadWA, 2048);
-static THD_FUNCTION(ShellThread, sdp) {
+static THD_FUNCTION(ShellThread, arg) {
 
   chRegSetThreadName("Shell");
 
   /* init static pointer for serial driver with received pointer */
-  ShellSDp = (SerialDriver *)sdp;
+  ShellChnp = (BaseChannel *)arg;
 
   // create and init microrl object
   microrl_t microrl_shell;
@@ -219,7 +219,7 @@ static THD_FUNCTION(ShellThread, sdp) {
 
   while (!chThdShouldTerminateX()){
     // put received char from stdin to microrl lib
-    msg_t c = sdGetTimeout(ShellSDp, MS2ST(50));
+    msg_t c = chnGetTimeout(ShellChnp, MS2ST(50));
     if (c != Q_TIMEOUT)
       microrl_insert_char(&microrl_shell, (char)c);
 
@@ -244,8 +244,8 @@ static THD_FUNCTION(ShellThread, sdp) {
 /**
  *
  */
-static thread_t* shellswap_clicmd(int argc, const char * const * argv, SerialDriver *sdp){
-  (void)sdp;
+static thread_t* shellswap_clicmd(int argc, const char * const * argv, BaseChannel *bchnp){
+  (void)bchnp;
   (void)argc;
   (void)argv;
 
@@ -264,8 +264,8 @@ static thread_t* shellswap_clicmd(int argc, const char * const * argv, SerialDri
 /**
  *
  */
-static thread_t* help_clicmd(int argc, const char * const * argv, SerialDriver *sdp){
-  (void)sdp;
+static thread_t* help_clicmd(int argc, const char * const * argv, BaseChannel *bchnp){
+  (void)bchnp;
   (void)argc;
   (void)argv;
 
@@ -295,11 +295,7 @@ static thread_t* help_clicmd(int argc, const char * const * argv, SerialDriver *
  * Print routine for microrl.
  */
 void cli_print(const char *str){
-  int i = 0;
-  while (str[i] != 0) {
-    sdPut(ShellSDp, str[i]);
-    i++;
-  }
+  chnWrite(ShellChnp, (const uint8_t*)str, strlen(str));
 }
 
 /**
@@ -349,15 +345,17 @@ void cli_println(const char *str){
 /**
  * Convenience function
  */
-void cli_put(char chr){
-  sdPut(ShellSDp, chr);
+void cli_put(const char chr){
+  chnWrite(ShellChnp, (const uint8_t*)&chr, 1);
 }
 
 /**
  * Read routine
  */
 char get_char (void){
-  return sdGet(ShellSDp);
+  char buf;
+  chnRead(ShellChnp, (uint8_t*)&buf, 1);
+  return buf;
 }
 
 /**
@@ -385,13 +383,13 @@ void KillShellThreads(void) {
 /**
  *
  */
-void SpawnShellThreads(void *sdp) {
+void SpawnShellThreads(void *bchnp) {
 
   shell_tp = chThdCreateStatic(ShellThreadWA,
                             sizeof(ShellThreadWA),
                             SHELLPRIO,
                             ShellThread,
-                            sdp);
+                            bchnp);
   if (shell_tp == NULL)
     osalSysHalt("Can not allocate memory");
 }

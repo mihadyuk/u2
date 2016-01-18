@@ -25,7 +25,7 @@
  * Board identifier.
  */
 #define BOARD_MNU
-#define BOARD_NAME                  "Monoblock"
+#define BOARD_NAME                  "Monoblock (MNU)"
 
 /*
  * Board oscillators-related settings.
@@ -50,6 +50,9 @@
 #define XBEESD                      SD6
 #define XBEE_BAUDRATE               115200
 #define XBEE_USE_CTS_RTS            TRUE
+
+#define MODSD                       SD1
+#define MOD_BAUDRATE                115200
 
 #define ADIS_SPI                    SPID1 // fake spi port for compileability only
 
@@ -90,8 +93,8 @@
 #define GPIOB_JTDO                  3
 #define GPIOB_JTRST                 4
 #define GPIOB_PIN5                  5
-#define GPIOB_PIN6                  6
-#define GPIOB_PIN7                  7
+#define GPIOB_MOD_TX                6
+#define GPIOB_MOD_RX                7
 #define GPIOB_SDIO_D4               8
 #define GPIOB_SDIO_D5               9
 #define GPIOB_UBLOX_PPS             10
@@ -131,7 +134,7 @@
 #define GPIOD_MEM_D15               10
 #define GPIOD_MEM_A16               11
 #define GPIOD_MEM_A17               12
-#define GPIOD_PIN13                 13
+#define GPIOD_MEM_A18               13
 #define GPIOD_MEM_D0                14
 #define GPIOD_MEM_D1                15
 
@@ -351,8 +354,8 @@
                                      PIN_MODE_ALTERNATE(GPIOB_JTDO) |         \
                                      PIN_MODE_ALTERNATE(GPIOB_JTRST) |        \
                                      PIN_MODE_INPUT(GPIOB_PIN5) |             \
-                                     PIN_MODE_INPUT(GPIOB_PIN6) |             \
-                                     PIN_MODE_INPUT(GPIOB_PIN7) |             \
+                                     PIN_MODE_ALTERNATE(GPIOB_MOD_TX) |       \
+                                     PIN_MODE_ALTERNATE(GPIOB_MOD_RX) |       \
                                      PIN_MODE_ALTERNATE(GPIOB_SDIO_D4) |      \
                                      PIN_MODE_ALTERNATE(GPIOB_SDIO_D5) |      \
                                      PIN_MODE_INPUT(GPIOB_UBLOX_PPS) |        \
@@ -368,8 +371,8 @@
                                      PIN_OTYPE_PUSHPULL(GPIOB_JTDO) |         \
                                      PIN_OTYPE_PUSHPULL(GPIOB_JTRST) |        \
                                      PIN_OTYPE_PUSHPULL(GPIOB_PIN5) |         \
-                                     PIN_OTYPE_PUSHPULL(GPIOB_PIN6) |         \
-                                     PIN_OTYPE_PUSHPULL(GPIOB_PIN7) |         \
+                                     PIN_OTYPE_PUSHPULL(GPIOB_MOD_TX) |       \
+                                     PIN_OTYPE_PUSHPULL(GPIOB_MOD_RX) |       \
                                      PIN_OTYPE_PUSHPULL(GPIOB_SDIO_D4) |      \
                                      PIN_OTYPE_PUSHPULL(GPIOB_SDIO_D5) |      \
                                      PIN_OTYPE_PUSHPULL(GPIOB_UBLOX_PPS) |    \
@@ -384,8 +387,8 @@
                                      PIN_OSPEED_100M(GPIOB_JTDO) |            \
                                      PIN_OSPEED_100M(GPIOB_JTRST) |           \
                                      PIN_OSPEED_100M(GPIOB_PIN5) |            \
-                                     PIN_OSPEED_100M(GPIOB_PIN6) |            \
-                                     PIN_OSPEED_100M(GPIOB_PIN7) |            \
+                                     PIN_OSPEED_2M(GPIOB_MOD_TX) |            \
+                                     PIN_OSPEED_2M(GPIOB_MOD_RX) |            \
                                      PIN_OSPEED_100M(GPIOB_SDIO_D4) |         \
                                      PIN_OSPEED_100M(GPIOB_SDIO_D5) |         \
                                      PIN_OSPEED_100M(GPIOB_UBLOX_PPS) |       \
@@ -400,8 +403,8 @@
                                      PIN_PUPDR_FLOATING(GPIOB_JTDO) |         \
                                      PIN_PUPDR_FLOATING(GPIOB_JTRST) |        \
                                      PIN_PUPDR_FLOATING(GPIOB_PIN5) |         \
-                                     PIN_PUPDR_FLOATING(GPIOB_PIN6) |         \
-                                     PIN_PUPDR_FLOATING(GPIOB_PIN7) |         \
+                                     PIN_PUPDR_PULLUP(GPIOB_MOD_TX) |         \
+                                     PIN_PUPDR_PULLUP(GPIOB_MOD_RX) |         \
                                      PIN_PUPDR_PULLUP(GPIOB_SDIO_D4) |        \
                                      PIN_PUPDR_PULLUP(GPIOB_SDIO_D5) |        \
                                      PIN_PUPDR_FLOATING(GPIOB_UBLOX_PPS) |    \
@@ -416,8 +419,8 @@
                                      PIN_ODR_HIGH(GPIOB_JTDO) |               \
                                      PIN_ODR_HIGH(GPIOB_JTRST) |              \
                                      PIN_ODR_HIGH(GPIOB_PIN5) |               \
-                                     PIN_ODR_HIGH(GPIOB_PIN6) |               \
-                                     PIN_ODR_HIGH(GPIOB_PIN7) |               \
+                                     PIN_ODR_HIGH(GPIOB_MOD_TX) |             \
+                                     PIN_ODR_HIGH(GPIOB_MOD_RX) |             \
                                      PIN_ODR_HIGH(GPIOB_SDIO_D4) |            \
                                      PIN_ODR_HIGH(GPIOB_SDIO_D5) |            \
                                      PIN_ODR_HIGH(GPIOB_UBLOX_PPS) |          \
@@ -432,8 +435,8 @@
                                      PIN_AFIO_AF(GPIOB_JTDO, 0) |             \
                                      PIN_AFIO_AF(GPIOB_JTRST, 0) |            \
                                      PIN_AFIO_AF(GPIOB_PIN5, 0) |             \
-                                     PIN_AFIO_AF(GPIOB_PIN6, 0) |             \
-                                     PIN_AFIO_AF(GPIOB_PIN7, 0))
+                                     PIN_AFIO_AF(GPIOB_MOD_TX, 7) |           \
+                                     PIN_AFIO_AF(GPIOB_MOD_RX, 7))
 #define VAL_GPIOB_AFRH              (PIN_AFIO_AF(GPIOB_SDIO_D4, 12) |         \
                                      PIN_AFIO_AF(GPIOB_SDIO_D5, 12) |         \
                                      PIN_AFIO_AF(GPIOB_UBLOX_PPS, 0) |        \
@@ -559,7 +562,7 @@
                                      PIN_MODE_ALTERNATE(GPIOD_MEM_D15) |      \
                                      PIN_MODE_ALTERNATE(GPIOD_MEM_A16) |      \
                                      PIN_MODE_ALTERNATE(GPIOD_MEM_A17) |      \
-                                     PIN_MODE_INPUT(GPIOD_PIN13) |            \
+                                     PIN_MODE_ALTERNATE(GPIOD_MEM_A18) |      \
                                      PIN_MODE_ALTERNATE(GPIOD_MEM_D0) |       \
                                      PIN_MODE_ALTERNATE(GPIOD_MEM_D1))
 #define VAL_GPIOD_OTYPER            (PIN_OTYPE_PUSHPULL(GPIOD_MEM_D2) |       \
@@ -575,7 +578,7 @@
                                      PIN_OTYPE_PUSHPULL(GPIOD_MEM_D15) |      \
                                      PIN_OTYPE_PUSHPULL(GPIOD_MEM_A16) |      \
                                      PIN_OTYPE_PUSHPULL(GPIOD_MEM_A17) |      \
-                                     PIN_OTYPE_PUSHPULL(GPIOD_PIN13) |        \
+                                     PIN_OTYPE_PUSHPULL(GPIOD_MEM_A18) |      \
                                      PIN_OTYPE_PUSHPULL(GPIOD_MEM_D0) |       \
                                      PIN_OTYPE_PUSHPULL(GPIOD_MEM_D1))
 #define VAL_GPIOD_OSPEEDR           (PIN_OSPEED_100M(GPIOD_MEM_D2) |          \
@@ -591,7 +594,7 @@
                                      PIN_OSPEED_100M(GPIOD_MEM_D15) |         \
                                      PIN_OSPEED_100M(GPIOD_MEM_A16) |         \
                                      PIN_OSPEED_100M(GPIOD_MEM_A17) |         \
-                                     PIN_OSPEED_100M(GPIOD_PIN13) |           \
+                                     PIN_OSPEED_100M(GPIOD_MEM_A18) |         \
                                      PIN_OSPEED_100M(GPIOD_MEM_D0) |          \
                                      PIN_OSPEED_100M(GPIOD_MEM_D1))
 #define VAL_GPIOD_PUPDR             (PIN_PUPDR_FLOATING(GPIOD_MEM_D2) |       \
@@ -607,7 +610,7 @@
                                      PIN_PUPDR_FLOATING(GPIOD_MEM_D15) |      \
                                      PIN_PUPDR_FLOATING(GPIOD_MEM_A16) |      \
                                      PIN_PUPDR_FLOATING(GPIOD_MEM_A17) |      \
-                                     PIN_PUPDR_FLOATING(GPIOD_PIN13) |        \
+                                     PIN_PUPDR_FLOATING(GPIOD_MEM_A18) |      \
                                      PIN_PUPDR_FLOATING(GPIOD_MEM_D0) |       \
                                      PIN_PUPDR_FLOATING(GPIOD_MEM_D1))
 #define VAL_GPIOD_ODR               (PIN_ODR_HIGH(GPIOD_MEM_D2) |             \
@@ -623,7 +626,7 @@
                                      PIN_ODR_HIGH(GPIOD_MEM_D15) |            \
                                      PIN_ODR_HIGH(GPIOD_MEM_A16) |            \
                                      PIN_ODR_HIGH(GPIOD_MEM_A17) |            \
-                                     PIN_ODR_HIGH(GPIOD_PIN13) |              \
+                                     PIN_ODR_HIGH(GPIOD_MEM_A18) |            \
                                      PIN_ODR_HIGH(GPIOD_MEM_D0) |             \
                                      PIN_ODR_HIGH(GPIOD_MEM_D1))
 #define VAL_GPIOD_AFRL              (PIN_AFIO_AF(GPIOD_MEM_D2, 12) |          \
@@ -639,7 +642,7 @@
                                      PIN_AFIO_AF(GPIOD_MEM_D15, 12) |         \
                                      PIN_AFIO_AF(GPIOD_MEM_A16, 12) |         \
                                      PIN_AFIO_AF(GPIOD_MEM_A17, 12) |         \
-                                     PIN_AFIO_AF(GPIOD_PIN13, 0) |            \
+                                     PIN_AFIO_AF(GPIOD_MEM_A18, 12) |         \
                                      PIN_AFIO_AF(GPIOD_MEM_D0, 12) |          \
                                      PIN_AFIO_AF(GPIOD_MEM_D1, 12))
 

@@ -46,10 +46,11 @@ extern MavLogger mav_logger;
  ******************************************************************************
  */
 
-typedef float  klmnfp;
+typedef float klmnfp;
 typedef double sinsfp;
+
 #define KALMAN_STATE_SIZE         15
-#define KALMAN_MEASUREMENT_SIZE   9
+#define KALMAN_MEASUREMENT_SIZE   10
 
 __CCM__ static NavigatorSins<sinsfp, klmnfp, KALMAN_STATE_SIZE, KALMAN_MEASUREMENT_SIZE> nav_sins;
 

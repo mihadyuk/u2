@@ -336,8 +336,8 @@ static size_t format_usec(char *buf, size_t N, int64_t tv_usec) {
 /**
  * Command to handle RTC.
  */
-thread_t* date_clicmd(int argc, const char * const * argv, SerialDriver *sdp) {
-  (void)sdp;
+thread_t* date_clicmd(int argc, const char * const * argv, BaseChannel *bchnp) {
+  (void)bchnp;
 
   time_t tv_sec = 0;
   int64_t tv_usec = 0;

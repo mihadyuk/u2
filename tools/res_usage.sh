@@ -15,7 +15,7 @@ let RAM_USED=$STACKS+$BSS+$DATA
 
 CCM_ALIAS=ram4
 CCM_SIZE=`cat build/ch.map | grep "__${CCM_ALIAS}_size__ =" | awk '{print$1}'`
-CCM_USED=`arm-none-eabi-size -A build/ch.elf | grep "."${CCM_ALIAS} | awk '{print $2}'`
+CCM_USED=`arm-none-eabi-size -A build/ch.elf | grep "."${CCM_ALIAS}"*[ \t]" | awk '{print $2}'`
 
 echo "---------------------------------------------------------------------------------------"
 
