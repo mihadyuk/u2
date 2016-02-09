@@ -157,73 +157,33 @@ bool MissionExecutor::load_next_mission_item(void) {
   return load_status;
 }
 
-#if !USE_LD_NAVIGATOR
-/**
- *
- */
-void MissionExecutor::navout2acsin(const NavOut<double> &nav_out) {
-  acs_in.ch[ACS_INPUT_dZrad] = nav_out.xtd;
-  acs_in.ch[ACS_INPUT_dZm]   = rad2m(nav_out.xtd);
-
-  float dYaw = acs_in.ch[ACS_INPUT_yaw] - static_cast<float>(navigator.get_crsAB());
-  acs_in.ch[ACS_INPUT_dYaw] = wrap_pi(dYaw);
-}
-
-/**
- *
- */
-void MissionExecutor::navout2mavlink(const NavOut<double> &nav_out) {
-
-  mavlink_out_nav_controller_output_struct.wp_dist = rad2m(nav_out.dist);
-  mavlink_out_nav_controller_output_struct.xtrack_error = rad2m(nav_out.xtd);
-  mavlink_out_nav_controller_output_struct.target_bearing = rad2deg(nav_out.crs);
-  mavlink_out_nav_controller_output_struct.nav_bearing = rad2deg(acs_in.ch[ACS_INPUT_dYaw]);
-
-  mavlink_out_debug_vect_struct.x = mavlink_out_nav_controller_output_struct.xtrack_error;
-  mavlink_out_debug_vect_struct.y = mavlink_out_nav_controller_output_struct.target_bearing;
-  mavlink_out_debug_vect_struct.z = mavlink_out_nav_controller_output_struct.nav_bearing;
-  mavlink_out_debug_vect_struct.time_usec = TIME_BOOT_MS;
-
-#if PID_TUNE_DEBUG
-  if (pid_tune_mail.free()) {
-    pid_tune_mail.fill(&mavlink_out_debug_vect_struct,
-        MAV_COMP_ID_ALL, MAVLINK_MSG_ID_DEBUG_VECT);
-    mav_logger.write(&pid_tune_mail);
+void MissionExecutor::analyze_partexecout() {
+  if (out.crossed && out.final) {
+    maneuver_completed = true;
+    part_number = 0;
   }
-#endif
+  else if (out.crossed) {
+    maneuver_completed = false;
+    part_number++;
+  }
+  else {
+    maneuver_completed = false;
+  }
 }
 
-/**
- * @brief   Detects waypoint reachable status.
- * @details Kind of hack. It increases effective radius if
- *          crosstrack error more than R/1.5
- */
-bool MissionExecutor::wp_reached(const NavOut<double> &nav_out) {
-
-  double Rmeters = rad2m(nav_out.xtd);
-  Rmeters = fabs(Rmeters * static_cast<double>(1.5));
-
-  if (Rmeters < static_cast<double>(trgt.WP_RADIUS))
-    Rmeters = trgt.WP_RADIUS;
-  /* else branch unneeded here because Rmeters already contains correct value */
-
-  return rad2m(nav_out.dist) < Rmeters;
+void MissionExecutor::partexecout2acsin(const partExecOut<double> &out) {
+  acs_in.ch[ACS_INPUT_dZm]  = out.dz;
+  acs_in.ch[ACS_INPUT_dYaw] = wrap_pi(acs_in.ch[ACS_INPUT_yaw] - out.crs);
+  acs_in.ch[ACS_INPUT_trgt_alt] = out.alt;
 }
 
-#else
+void MissionExecutor::partexecout2mavlink(const partExecOut<double> &out) {
 
-void MissionExecutor::navout2acsin(const LdNavOut<double> &nav_out) {
-  acs_in.ch[ACS_INPUT_dZm]  = nav_out.dz;
-  acs_in.ch[ACS_INPUT_dYaw] = wrap_pi(acs_in.ch[ACS_INPUT_yaw] - nav_out.crs);
-  acs_in.ch[ACS_INPUT_trgt_alt] = nav_out.alt;
-}
-
-void MissionExecutor::navout2mavlink(const LdNavOut<double> &nav_out) {
-
-  mavlink_out_nav_controller_output_struct.wp_dist = static_cast<uint16_t>(round(fabs(nav_out.dist)));
-  mavlink_out_nav_controller_output_struct.xtrack_error = static_cast<float>(nav_out.dz);
-  mavlink_out_nav_controller_output_struct.target_bearing = rad2deg(nav_out.crs);
+  mavlink_out_nav_controller_output_struct.wp_dist = static_cast<uint16_t>(round(fabs(out.dist)));
+  mavlink_out_nav_controller_output_struct.xtrack_error = static_cast<float>(out.dz);
+  mavlink_out_nav_controller_output_struct.target_bearing = rad2deg(out.crs);
   mavlink_out_nav_controller_output_struct.nav_bearing = rad2deg(acs_in.ch[ACS_INPUT_dYaw]);
+  mavlink_out_nav_controller_output_struct.alt_error = acs_in.ch[ACS_INPUT_alt] - out.alt;
 
 #if PID_TUNE_DEBUG
   mavlink_out_debug_vect_struct.x = mavlink_out_nav_controller_output_struct.xtrack_error;
@@ -232,7 +192,8 @@ void MissionExecutor::navout2mavlink(const LdNavOut<double> &nav_out) {
   mavlink_out_debug_vect_struct.time_usec = TIME_BOOT_MS;
   if (pid_tune_mail.free()) {
     pid_tune_mail.fill(&mavlink_out_debug_vect_struct,
-        MAV_COMP_ID_ALL, MAVLINK_MSG_ID_DEBUG_VECT);
+                       MAV_COMP_ID_ALL,
+                       MAVLINK_MSG_ID_DEBUG_VECT);
     mav_logger.write(&pid_tune_mail);
   }
 #endif
@@ -248,7 +209,8 @@ void MissionExecutor::debug2mavlink(float dT) {
       uint64_t time = TimeKeeper::utc();
 
       dbg_msn_exec.time_usec = time;
-      dbg_msn_exec.x = static_cast<float>(mnr_executor.debugPartNumber());
+//      dbg_msn_exec.x = static_cast<float>(mnr_executor.debugPartNumber());
+      dbg_msn_exec.x = static_cast<float>(part_number);
       dbg_msn_exec.y = static_cast<float>(acs_in.ch[ACS_INPUT_dYaw]);
       dbg_msn_exec.z = static_cast<float>(acs_in.ch[ACS_INPUT_dZm]);
 
@@ -259,38 +221,41 @@ void MissionExecutor::debug2mavlink(float dT) {
 
 }
 
-#endif
 /**
  *
  */
 void MissionExecutor::navigate(float dT) {
-#if !USE_LD_NAVIGATOR
-  NavIn<double> nav_in(acs_in.ch[ACS_INPUT_lat],
-                       acs_in.ch[ACS_INPUT_lon]);
-  NavOut<double> nav_out = navigator.update(nav_in);
-  navout2acsin(nav_out);
-  navout2mavlink(nav_out);
-  if (wp_reached(nav_out)) {
-    broadcast_mission_item_reached(trgt.seq);
-    load_next_mission_item();
-    NavLine<double> line(deg2rad(prev.x), deg2rad(prev.y), deg2rad(trgt.x), deg2rad(trgt.y));
-    navigator.loadLine(line);
-  }
-#else
+
   double curr_wgs84[3][1] = {{acs_in.ch[ACS_INPUT_lat]},
                              {acs_in.ch[ACS_INPUT_lon]},
                              {acs_in.ch[ACS_INPUT_alt]}};
-  LdNavOut<double> nav_out = mnr_executor.update(curr_wgs84);
-  navout2acsin(nav_out);
-  navout2mavlink(nav_out);
+  //  partExecOut<double> out = mnr_executor.update(curr_wgs84);
+  MissionComponent component = maneuver::indetifyTargetMissonItem(prev,
+                                                                  trgt,
+                                                                  third);
+  maneuver::parseMissionComponent(part,
+                                  component,
+                                  part_number,
+                                  prev,
+                                  trgt,
+                                  third,
+                                  curr_wgs84);
+  part.execute(out);
+  partexecout2acsin(out);
+  partexecout2mavlink(out);
   debug2mavlink(dT);
+  analyze_partexecout();
 
-  if (mnr_executor.isManeuverCompleted()) {
+  if (maneuver_completed) {
     broadcast_mission_item_reached(trgt.seq);
     load_next_mission_item();
   }
 
-#endif
+//  if (mnr_executor.isManeuverCompleted()) {
+//    broadcast_mission_item_reached(trgt.seq);
+//    load_next_mission_item();
+//  }
+
 }
 
 /*
@@ -304,8 +269,8 @@ void MissionExecutor::navigate(float dT) {
  */
 MissionExecutor::MissionExecutor(ACSInput &acs_in) :
   state(MissionState::uninit),
-  acs_in(acs_in),
-  mnr_executor(prev, trgt, third) {
+  acs_in(acs_in) {
+//  mnr_executor(prev, trgt, third) {
 
   /* fill home point with invalid data. This denotes it uninitialized. */
   memset(&home, 0xFF, sizeof(home));
@@ -378,10 +343,6 @@ bool MissionExecutor::takeoff(void) {
     if ((OSAL_SUCCESS != read_status1) || (OSAL_SUCCESS != read_status2))
       return OSAL_FAILED;
     else {
-#if !USE_LD_NAVIGATOR
-      NavLine<double> line(deg2rad(prev.x), deg2rad(prev.y), deg2rad(trgt.x), deg2rad(trgt.y));
-      navigator.loadLine(line);
-#endif
       state = MissionState::navigate;
       return OSAL_SUCCESS;
     }
