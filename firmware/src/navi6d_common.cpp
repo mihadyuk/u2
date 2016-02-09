@@ -189,9 +189,12 @@ void Navi6dWrapper::prepare_data(const baro_data_t &baro,
   nav_sins.sensor_data.alt_b[0][0] = baro.alt;
   nav_sins.sensor_data.v_odo[0][0] = odo.speed;
 
-  for(size_t i=0; i<3; i++) {
-    nav_sins.sensor_data.fb[i][0] = marg.acc[i];
-    nav_sins.sensor_data.wb[i][0] = marg.gyr[i];
-    nav_sins.sensor_data.mb[i][0] = marg.mag[i];
-  }
+  nav_sins.marg_b.set_acc(marg.acc);
+  nav_sins.marg_b.set_gyr(marg.gyr);
+  nav_sins.marg_b.set_mag(marg.mag);
+//  for(size_t i=0; i<3; i++) {
+//    nav_sins.sensor_data.fb[i][0] = marg.acc[i];
+//    nav_sins.sensor_data.wb[i][0] = marg.gyr[i];
+//    nav_sins.sensor_data.mb[i][0] = marg.mag[i];
+//  }
 }
