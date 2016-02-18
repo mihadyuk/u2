@@ -23,7 +23,7 @@ using namespace control;
  * EXTERNS
  ******************************************************************************
  */
-
+extern mavlink_rc_channels_scaled_t   mavlink_out_rc_channels_scaled_struct;
 extern MavLogger mav_logger;
 
 /*
@@ -54,6 +54,18 @@ __CCM__ static mavMail named_value_mail;
  */
 
 static void drivetrain2mavlink(const DrivetrainImpact &impact) {
+
+  mavlink_out_rc_channels_scaled_struct.time_boot_ms = TIME_BOOT_MS;
+  mavlink_out_rc_channels_scaled_struct.chan1_scaled = round(impact.ch[IMPACT_RUD]*10000);
+  mavlink_out_rc_channels_scaled_struct.chan2_scaled = round(impact.ch[IMPACT_THR]*10000);
+  mavlink_out_rc_channels_scaled_struct.chan3_scaled = UINT16_MAX;
+  mavlink_out_rc_channels_scaled_struct.chan4_scaled = UINT16_MAX;
+  mavlink_out_rc_channels_scaled_struct.chan5_scaled = UINT16_MAX;
+  mavlink_out_rc_channels_scaled_struct.chan6_scaled = UINT16_MAX;
+  mavlink_out_rc_channels_scaled_struct.chan7_scaled = UINT16_MAX;
+  mavlink_out_rc_channels_scaled_struct.chan8_scaled = UINT16_MAX;
+  mavlink_out_rc_channels_scaled_struct.rssi = 255;
+  mavlink_out_rc_channels_scaled_struct.port = 0;
 
   mavlink_named_value_float_struct.value = impact.ch[IMPACT_RUD];
   mavlink_named_value_float_struct.time_boot_ms = TIME_BOOT_MS;

@@ -12,6 +12,7 @@
  *
  */
 typedef enum {
+  /* TODO: delete unused fields */
   ACS_INPUT_lat,      // latitude from NS (WGS-84, rad)
   ACS_INPUT_lon,      // longitude from NS (WGS-84, rad)
   ACS_INPUT_alt,      // altitude from NS (WGS-84, m)
@@ -56,10 +57,10 @@ typedef enum {
   ACS_INPUT_ay_body,
   ACS_INPUT_az_body,
 
-  // angular rates in rad/s (NED)
-  ACS_INPUT_wx,
-  ACS_INPUT_wy,
-  ACS_INPUT_wz,
+  // free angular rates in vehicle frame (rad/s) (NED)
+  ACS_INPUT_free_wx_vehicle,
+  ACS_INPUT_free_wy_vehicle,
+  ACS_INPUT_free_wz_vehicle,
 
   ACS_INPUT_dZrad,      // cross track error (rad)
   ACS_INPUT_dZm,        // cross track error (m)

@@ -184,6 +184,11 @@ void MissionExecutor::partexecout2mavlink(const partExecOut<double> &out) {
   mavlink_out_nav_controller_output_struct.target_bearing = rad2deg(out.crs);
   mavlink_out_nav_controller_output_struct.nav_bearing = rad2deg(acs_in.ch[ACS_INPUT_dYaw]);
   mavlink_out_nav_controller_output_struct.alt_error = acs_in.ch[ACS_INPUT_alt] - out.alt;
+  /* TODO: change constant values of target roll and pitch to real */
+  mavlink_out_nav_controller_output_struct.nav_roll = 0;
+  mavlink_out_nav_controller_output_struct.nav_pitch = 0;
+  /* TODO: change odo_speed to air_speed */
+  mavlink_out_nav_controller_output_struct.aspd_error = acs_in.ch[ACS_INPUT_trgt_speed] - acs_in.ch[ACS_INPUT_odo_speed];
 
 #if PID_TUNE_DEBUG
   mavlink_out_debug_vect_struct.x = mavlink_out_nav_controller_output_struct.xtrack_error;

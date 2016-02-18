@@ -402,6 +402,7 @@ int main(void) {
 #error "board unsupported"
 #endif
 
+    /* TODO: change constant GNSS altitude to real */
     PMUGet(abs_press, diff_press, 252, baro_data);
     baro2acs_in(baro_data, acs_in);
 

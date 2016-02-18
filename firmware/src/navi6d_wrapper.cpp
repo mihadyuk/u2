@@ -38,6 +38,7 @@ typedef double sinsfp;
  ******************************************************************************
  */
 extern mavlink_highres_imu_t          mavlink_out_highres_imu_struct;
+extern mavlink_vfr_hud_t              mavlink_out_vfr_hud_struct;
 extern chibios_rt::EvtSource event_gnss;
 
 #if KALMAN_DEBUG_LOG
@@ -192,6 +193,8 @@ void Navi6dWrapper::navi2mavlink(void) {
   mavlink_out_highres_imu_struct.zmag = data.mb_c[2][0];
 
   mavlink_out_highres_imu_struct.time_usec = TimeKeeper::utc();
+
+  mavlink_out_vfr_hud_struct.heading = rad2deg(data.mag_head_v[0][0]);
 }
 
 /**
@@ -300,9 +303,9 @@ void Navi6dWrapper::navi2acs(void) {
   acs_in.ch[ACS_INPUT_ay_body] = data.a_b[1][0];
   acs_in.ch[ACS_INPUT_az_body] = data.a_b[2][0];
 
-  acs_in.ch[ACS_INPUT_wx] = data.w_b[0][0];
-  acs_in.ch[ACS_INPUT_wy] = data.w_b[1][0];
-  acs_in.ch[ACS_INPUT_wz] = data.w_b[2][0];
+  acs_in.ch[ACS_INPUT_free_wx_vehicle] = data.free_gyrv[0][0];
+  acs_in.ch[ACS_INPUT_free_wy_vehicle] = data.free_gyrv[1][0];
+  acs_in.ch[ACS_INPUT_free_wz_vehicle] = data.free_gyrv[2][0];
 
   acs_in.ch[ACS_INPUT_free_ax] = data.free_accb[0][0];
   acs_in.ch[ACS_INPUT_free_ay] = data.free_accb[1][0];

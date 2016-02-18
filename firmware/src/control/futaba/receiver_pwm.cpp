@@ -37,7 +37,7 @@ using namespace control;
  ******************************************************************************
  */
 extern mavlink_rc_channels_t          mavlink_out_rc_channels_struct;
-extern mavlink_rc_channels_scaled_t   mavlink_out_rc_channels_scaled_struct;
+//extern mavlink_rc_channels_scaled_t   mavlink_out_rc_channels_scaled_struct;
 
 /*
  ******************************************************************************
@@ -132,6 +132,7 @@ static void receiver2mavlink(const uint16_t *pwm, size_t channels) {
   mavlink_out_rc_channels_struct.rssi = 255;
 
   // A value of UINT16_MAX implies the channel is unused.
+  /*
   mavlink_out_rc_channels_scaled_struct.time_boot_ms = TIME_BOOT_MS;
   mavlink_out_rc_channels_scaled_struct.chan1_scaled = pwm[0];
   mavlink_out_rc_channels_scaled_struct.chan2_scaled = pwm[1];
@@ -143,6 +144,7 @@ static void receiver2mavlink(const uint16_t *pwm, size_t channels) {
   mavlink_out_rc_channels_scaled_struct.chan8_scaled = UINT16_MAX;
   mavlink_out_rc_channels_scaled_struct.rssi = 255;
   mavlink_out_rc_channels_scaled_struct.port = 0;
+  */
 }
 
 /**
