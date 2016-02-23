@@ -339,8 +339,8 @@ int main(void) {
 #if defined(BOARD_BEZVODIATEL)
   gps_power_on();
 #elif defined(BOARD_MNU)
-  gnss_select(it530);
-  modem_select(xbee);
+  gnss_select(GNSSReceiver::msno_nmea);
+  modem_select(ModemType::mors);
 #else
 #error "board unsupported"
 #endif
