@@ -509,9 +509,9 @@ void Navi6dWrapper::update(const baro_data_t &baro,
   nav_sins.calib_params.sw[1][0] = *gyr_scale_y;
   nav_sins.calib_params.sw[2][0] = *gyr_scale_z;
 
-  nav_sins.ref_params.mag_eu_bs[0][0] = M_PI;
-  nav_sins.ref_params.mag_eu_bs[1][0] = 0.0;
-  nav_sins.ref_params.mag_eu_bs[2][0] = -M_PI;
+  nav_sins.marg_b.eu_bs_mag[0][0] = M_PI;
+  nav_sins.marg_b.eu_bs_mag[1][0] = 0.0;
+  nav_sins.marg_b.eu_bs_mag[2][0] = -M_PI;
 
   nav_sins.ref_params.eu_vh_base[0][0] = *eu_vh_roll;
   nav_sins.ref_params.eu_vh_base[1][0] = *eu_vh_pitch;
