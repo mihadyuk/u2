@@ -106,7 +106,7 @@ void boardInit(void) {
 }
 
 bool FPGAReady(void) {
-  return PAL_LOW == palReadPad(GPIOC, GPIOC_FPGA_IO3);
+  return PAL_HIGH == palReadPad(GPIOC, GPIOC_FPGA_IO3);
 }
 
 #if HAL_USE_USB
