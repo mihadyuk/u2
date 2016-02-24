@@ -105,10 +105,6 @@ bool mmc_lld_is_write_protected(MMCDriver *mmcp) {
 void boardInit(void) {
 }
 
-bool FPGAReady(void) {
-  return PAL_HIGH == palReadPad(GPIOC, GPIOC_FPGA_IO3);
-}
-
 #if HAL_USE_USB
 
 unsigned int usb_lld_plug_state(void) {
@@ -121,6 +117,41 @@ void usb_lld_connect_bus_workaround(void) {
 
 void usb_lld_disconnect_bus_workaround(void) {
   ;
+}
+
+/*
+ * FPGA related pins
+ */
+bool FPGAReady(void) {
+  return PAL_HIGH == palReadPad(GPIOC, GPIOC_FPGA_IO3);
+}
+
+bool FPGAbramDbgOk(void) {
+  return PAL_HIGH == palReadPad(GPIOF, GPIOF_FPGA_IO6);
+}
+
+bool FSMCDataFlushed(void) {
+  return PAL_HIGH == palReadPad(GPIOD, GPIOD_MEM_NE1);
+}
+
+void FPGAMemAutoFill(bool enable) {
+  if (enable)
+    palSetPad(GPIOD, GPIOD_FPGA_IO5);
+  else
+    palClearPad(GPIOD, GPIOD_FPGA_IO5);
+}
+
+bool FPGAMathRdy(void) {
+  return PAL_HIGH == palReadPad(GPIOG, GPIOG_FPGA_IO9);
+}
+
+void FPGAMathRst(bool active) {
+  if (active) {
+    palSetPad(GPIOH, GPIOH_FPGA_IO10);
+  }
+  else {
+    palClearPad(GPIOH, GPIOH_FPGA_IO10);
+  }
 }
 
 #endif /* HAL_USE_USB */
