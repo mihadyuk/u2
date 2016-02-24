@@ -276,10 +276,10 @@ enum ModemType {
 static void modem_select(ModemType type) {
   switch(type) {
   case ModemType::xbee:
-    palClearPad(GPIOG, GPIOG_FPGA_IO8);
+    palClearPad(GPIOF, GPIOF_FPGA_IO12);
     break;
   case ModemType::mors:
-    palSetPad(GPIOG, GPIOG_FPGA_IO8);
+    palSetPad(GPIOF, GPIOF_FPGA_IO12);
     break;
   }
 }
