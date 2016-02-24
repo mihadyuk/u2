@@ -57,7 +57,7 @@ void PWMFPGA::start(void) {
   if (ready)
     return;
 
-  fpgapwmStart(&FPGAPWMD1, &FPGAD1);
+  fpgaPwmStart(&FPGAPWMD1, &FPGAD1);
 
   ready = true;
 }
@@ -72,7 +72,7 @@ void PWMFPGA::stop(void) {
 
   ready = false;
 
-  fpgapwmStop(&FPGAPWMD1);
+  fpgaPwmStop(&FPGAPWMD1);
 }
 
 /**
@@ -80,5 +80,5 @@ void PWMFPGA::stop(void) {
  */
 void PWMFPGA::update(uint16_t pwm, size_t channel) {
 
-  fpgapwmSet(&FPGAPWMD1, pwm, channel);
+  FPGAPWMD1.pwm[channel] = pwm;
 }

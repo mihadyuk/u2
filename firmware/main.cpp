@@ -73,7 +73,6 @@ Giovanni
 #elif defined(BOARD_MNU)
   #include "fpga.h"
   #include "fpga_pwm.h"
-  #include "fpga_icu.h"
   #include "odometer_fpga.hpp"
   #include "mod_telem.hpp"
 #else
@@ -140,7 +139,7 @@ __CCM__ gnss::uBlox GNSS(&GPSSD, 9600, 57600);
 __CCM__ static OdometerSTM odometer;
 #elif defined(BOARD_MNU)
 __CCM__ gnss::msnonmea GNSS(&GPSSD, 115200, 115200);
-__CCM__ static OdometerFPGA odometer(&FPGAICUD1);
+__CCM__ static OdometerFPGA odometer(&FPGAPWMD1);
 #else
 #error "board unsupported"
 #endif
@@ -320,9 +319,8 @@ int main(void) {
   osalThreadSleepMilliseconds(300);
 #elif defined(BOARD_MNU)
   fpgaObjectInit(&FPGAD1);
-  fpgapwmObjectInit(&FPGAPWMD1);
-  fpgaicuObjectInit(&FPGAICUD1);
   fpgaStart(&FPGAD1);
+  fpgaPwmObjectInit(&FPGAPWMD1);
 #else
 #error "board unsupported"
 #endif

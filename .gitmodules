@@ -13,3 +13,6 @@
 [submodule "firmware/lib/navi6d"]
 	path = firmware/lib/navi6d
 	url = git@10.37.61.248:muaddib/sins_cpp.git
+[submodule "firmware/src/fpga"]
+	path = firmware/src/fpga
+	url = git@github.com:barthess/chibi_fpga.git
