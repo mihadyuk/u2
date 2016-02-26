@@ -74,6 +74,7 @@ Giovanni
   #include "fpga.h"
   #include "fpga_pwm.h"
   #include "fpga_mtrx.h"
+  #include "test/fpga_mtrx_test.hpp"
   #include "odometer_fpga.hpp"
   #include "mod_telem.hpp"
 #else
@@ -328,6 +329,7 @@ int main(void) {
   FPGAMathRst(true);
   osalThreadSleepMilliseconds(1);
   FPGAMathRst(false);
+  fpga_mtrx_mem_test(&MTRXD1, 3);
 
 #else
 #error "board unsupported"

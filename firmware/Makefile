@@ -40,7 +40,7 @@ endif
 
 # Enable this if you want to see the full log while compiling.
 ifeq ($(USE_VERBOSE_COMPILE),)
-  USE_VERBOSE_COMPILE = no
+  USE_VERBOSE_COMPILE = yes
 endif
 
 # If enabled, this option makes the build process faster by not compiling
@@ -238,6 +238,9 @@ CPPSRC = $(CHCPPSRC) \
 		src/kinematic/ahrs.cpp \
 		src/kinematic/ahrs_starlino.cpp \
 		lib/filters/fir_test.cpp \
+		src/fpga/test/fpga_mtrx_test.cpp \
+		src/fpga/test/fpga_mem_test.cpp \
+		$(CHIBIOS_CONTRIB)/os/various/memtest.cpp
 
 
 # C sources to be compiled in ARM mode regardless of the global setting.
@@ -285,6 +288,7 @@ INCDIR = $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
          src/control \
          src/fpga \
          lib/navi6d \
+         lib/embmatrix/src \
          lib/mavlink/C/lapwing \
          benchmark \
 
