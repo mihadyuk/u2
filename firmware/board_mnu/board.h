@@ -510,7 +510,7 @@
                                      PIN_PUPDR_PULLUP(GPIOC_SDIO_D2) |        \
                                      PIN_PUPDR_PULLUP(GPIOC_SDIO_D3) |        \
                                      PIN_PUPDR_PULLDOWN(GPIOC_SDIO_CLK) |     \
-                                     PIN_PUPDR_PULLUP(GPIOC_FPGA_IO3) |       \
+                                     PIN_PUPDR_PULLDOWN(GPIOC_FPGA_IO3) |     \
                                      PIN_PUPDR_FLOATING(GPIOC_PIN14) |        \
                                      PIN_PUPDR_FLOATING(GPIOC_PIN15))
 #define VAL_GPIOC_ODR               (PIN_ODR_HIGH(GPIOC_ADC_VCC_P) |          \
