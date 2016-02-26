@@ -329,7 +329,7 @@ int main(void) {
   FPGAMathRst(true);
   osalThreadSleepMilliseconds(1);
   FPGAMathRst(false);
-  fpga_mtrx_mem_test(&MTRXD1, 3);
+  fpga_mtrx_mem_test(&MTRXD1, 2);
 
 #else
 #error "board unsupported"
