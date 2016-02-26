@@ -1,5 +1,5 @@
 #include "main.h"
-#include "fpga_icu.h"
+#include "fpga_pwm.h"
 
 #include "receiver_pwm_fpga.hpp"
 #include "param_registry.hpp"
@@ -88,7 +88,7 @@ static void receiver2mavlink(const uint16_t *pwm, size_t channels) {
  */
 uint16_t ReceiverPWMFPGA::get_ch(size_t chnum, bool *data_valid) const {
 
-  uint16_t ret = fpgaicuRead(&FPGAICUD1, chnum);
+  uint16_t ret = this->icup[chnum];
 
   if ((ret > MAX_VALID_VALUE) || (ret < MIN_VALID_VALUE))
     *data_valid = false;
@@ -106,7 +106,8 @@ uint16_t ReceiverPWMFPGA::get_ch(size_t chnum, bool *data_valid) const {
  */
 void ReceiverPWMFPGA::start(void) {
 
-  fpgaicuStart(&FPGAICUD1, &FPGAD1);
+  fpgaPwmStart(&FPGAPWMD1, &FPGAD1);
+  this->icup = FPGAPWMD1.icu;
 
   ready = true;
 }
@@ -117,9 +118,6 @@ void ReceiverPWMFPGA::start(void) {
 void ReceiverPWMFPGA::stop(void) {
 
   ready = false;
-
-  eicuDisable(&EICUD4);
-  eicuStop(&EICUD4);
 }
 
 /**
@@ -130,7 +128,7 @@ void ReceiverPWMFPGA::update(RecevierOutput &result) {
 
   osalDbgCheck(ready);
 
-  receiver2mavlink(FPGAICUD1.icu, CHANNEL_CNT);
+  receiver2mavlink(this->icup, CHANNEL_CNT);
 
   /* fill all with valid values */
   for (size_t i=0; i<ArrayLen(result.ch); i++)

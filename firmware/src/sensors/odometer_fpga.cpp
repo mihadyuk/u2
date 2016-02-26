@@ -48,8 +48,8 @@
  ******************************************************************************
  */
 
-OdometerFPGA::OdometerFPGA(const FpgaIcu *fpgaicup) :
-  fpgaicup(fpgaicup)
+OdometerFPGA::OdometerFPGA(const FpgaPwm *fpgaicup) :
+fpgaicup(fpgaicup)
 {
   return;
 }
@@ -78,7 +78,7 @@ void OdometerFPGA::update_impl(odometer_data_t &result, float dT) {
   uint16_t last_pulse_period;
   (void)dT;
 
-  last_pulse_period = fpgaicuRead(this->fpgaicup, SPEED_OFFSET);
+  last_pulse_period = *this->fpgaicup->speedometer;
 
   if(0 != last_pulse_period) {
     //last_pulse_period = filter_median(last_pulse_period);
@@ -91,8 +91,7 @@ void OdometerFPGA::update_impl(odometer_data_t &result, float dT) {
     result.speed = 0;
   }
 
-  uint32_t *ptr = (uint32_t *)&this->fpgaicup->icu[PATH_OFFSET];
-  result.path  = *ptr;
+  result.path  = *this->fpgaicup->odometer;
   result.fresh = true;
 }
 

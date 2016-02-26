@@ -25,6 +25,7 @@ using namespace chibios_rt;
 extern mavlink_global_position_int_t   mavlink_out_global_position_int_struct;
 extern mavlink_attitude_t              mavlink_out_attitude_struct;
 extern mavlink_system_time_t           mavlink_out_system_time_struct;
+extern mavlink_heartbeat_t             mavlink_out_heartbeat_struct;
 
 /*
  ******************************************************************************
@@ -63,7 +64,7 @@ static mavChannelSerial mod_channel_serial;
 void ModTelem::push(uint8_t msgid, const void* mavlink_struct) {
   size_t len;
 
-  mavlink_encode(msgid, MAV_COMP_ID_ALL, &tx_msg,  &mavlink_struct);
+  mavlink_encode(msgid, MAV_COMP_ID_ALL, &tx_msg, mavlink_struct);
   len = mavlink_msg_to_send_buffer(sendbuf, &tx_msg);
 
   if (MSG_OK != mod_channel_serial.write(sendbuf, len, MS2ST(100)))
@@ -76,7 +77,6 @@ void ModTelem::push(uint8_t msgid, const void* mavlink_struct) {
 void ModTelem::start_impl(void) {
   sdStart(&MODSD, &mod_ser_cfg);
   mod_channel_serial.start(&MODSD);
-
 }
 
 /**
@@ -95,6 +95,9 @@ void ModTelem::main(void) {
   start_impl();
 
   while (!this->shouldTerminate()) {
+
+    osalThreadSleep(MOD_TELEM_SPREAD);
+    this->push(MAVLINK_MSG_ID_HEARTBEAT, &mavlink_out_heartbeat_struct);
 
     osalThreadSleep(MOD_TELEM_SPREAD);
     this->push(MAVLINK_MSG_ID_SYSTEM_TIME, &mavlink_out_system_time_struct);

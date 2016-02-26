@@ -2,6 +2,7 @@
 #define PWM_FPGA_HPP_
 
 #include "pwm_base.hpp"
+#include "fpga_pwm.h"
 
 namespace control {
 

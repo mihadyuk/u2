@@ -134,7 +134,7 @@ CSRC = $(STARTUPSRC) \
        src/usbcfg.c \
        src/fpga/fpga.c \
        src/fpga/fpga_pwm.c \
-       src/fpga/fpga_icu.c
+       src/fpga/fpga_mtrx.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -408,4 +408,8 @@ autogen_clean:
 	rm -f src/mavlink_local/tlm_sender.cpp
 	rm -f firmware_version.h
 
+src/fpga/fpga.h : src/fpga/fpga_constants.h
+
+src/fpga/fpga_constants.h: ../../xilinx/fsmc2wb/rtl/mtrx_math_constants.vhd
+	bash src/fpga/extract_fpga_constants.sh $< $@
 

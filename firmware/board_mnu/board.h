@@ -555,7 +555,7 @@
                                      PIN_MODE_ALTERNATE(GPIOD_MEM_CLK) |      \
                                      PIN_MODE_ALTERNATE(GPIOD_MEM_OE) |       \
                                      PIN_MODE_ALTERNATE(GPIOD_MEM_WE) |       \
-                                     PIN_MODE_INPUT(GPIOD_FPGA_IO5) |         \
+                                     PIN_MODE_OUTPUT(GPIOD_FPGA_IO5) |        \
                                      PIN_MODE_ALTERNATE(GPIOD_MEM_NE1) |      \
                                      PIN_MODE_ALTERNATE(GPIOD_MEM_D13) |      \
                                      PIN_MODE_ALTERNATE(GPIOD_MEM_D14) |      \
@@ -587,7 +587,7 @@
                                      PIN_OSPEED_100M(GPIOD_MEM_CLK) |         \
                                      PIN_OSPEED_100M(GPIOD_MEM_OE) |          \
                                      PIN_OSPEED_100M(GPIOD_MEM_WE) |          \
-                                     PIN_OSPEED_100M(GPIOD_FPGA_IO5) |        \
+                                     PIN_OSPEED_2M(GPIOD_FPGA_IO5) |          \
                                      PIN_OSPEED_100M(GPIOD_MEM_NE1) |         \
                                      PIN_OSPEED_100M(GPIOD_MEM_D13) |         \
                                      PIN_OSPEED_100M(GPIOD_MEM_D14) |         \
@@ -619,7 +619,7 @@
                                      PIN_ODR_LOW(GPIOD_MEM_CLK) |             \
                                      PIN_ODR_HIGH(GPIOD_MEM_OE) |             \
                                      PIN_ODR_HIGH(GPIOD_MEM_WE) |             \
-                                     PIN_ODR_HIGH(GPIOD_FPGA_IO5) |           \
+                                     PIN_ODR_LOW(GPIOD_FPGA_IO5) |            \
                                      PIN_ODR_HIGH(GPIOD_MEM_NE1) |            \
                                      PIN_ODR_HIGH(GPIOD_MEM_D13) |            \
                                      PIN_ODR_HIGH(GPIOD_MEM_D14) |            \
@@ -755,7 +755,7 @@
                                      PIN_MODE_ALTERNATE(GPIOF_MEM_A3) |       \
                                      PIN_MODE_ALTERNATE(GPIOF_MEM_A4) |       \
                                      PIN_MODE_ALTERNATE(GPIOF_MEM_A5) |       \
-                                     PIN_MODE_INPUT(GPIOF_FPGA_IO12) |        \
+                                     PIN_MODE_OUTPUT(GPIOF_FPGA_IO12) |       \
                                      PIN_MODE_INPUT(GPIOF_PIN7) |             \
                                      PIN_MODE_INPUT(GPIOF_PIN8) |             \
                                      PIN_MODE_INPUT(GPIOF_PIN9) |             \
@@ -787,12 +787,12 @@
                                      PIN_OSPEED_100M(GPIOF_MEM_A3) |          \
                                      PIN_OSPEED_100M(GPIOF_MEM_A4) |          \
                                      PIN_OSPEED_100M(GPIOF_MEM_A5) |          \
-                                     PIN_OSPEED_100M(GPIOF_FPGA_IO12) |       \
+                                     PIN_OSPEED_2M(GPIOF_FPGA_IO12) |         \
                                      PIN_OSPEED_100M(GPIOF_PIN7) |            \
                                      PIN_OSPEED_100M(GPIOF_PIN8) |            \
                                      PIN_OSPEED_100M(GPIOF_PIN9) |            \
                                      PIN_OSPEED_100M(GPIOF_FPGA_IO6) |        \
-                                     PIN_OSPEED_100M(GPIOF_FPGA_IO13) |       \
+                                     PIN_OSPEED_2M(GPIOF_FPGA_IO13) |         \
                                      PIN_OSPEED_100M(GPIOF_MEM_A6) |          \
                                      PIN_OSPEED_100M(GPIOF_MEM_A7) |          \
                                      PIN_OSPEED_100M(GPIOF_MEM_A8) |          \
@@ -959,7 +959,7 @@
                                      PIN_MODE_INPUT(GPIOH_PIN7) |             \
                                      PIN_MODE_ALTERNATE(GPIOH_MCU_I2C_SDA) |  \
                                      PIN_MODE_OUTPUT(GPIOH_NVRAM_PWR) |       \
-                                     PIN_MODE_INPUT(GPIOH_FPGA_IO10) |        \
+                                     PIN_MODE_OUTPUT(GPIOH_FPGA_IO10) |       \
                                      PIN_MODE_INPUT(GPIOH_PIN11) |            \
                                      PIN_MODE_INPUT(GPIOH_PIN12) |            \
                                      PIN_MODE_INPUT(GPIOH_PIN13) |            \
@@ -991,7 +991,7 @@
                                      PIN_OSPEED_100M(GPIOH_PIN7) |            \
                                      PIN_OSPEED_2M(GPIOH_MCU_I2C_SDA) |       \
                                      PIN_OSPEED_2M(GPIOH_NVRAM_PWR) |         \
-                                     PIN_OSPEED_100M(GPIOH_FPGA_IO10) |       \
+                                     PIN_OSPEED_2M(GPIOH_FPGA_IO10) |         \
                                      PIN_OSPEED_100M(GPIOH_PIN11) |           \
                                      PIN_OSPEED_100M(GPIOH_PIN12) |           \
                                      PIN_OSPEED_100M(GPIOH_PIN13) |           \
@@ -1151,10 +1151,15 @@
 extern "C" {
 #endif
   void boardInit(void);
-  bool FPGAReady(void);
   unsigned int usb_lld_plug_state(void);
   void usb_lld_connect_bus_workaround(void);
   void usb_lld_disconnect_bus_workaround(void);
+  bool FPGAReady(void);
+  bool FPGAbramDbgOk(void);
+  bool FSMCDataFlushed(void);
+  void FPGAMemAutoFill(bool enable);
+  bool FPGAMathRdy(void);
+  void FPGAMathRst(bool active);
 #ifdef __cplusplus
 }
 #endif

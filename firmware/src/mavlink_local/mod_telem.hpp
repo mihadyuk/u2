@@ -6,7 +6,7 @@
 /*
  *
  */
-class ModTelem : public chibios_rt::BaseStaticThread<256> {
+class ModTelem : public chibios_rt::BaseStaticThread<512> {
 public:
   void stop(void);
 private:

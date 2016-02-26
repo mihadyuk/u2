@@ -2,6 +2,7 @@
 #define RECEIVER_PWM_FPGA_HPP_
 
 #include "receiver.hpp"
+#include "fpga_pwm.h"
 
 namespace control {
 
@@ -15,6 +16,7 @@ public:
   void update(RecevierOutput &result);
 private:
   uint16_t get_ch(size_t chnum, bool *data_valid) const;
+  const fpgaword_t *icup;
 };
 
 } /* namespace */
