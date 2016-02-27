@@ -324,12 +324,12 @@ int main(void) {
   fpgaStart(&FPGAD1);
   fpgaPwmObjectInit(&FPGAPWMD1);
 
-  fpgaMtrxObjectInit(&MTRXD1);
-  fpgaMtrxStart(&MTRXD1, &FPGAD1);
+  fpgaMtrxObjectInit(&MTRXD);
+  fpgaMtrxStart(&MTRXD, &FPGAD1);
   FPGAMathRst(true);
   osalThreadSleepMilliseconds(1);
   FPGAMathRst(false);
-  fpga_mtrx_mem_test(&MTRXD1, 2);
+  fpga_mtrx_mem_test(2);
 
 #else
 #error "board unsupported"
