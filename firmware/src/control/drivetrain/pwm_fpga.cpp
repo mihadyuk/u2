@@ -80,5 +80,10 @@ void PWMFPGA::stop(void) {
  */
 void PWMFPGA::update(uint16_t pwm, size_t channel) {
 
+//  FPGAPWMD1.pwm[0] = 1450;
+//  FPGAPWMD1.pwm[1] = 1475;
+//  FPGAPWMD1.pwm[2] = 1525;
+//  FPGAPWMD1.pwm[3] = 1550;
+
   FPGAPWMD1.pwm[channel] = pwm;
 }

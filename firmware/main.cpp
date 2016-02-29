@@ -73,6 +73,8 @@ Giovanni
 #elif defined(BOARD_MNU)
   #include "fpga.h"
   #include "fpga_pwm.h"
+  #include "fpga_mtrx.h"
+  #include "test/fpga_mtrx_test.hpp"
   #include "odometer_fpga.hpp"
   #include "mod_telem.hpp"
 #else
@@ -138,7 +140,7 @@ __CCM__ static power_monitor_data_t power_monitor_data;
 __CCM__ gnss::uBlox GNSS(&GPSSD, 9600, 57600);
 __CCM__ static OdometerSTM odometer;
 #elif defined(BOARD_MNU)
-__CCM__ gnss::msnonmea GNSS(&GPSSD, 115200, 115200);
+__CCM__ gnss::mtkgps GNSS(&GPSSD, 115200, 115200);
 __CCM__ static OdometerFPGA odometer(&FPGAPWMD1);
 #else
 #error "board unsupported"
@@ -321,6 +323,14 @@ int main(void) {
   fpgaObjectInit(&FPGAD1);
   fpgaStart(&FPGAD1);
   fpgaPwmObjectInit(&FPGAPWMD1);
+
+  fpgaMtrxObjectInit(&MTRXD1);
+  fpgaMtrxStart(&MTRXD1, &FPGAD1);
+  FPGAMathRst(true);
+  osalThreadSleepMilliseconds(1);
+  FPGAMathRst(false);
+  fpga_mtrx_mem_test(&MTRXD1, 2);
+
 #else
 #error "board unsupported"
 #endif
@@ -337,8 +347,8 @@ int main(void) {
 #if defined(BOARD_BEZVODIATEL)
   gps_power_on();
 #elif defined(BOARD_MNU)
-  gnss_select(GNSSReceiver::msno_nmea);
-  modem_select(ModemType::mors);
+  gnss_select(GNSSReceiver::it530);
+  modem_select(ModemType::xbee);
 #else
 #error "board unsupported"
 #endif
