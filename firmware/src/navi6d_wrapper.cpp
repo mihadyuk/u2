@@ -6,6 +6,10 @@
 #include <math.h>
 #include "main.h"
 
+#define KALMAN_USE_FPGA       TRUE
+typedef double klmnfp;
+typedef double sinsfp;
+
 #include "navigator_sins.hpp"
 #include "kalman_flags.cpp" // dirty hack allowing to not add this file to the Makefile
 
@@ -45,9 +49,6 @@ extern MavLogger mav_logger;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-
-typedef double klmnfp;
-typedef double sinsfp;
 
 #define KALMAN_STATE_SIZE         15
 #define KALMAN_MEASUREMENT_SIZE   10
