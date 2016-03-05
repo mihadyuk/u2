@@ -8,7 +8,7 @@ namespace filters {
  */
 template <typename T>
 class MedianBase {
-  virtual T operator() (T sample) = 0;
+  virtual T update (T sample) = 0;
 };
 
 /**
@@ -35,7 +35,7 @@ public:
   /**
    * Update filter state and return filtered value
    */
-  T operator() (T sample) {
+  T update (T sample) {
     unsigned int j = 0, i = 0;
     T tmp;
 

@@ -160,7 +160,7 @@ adcsample_t ADCLocal::getChannel(size_t N, filters::AlphaBetaBase<int32_t> &filt
 
   for (size_t i=0; i<ADC_BUF_DEPTH; i++) {
     idx = N + i * ADC_BUF_DEPTH;
-    filter(samples[idx]);
+    filter.update(samples[idx]);
   }
 
   return filter.get();

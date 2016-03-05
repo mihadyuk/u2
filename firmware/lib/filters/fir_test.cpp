@@ -34,7 +34,7 @@ void firTest(void){
 
     for (size_t i=0; i<ROUNDS; i++) {
       chTMStartMeasurementX(&tmp);
-      filter1 = fir(sample);
+      filter1 = fir.update(sample);
       chTMStopMeasurementX(&tmp);
 
       chTMStartMeasurementX(&tmp_ref);

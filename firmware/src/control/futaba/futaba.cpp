@@ -57,7 +57,7 @@ void Futaba::process_man_tumbler(RecevierOutput const &recv, ManualSwitch &man) 
     man = ManualSwitch::fullauto;
   else {
     if (recv.data_valid) {
-      uint16_t tmp = manual_switch_filter(recv.ch[*map_man]);
+      uint16_t tmp = manual_switch_filter.update(recv.ch[*map_man]);
       man = static_cast<ManualSwitch>(manual_switch.update(tmp));
     }
   }
@@ -88,9 +88,9 @@ void Futaba::recevier2futaba(RecevierOutput const &recv, ACSInput &result) {
 
   /* first check errors */
   if (recv.data_valid)
-    error_rate(0);
+    error_rate.update(0);
   else
-    error_rate(100);
+    error_rate.update(100);
 
   result.futaba_good = hyst.check(error_rate.get());
   scale(recv, result);
