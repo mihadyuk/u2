@@ -2,9 +2,9 @@
 
 #include "main.h"
 
+#include "pid.hpp"
 #include "param_registry.hpp"
 #include "stab_vm.hpp"
-#include "pid.hpp"
 #include "geometry.hpp"
 #include "putinrange.hpp"
 
@@ -202,11 +202,11 @@ public:
   void update(float target) {
     vmDbgCheck((nullptr != next) && (nullptr != position));
     if (alcoi_time_elapsed > 0) {
-      next->update(this->pid(*position, alcoi_target, *dT));
+      next->update(this->pid.update(*position, alcoi_target, *dT));
       alcoi_time_elapsed -= *dT;
     }
     else {
-      next->update(this->pid(*position, target, *dT));
+      next->update(this->pid.update(*position, target, *dT));
     }
   }
 

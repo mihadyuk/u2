@@ -58,7 +58,7 @@ typedef enum {
 extern sensor_state_registry_t SensorStateRegistry;
 extern MavLogger mav_logger;
 
-extern mavlink_raw_imu_t                mavlink_out_raw_imu_struct;
+//extern mavlink_raw_imu_t                mavlink_out_raw_imu_struct;
 extern mavlink_scaled_imu_t             mavlink_out_scaled_imu_struct;
 
 /*
@@ -72,7 +72,7 @@ extern mavlink_scaled_imu_t             mavlink_out_scaled_imu_struct;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-static mavMail raw_imu_mail;
+//static mavMail raw_imu_mail;
 static mavMail scaled_imu_mail;
 
 /*
@@ -103,7 +103,7 @@ void marg2mavlink(const marg_data_t &data) {
 
   mavlink_out_scaled_imu_struct.time_boot_ms = TIME_BOOT_MS;
 
-  /**/
+  /*
   mavlink_out_raw_imu_struct.xacc = data.acc_raw[0];
   mavlink_out_raw_imu_struct.yacc = data.acc_raw[1];
   mavlink_out_raw_imu_struct.zacc = data.acc_raw[2];
@@ -117,6 +117,7 @@ void marg2mavlink(const marg_data_t &data) {
   mavlink_out_raw_imu_struct.zmag = data.mag_raw[2];
 
   mavlink_out_raw_imu_struct.time_usec = TimeKeeper::utc();
+  */
 }
 
 /**
@@ -124,10 +125,12 @@ void marg2mavlink(const marg_data_t &data) {
  */
 static void log_append(void) {
 
+  /*
   if (raw_imu_mail.free()) {
     raw_imu_mail.fill(&mavlink_out_raw_imu_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_RAW_IMU);
     mav_logger.write(&raw_imu_mail);
   }
+  */
 
   if (scaled_imu_mail.free()) {
     scaled_imu_mail.fill(&mavlink_out_scaled_imu_struct, MAV_COMP_ID_ALL, MAVLINK_MSG_ID_SCALED_IMU);

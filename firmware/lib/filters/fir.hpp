@@ -11,7 +11,7 @@ namespace filters {
 template<typename T, typename dataT>
 class FIRBase {
 public:
-  virtual T operator() (dataT sample) = 0;
+  virtual T update (dataT sample) = 0;
 };
 
 /**
@@ -142,7 +142,7 @@ public:
   /**
    * @brief   Fastest variant for cortex-m4.
    */
-  T operator() (dataT sample) {
+  T update(dataT sample) {
     T s;
 
     tip--;

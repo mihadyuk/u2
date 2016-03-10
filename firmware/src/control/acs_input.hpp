@@ -12,9 +12,10 @@
  *
  */
 typedef enum {
-  ACS_INPUT_lat,      // latitude from GNSS (WGS-84, rad)
-  ACS_INPUT_lon,      // longitude from GNSS (WGS-84, rad)
-  ACS_INPUT_alt,      // altitude from GNSS (WGS-84, m)
+  /* TODO: delete unused fields */
+  ACS_INPUT_lat,      // latitude from NS (WGS-84, rad)
+  ACS_INPUT_lon,      // longitude from NS (WGS-84, rad)
+  ACS_INPUT_alt,      // altitude from NS (WGS-84, m)
   ACS_INPUT_alt_baro, // barometric height (m)
 
   ACS_INPUT_roll,     // rad (-pi..pi)
@@ -31,7 +32,7 @@ typedef enum {
   ACS_INPUT_ye,       // Y coordinate, East  (m)
   ACS_INPUT_zd,       // Z coordinate, Down  (m)
 
-  // speed from GPS (m/s) (NED)
+  // speed from NS (m/s) (NED)
   ACS_INPUT_vx,
   ACS_INPUT_vy,
   ACS_INPUT_vz,
@@ -56,16 +57,17 @@ typedef enum {
   ACS_INPUT_ay_body,
   ACS_INPUT_az_body,
 
-  // angular rates in rad/s (NED)
-  ACS_INPUT_wx,
-  ACS_INPUT_wy,
-  ACS_INPUT_wz,
+  // free angular rates in vehicle frame (rad/s) (NED)
+  ACS_INPUT_free_wx_vehicle,
+  ACS_INPUT_free_wy_vehicle,
+  ACS_INPUT_free_wz_vehicle,
 
   ACS_INPUT_dZrad,      // cross track error (rad)
   ACS_INPUT_dZm,        // cross track error (m)
   ACS_INPUT_dYaw,       // (rad)
   ACS_INPUT_trgt_crs,   // course to target point (rad)
   ACS_INPUT_trgt_speed, // m/s
+  ACS_INPUT_trgt_alt,   // m
 
   // raw futaba values (normalized -1..1)
   ACS_INPUT_futaba_raw_00,

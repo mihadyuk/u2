@@ -16,8 +16,9 @@
  * EXTERNS
  ******************************************************************************
  */
-extern mavlink_raw_pressure_t     mavlink_out_raw_pressure_struct;
-extern mavlink_scaled_pressure_t  mavlink_out_scaled_pressure_struct;
+//extern mavlink_raw_pressure_t     mavlink_out_raw_pressure_struct;
+//extern mavlink_scaled_pressure_t  mavlink_out_scaled_pressure_struct;
+extern mavlink_highres_imu_t      mavlink_out_highres_imu_struct;
 extern mavlink_vfr_hud_t          mavlink_out_vfr_hud_struct;
 
 /*
@@ -71,11 +72,22 @@ static float press2airspeed(int32_t press_diff){
 static void baro2mavlink(const baro_data_t &data,
                          const baro_diff_data_t &diff,
                          const baro_abs_data_t &abs) {
+  /* TODO: remove unused parameters */
+
+  /* mute warning: unused parameter */
+  (void)diff;
+  (void)abs;
 
   mavlink_out_vfr_hud_struct.alt = data.alt;
   mavlink_out_vfr_hud_struct.climb = data.climb;
   mavlink_out_vfr_hud_struct.airspeed = data.airspeed;
 
+  // Fill baro data only in HIGHRES_IMU mavlink package
+  mavlink_out_highres_imu_struct.abs_pressure = data.p_abs;
+  mavlink_out_highres_imu_struct.diff_pressure = data.p_diff;
+  mavlink_out_highres_imu_struct.pressure_alt = data.alt;
+  mavlink_out_highres_imu_struct.temperature = data.t;
+  /*
   mavlink_out_scaled_pressure_struct.press_abs = data.p_abs;
   mavlink_out_scaled_pressure_struct.press_diff = data.p_diff;
   mavlink_out_scaled_pressure_struct.time_boot_ms = TIME_BOOT_MS;
@@ -89,6 +101,7 @@ static void baro2mavlink(const baro_data_t &data,
   mavlink_out_raw_pressure_struct.temperature  = 0;
   mavlink_out_raw_pressure_struct.temperature |= (abs.t_raw >> 8) & 0xFFFF;
   osalSysUnlock();
+  */
 }
 
 /*
@@ -106,6 +119,7 @@ void PMUGet(const baro_abs_data_t &abs, const baro_diff_data_t &diff,
   result.alt = press2height(abs.p);
   result.p_abs = abs.p;
   result.p_msl_adjusted = press2msl(abs.p, gnss_alt);
+  result.t = abs.t;
   result.climb = 0;
 
   result.p_diff = diff.p;

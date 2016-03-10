@@ -84,7 +84,7 @@ void OdometerFPGA::update_impl(odometer_data_t &result, float dT) {
     //last_pulse_period = filter_median(last_pulse_period);
     last_pulse_period = putinrange(last_pulse_period, 500, 65000);
     pps = static_cast<float>(EICU_FREQ) / static_cast<float>(last_pulse_period);
-    pps = filter_alphabeta(pps);
+    pps = filter_alphabeta.update(pps);
     result.speed = *pulse2m * pps;
   }
   else {

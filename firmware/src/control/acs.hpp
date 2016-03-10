@@ -68,6 +68,7 @@ private:
   void set_mode_handler(const mavlink_message_t *recv_mail);
   enum MAV_RESULT alcoi_command_handler(const mavlink_command_long_t *clp);
   enum MAV_RESULT calibrate_command_handler(const mavlink_command_long_t *clp);
+  MAV_RESULT arm_disarm_command_handler(const mavlink_command_long_t *clp);
   enum MAV_RESULT take_off_handler(const mavlink_command_long_t *clp);
   enum MAV_RESULT land_handler(const mavlink_command_long_t *clp);
   Drivetrain &drivetrain;

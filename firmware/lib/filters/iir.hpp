@@ -11,7 +11,7 @@ namespace filters {
 template <typename T, typename dataT>
 class IIRBase {
 public:
-  virtual T operator() (T sample) = 0;
+  virtual T update (T sample) = 0;
 };
 
 /**
@@ -49,7 +49,7 @@ public:
   /**
    *
    */
-  T operator() (T sample) {
+  T update (T sample) {
 
     unsigned int i;
     T s;

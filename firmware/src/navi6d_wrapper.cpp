@@ -6,6 +6,10 @@
 #include <math.h>
 #include "main.h"
 
+#define KALMAN_USE_FPGA       TRUE
+typedef double klmnfp;
+typedef double sinsfp;
+
 #include "navigator_sins.hpp"
 #include "kalman_flags.cpp" // dirty hack allowing to not add this file to the Makefile
 
@@ -34,6 +38,7 @@
  ******************************************************************************
  */
 extern mavlink_highres_imu_t          mavlink_out_highres_imu_struct;
+extern mavlink_vfr_hud_t              mavlink_out_vfr_hud_struct;
 extern chibios_rt::EvtSource event_gnss;
 
 #if KALMAN_DEBUG_LOG
@@ -46,9 +51,6 @@ extern MavLogger mav_logger;
  ******************************************************************************
  */
 
-typedef float klmnfp;
-typedef double sinsfp;
-
 #define KALMAN_STATE_SIZE         15
 #define KALMAN_MEASUREMENT_SIZE   10
 
@@ -59,10 +61,12 @@ __CCM__ static mavlink_navi6d_debug_output_t  dbg_out_struct;
 __CCM__ static mavMail dbg_in_mail;
 __CCM__ static mavMail dbg_out_mail;
 
+__CCM__ static mavlink_debug_vect_t dbg_gps_vel;
 __CCM__ static mavlink_debug_vect_t dbg_acc_bias;
 __CCM__ static mavlink_debug_vect_t dbg_gyr_bias;
 __CCM__ static mavlink_debug_vect_t dbg_acc_scale;
 __CCM__ static mavlink_debug_vect_t dbg_gyr_scale;
+__CCM__ static mavMail mail_gps_vel;
 __CCM__ static mavMail mail_acc_bias;
 __CCM__ static mavMail mail_gyr_bias;
 __CCM__ static mavMail mail_acc_scale;
@@ -189,6 +193,8 @@ void Navi6dWrapper::navi2mavlink(void) {
   mavlink_out_highres_imu_struct.zmag = data.mb_c[2][0];
 
   mavlink_out_highres_imu_struct.time_usec = TimeKeeper::utc();
+
+  mavlink_out_vfr_hud_struct.heading = rad2deg(data.mag_head_v[0][0]);
 }
 
 /**
@@ -203,6 +209,14 @@ void Navi6dWrapper::debug2mavlink(float dT) {
     else {
       debug_vect_decimator = 0;
       uint64_t time = TimeKeeper::utc();
+
+      //
+      dbg_gps_vel.time_usec = time;
+      dbg_gps_vel.x = round(100 * nav_sins.sensor_data.v_sns[0][0]);
+      dbg_gps_vel.y = round(100 * nav_sins.sensor_data.v_sns[1][0]);
+      dbg_gps_vel.z = round(100 * nav_sins.sensor_data.v_sns[2][0]);
+      mail_gps_vel.fill(&dbg_gps_vel, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG_VECT);
+      mav_postman.post(mail_gps_vel);
 
       //
       dbg_acc_bias.time_usec = time;
@@ -289,9 +303,9 @@ void Navi6dWrapper::navi2acs(void) {
   acs_in.ch[ACS_INPUT_ay_body] = data.a_b[1][0];
   acs_in.ch[ACS_INPUT_az_body] = data.a_b[2][0];
 
-  acs_in.ch[ACS_INPUT_wx] = data.w_b[0][0];
-  acs_in.ch[ACS_INPUT_wy] = data.w_b[1][0];
-  acs_in.ch[ACS_INPUT_wz] = data.w_b[2][0];
+  acs_in.ch[ACS_INPUT_free_wx_vehicle] = data.free_gyrv[0][0];
+  acs_in.ch[ACS_INPUT_free_wy_vehicle] = data.free_gyrv[1][0];
+  acs_in.ch[ACS_INPUT_free_wz_vehicle] = data.free_gyrv[2][0];
 
   acs_in.ch[ACS_INPUT_free_ax] = data.free_accb[0][0];
   acs_in.ch[ACS_INPUT_free_ay] = data.free_accb[1][0];
@@ -357,6 +371,7 @@ void Navi6dWrapper::start(void) {
   /* we need to initialize names of fields manually because CCM RAM section
    * set to NOLOAD in chibios linker scripts */
   const size_t N = sizeof(mavlink_debug_vect_t::name);
+  strncpy(dbg_gps_vel.name,   "gps_vel",   N);
   strncpy(dbg_acc_bias.name,  "acc_bias",  N);
   strncpy(dbg_gyr_bias.name,  "gyr_bias",  N);
   strncpy(dbg_acc_scale.name, "acc_scale", N);

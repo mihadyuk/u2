@@ -3,13 +3,10 @@
 
 #include "float.h" /* for FLT_EPSILON macro */
 #include "iir.hpp"
-#include <functional>
 
 #define PID_CLAMP_NEG       -1
 #define PID_CLAMP_NONE      0
 #define PID_CLAMP_POS       1
-
-#define PID_USE_STD_FUNCTION      FALSE
 
 /**
  *
@@ -24,11 +21,7 @@ struct PIDInit {
   T const *D;
   T const *Min;
   T const *Max;
-#if PID_USE_STD_FUNCTION
-  std::function<T(T)> postproc;
-#else
   T (*postproc)(T);
-#endif
 };
 
 /**
@@ -78,11 +71,7 @@ protected:
    *          Generally is wrap_pi() for delta Yaw.
    *          Set to nullptr if unneeded.
    */
-#if PID_USE_STD_FUNCTION
-  std::function<T(T)> postproc;
-#else
   T (*postproc)(T);
-#endif
   T iState;           /* Integrator state */
   T errorPrev;        /* Previous error value for trapezoidal integration */
   T const *pGain;     /* proportional gain */
@@ -171,7 +160,7 @@ public:
    * @param[in] target    Target value
 
    */
-  T operator()(T current, T target, T dT) {
+  T update(T current, T target, T dT) {
 
     T error = target - current;
     if (nullptr != this->postproc)
@@ -185,8 +174,9 @@ public:
     /* calculate the derivative term */
     T dTerm = (error - this->errorPrev) / dT;
     this->errorPrev = error;
-    if (need_filter)
-      dTerm = filter(dTerm);
+    if (need_filter) {
+      dTerm = filter.update(dTerm);
+    }
 
     return this->do_pid(error, dTerm);
   }

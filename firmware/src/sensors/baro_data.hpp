@@ -11,6 +11,7 @@ struct baro_data_t {
   float     climb;          /* m/s */
   int32_t   p_diff;         /* Pascals */
   float     airspeed;       /* m/s */
+  float     t;              /* Celsius */
  };
 
 /**

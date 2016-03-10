@@ -79,4 +79,12 @@ T wrap_2pi(T angle) {
   return angle;
 }
 
+template <typename T>
+T tangentLineCourse(const T (&lineVector)[2][1], T clockwise) {
+  T course = atan2(lineVector[1][0], lineVector[0][0]);
+  course += clockwise*static_cast<T>(M_PI_2);
+  course = wrap_2pi(course);
+  return course;
+}
+
 #endif /* GEOMETRY_HPP_ */

@@ -91,6 +91,28 @@ enum MAV_RESULT ACS::calibrate_command_handler(const mavlink_command_long_t *clp
 }
 
 /**
+ * For support arm/disarm in new version QGC
+ */
+MAV_RESULT ACS::arm_disarm_command_handler(const mavlink_command_long_t *clp) {
+
+  /* arm status may changed only in standby state */
+  if (MAV_STATE_STANDBY == mavlink_system_info_struct.state) {
+    if (fabs(clp->param1) > 0.0f) {
+      this->drivetrain.arm();
+      mavlink_system_info_struct.mode |= MAV_MODE_FLAG_SAFETY_ARMED;
+    }
+    else {
+      this->drivetrain.disarm();
+      mavlink_system_info_struct.mode &= ~MAV_MODE_FLAG_SAFETY_ARMED;
+    }
+    return MAV_RESULT_ACCEPTED;
+  }
+  else {
+    return MAV_RESULT_TEMPORARILY_REJECTED;
+  }
+}
+
+/**
  *
  */
 enum MAV_RESULT ACS::take_off_handler(const mavlink_command_long_t *clp) {
@@ -155,6 +177,10 @@ void ACS::command_long_handler(const mavlink_message_t *recv_msg) {
 
   case MAV_CMD_PREFLIGHT_CALIBRATION:
     result = this->calibrate_command_handler(&cl);
+    break;
+
+  case MAV_CMD_COMPONENT_ARM_DISARM:
+    result = this->arm_disarm_command_handler(&cl);
     break;
 
   default:

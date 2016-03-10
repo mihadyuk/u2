@@ -8,7 +8,6 @@
 #include "global_flags.h"
 #include "waypoint_db.hpp"
 #include "mav_dbg.hpp"
-#include "mission_executor.hpp"
 
 using namespace chibios_rt;
 
@@ -206,7 +205,7 @@ static MAV_MISSION_RESULT check_wp(const mavlink_mission_item_t *wp,
     return check_do_jump(wp, total_wps);
   }
 
-#if !USE_LD_NAVIGATOR
+#if 0
   /* check target radius */
   if (((wp->TARGET_RADIUS < MIN_TARGET_RADIUS_WGS84) && (wp->frame == MAV_FRAME_GLOBAL)) ||
       ((wp->TARGET_RADIUS < MIN_TARGET_RADIUS_LOCAL) && (wp->frame == MAV_FRAME_LOCAL_NED))){
