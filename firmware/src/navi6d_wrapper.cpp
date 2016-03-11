@@ -6,9 +6,15 @@
 #include <math.h>
 #include "main.h"
 
-#define KALMAN_USE_FPGA       TRUE
-typedef double klmnfp;
-typedef double sinsfp;
+#if defined(BOARD_BEZVODIATEL)
+  #define KALMAN_USE_FPGA       FALSE
+  typedef float klmnfp;
+  typedef double sinsfp;
+#elif defined(BOARD_MNU)
+  #define KALMAN_USE_FPGA       TRUE
+  typedef double klmnfp;
+  typedef double sinsfp;
+#endif
 
 #include "navigator_sins.hpp"
 #include "kalman_flags.cpp" // dirty hack allowing to not add this file to the Makefile
