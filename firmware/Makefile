@@ -135,6 +135,7 @@ CSRC = $(STARTUPSRC) \
 
 FPGASRC = src/fpga/fpga.c \
        src/fpga/fpga_pwm.c \
+       src/fpga/fpga_uart.c \
        src/fpga/fpga_mtrx.c
 
 ifeq ($(BOARDINC), board_mnu)

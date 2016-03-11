@@ -74,6 +74,7 @@ Giovanni
   #include "fpga.h"
   #include "fpga_pwm.h"
   #include "fpga_mtrx.h"
+  #include "fpga_uart.h"
   #include "test/fpga_mtrx_test.hpp"
   #include "odometer_fpga.hpp"
   #include "mod_telem.hpp"
@@ -305,6 +306,12 @@ static void board_detect(void) {
 #endif
 }
 
+static const FPGAUARTConfig uart_cfg {
+  nullptr,
+  nullptr,
+  115200
+};
+
 /**
  *
  */
@@ -322,6 +329,7 @@ int main(void) {
 #elif defined(BOARD_MNU)
   fpgaObjectInit(&FPGAD1);
   fpgaStart(&FPGAD1);
+
   fpgaPwmObjectInit(&FPGAPWMD1);
 
   fpgaMtrxObjectInit(&MTRXD);
@@ -331,6 +339,10 @@ int main(void) {
   FPGAMathRst(false);
   fpga_mtrx_mem_test(2);
 
+  fpgaUartObjectInit(&FPGAUARTBridge, &FPGAD1);
+  fpgaUartBridgeStart(&FPGAUARTBridge);
+  fpgaUartStart(&FPGAUARTBridge.FPGAUARTD[0], &uart_cfg);
+  static FPGAUARTDriver *test_uart = &FPGAUARTBridge.FPGAUARTD[0];
 #else
 #error "board unsupported"
 #endif
@@ -401,6 +413,8 @@ int main(void) {
 #else
 #error "board unsupported"
 #endif
+
+    fpgaUartStartSend(test_uart, 32, (const uint8_t*)"UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU");
 
     /* TODO: change constant GNSS altitude to real */
     PMUGet(abs_press, diff_press, 252, baro_data);
