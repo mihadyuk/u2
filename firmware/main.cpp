@@ -103,7 +103,7 @@ GlobalFlags_t GlobalFlags = {0,0,0,0,0,0,0,0,
 
 /* heap for temporarily threads */
 memory_heap_t ThdHeap;
-static uint8_t link_thd_buf[THREAD_HEAP_SIZE + sizeof(stkalign_t)];
+static uint64_t link_thd_buf[THREAD_HEAP_SIZE / sizeof(uint64_t)];
 
 /* State vector of system. Calculated mostly in IMU, used mostly in ACS */
 __CCM__ static ACSInput acs_in;
@@ -306,12 +306,6 @@ static void board_detect(void) {
 #endif
 }
 
-static const FPGAUARTConfig uart_cfg {
-  nullptr,
-  nullptr,
-  115200
-};
-
 /**
  *
  */
@@ -339,10 +333,6 @@ int main(void) {
   FPGAMathRst(false);
   fpga_mtrx_mem_test(2);
 
-  fpgaUartObjectInit(&FPGAUARTBridge, &FPGAD1);
-  fpgaUartBridgeStart(&FPGAUARTBridge);
-  fpgaUartStart(&FPGAUARTBridge.FPGAUARTD[0], &uart_cfg);
-  static FPGAUARTDriver *test_uart = &FPGAUARTBridge.FPGAUARTD[0];
 #else
 #error "board unsupported"
 #endif
@@ -370,7 +360,7 @@ int main(void) {
   nvram_power_on();
   osalThreadSleepMilliseconds(10);
 
-  chHeapObjectInit(&ThdHeap, (uint8_t *)MEM_ALIGN_NEXT(link_thd_buf), THREAD_HEAP_SIZE);
+  chHeapObjectInit(&ThdHeap, link_thd_buf, sizeof(link_thd_buf));
 
   Exti.start();
   I2CInitLocal();
@@ -413,8 +403,6 @@ int main(void) {
 #else
 #error "board unsupported"
 #endif
-
-    fpgaUartStartSend(test_uart, 32, (const uint8_t*)"UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU");
 
     /* TODO: change constant GNSS altitude to real */
     PMUGet(abs_press, diff_press, 252, baro_data);
