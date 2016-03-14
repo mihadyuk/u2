@@ -12,7 +12,7 @@
 extern chibios_rt::EvtSource event_gnss;
 
 #define GNSS_MAX_SUBSCRIBERS        4
-#define GNSS_THREAD_SIZE            400
+#define GNSS_THREAD_SIZE            432
 #define GNSS_MAVLINK_HDG_UNKNOWN    0xFFFF
 
 namespace gnss {

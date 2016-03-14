@@ -1,13 +1,13 @@
 #!/bin/bash
 
-FLASH_SIZE=`cat build/ch.map | grep '^flash.*.[0..9]' | awk '{print$3}'`
+FLASH_SIZE=`cat build/ch.map | grep '^flash0.*.[0..9]' | awk '{print$3}'`
 FLASH_USED=`arm-none-eabi-size -B build/ch.elf | tail -1 | awk '{print $1 + $2}'`
 
 RAM_ALIAS=ram0
 RAM_SIZE=`cat build/ch.map | grep "__${RAM_ALIAS}_size__ =" | awk '{print$1}'`
-STACKS=`arm-none-eabi-size -A build/ch.elf | grep .stacks | awk '{print $2}'`
-BSS=`arm-none-eabi-size -A build/ch.elf | grep .bss | awk '{print $2}'`
-DATA=`arm-none-eabi-size -A build/ch.elf | grep .data | awk '{print $2}'`
+STACKS=`arm-none-eabi-size -A build/ch.elf | grep '\.stacks' | awk '{print $2}'`
+BSS=`arm-none-eabi-size -A build/ch.elf | grep '\.bss' | awk '{print $2}'`
+DATA=`arm-none-eabi-size -A build/ch.elf | grep '\.data' | awk '{print $2}'`
 
 if [ ! $BSS ] ; then BSS=0; fi
 if [ ! $DATA ] ; then DATA=0; fi
