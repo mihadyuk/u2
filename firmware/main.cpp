@@ -372,8 +372,9 @@ int main(void) {
 
   power_monitor.start();
   power_monitor.warmup_filters(power_monitor_data);
-  if (main_battery_health::GOOD != power_monitor_data.health)
+  if (main_battery_health::GOOD != power_monitor_data.health) {
     goto DEATH;
+  }
 
 #if defined(BOARD_BEZVODIATEL)
   pwr5v_power_on();
