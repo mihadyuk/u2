@@ -93,15 +93,15 @@ include board_mnu/board.mk
 #include board_bezvodiatel/board.mk
 
 # Startup files.
-include $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC/mk/startup_stm32f4xx.mk
+include $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/mk/startup_stm32f4xx.mk
 # HAL-OSAL files (optional).
 include $(CHIBIOS_CONTRIB)/os/hal/hal.mk
 include $(CHIBIOS_CONTRIB)/os/hal/ports/STM32/STM32F4xx/platform.mk
 include $(CHIBIOS)/os/hal/osal/rt/osal.mk
 # RTOS files (optional).
 include $(CHIBIOS)/os/rt/rt.mk
-include $(CHIBIOS)/os/rt/ports/ARMCMx/compilers/GCC/mk/port_v7m.mk
-# oterh files (optional).
+include $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC/mk/port_v7m.mk
+# other files (optional).
 include $(CHIBIOS)/os/various/cpp_wrappers/chcpp.mk
 include $(CHIBIOS)/os/various/fatfs_bindings/fatfs.mk
 
@@ -131,10 +131,16 @@ CSRC = $(STARTUPSRC) \
        src/fault_handlers.c \
        benchmark/memcpy_bench.c \
        src/mavlink_local/mav_encoder.c \
-       src/usbcfg.c \
-       src/fpga/fpga.c \
+       src/usbcfg.c
+
+FPGASRC = src/fpga/fpga.c \
        src/fpga/fpga_pwm.c \
+       src/fpga/fpga_uart.c \
        src/fpga/fpga_mtrx.c
+
+ifeq ($(BOARDINC), board_mnu)
+	CSRC += $(FPGASRC) 
+endif
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -220,7 +226,13 @@ SENSORSRC = src/i2c_local.cpp \
 
 CLISRC = src/cli/cli.cpp \
 		src/cli/cli_cmd.cpp \
-		src/param_cli.cpp \
+		src/param_cli.cpp
+
+ifeq ($(BOARDINC), board_mnu)
+FPGACPPSRC = src/fpga/test/fpga_mtrx_test.cpp \
+        src/fpga/test/fpga_mem_test.cpp \
+        $(CHIBIOS_CONTRIB)/os/various/memtest.cpp
+endif
 
 CPPSRC = $(CHCPPSRC) \
 		$(NVRAMSRC) \
@@ -238,10 +250,7 @@ CPPSRC = $(CHCPPSRC) \
 		src/kinematic/ahrs.cpp \
 		src/kinematic/ahrs_starlino.cpp \
 		lib/filters/fir_test.cpp \
-		src/fpga/test/fpga_mtrx_test.cpp \
-		src/fpga/test/fpga_mem_test.cpp \
-		$(CHIBIOS_CONTRIB)/os/various/memtest.cpp
-
+		$(FPGACPPSRC)
 
 # C sources to be compiled in ARM mode regardless of the global setting.
 # NOTE: Mixing ARM and THUMB mode enables the -mthumb-interwork compiler
@@ -367,7 +376,7 @@ ULIBS = -lm
 # End of user defines
 ##############################################################################
 
-RULESPATH = $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC
+RULESPATH = $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC
 include $(RULESPATH)/rules.mk
 
 ######## resource usage show ################
@@ -412,8 +421,9 @@ autogen_clean:
 	rm -f src/mavlink_local/tlm_sender.cpp
 	rm -f firmware_version.h
 
+ifeq ($(BOARDINC), board_mnu)
 src/fpga/fpga.h : src/fpga/fpga_constants.h
 
 src/fpga/fpga_constants.h: ../../xilinx/fsmc2wb/rtl/mtrx_math_constants.vhd
 	bash src/fpga/extract_fpga_constants.sh $< $@
-
+endif

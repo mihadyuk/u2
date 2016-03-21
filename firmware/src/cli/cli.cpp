@@ -23,6 +23,7 @@
  * DEFINES
  ******************************************************************************
  */
+#define ShellThreadWASize   2048
 #define _NUM_OF_CMD (sizeof(cliutils)/sizeof(ShellCmd_t))
 
 /*
@@ -32,6 +33,7 @@
  */
 extern GlobalFlags_t GlobalFlags;
 extern ParamRegistry param_registry;
+extern memory_heap_t ThdHeap;
 
 /*
  *******************************************************************************
@@ -189,7 +191,7 @@ static void sigint (void* user_handle){
 /**
  * Thread function
  */
-static THD_WORKING_AREA(ShellThreadWA, 2048);
+//static THD_WORKING_AREA(ShellThreadWA, ShellThreadWASize);
 static THD_FUNCTION(ShellThread, arg) {
 
   chRegSetThreadName("Shell");
@@ -220,11 +222,12 @@ static THD_FUNCTION(ShellThread, arg) {
   while (!chThdShouldTerminateX()){
     // put received char from stdin to microrl lib
     msg_t c = chnGetTimeout(ShellChnp, MS2ST(50));
-    if (c != Q_TIMEOUT)
+    if (c != Q_TIMEOUT) {
       microrl_insert_char(&microrl_shell, (char)c);
+    }
 
     /* if fork finished than collect allocated for it memory */
-    if ((current_cmd_tp != NULL) && (current_cmd_tp->p_state == CH_STATE_FINAL)){
+    if ((current_cmd_tp != NULL) && chThdTerminatedX(current_cmd_tp)){
       chThdWait(current_cmd_tp);
       current_cmd_tp = NULL;
     }
@@ -232,7 +235,7 @@ static THD_FUNCTION(ShellThread, arg) {
 
   /* умираем по всем правилам, не забываем убить потомков */
   if (current_cmd_tp != NULL){
-    if (current_cmd_tp->p_state != CH_STATE_FINAL)
+    if (chThdTerminatedX(current_cmd_tp))
       chThdTerminate(current_cmd_tp);
     chThdWait(current_cmd_tp);
   }
@@ -385,11 +388,8 @@ void KillShellThreads(void) {
  */
 void SpawnShellThreads(void *bchnp) {
 
-  shell_tp = chThdCreateStatic(ShellThreadWA,
-                            sizeof(ShellThreadWA),
-                            SHELLPRIO,
-                            ShellThread,
-                            bchnp);
+  shell_tp = chThdCreateFromHeap(&ThdHeap, ShellThreadWASize, "Shell",
+                                  SHELLPRIO, ShellThread, bchnp);
   if (shell_tp == NULL)
     osalSysHalt("Can not allocate memory");
 }

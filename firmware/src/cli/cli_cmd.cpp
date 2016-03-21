@@ -64,18 +64,19 @@ thread_t* echo_clicmd(int argc, const char * const * argv, BaseChannel *bchnp){
 /**
  *
  */
-static THD_WORKING_AREA(LoopCmdThreadWA, 1024);
 static THD_FUNCTION(LoopCmdThread, arg) {
   chRegSetThreadName("LoopCmd");
   (void)arg;
+  int counter = 0;
 
   cli_print("This is loop function test. Press ^C to stop it.\n\r");
   while (!chThdShouldTerminateX()){
     int n = 16;
     char str[n];
-    snprintf(str, n, "%i\r\n", -666);
+    snprintf(str, n, "%i\r\n", counter);
+    counter++;
     cli_print(str);
-    chThdSleepMilliseconds(25);
+    chThdSleepMilliseconds(100);
   }
 
   chThdExit(MSG_OK);
@@ -89,11 +90,8 @@ thread_t* loop_clicmd(int argc, const char * const * argv, BaseChannel *bchnp){
   (void)argc;
   (void)argv;
 
-  loop_clicmd_tp = chThdCreateFromHeap(&ThdHeap,
-                                  sizeof(LoopCmdThreadWA),
-                                  NORMALPRIO + 5,
-                                  LoopCmdThread,
-                                  NULL);
+  loop_clicmd_tp = chThdCreateFromHeap(&ThdHeap, 1024, "Loop_test",
+                                  NORMALPRIO + 5, LoopCmdThread, NULL);
 
   if (loop_clicmd_tp == NULL)
     osalSysHalt("can not allocate memory");
@@ -200,15 +198,17 @@ thread_t* ps_clicmd(int argc, const char * const * argv, BaseChannel *bchnp){
 
   cli_print("name\t\tstate\tprio\ttime\n\r");
   cli_print("------------------------------------------\n\r");
-  while (curr->p_refs > 0){
-    cli_print(curr->p_name);
+
+  do {
+    cli_print(chRegGetThreadNameX(curr));
     cli_print("\t");
     //cli_print(curr->p_state);
     //cli_print(curr->p_prio);
     //cli_print(curr->p_time);
     cli_print("\n\r");
     curr = chRegNextThread(curr);
-  }
+  } while (curr != NULL);
+
   return NULL;
 #endif
 }

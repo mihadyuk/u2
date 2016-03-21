@@ -74,6 +74,7 @@ Giovanni
   #include "fpga.h"
   #include "fpga_pwm.h"
   #include "fpga_mtrx.h"
+  #include "fpga_uart.h"
   #include "test/fpga_mtrx_test.hpp"
   #include "odometer_fpga.hpp"
   #include "mod_telem.hpp"
@@ -102,7 +103,7 @@ GlobalFlags_t GlobalFlags = {0,0,0,0,0,0,0,0,
 
 /* heap for temporarily threads */
 memory_heap_t ThdHeap;
-static uint8_t link_thd_buf[THREAD_HEAP_SIZE + sizeof(stkalign_t)];
+static uint64_t link_thd_buf[THREAD_HEAP_SIZE / sizeof(uint64_t)];
 
 /* State vector of system. Calculated mostly in IMU, used mostly in ACS */
 __CCM__ static ACSInput acs_in;
@@ -322,6 +323,7 @@ int main(void) {
 #elif defined(BOARD_MNU)
   fpgaObjectInit(&FPGAD1);
   fpgaStart(&FPGAD1);
+
   fpgaPwmObjectInit(&FPGAPWMD1);
 
   fpgaMtrxObjectInit(&MTRXD);
@@ -358,7 +360,7 @@ int main(void) {
   nvram_power_on();
   osalThreadSleepMilliseconds(10);
 
-  chHeapObjectInit(&ThdHeap, (uint8_t *)MEM_ALIGN_NEXT(link_thd_buf), THREAD_HEAP_SIZE);
+  chHeapObjectInit(&ThdHeap, link_thd_buf, sizeof(link_thd_buf));
 
   Exti.start();
   I2CInitLocal();
@@ -370,8 +372,9 @@ int main(void) {
 
   power_monitor.start();
   power_monitor.warmup_filters(power_monitor_data);
-  if (main_battery_health::GOOD != power_monitor_data.health)
+  if (main_battery_health::GOOD != power_monitor_data.health) {
     goto DEATH;
+  }
 
 #if defined(BOARD_BEZVODIATEL)
   pwr5v_power_on();

@@ -53,9 +53,7 @@ void gnss_set_5hz(void) {
 /**
  *
  */
-static THD_WORKING_AREA(LoopCmdThreadWA, 1024);
 static THD_FUNCTION(LoopCmdThread, arg) {
-  chRegSetThreadName("LoopCmd");
 
   GNSS_CLI.setSniffer((BaseChannel *)arg);
 
@@ -72,15 +70,12 @@ static THD_FUNCTION(LoopCmdThread, arg) {
  */
 thread_t* loop_sniff(BaseChannel *bchnp) {
   thread_t *loop_clicmd_tp = nullptr;
+  loop_clicmd_tp = chThdCreateFromHeap(&ThdHeap, 1024, "GNSS_sniff",
+                                        CMDPRIO - 1, LoopCmdThread, bchnp);
 
-  loop_clicmd_tp = chThdCreateFromHeap(&ThdHeap,
-                                  sizeof(LoopCmdThreadWA),
-                                  CMDPRIO - 1,
-                                  LoopCmdThread,
-                                  bchnp);
-
-  if (loop_clicmd_tp == nullptr)
+  if (loop_clicmd_tp == nullptr) {
     osalSysHalt("can not allocate memory");
+  }
 
   return loop_clicmd_tp;
 }
