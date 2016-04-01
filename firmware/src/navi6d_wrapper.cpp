@@ -28,6 +28,7 @@
 #include "param_registry.hpp"
 #include "mav_logger.hpp"
 #include "mav_postman.hpp"
+#include "debug_indices.h"
 
 /*
  ******************************************************************************
@@ -36,7 +37,6 @@
  */
 
 #define KALMAN_DEBUG_LOG          FALSE
-#define DEBUG_INDEX_SINS          42
 
 /*
  ******************************************************************************

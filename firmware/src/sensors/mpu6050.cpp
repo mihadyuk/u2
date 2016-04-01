@@ -13,6 +13,8 @@
 #include "array_len.hpp"
 #include "putinrange.hpp"
 #include "mav_logger.hpp"
+#include "mav_postman.hpp"
+#include "debug_indices.h"
 
 using namespace filters;
 
@@ -80,6 +82,8 @@ typedef enum {
 /* how many bytes in single fifo sample */
 #define BYTES_IN_SAMPLE       12
 
+#define SEND_DEBUG_TEMP       TRUE
+
 /*
  ******************************************************************************
  * EXTERNS
@@ -114,7 +118,8 @@ uint8_t MPU6050::isr_dlpf = 0;
 uint8_t MPU6050::isr_smplrtdiv = 0;
 chibios_rt::BinarySemaphore MPU6050::isr_sem(true);
 
-static mavMail dbg_mail;
+__CCM__ static mavlink_debug_t dbg_temp;
+__CCM__ static mavMail mail_dbg_temp;
 
 /*
  *******************************************************************************
@@ -141,9 +146,8 @@ float MPU6050::acc_sens(void) {
 /**
  *
  */
-void MPU6050::pickle_temp(float *result) {
-  uint8_t *b = &rxbuf[MPU_TEMP_OFFSET];
-  result[0] = static_cast<int16_t>(pack8to16be(b));
+void MPU6050::pickle_temp(float *result, const uint8_t *buf) {
+  result[0] = static_cast<int16_t>(pack8to16be(buf));
   result[0] /= 340;
   result[0] += 36.53f;
 }
@@ -408,7 +412,7 @@ msg_t MPU6050::acquire_simple(float *acc, float *gyr) {
 
   this->set_lock();
 
-  pickle_temp(&temperature);
+  pickle_temp(&temperature, &rxbuf[MPU_TEMP_OFFSET]);
   if (nullptr != gyr)
     pickle_gyr(gyr);
   if (nullptr != acc)
@@ -478,16 +482,36 @@ msg_t MPU6050::acquire_fifo(float *acc, float *gyr) {
     recvd = putinrange(recvd, 0, sizeof(rxbuf_fifo));
     recvd = (recvd / BYTES_IN_SAMPLE) * BYTES_IN_SAMPLE;
 
+    /* read Acc and Gyr from FIFO */
     txbuf[0] = MPUREG_FIFO_DATA;
     ret = transmit(txbuf, 1, (uint8_t*)rxbuf_fifo, recvd);
     toggle_endiannes16((uint8_t*)rxbuf_fifo, recvd);
 
+    /* read temperature */
+    txbuf[0] = MPUREG_INT_STATUS;
+    transmit(txbuf, 1, rxbuf, sizeof(rxbuf));
+
+    /* process acquired data */
     this->set_lock();
+    pickle_temp(&temperature, &rxbuf[MPU_TEMP_OFFSET]);
     pickle_fifo(acc, gyr, recvd/BYTES_IN_SAMPLE);
     this->release_lock();
   }
 
   return ret;
+}
+
+/**
+ *
+ */
+void MPU6050::send_debug_temp(void) {
+#if SEND_DEBUG_TEMP
+  dbg_temp.value = this->temperature;
+  dbg_temp.ind = DEBUG_INDEX_MPU6050;
+  dbg_temp.time_boot_ms = TIME_BOOT_MS;
+  mail_dbg_temp.fill(&dbg_temp, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG);
+  mav_postman.post(mail_dbg_temp);
+#endif
 }
 
 /**
@@ -501,10 +525,14 @@ void MPU6050::acquire_data(void) {
   if (SENSOR_STATE_READY == this->state) {
     ret2 = param_update();
 
-    if (dlpf_current > 0)
+    if (dlpf_current > 0) {
       ret1 = acquire_simple(acc_data, gyr_data);
-    else
+    }
+    else {
       ret1 = acquire_fifo(acc_data, gyr_data);
+    }
+
+    send_debug_temp();
 
     if ((MSG_OK != ret1) || (MSG_OK != ret2))
       this->state = SENSOR_STATE_DEAD;

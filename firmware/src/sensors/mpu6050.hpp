@@ -48,6 +48,7 @@ private:
   friend THD_FUNCTION(Mpu6050Thread, arg);
   float dT(void);
   void acquire_data(void);
+  void send_debug_temp(void);
   msg_t soft_reset(void);
   msg_t acquire_simple(float *acc, float *gyr);
   msg_t acquire_fifo(float *acc, float *gyr);
@@ -64,7 +65,7 @@ private:
   void pickle_gyr(float *result);
   void pickle_fifo(float *acc, float *gyr, const size_t sample_cnt);
   void pickle_acc(float *result);
-  void pickle_temp(float *result);
+  void pickle_temp(float *result, const uint8_t *buf);
   bool hw_init_full(void);
   bool hw_init_fast(void);
 
