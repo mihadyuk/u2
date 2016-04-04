@@ -25,13 +25,14 @@ class PIDSpinbox(Frame):
         self.TO = 5.0
         self.var = StringVar()
         self.internalname = internalname
-        self.spinbox = Entry(self, width=8, textvariable=self.var)
+        self.spinbox = Entry(self, width=10, textvariable=self.var)
         # self.spinbox = Spinbox(self, width=8, textvariable=self.var, increment=1.0/10000)
         self.spinbox.pack(side = RIGHT)
-        self.label = Label(self, text=guiname, width=2)
+        self.label = Label(self, text=guiname, width=3)
         self.label.pack(side = LEFT)
         self.spinbox.bind('<FocusIn>', self._changed)
         self.changed = False
+        #print (">>> PIDSpinbox:", internalname)
 
     def validate(self):
         d = 0.0
@@ -83,7 +84,7 @@ class PIDFrame(LabelFrame):
         LabelFrame.__init__(self, parent, text=guiname)
         self.controls = {}
 
-        self.name_list = ["P", "I", "D"]
+        self.name_list = ["P", "I", "D", "Min", "Max", "proc"]
 
         for n in self.name_list:
             self.controls[n] = PIDSpinbox(self, n, internalname + n)
@@ -104,27 +105,30 @@ class PIDFrame(LabelFrame):
             self.controls[c].set(cmd)
 
 
+
 class ChannelFrame(LabelFrame):
 
-    def __init__(self, parent, guiname, internalname):
+    def __init__(self, parent, guiname, ch_number):
         LabelFrame.__init__(self, parent, text=guiname)
-        self.pid = {} # dictionary for PIDs
-        self.name_list = ["h", "m", "l"]
+        self.pid_list = [] # list for PIDs
 
-        for n in self.name_list:
-            self.pid[n] = PIDFrame(self, "High", internalname + n + "_")
-            self.pid[n].pack(side = LEFT)
+        for i in range(0, 4):
+            pid_name = ('PID_%02d_' % (ch_number*4+i))
+            pid = PIDFrame(self, "High", pid_name)
+            pid.pack(side = LEFT)
+            self.pid_list.append(pid)
 
     def validate(self):
         ret = True
-        for n in self.pid:
-            if False == self.pid[n].validate():
+        for p in self.pid_list:
+            if False == p.validate():
                 ret = False
         return ret
 
     def set(self, cmd):
-        for n in self.name_list:
-            self.pid[n].set(cmd)
+        for p in self.pid_list:
+            p.set(cmd)
+
 
 
 class Gui(object):
@@ -132,12 +136,13 @@ class Gui(object):
     def __init__(self, parent, to_pnc, from_pnc):
         self.to_pnc = to_pnc
         self.from_pnc = from_pnc
-        self.ch = {} # channel dictionary
-        self.name_list = ["ail", "ele", "rud", "thr"]
+        self.ch_list = [] # channel list
 
-        for n in self.name_list:
-            self.ch[n] = ChannelFrame(parent, "Aileron",  "PID_" + n + "_")
-            self.ch[n].pack()
+        for i in range(0, 4):
+            ch_name = "CH_" + str(i)
+            ch = ChannelFrame(parent, ch_name, i)
+            ch.pack()
+            self.ch_list.append(ch)
 
         self.sendbutton = Button(parent, text="Send", command=self.send_all)
         self.sendbutton.pack(side = LEFT)
@@ -157,8 +162,8 @@ class Gui(object):
             pass
 
     def set(self, cmd):
-        for n in self.name_list:
-            self.ch[n].set(cmd)
+        for ch in self.ch_list:
+            ch.set(cmd)
 
     def update(self, Event):
         try:
@@ -183,7 +188,8 @@ if __name__ == '__main__':
     gui = Gui(root, to_pnc, from_pnc)
     root.bind('<<NewParam>>', gui.update)
 
-    comm_worker = commworker.CommWorker(to_pnc, from_pnc, root, "/dev/ttyS0")
+    comm_worker = commworker.CommWorker(to_pnc, from_pnc, root,
+            "udpin:localhost:14551", "udpout:localhost:14556")
     comm_worker.start()
 
     root.mainloop()
