@@ -11,10 +11,12 @@
   typedef float klmnfp;
   typedef double sinsfp;
 #elif defined(BOARD_MNU)
-  #define KALMAN_USE_FPGA       TRUE
-  typedef double klmnfp;
+  #define KALMAN_USE_FPGA       FALSE
+  typedef float klmnfp;
   typedef double sinsfp;
 #endif
+
+#include "pads.h"
 
 #include "navigator_sins.hpp"
 #include "kalman_flags.cpp" // dirty hack allowing to not add this file to the Makefile
@@ -415,6 +417,7 @@ void Navi6dWrapper::update(const baro_data_t &baro,
   nav_sins.init_params.dT = marg.dT;
 
   nav_sins.kalman_params.gnss_mean_pos_sigma = *R_pos_sns;
+  nav_sins.kalman_params.gnss_mean_alt_sigma = *R_alt_sns;
   nav_sins.kalman_params.gnss_mean_vel_sigma = *R_vel_sns;
 
   nav_sins.kalman_params.sigma_R.v_odo_x = *R_odo; //odo
@@ -452,20 +455,9 @@ void Navi6dWrapper::update(const baro_data_t &baro,
   nav_sins.kalman_params.sigma_Qm.gyr_b_y = *Qm_gyr_bias; //gyr_bias
   nav_sins.kalman_params.sigma_Qm.gyr_b_z = *Qm_gyr_bias; //gyr_bias
 
-  nav_sins.kalman_params.sigma_P.n = *P_ned;
-  nav_sins.kalman_params.sigma_P.e = *P_ned;
-  nav_sins.kalman_params.sigma_P.d = *P_ned;
 
   nav_sins.kalman_params.Beta_inv.acc_b = *B_acc_b;
   nav_sins.kalman_params.Beta_inv.gyr_b = *B_gyr_b;
-
-  nav_sins.kalman_params.sigma_P.acc_b_x = *P_acc_b;
-  nav_sins.kalman_params.sigma_P.acc_b_y = *P_acc_b;
-  nav_sins.kalman_params.sigma_P.acc_b_z = *P_acc_b;
-
-  nav_sins.kalman_params.sigma_P.gyr_b_x = *P_gyr_b;
-  nav_sins.kalman_params.sigma_P.gyr_b_y = *P_gyr_b;
-  nav_sins.kalman_params.sigma_P.gyr_b_z = *P_gyr_b;
 
   nav_sins.kalman_params.Beta_inv.acc_s  = 10000000;
   nav_sins.kalman_params.Beta_inv.gyr_s  = 10000000;
@@ -548,6 +540,7 @@ void Navi6dWrapper::update(const baro_data_t &baro,
   nav_sins.ref_params.glrt_gyr_sigma  = *gyr_sigma;
   nav_sins.ref_params.glrt_n          = *samples;
   nav_sins.ref_params.sns_extr_en     = true;
+  nav_sins.ref_params.sns_vel_th      = *sns_v_th;
 
   dbg_in_fill_gnss(this->gps);
   prepare_data_gnss(this->gps);
@@ -555,7 +548,15 @@ void Navi6dWrapper::update(const baro_data_t &baro,
   dbg_in_append_log();
   prepare_data(baro, odo, marg);
 
-  nav_sins.run();
+//  nav_sins.run();
+//  if (NAV_RUN_STATIONARY_AUTONOMOUS == nav_sins.run_mode ||
+//      NAV_RUN_STATIONARY_PRIMARY    == nav_sins.run_mode) {
+//    blue_led_on();
+//    red_led_on();
+//  } else {
+//    blue_led_off();
+//    red_led_off();
+//  }
 
   navi2acs();
   navi2mavlink();
