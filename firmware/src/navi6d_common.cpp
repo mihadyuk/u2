@@ -11,7 +11,9 @@ void Navi6dWrapper::read_settings(void) {
   param_registry.valueSearch("T_debug",         &T_debug);
   param_registry.valueSearch("T_debug_vect",    &T_debug_vect);
 
-  param_registry.valueSearch("SINS_en_gnss",    &en_gnss);
+  param_registry.valueSearch("SINS_en_r_sns",    &en_r_sns);
+  param_registry.valueSearch("SINS_en_v_sns",    &en_v_sns);
+  param_registry.valueSearch("SINS_sns_v_th",    &sns_v_th);
 
   param_registry.valueSearch("SINS_en_odo",     &en_odo);
   param_registry.valueSearch("SINS_en_nhl_y",   &en_nhl_y);
@@ -27,6 +29,7 @@ void Navi6dWrapper::read_settings(void) {
   param_registry.valueSearch("SINS_zupt_src",   &zupt_src);
 
   param_registry.valueSearch("SINS_R_pos_sns",  &R_pos_sns);
+  param_registry.valueSearch("SINS_R_alt_sns",  &R_alt_sns);
   param_registry.valueSearch("SINS_R_vel_sns",  &R_vel_sns);
   param_registry.valueSearch("SINS_R_odo",      &R_odo);
   param_registry.valueSearch("SINS_R_nhl_y",    &R_nhl_y);
@@ -39,10 +42,6 @@ void Navi6dWrapper::read_settings(void) {
   param_registry.valueSearch("SINS_R_vv_st",    &R_v_veh_st);
   param_registry.valueSearch("SINS_R_yaw_st",   &R_yaw_st);
   param_registry.valueSearch("SINS_R_yaw_mg",   &R_mag_yaw);
-
-  param_registry.valueSearch("SINS_P_ned",      &P_ned);
-  param_registry.valueSearch("SINS_P_acc_b",    &P_acc_b);
-  param_registry.valueSearch("SINS_P_gyr_b",    &P_gyr_b);
 
   param_registry.valueSearch("SINS_B_acc_b",    &B_acc_b);
   param_registry.valueSearch("SINS_B_gyr_b",    &B_gyr_b);
@@ -169,7 +168,8 @@ void Navi6dWrapper::prepare_data(const baro_data_t &baro,
                                  const odometer_data_t &odo,
                                  const marg_data_t &marg) {
 
-  nav_sins.ctrl_params.use_sns        = *en_gnss;
+  nav_sins.ctrl_params.use_r_sns      = *en_r_sns;
+  nav_sins.ctrl_params.use_v_sns      = *en_v_sns;
   nav_sins.ctrl_params.use_baro_alt   = *en_baro;
   nav_sins.ctrl_params.use_odo        = *en_odo;
   nav_sins.ctrl_params.use_nonhol_y   = *en_nhl_y;
