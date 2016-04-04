@@ -548,7 +548,8 @@ void Navi6dWrapper::update(const baro_data_t &baro,
   dbg_in_append_log();
   prepare_data(baro, odo, marg);
 
-//  nav_sins.run();
+  nav_sins.run();
+
 //  if (NAV_RUN_STATIONARY_AUTONOMOUS == nav_sins.run_mode ||
 //      NAV_RUN_STATIONARY_PRIMARY    == nav_sins.run_mode) {
 //    blue_led_on();
