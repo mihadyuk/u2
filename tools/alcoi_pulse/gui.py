@@ -1,10 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import commworker
+import struct
+import binascii
 
-from multiprocessing import Process, Queue, Event, freeze_support
-from queue import Empty, Full # for exception catching
+import pymavlink.dialects.v10.lapwing as mavlink
+import pymavlink.mavutil as mavutil
+mavutil.set_dialect("lapwing")
 
 # from tkinter import ttk
 # from tkinter import *
@@ -12,70 +14,162 @@ from queue import Empty, Full # for exception catching
 
 from tkinter import *
 
-param_recvd = {}
-param_changed = {}
+# create in and out communication channels
+mavin  = mavutil.mavlink_connection("udpin:localhost:14551")
+mavout = mavutil.mavlink_connection("udpout:localhost:14556")
+
+RECV_TIMEOUT = 2.0
+RECV_TRIES = 4
+CHANNEL_NUMBER = 1
+
+
+
+def mavlink_wait_param_timeout(param_name):
+    ret = None
+    print("Trying to get:", param_name)
+    m = mavin.recv_match(type="PARAM_VALUE", blocking=True, timeout=RECV_TIMEOUT)
+    if m is None:
+        print ("Time is out. Retrying:")
+    else:
+        st = m.param_id.decode("utf-8")
+        st = st[0:len(param_name)]
+        if st == param_name:
+            if m.param_type == 9 or m.param_type == 10:
+                ret = float(m.param_value)
+            else:
+                b = struct.pack('<f', m.param_value)
+                i = struct.unpack('<I', b)
+                ret = i[0]
+    return ret
+
+
+def mavlink_acqure_with_retry(param_name):
+    retry = RECV_TRIES
+    ret = None
+    while retry > 0:
+        retry -= 1
+        ascii_name = bytearray(param_name, "ascii")
+        mavout.param_fetch_one(ascii_name)
+        ret = mavlink_wait_param_timeout(param_name)
+        if ret is not None:
+            return ret
+
+
+def mavlink_set_with_retry(param_name, param_value):
+    retry = RECV_TRIES
+    check = None
+    if "proc" == param_name[-4:]:
+        param_type = 5
+    else:
+        param_type = 9
+
+    while retry > 0:
+        retry -= 1
+        ascii_name = bytearray(param_name, "ascii")
+        mavout.param_set_send(ascii_name, param_value, param_type)
+        print("Trying to send:", param_name)
+        check = mavlink_wait_param_timeout(param_name)
+        if check is not None:
+            return check
+
+    print("ERROR: unable to send", self.paramname)
+    return None
+
+
+
+class PostProcMenu(Frame):
+    def __init__(self, parent, guiname, param_name):
+        Frame.__init__(self, parent)
+        self.param_name = param_name
+        self.var = StringVar()
+        self.option = OptionMenu(parent, self.var, "none", "wrap_pi", "wrap_2pi")
+        self.option.pack(side = RIGHT)
+        self.label = Label(self, text=guiname, width=3)
+        self.label.pack(side = LEFT)
+        self.state = "UNINIT"
+
+    def _set_val(self, intval):
+        if intval == 0:
+            self.var.set("none")
+        elif intval == 1:
+            self.var.set("wrap_pi")
+        elif intval == 2:
+            self.var.set("wrap_2pi")
+        else:
+            raise("ERROR: unexpected postprocessing function number")
+
+    def _decode_val(self):
+        if self.var.get() == "none":
+            return 0
+        elif self.var.get() == "wrap_pi":
+            return 1
+        elif self.var.get() == "wrap_2pi":
+            return 2
+        else:
+            raise("ERROR: unexpected menu value")
+
+    def acqure(self):
+        val = mavlink_acqure_with_retry(self.param_name)
+        if val is not None:
+            self._set_val(val)
+            self.state = "GOT"
+            self.var.trace("w", self._changed)
+
+    def _changed(self, a1, a2, a3):
+        self.state = "CHANGED"
+
+    def send(self):
+        if self.state == "CHANGED":
+            ret = mavlink_set_with_retry(self.param_name, self._decode_val())
+            if None == ret:
+                print("ERROR: unable to send", self.param_name)
+            else:
+                print("OK")
+                self.state = "GOT"
 
 
 class PIDSpinbox(Frame):
 
-    def __init__(self, parent, guiname, internalname):
+    def __init__(self, parent, guiname, param_name):
         Frame.__init__(self, parent)
-
-        self.FROM = 0.0
-        self.TO = 5.0
         self.var = StringVar()
-        self.internalname = internalname
+        self.var.set("??????")
+        self.param_name = param_name
         self.spinbox = Entry(self, width=10, textvariable=self.var)
-        # self.spinbox = Spinbox(self, width=8, textvariable=self.var, increment=1.0/10000)
         self.spinbox.pack(side = RIGHT)
         self.label = Label(self, text=guiname, width=3)
         self.label.pack(side = LEFT)
         self.spinbox.bind('<FocusIn>', self._changed)
-        self.changed = False
-        #print (">>> PIDSpinbox:", internalname)
+        self.state = "UNINIT" # CHANGED, GOT
 
-    def validate(self):
-        d = 0.0
-        try:
-            d = float(self.var.get())
-            if (d < self.FROM) or (d > self.TO):
-                self.spinbox.configure(background="yellow")
-                return False
-        except:
-            self.spinbox.configure(background="red")
-            return False
-
-        self.spinbox.configure(background="white")
-        return True
-
-    def set(self, cmd):
-        if (cmd.name == self.internalname):
-            self.var.set(round(cmd.var, 5))
-            self.changed = False
+    def acqure(self):
+        val = mavlink_acqure_with_retry(self.param_name)
+        if val is not None:
+            self.var.set(round(val, 5))
+            self.state = "GOT"
+            self.spinbox.configure(background="white")
+        else:
+            self.var.set("timeout")
 
     def _changed(self, event):
-        print ("changed")
-        self.changed = True
+        print(self.var.get())
+        self.state = "CHANGED"
+        self.spinbox.configure(background="green")
 
-
-class Bypassbutton(Checkbutton):
-
-    def __init__(self, parent, guiname, internalname):
-        self.var = IntVar()
-        Checkbutton.__init__(self, parent, variable=self.var, text=guiname, command=self._changed)
-        self.internalname = internalname
-        self.changed = False
-
-    def validate(self):
-        return True
-
-    def _changed(self):
-        self.changed = True
-
-    def set(self, cmd):
-        if (cmd.name == self.internalname):
-            self.var.set(cmd.var)
-            self.changed = False
+    def send(self):
+        if "CHANGED" == self.state:
+            ret = mavlink_set_with_retry(self.param_name, float(self.var.get()))
+            if None == ret:
+                print("ERROR: unable to send", self.param_name)
+            elif float(self.var.get()) != ret:
+                self.var.set(round(ret, 5))
+                self.state = "GOT"
+                self.spinbox.configure(background="yellow")
+                print("WARNING: sent: %s read back", self.var.get(), ret)
+            else:
+                print("OK")
+                self.state = "GOT"
+                self.spinbox.configure(background="white")
 
 
 class PIDFrame(LabelFrame):
@@ -87,23 +181,19 @@ class PIDFrame(LabelFrame):
         self.name_list = ["P", "I", "D", "Min", "Max", "proc"]
 
         for n in self.name_list:
-            self.controls[n] = PIDSpinbox(self, n, internalname + n)
+            if "proc" == n:
+                self.controls[n] = PostProcMenu(self, n, internalname + n)
+            else:
+                self.controls[n] = PIDSpinbox(self, n, internalname + n)
             self.controls[n].pack()
 
-        self.controls["B"] = Bypassbutton(self, "Bypass", internalname + "B")
-        self.controls["B"].pack()
-
-    def validate(self):
-        ret = True
-        for n in self.controls:
-            if False == self.controls[n].validate():
-                ret = False
-        return ret
-
-    def set(self, cmd):
+    def acquire(self):
         for c in self.controls:
-            self.controls[c].set(cmd)
+            self.controls[c].acqure()
 
+    def send(self):
+        for c in self.controls:
+            self.controls[c].send()
 
 
 class ChannelFrame(LabelFrame):
@@ -118,61 +208,63 @@ class ChannelFrame(LabelFrame):
             pid.pack(side = LEFT)
             self.pid_list.append(pid)
 
-    def validate(self):
-        ret = True
+    def acqure(self):
         for p in self.pid_list:
-            if False == p.validate():
-                ret = False
-        return ret
+            p.acquire()
 
-    def set(self, cmd):
+    def send(self):
         for p in self.pid_list:
-            p.set(cmd)
-
+            p.send()
 
 
 class Gui(object):
 
-    def __init__(self, parent, to_pnc, from_pnc):
-        self.to_pnc = to_pnc
-        self.from_pnc = from_pnc
+    def __init__(self, parent):
         self.ch_list = [] # channel list
+        self.connected = False
 
-        for i in range(0, 4):
+        for i in range(0, CHANNEL_NUMBER):
             ch_name = "CH_" + str(i)
             ch = ChannelFrame(parent, ch_name, i)
             ch.pack()
             self.ch_list.append(ch)
 
-        self.sendbutton = Button(parent, text="Send", command=self.send_all)
-        self.sendbutton.pack(side = LEFT)
+        self.getbutton = Button(parent, text="Get", command=self.acqure)
+        self.sendbutton = Button(parent, text="Set", command=self.send)
+        self.writeconnect = Button(parent, text="Write", command=self.write)
 
-        self.connect = Button(parent, text="Write")
-        self.connect.pack(side = LEFT)
+        self.getbutton.pack(side = LEFT)
 
-    def validate(self):
-        ret = True
-        for n in self.name_list:
-            if False == self.ch[n].validate():
-                ret = False
-        return ret
+    def acqure(self):
+        if self.connected:
+            for ch in self.ch_list:
+                ch.acqure()
+        else:
+            print ("Waiting heartbeat...")
+            m = mavin.recv_match(type="HEARTBEAT", blocking=True, timeout=5)
+            if m is not None:
+                print(m)
+                mavout.target_system = m.get_srcSystem()
+                self.connected = True
+                self.acqure() # recursive call to avoid copypasta
+                self.sendbutton.pack(side = LEFT)
+                self.writeconnect.pack(side = LEFT)
+                print("Success!")
+            else:
+                print("Connection time is out")
 
-    def send_all(self):
-        if self.validate():
-            pass
+    def send(self):
+        if self.connected:
+            for ch in self.ch_list:
+                ch.send()
+        else:
+            print("ERROR: you need to connect first")
 
-    def set(self, cmd):
-        for ch in self.ch_list:
-            ch.set(cmd)
-
-    def update(self, Event):
-        try:
-            cmd = self.from_pnc.get_nowait()
-        except:
-            cmd = None
-        if type(cmd) is commworker.AcquiredParam:
-            print (">>> GUI updater:", cmd.name, cmd.var)
-            self.set(cmd)
+    def write(self):
+        if self.connected:
+            print("Write stub!")
+        else:
+            print("ERROR: you need to connect first")
 
 
 root = Tk()
@@ -183,18 +275,7 @@ except:
     pass
 
 if __name__ == '__main__':
-    to_pnc = Queue(256)
-    from_pnc = Queue(256)
-    gui = Gui(root, to_pnc, from_pnc)
-    root.bind('<<NewParam>>', gui.update)
-
-    comm_worker = commworker.CommWorker(to_pnc, from_pnc, root,
-            "udpin:localhost:14551", "udpout:localhost:14556")
-    comm_worker.start()
-
+    gui = Gui(root)
     root.mainloop()
-
-    comm_worker.stop()
-    comm_worker.join()
 
 

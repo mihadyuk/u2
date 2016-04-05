@@ -72,9 +72,12 @@ class CommWorker(Thread):
 
         # main working loop
         while not (self.__stop.is_set()):
+            recv = None
             try:
                 recv = self.to_pnc.get_nowait()
             except Empty:
+                pass
+            if recv is not None:
                 pass
             time.sleep(0.02)
 
