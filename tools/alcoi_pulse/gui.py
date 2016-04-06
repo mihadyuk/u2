@@ -13,6 +13,7 @@ mavutil.set_dialect("lapwing")
 # from tkinter.ttk import *
 
 from tkinter import *
+from tkinter import messagebox
 
 # create in and out communication channels
 mavin  = mavutil.mavlink_connection("udpin:localhost:14551")
@@ -20,11 +21,11 @@ mavout = mavutil.mavlink_connection("udpout:localhost:14556")
 
 RECV_TIMEOUT = 2.0
 RECV_TRIES = 4
-CHANNEL_NUMBER = 1
+CHANNEL_NUMBER = 4
+ENTRY_WIDTH = 12
+LABEL_WIDTH = 3
 
-
-
-def mavlink_wait_param_timeout(param_name):
+def mavlink_wait_param_timeout(param_name): #{{{
     ret = None
     print("Trying to get:", param_name)
     m = mavin.recv_match(type="PARAM_VALUE", blocking=True, timeout=RECV_TIMEOUT)
@@ -41,9 +42,8 @@ def mavlink_wait_param_timeout(param_name):
                 i = struct.unpack('<I', b)
                 ret = i[0]
     return ret
-
-
-def mavlink_acqure_with_retry(param_name):
+#}}}
+def mavlink_acqure_with_retry(param_name):#{{{
     retry = RECV_TRIES
     ret = None
     while retry > 0:
@@ -53,9 +53,8 @@ def mavlink_acqure_with_retry(param_name):
         ret = mavlink_wait_param_timeout(param_name)
         if ret is not None:
             return ret
-
-
-def mavlink_set_with_retry(param_name, param_value):
+#}}}
+def mavlink_set_with_retry(param_name, param_value):#{{{
     retry = RECV_TRIES
     check = None
     if "proc" == param_name[-4:]:
@@ -74,17 +73,107 @@ def mavlink_set_with_retry(param_name, param_value):
 
     print("ERROR: unable to send", self.paramname)
     return None
+#}}}
+def mavlink_alcoi_with_confirm(pid_num, width, strength):#{{{
+    #define PARAM_PULSE_CHANNEL       param5
+    #define PARAM_PULSE_WIDTH         param6
+    #define PARAM_PULSE_STRENGTH      param7
+    print("Pulse: channel", pid_num, width, strength)
+    mavout.mav.command_long_send(mavout.target_system,
+            0,
+            mavlink.MAV_CMD_DO_SET_SERVO,
+            0,
+            0, #param1
+            0,
+            0,
+            0,
+            pid_num,
+            width,
+            strength)
 
+    # m = mavin.recv_match(type="COMMAND_ACK", blocking=True, timeout=RECV_TIMEOUT*2)
+    # if m is None:
+    #     messagebox.showerror(
+    #         "Error",
+    #         "Time is out."
+    #     )
+    # else:
+    #     if m.result == mavlink.MAV_RESULT_TEMPORARILY_REJECTED:
+    #         messagebox.showerror(
+    #             "Error",
+    #             "TEMPORARILY_REJECTED"
+    #         )
+    #     elif m.result == mavlink.MAV_RESULT_DENIED:
+    #         messagebox.showerror(
+    #             "Error",
+    #             "DENIED"
+    #         )
+    #     elif m.result == mavlink.MAV_RESULT_UNSUPPORTED:
+    #         messagebox.showerror(
+    #             "Error",
+    #             "UNSUPPORTED"
+    #         )
+    #     elif m.result == mavlink.MAV_RESULT_FAILED:
+    #         messagebox.showerror(
+    #             "Error",
+    #             "FAILED"
+    #         )
+#}}}
 
+class AlcoiPulse(LabelFrame):#{{{
+    def __init__(self, parent, channel_num):
+        LabelFrame.__init__(self, parent, text="Alcoi")
+        self.channel = channel_num
+        self.var_w = DoubleVar()
+        self.var_w.trace("w", self._changed_w)
+        self.frame_w = Frame(self)
+        self.frame_w.pack()
+        self.entry_w = Entry(self.frame_w, width=ENTRY_WIDTH-5, textvariable=self.var_w)
+        self.entry_w.pack(side = RIGHT)
+        self.label_w = Label(self.frame_w, text="Width", width=LABEL_WIDTH+5)
+        self.label_w.pack(side = LEFT)
 
-class PostProcMenu(Frame):
+        self.var_s = DoubleVar()
+        self.var_s.trace("w", self._changed_s)
+        self.frame_s = Frame(self)
+        self.frame_s.pack()
+        self.entry_s = Entry(self.frame_s, width=ENTRY_WIDTH-5, textvariable=self.var_s)
+        self.entry_s.pack(side = RIGHT)
+        self.label_s = Label(self.frame_s, text="Strength", width=LABEL_WIDTH+5)
+        self.label_s.pack(side = LEFT)
+
+        self.pulse_button = Button(self, text="Пыщь!", command=self._pulse)
+        self.pulse_button.pack()
+
+    def _changed_w(self, a1, a2, a3):
+        try:
+            float(self.var_w.get())
+        except ValueError:
+            self.entry_w.configure(background="red")
+            return
+        self.entry_w.configure(background="white")
+
+    def _changed_s(self, a1, a2, a3):
+        try:
+            float(self.var_s.get())
+        except ValueError:
+            self.entry_s.configure(background="red")
+            return
+        self.entry_s.configure(background="white")
+
+    def _pulse(self):
+        mavlink_alcoi_with_confirm(self.channel, self.var_w.get(), self.var_s.get())
+#}}}
+class PostProcMenu(Frame):#{{{
     def __init__(self, parent, guiname, param_name):
         Frame.__init__(self, parent)
+        self.default_color = "light gray"
         self.param_name = param_name
         self.var = StringVar()
-        self.option = OptionMenu(parent, self.var, "none", "wrap_pi", "wrap_2pi")
+        self.option = OptionMenu(self, self.var, "none", "wrap_pi", "wrap_2pi")
+        self.option.configure(background=self.default_color)
         self.option.pack(side = RIGHT)
-        self.label = Label(self, text=guiname, width=3)
+        self.label = Label(self, text=guiname, width=LABEL_WIDTH)
         self.label.pack(side = LEFT)
         self.state = "UNINIT"
 
@@ -109,14 +198,16 @@ class PostProcMenu(Frame):
             raise("ERROR: unexpected menu value")
 
     def acqure(self):
-        val = mavlink_acqure_with_retry(self.param_name)
-        if val is not None:
-            self._set_val(val)
-            self.state = "GOT"
-            self.var.trace("w", self._changed)
+        if self.state == "UNINIT":
+            val = mavlink_acqure_with_retry(self.param_name)
+            if val is not None:
+                self._set_val(val)
+                self.state = "GOT"
+                self.var.trace("w", self._changed)
 
     def _changed(self, a1, a2, a3):
         self.state = "CHANGED"
+        self.option.configure(background="green")
 
     def send(self):
         if self.state == "CHANGED":
@@ -126,66 +217,77 @@ class PostProcMenu(Frame):
             else:
                 print("OK")
                 self.state = "GOT"
-
-
-class PIDSpinbox(Frame):
+                self.option.configure(background=self.default_color)
+#}}}
+class PIDSpinbox(Frame):#{{{
 
     def __init__(self, parent, guiname, param_name):
         Frame.__init__(self, parent)
-        self.var = StringVar()
-        self.var.set("??????")
+        self.var = DoubleVar()
+        self.var.set("???")
         self.param_name = param_name
-        self.spinbox = Entry(self, width=10, textvariable=self.var)
-        self.spinbox.pack(side = RIGHT)
-        self.label = Label(self, text=guiname, width=3)
+        self.entry = Entry(self, width=ENTRY_WIDTH, textvariable=self.var)
+        self.entry.pack(side = RIGHT)
+        self.label = Label(self, text=guiname, width=LABEL_WIDTH)
         self.label.pack(side = LEFT)
-        self.spinbox.bind('<FocusIn>', self._changed)
         self.state = "UNINIT" # CHANGED, GOT
 
     def acqure(self):
-        val = mavlink_acqure_with_retry(self.param_name)
-        if val is not None:
-            self.var.set(round(val, 5))
-            self.state = "GOT"
-            self.spinbox.configure(background="white")
-        else:
-            self.var.set("timeout")
+        if self.state == "UNINIT":
+            val = mavlink_acqure_with_retry(self.param_name)
+            if val is not None:
+                self.var.set(round(val, 5))
+                self.state = "GOT"
+                self.entry.configure(background="white")
+                self.var.trace("w", self._changed)
 
-    def _changed(self, event):
-        print(self.var.get())
+    def _changed(self, a1, a2, a3):
+        try:
+            float(self.var.get())
+        except ValueError:
+            self.entry.configure(background="red")
+            return
         self.state = "CHANGED"
-        self.spinbox.configure(background="green")
+        self.entry.configure(background="green")
 
     def send(self):
         if "CHANGED" == self.state:
-            ret = mavlink_set_with_retry(self.param_name, float(self.var.get()))
+            ret = mavlink_set_with_retry(self.param_name, self.var.get())
             if None == ret:
                 print("ERROR: unable to send", self.param_name)
-            elif float(self.var.get()) != ret:
+            elif abs(self.var.get() - ret) > 0.0001:
+                print("WARNING: sent: {} read back {}".format(self.var.get(), ret))
                 self.var.set(round(ret, 5))
                 self.state = "GOT"
-                self.spinbox.configure(background="yellow")
-                print("WARNING: sent: %s read back", self.var.get(), ret)
+                self.entry.configure(background="yellow")
             else:
                 print("OK")
                 self.state = "GOT"
-                self.spinbox.configure(background="white")
+                self.entry.configure(background="white")
+#}}}
+class PIDFrame(LabelFrame):#{{{
 
-
-class PIDFrame(LabelFrame):
-
-    def __init__(self, parent, guiname, internalname):
+    def __init__(self, parent, pid_number):
+        paramname = ('PID_%02d_' % pid_number)
+        guiname = ('PID #%02d' % pid_number)
         LabelFrame.__init__(self, parent, text=guiname)
         self.controls = {}
 
         self.name_list = ["P", "I", "D", "Min", "Max", "proc"]
+        self.pid_control_frame = Frame(self)
+        self.alcoi_pulse_frame = Frame(self)
+        self.pid_control_frame.pack(side = LEFT)
+        self.alcoi_pulse_frame.pack(side = RIGHT)
 
         for n in self.name_list:
             if "proc" == n:
-                self.controls[n] = PostProcMenu(self, n, internalname + n)
+                self.controls[n] = PostProcMenu(self.pid_control_frame, n, paramname + n)
             else:
-                self.controls[n] = PIDSpinbox(self, n, internalname + n)
+                self.controls[n] = PIDSpinbox(self.pid_control_frame, n, paramname + n)
             self.controls[n].pack()
+
+        self.alcoi = AlcoiPulse(self.alcoi_pulse_frame, pid_number)
+        self.alcoi.pack()
 
     def acquire(self):
         for c in self.controls:
@@ -194,17 +296,16 @@ class PIDFrame(LabelFrame):
     def send(self):
         for c in self.controls:
             self.controls[c].send()
-
-
-class ChannelFrame(LabelFrame):
+#}}}
+class ChannelFrame(LabelFrame):#{{{
 
     def __init__(self, parent, guiname, ch_number):
-        LabelFrame.__init__(self, parent, text=guiname)
+        LabelFrame.__init__(self, parent, text=guiname, background="grey")
         self.pid_list = [] # list for PIDs
 
         for i in range(0, 4):
-            pid_name = ('PID_%02d_' % (ch_number*4+i))
-            pid = PIDFrame(self, "High", pid_name)
+            pid_number = ch_number*4 + i
+            pid = PIDFrame(self, pid_number)
             pid.pack(side = LEFT)
             self.pid_list.append(pid)
 
@@ -215,9 +316,8 @@ class ChannelFrame(LabelFrame):
     def send(self):
         for p in self.pid_list:
             p.send()
-
-
-class Gui(object):
+#}}}
+class Gui(object):#{{{
 
     def __init__(self, parent):
         self.ch_list = [] # channel list
@@ -231,7 +331,6 @@ class Gui(object):
 
         self.getbutton = Button(parent, text="Get", command=self.acqure)
         self.sendbutton = Button(parent, text="Set", command=self.send)
-        self.writeconnect = Button(parent, text="Write", command=self.write)
 
         self.getbutton.pack(side = LEFT)
 
@@ -248,10 +347,14 @@ class Gui(object):
                 self.connected = True
                 self.acqure() # recursive call to avoid copypasta
                 self.sendbutton.pack(side = LEFT)
-                self.writeconnect.pack(side = LEFT)
                 print("Success!")
             else:
                 print("Connection time is out")
+                messagebox.showerror(
+                    "Error",
+                    "Time is out."
+                )
+
 
     def send(self):
         if self.connected:
@@ -259,13 +362,7 @@ class Gui(object):
                 ch.send()
         else:
             print("ERROR: you need to connect first")
-
-    def write(self):
-        if self.connected:
-            print("Write stub!")
-        else:
-            print("ERROR: you need to connect first")
-
+#}}}
 
 root = Tk()
 # try to use native look from ttk
@@ -276,6 +373,7 @@ except:
 
 if __name__ == '__main__':
     gui = Gui(root)
+    root.resizable(width=FALSE, height=FALSE)
     root.mainloop()
 
 
