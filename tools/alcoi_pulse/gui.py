@@ -145,6 +145,16 @@ class AlcoiPulse(LabelFrame):#{{{
         self.pulse_button = Button(self, text="Пыщь!", command=self._pulse)
         self.pulse_button.pack()
 
+    def disable(self):
+        self.entry_w.configure(state='disabled')
+        self.entry_s.configure(state='disabled')
+        self.pulse_button.configure(state='disabled')
+
+    def enable(self):
+        self.entry_w.configure(state='normal')
+        self.entry_s.configure(state='normal')
+        self.pulse_button.configure(state='normal')
+
     def _changed_w(self, a1, a2, a3):
         try:
             float(self.var_w.get())
@@ -176,6 +186,12 @@ class PostProcMenu(Frame):#{{{
         self.label = Label(self, text=guiname, width=LABEL_WIDTH)
         self.label.pack(side = LEFT)
         self.state = "UNINIT"
+
+    def disable(self):
+        self.option.configure(state='disabled')
+
+    def enable(self):
+        self.option.configure(state='normal')
 
     def _set_val(self, intval):
         if intval == 0:
@@ -232,6 +248,12 @@ class PIDSpinbox(Frame):#{{{
         self.label.pack(side = LEFT)
         self.state = "UNINIT" # CHANGED, GOT
 
+    def disable(self):
+        self.entry.configure(state='disabled')
+
+    def enable(self):
+        self.entry.configure(state='normal')
+
     def acqure(self):
         if self.state == "UNINIT":
             val = mavlink_acqure_with_retry(self.param_name)
@@ -268,6 +290,7 @@ class PIDSpinbox(Frame):#{{{
 class PIDFrame(LabelFrame):#{{{
 
     def __init__(self, parent, pid_number):
+        self.pid_number = pid_number
         paramname = ('PID_%02d_' % pid_number)
         guiname = ('PID #%02d' % pid_number)
         LabelFrame.__init__(self, parent, text=guiname)
@@ -289,6 +312,17 @@ class PIDFrame(LabelFrame):#{{{
         self.alcoi = AlcoiPulse(self.alcoi_pulse_frame, pid_number)
         self.alcoi.pack()
 
+    def disable(self):
+        self.alcoi.disable()
+        for key in self.controls:
+            self.controls[key].disable()
+
+    def enable(self, pid_number):
+        if pid_number == self.pid_number:
+            self.alcoi.enable()
+            for key in self.controls:
+                self.controls[key].enable()
+
     def acquire(self):
         for c in self.controls:
             self.controls[c].acqure()
@@ -309,6 +343,14 @@ class ChannelFrame(LabelFrame):#{{{
             pid.pack(side = LEFT)
             self.pid_list.append(pid)
 
+    def disable(self):
+        for p in self.pid_list:
+            p.disable()
+
+    def enable(self, pid_num):
+        for p in self.pid_list:
+            p.enable(pid_num)
+
     def acqure(self):
         for p in self.pid_list:
             p.acquire()
@@ -317,20 +359,33 @@ class ChannelFrame(LabelFrame):#{{{
         for p in self.pid_list:
             p.send()
 #}}}
+class PidEnableMenu(Frame):#{{{
+    def __init__(self, parent, var):
+        Frame.__init__(self, parent)
+        self.var = var
+        self.entry = Entry(self, width=ENTRY_WIDTH // 2, textvariable=self.var)
+        self.entry.pack(side = RIGHT)
+        self.label = Label(self, text="Select PID")
+        self.label.pack(side = LEFT)
+#}}}
 class Gui(object):#{{{
 
     def __init__(self, parent):
         self.ch_list = [] # channel list
         self.connected = False
+        self.pid_enabled_var = IntVar()
+        self.pid_enabled_var.set(-1)
 
         for i in range(0, CHANNEL_NUMBER):
             ch_name = "CH_" + str(i)
             ch = ChannelFrame(parent, ch_name, i)
+            ch.disable()
             ch.pack()
             self.ch_list.append(ch)
 
         self.getbutton = Button(parent, text="Get", command=self.acqure)
         self.sendbutton = Button(parent, text="Set", command=self.send)
+        self.pid_enable_menu = PidEnableMenu(parent, self.pid_enabled_var)
 
         self.getbutton.pack(side = LEFT)
 
@@ -347,6 +402,8 @@ class Gui(object):#{{{
                 self.connected = True
                 self.acqure() # recursive call to avoid copypasta
                 self.sendbutton.pack(side = LEFT)
+                self.pid_enable_menu.pack(side = LEFT)
+                self.pid_enabled_var.trace("w", self._changed_pid_menu)
                 print("Success!")
             else:
                 print("Connection time is out")
@@ -355,6 +412,16 @@ class Gui(object):#{{{
                     "Time is out."
                 )
 
+    def _changed_pid_menu(self, a1, a2, a3):
+        pid_num = None
+        for ch in self.ch_list:
+            ch.disable()
+        try:
+            pid_num = self.pid_enabled_var.get()
+        except ValueError:
+            return
+        for ch in self.ch_list:
+            ch.enable(pid_num)
 
     def send(self):
         if self.connected:
