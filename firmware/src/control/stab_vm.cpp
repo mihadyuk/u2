@@ -7,6 +7,7 @@
 #include "stab_vm.hpp"
 #include "geometry.hpp"
 #include "putinrange.hpp"
+#include "mav_dbg_sender.hpp"
 
 using namespace chibios_rt;
 using namespace control;
@@ -215,6 +216,13 @@ public:
     alcoi_time_elapsed = time;
   }
 
+  float alcoi_status(void) {
+    if (alcoi_time_elapsed > 0)
+      return alcoi_target;
+    else
+      return 0;
+  }
+
 private:
   float alcoi_target = 0;
   float alcoi_time_elapsed = 0;
@@ -340,6 +348,9 @@ static const uint8_t fly_program[] = {
     OUTPUT, 0,
     END
 };
+
+/* current PID measuring Alcoi */
+static size_t alcoi_pid = 0;
 
 /*
  ******************************************************************************
@@ -670,6 +681,11 @@ void StabVM::update(float dT, const uint8_t *bytecode) {
   chTMStartMeasurementX(&exec_tmo);
   this->exec();
   chTMStopMeasurementX(&exec_tmo);
+
+  mav_dbg_sender.send(
+      pid_pool[alcoi_pid].alcoi_status(),
+      DEBUG_INDEX_ALCOI,
+      TIME_BOOT_MS);
 };
 
 /**
@@ -680,10 +696,9 @@ bool StabVM::alcoiPulse(const AlcoiPulse &pulse) {
   if (pulse.pid >= TOTAL_PID_CNT)
     return OSAL_FAILED;
 
+  alcoi_pid = pulse.pid;
   pid_pool[pulse.pid].alcoi_pulse(pulse.strength, pulse.width);
 
   return OSAL_SUCCESS;
 }
-
-
 

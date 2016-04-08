@@ -23,12 +23,13 @@
 
 #include "navi6d_wrapper.hpp"
 #include "mavlink_local.hpp"
-#include "mav_dbg.hpp"
+#include "mav_dbg_print.hpp"
 #include "acs_input.hpp"
 #include "geometry.hpp"
 #include "time_keeper.hpp"
 #include "param_registry.hpp"
 #include "mav_logger.hpp"
+#include "mav_dbg_sender.hpp"
 #include "mav_postman.hpp"
 #include "debug_indices.h"
 
@@ -68,23 +69,6 @@ __CCM__ static mavlink_navi6d_debug_input_t   dbg_in_struct;
 __CCM__ static mavlink_navi6d_debug_output_t  dbg_out_struct;
 __CCM__ static mavMail dbg_in_mail;
 __CCM__ static mavMail dbg_out_mail;
-
-__CCM__ static mavlink_debug_vect_t dbg_gps_vel;
-__CCM__ static mavlink_debug_vect_t dbg_acc_bias;
-__CCM__ static mavlink_debug_vect_t dbg_gyr_bias;
-__CCM__ static mavlink_debug_vect_t dbg_acc_scale;
-__CCM__ static mavlink_debug_vect_t dbg_gyr_scale;
-__CCM__ static mavMail mail_gps_vel;
-__CCM__ static mavMail mail_acc_bias;
-__CCM__ static mavMail mail_gyr_bias;
-__CCM__ static mavMail mail_acc_scale;
-__CCM__ static mavMail mail_gyr_scale;
-
-__CCM__ static mavlink_debug_t dbg_sins_stat;
-__CCM__ static mavMail mail_sins_stat;
-
-__CCM__ static mavlink_debug_vect_t dbg_mag_data;
-__CCM__ static mavMail mail_mag_data;
 
 /*
  ******************************************************************************
@@ -208,79 +192,53 @@ void Navi6dWrapper::navi2mavlink(void) {
 /**
  *
  */
-void Navi6dWrapper::debug2mavlink(float dT) {
+void Navi6dWrapper::debug2mavlink(void) {
 
-  if (*T_debug_vect != TELEMETRY_SEND_OFF) {
-    if (debug_vect_decimator < *T_debug_vect) {
-      debug_vect_decimator += dT * 1000;
-    }
-    else {
-      debug_vect_decimator = 0;
-      uint64_t time = TimeKeeper::utc();
+  uint64_t time = TimeKeeper::utc();
 
-      //
-      dbg_gps_vel.time_usec = time;
-      dbg_gps_vel.x = round(100 * nav_sins.sensor_data.v_sns[0][0]);
-      dbg_gps_vel.y = round(100 * nav_sins.sensor_data.v_sns[1][0]);
-      dbg_gps_vel.z = round(100 * nav_sins.sensor_data.v_sns[2][0]);
-      mail_gps_vel.fill(&dbg_gps_vel, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG_VECT);
-      mav_postman.post(mail_gps_vel);
+  mav_dbg_sender.send(
+      "gps_vel",
+      round(100 * nav_sins.sensor_data.v_sns[0][0]),
+      round(100 * nav_sins.sensor_data.v_sns[1][0]),
+      round(100 * nav_sins.sensor_data.v_sns[2][0]),
+      time);
 
-      //
-      dbg_acc_bias.time_usec = time;
-      dbg_acc_bias.x = nav_sins.navi_data.a_bias[0][0];
-      dbg_acc_bias.y = nav_sins.navi_data.a_bias[1][0];
-      dbg_acc_bias.z = nav_sins.navi_data.a_bias[2][0];
-      mail_acc_bias.fill(&dbg_acc_bias, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG_VECT);
-      mav_postman.post(mail_acc_bias);
+  mav_dbg_sender.send(
+      "acc_bias",
+      nav_sins.navi_data.a_bias[0][0],
+      nav_sins.navi_data.a_bias[1][0],
+      nav_sins.navi_data.a_bias[2][0],
+      time);
 
-      //
-      dbg_gyr_bias.time_usec = time;
-      dbg_gyr_bias.x = nav_sins.navi_data.w_bias[0][0];
-      dbg_gyr_bias.y = nav_sins.navi_data.w_bias[1][0];
-      dbg_gyr_bias.z = nav_sins.navi_data.w_bias[2][0];
-      mail_gyr_bias.fill(&dbg_gyr_bias, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG_VECT);
-      mav_postman.post(mail_gyr_bias);
+  mav_dbg_sender.send(
+      "gyr_bias",
+      nav_sins.navi_data.w_bias[0][0],
+      nav_sins.navi_data.w_bias[1][0],
+      nav_sins.navi_data.w_bias[2][0],
+      time);
 
-      //
-      dbg_acc_scale.time_usec = time;
-      dbg_acc_scale.x = nav_sins.navi_data.a_scale[0][0];
-      dbg_acc_scale.y = nav_sins.navi_data.a_scale[1][1];
-      dbg_acc_scale.z = nav_sins.navi_data.a_scale[2][2];
-      mail_acc_scale.fill(&dbg_acc_scale, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG_VECT);
-      mav_postman.post(mail_acc_scale);
+  mav_dbg_sender.send(
+      "acc_scale",
+      nav_sins.navi_data.a_scale[0][0],
+      nav_sins.navi_data.a_scale[1][1],
+      nav_sins.navi_data.a_scale[2][2],
+      time);
 
-      //
-      dbg_gyr_scale.time_usec = time;
-      dbg_gyr_scale.x = nav_sins.navi_data.w_scale[0][0];
-      dbg_gyr_scale.y = nav_sins.navi_data.w_scale[1][1];
-      dbg_gyr_scale.z = nav_sins.navi_data.w_scale[2][2];
-      mail_gyr_scale.fill(&dbg_gyr_scale, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG_VECT);
-      mav_postman.post(mail_gyr_scale);
+  mav_dbg_sender.send(
+      "gyr_scale",
+      nav_sins.navi_data.w_scale[0][0],
+      nav_sins.navi_data.w_scale[1][1],
+      nav_sins.navi_data.w_scale[2][2],
+      time);
 
-      dbg_mag_data.time_usec = time;
-      dbg_mag_data.x = nav_sins.navi_data.mag_head_v[0][0];
-      dbg_mag_data.y = nav_sins.navi_data.mag_mod;
-      dbg_mag_data.z = 0;
-      mail_mag_data.fill(&dbg_mag_data, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG_VECT);
-      mav_postman.post(mail_mag_data);
-    }
-  }
+  mav_dbg_sender.send(
+      "mag_data",
+      nav_sins.navi_data.mag_head_v[0][0],
+      nav_sins.navi_data.mag_mod,
+      0,
+      time);
 
-  if (*T_debug != TELEMETRY_SEND_OFF) {
-    if (debug_decimator < *T_debug) {
-      debug_decimator += dT * 1000;
-    }
-    else {
-      debug_decimator = 0;
-
-      dbg_sins_stat.value = nav_sins.navi_data.status;
-      dbg_sins_stat.ind = DEBUG_INDEX_SINS;
-      dbg_sins_stat.time_boot_ms = TIME_BOOT_MS;
-      mail_sins_stat.fill(&dbg_sins_stat, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG);
-      mav_postman.post(mail_sins_stat);
-    }
-  }
+  mav_dbg_sender.send(nav_sins.navi_data.status, DEBUG_INDEX_SINS, TIME_BOOT_MS);
 }
 
 /**
@@ -375,16 +333,6 @@ void Navi6dWrapper::start(void) {
 
   read_settings();
   restart_cache = *restart + 1; // enforce sins restart in first update call
-
-  /* we need to initialize names of fields manually because CCM RAM section
-   * set to NOLOAD in chibios linker scripts */
-  const size_t N = sizeof(mavlink_debug_vect_t::name);
-  strncpy(dbg_gps_vel.name,   "gps_vel",   N);
-  strncpy(dbg_acc_bias.name,  "acc_bias",  N);
-  strncpy(dbg_gyr_bias.name,  "gyr_bias",  N);
-  strncpy(dbg_acc_scale.name, "acc_scale", N);
-  strncpy(dbg_gyr_scale.name, "gyr_scale", N);
-  strncpy(dbg_mag_data.name,  "mag_data",  N);
 
   ready = true;
 }
@@ -561,7 +509,7 @@ void Navi6dWrapper::update(const baro_data_t &baro,
 
   navi2acs();
   navi2mavlink();
-  debug2mavlink(marg.dT);
+  debug2mavlink();
 
   dbg_out_fill(nav_sins.navi_data);
   dbg_out_append_log();

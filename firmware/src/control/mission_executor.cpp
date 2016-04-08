@@ -2,12 +2,13 @@
 
 #include "mission_executor.hpp"
 #include "waypoint_db.hpp"
-#include "mav_dbg.hpp"
+#include "mav_dbg_print.hpp"
 #include "navigator_types.hpp"
 #include "time_keeper.hpp"
 #include "param_registry.hpp"
 #include "mav_logger.hpp"
 #include "mav_postman.hpp"
+#include "mav_dbg_sender.hpp"
 
 using namespace chibios_rt;
 using namespace control;
@@ -24,8 +25,6 @@ using namespace control;
 #define JUMP_REPEAT         param2
 #define JUMP_SEQ            param1
 
-#define PID_TUNE_DEBUG      TRUE
-
 /*
  ******************************************************************************
  * EXTERNS
@@ -38,8 +37,6 @@ extern mavlink_nav_controller_output_t  mavlink_out_nav_controller_output_struct
 
 extern EvtSource event_mission_reached;
 
-extern MavLogger mav_logger;
-
 /*
  ******************************************************************************
  * PROTOTYPES
@@ -51,14 +48,6 @@ extern MavLogger mav_logger;
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-
-#if PID_TUNE_DEBUG
-__CCM__ static mavMail pid_tune_mail;
-__CCM__ static mavlink_debug_vect_t mavlink_out_debug_vect_struct = {0, 0, 0, 0, "PID_TUNE"};
-#endif
-
-__CCM__ static mavlink_debug_vect_t dbg_msn_exec;
-__CCM__ static mavMail mail_msn_exec;
 
 /*
  ******************************************************************************
@@ -189,47 +178,23 @@ void MissionExecutor::partexecout2mavlink(const partExecOut<double> &out) {
   mavlink_out_nav_controller_output_struct.nav_pitch = 0;
   /* TODO: change odo_speed to air_speed */
   mavlink_out_nav_controller_output_struct.aspd_error = acs_in.ch[ACS_INPUT_trgt_speed] - acs_in.ch[ACS_INPUT_odo_speed];
-
-#if PID_TUNE_DEBUG
-  mavlink_out_debug_vect_struct.x = mavlink_out_nav_controller_output_struct.xtrack_error;
-  mavlink_out_debug_vect_struct.y = mavlink_out_nav_controller_output_struct.target_bearing;
-  mavlink_out_debug_vect_struct.z = mavlink_out_nav_controller_output_struct.nav_bearing;
-  mavlink_out_debug_vect_struct.time_usec = TIME_BOOT_MS;
-  if (pid_tune_mail.free()) {
-    pid_tune_mail.fill(&mavlink_out_debug_vect_struct,
-                       MAV_COMP_ID_ALL,
-                       MAVLINK_MSG_ID_DEBUG_VECT);
-    mav_logger.write(&pid_tune_mail);
-  }
-#endif
 }
 
-void MissionExecutor::debug2mavlink(float dT) {
+void MissionExecutor::debug2mavlink(void) {
 
-  if (*T_debug_mnr != TELEMETRY_SEND_OFF) {
-    if (debug_mnr_decimator < *T_debug_mnr) {
-      debug_mnr_decimator += dT * 1000;
-    } else {
-      debug_mnr_decimator = 0;
-      uint64_t time = TimeKeeper::utc();
-
-      dbg_msn_exec.time_usec = time;
-//      dbg_msn_exec.x = static_cast<float>(mnr_executor.debugPartNumber());
-      dbg_msn_exec.x = static_cast<float>(part_number);
-      dbg_msn_exec.y = static_cast<float>(acs_in.ch[ACS_INPUT_dYaw]);
-      dbg_msn_exec.z = static_cast<float>(acs_in.ch[ACS_INPUT_dZm]);
-
-      mail_msn_exec.fill(&dbg_msn_exec, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG_VECT);
-      mav_postman.post(mail_msn_exec);
-    }
-  }
-
+  mav_dbg_sender.send(
+      "maneuver",
+      static_cast<float>(part_number),
+      static_cast<float>(acs_in.ch[ACS_INPUT_dYaw]),
+      static_cast<float>(acs_in.ch[ACS_INPUT_dZm]),
+      TimeKeeper::utc());
 }
 
 /**
  *
  */
 void MissionExecutor::navigate(float dT) {
+  (void)dT;
 
   double curr_wgs84[3][1] = {{acs_in.ch[ACS_INPUT_lat]},
                              {acs_in.ch[ACS_INPUT_lon]},
@@ -248,7 +213,7 @@ void MissionExecutor::navigate(float dT) {
   part.execute(out);
   partexecout2acsin(out);
   partexecout2mavlink(out);
-  debug2mavlink(dT);
+  debug2mavlink();
   analyze_partexecout();
 
   if (maneuver_completed) {
@@ -287,12 +252,6 @@ MissionExecutor::MissionExecutor(ACSInput &acs_in) :
  */
 void MissionExecutor::start(void) {
   chTMObjectInit(&this->tmp_nav);
-
-  param_registry.valueSearch("T_debug_mnr", &T_debug_mnr);
-  /* we need to initialize names of fields manually because CCM RAM section
-   * set to NOLOAD in chibios linker scripts */
-  const size_t N = sizeof(mavlink_debug_vect_t::name);
-  strncpy(dbg_msn_exec.name,  "msn_exec",  N);
 
   state = MissionState::idle;
 }

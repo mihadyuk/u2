@@ -1,5 +1,5 @@
-#ifndef MAV_DBG_HPP_
-#define MAV_DBG_HPP_
+#ifndef MAV_DBG_PRINT_HPP_
+#define MAV_DBG_PRINT_HPP_
 
 #include "mav_mail.hpp"
 #include "mav_postman.hpp"
@@ -25,4 +25,4 @@ static void mavlink_dbg_print(MAV_SEVERITY severity, const char *text, MAV_COMPO
   }
 }
 
-#endif /* MAV_DBG_HPP_ */
+#endif /* MAV_DBG_PRINT_HPP_ */

@@ -3,7 +3,7 @@
 #include "mavlink_local.hpp"
 #include "param_registry.hpp"
 #include "mav_postman.hpp"
-#include "mav_dbg.hpp"
+#include "mav_dbg_print.hpp"
 #include "mav_cmd_confirm.hpp"
 
 using namespace chibios_rt;

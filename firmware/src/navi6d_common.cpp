@@ -8,9 +8,6 @@
 
 void Navi6dWrapper::read_settings(void) {
 
-  param_registry.valueSearch("T_debug",         &T_debug);
-  param_registry.valueSearch("T_debug_vect",    &T_debug_vect);
-
   param_registry.valueSearch("SINS_en_r_sns",    &en_r_sns);
   param_registry.valueSearch("SINS_en_v_sns",    &en_v_sns);
   param_registry.valueSearch("SINS_sns_v_th",    &sns_v_th);

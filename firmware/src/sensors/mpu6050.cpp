@@ -14,6 +14,7 @@
 #include "putinrange.hpp"
 #include "mav_logger.hpp"
 #include "mav_postman.hpp"
+#include "mav_dbg_sender.hpp"
 #include "debug_indices.h"
 
 using namespace filters;
@@ -82,14 +83,11 @@ typedef enum {
 /* how many bytes in single fifo sample */
 #define BYTES_IN_SAMPLE       12
 
-#define SEND_DEBUG_TEMP       TRUE
-
 /*
  ******************************************************************************
  * EXTERNS
  ******************************************************************************
  */
-extern MavLogger mav_logger;
 
 /*
  ******************************************************************************
@@ -117,9 +115,6 @@ size_t MPU6050::isr_count = 0;
 uint8_t MPU6050::isr_dlpf = 0;
 uint8_t MPU6050::isr_smplrtdiv = 0;
 chibios_rt::BinarySemaphore MPU6050::isr_sem(true);
-
-__CCM__ static mavlink_debug_t dbg_temp;
-__CCM__ static mavMail mail_dbg_temp;
 
 /*
  *******************************************************************************
@@ -504,19 +499,6 @@ msg_t MPU6050::acquire_fifo(float *acc, float *gyr) {
 /**
  *
  */
-void MPU6050::send_debug_temp(void) {
-#if SEND_DEBUG_TEMP
-  dbg_temp.value = this->temperature;
-  dbg_temp.ind = DEBUG_INDEX_MPU6050;
-  dbg_temp.time_boot_ms = TIME_BOOT_MS;
-  mail_dbg_temp.fill(&dbg_temp, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG);
-  mav_postman.post(mail_dbg_temp);
-#endif
-}
-
-/**
- *
- */
 void MPU6050::acquire_data(void) {
 
   msg_t ret1 = MSG_RESET;
@@ -532,7 +514,7 @@ void MPU6050::acquire_data(void) {
       ret1 = acquire_fifo(acc_data, gyr_data);
     }
 
-    send_debug_temp();
+    mav_dbg_sender.send(this->temperature, DEBUG_INDEX_MPU6050, TIME_BOOT_MS);
 
     if ((MSG_OK != ret1) || (MSG_OK != ret2))
       this->state = SENSOR_STATE_DEAD;

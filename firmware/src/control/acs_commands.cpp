@@ -3,7 +3,7 @@
 
 #include "mavlink_local.hpp"
 #include "mav_cmd_confirm.hpp"
-#include "mav_dbg.hpp"
+#include "mav_dbg_print.hpp"
 
 using namespace control;
 

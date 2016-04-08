@@ -7,7 +7,7 @@
 #include "mission_receiver.hpp"
 #include "global_flags.h"
 #include "waypoint_db.hpp"
-#include "mav_dbg.hpp"
+#include "mav_dbg_print.hpp"
 
 using namespace chibios_rt;
 

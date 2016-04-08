@@ -23,7 +23,7 @@ private:
   void sins_cold_start(void);
   void navi2acs(void);
   void navi2mavlink(void);
-  void debug2mavlink(float dT);
+  void debug2mavlink(void);
   void prepare_data(const baro_data_t &baro,
                     const odometer_data_t &odo,
                     const marg_data_t &marg);
@@ -36,15 +36,10 @@ private:
   float time_meas_decimator = 0;
   bool ready = false;
   float dT_cache = 0.01;
-  float debug_vect_decimator = 0;
-  float debug_decimator = 0;
   ACSInput &acs_in;
   gnss::GNSSReceiver &GNSS;
   gnss::gnss_data_t gps;
   chibios_rt::EvtListener gnss_evl;
-
-  const uint32_t *T_debug      = nullptr;
-  const uint32_t *T_debug_vect = nullptr;
 
   const uint32_t *en_r_sns   = nullptr;
   const uint32_t *en_v_sns   = nullptr;

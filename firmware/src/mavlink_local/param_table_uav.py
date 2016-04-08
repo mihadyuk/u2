@@ -473,13 +473,8 @@ param = [
 ("PID_vm_scale_02", -10000,     1,          10000,      "f", "default",     "NULL"),
 ("PID_vm_scale_03", -10000,     1,          10000,      "f", "default",     "NULL"),
 
-
-
 #/* intervals between sending different data (mS) */
 ("T_attitude",      SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
-("T_debug",         SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
-("T_debug_vect",    SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
-("T_debug_mnr",     SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 ("T_global_pos",    SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 ("T_gps_raw_int",   SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 ("T_gps_status",    SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
@@ -496,6 +491,23 @@ param = [
 ("T_sys_status",    SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 ("T_system_time",   SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 ("T_vfr_hud",       SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
+
+# decimators for debug values
+("DBG_val_0",       0,          0,          100,        "u", "default",     "NULL"),
+("DBG_val_1",       0,          0,          100,        "u", "default",     "NULL"),
+("DBG_val_2",       0,          0,          100,        "u", "default",     "NULL"),
+("DBG_val_3",       0,          0,          100,        "u", "default",     "NULL"),
+("DBG_val_4",       0,          0,          100,        "u", "default",     "NULL"),
+("DBG_val_5",       0,          0,          100,        "u", "default",     "NULL"),
+("DBG_val_6",       0,          0,          100,        "u", "default",     "NULL"),
+("DBG_val_7",       0,          0,          100,        "u", "default",     "NULL"),
+("DBG_gps_vel",     0,          0,          100,        "u", "default",     "NULL"),
+("DBG_acc_bias",    0,          0,          100,        "u", "default",     "NULL"),
+("DBG_gyr_bias",    0,          0,          100,        "u", "default",     "NULL"),
+("DBG_acc_scale",   0,          0,          100,        "u", "default",     "NULL"),
+("DBG_gyr_scale",   0,          0,          100,        "u", "default",     "NULL"),
+("DBG_mag_data",    0,          0,          100,        "u", "default",     "NULL"),
+("DBG_maneuver",    0,          0,          100,        "u", "default",     "NULL"),
 
 #/* Timezone. */
 ("TIME_zone",       -24,        0,          24,         "i", "default",    "Simple offset in hours."),
