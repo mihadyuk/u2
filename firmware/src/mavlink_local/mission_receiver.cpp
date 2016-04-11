@@ -22,7 +22,7 @@ using namespace chibios_rt;
 #define MIN_POINTS_PER_MISSION        3       /* minimal number of waypoints in valid mission */
 #define TARGET_RADIUS                 param2  /* convenience alias */
 
-#define MISSION_RETRY_CNT             10
+#define MISSION_RETRY_CNT             5
 #define MISSION_CHECK_PERIOD          MS2ST(100)
 #define MISSION_TIMEOUT               MS2ST(2000)
 #define MISSION_SEND_PAUSE            MS2ST(100)
