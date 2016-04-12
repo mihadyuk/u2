@@ -82,6 +82,10 @@ private:
   const uint32_t *dlpf = NULL;
   const uint32_t *smplrtdiv = NULL;
   const int32_t  *fir_f = NULL;
+  const float *gyr_bias_c[3][3] = {};
+  const float *acc_bias_c[3][3] = {};
+  const float *acc_sens_c[3][3] = {};
+  float poly_c[3];
   uint8_t gyr_fs_current;
   uint8_t acc_fs_current;
   uint8_t dlpf_current;

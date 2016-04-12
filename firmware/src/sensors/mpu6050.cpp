@@ -16,6 +16,8 @@
 #include "mav_postman.hpp"
 #include "mav_dbg_sender.hpp"
 #include "debug_indices.h"
+#include "polynomial.hpp"
+#include <cstdio>
 
 using namespace filters;
 
@@ -151,14 +153,34 @@ void MPU6050::pickle_temp(float *result, const uint8_t *buf) {
  *
  */
 void MPU6050::gyro_thermo_comp(float *result) {
-  (void)result;
+  //bias
+  for (size_t axis=0; axis<3; axis++) {
+    for (size_t i=0; i<3; i++) {
+      poly_c[i] = *gyr_bias_c[axis][2-i]; //x^2 goes first
+    }
+    result[axis] -= PolyMul(poly_c, 3, temperature);
+  }
 }
 
 /**
  *
  */
 void MPU6050::acc_egg_comp(float *result) {
-  (void)result;
+  size_t axis, i;
+  //bias
+  for (axis=0; axis<3; axis++) {
+    for (i=0; i<3; i++) {
+      poly_c[i] = *acc_bias_c[axis][2-i];
+    }
+    result[axis] -= PolyMul(poly_c, 3, temperature);
+  }
+  //sens
+  for (axis=0; axis<3; axis++) {
+    for (i=0; i<3; i++) {
+      poly_c[i] = *acc_sens_c[axis][2-i];
+    }
+    result[axis] *= PolyMul(poly_c, 3, temperature);
+  }
 }
 
 /**
@@ -587,6 +609,18 @@ sensor_state_t MPU6050::start(void) {
     param_registry.valueSearch("MPU_fir_f",     &fir_f);
     param_registry.valueSearch("MPU_dlpf",      &dlpf);
     param_registry.valueSearch("MPU_smplrtdiv", &smplrtdiv);
+
+    char search_key[13];
+    for (size_t axis=0; axis<3; axis++) {
+      for (size_t i=0; i<3; i++) {
+        sprintf(search_key, "MPUG_%cbias_c%u", 'x'+axis, i);
+        param_registry.valueSearch(search_key, &gyr_bias_c[axis][i]);
+        sprintf(search_key, "MPUA_%cbias_c%u", 'x'+axis, i);
+        param_registry.valueSearch(search_key, &acc_bias_c[axis][i]);
+        sprintf(search_key, "MPUA_%csens_c%u", 'x'+axis, i);
+        param_registry.valueSearch(search_key, &acc_sens_c[axis][i]);
+      }
+    }
 
     osalSysLock();
     gyr_fs_current      = *gyr_fs;
