@@ -33,11 +33,11 @@ extern mavlink_sys_status_t   mavlink_out_sys_status_struct;
 #error "board unsupported"
 #endif
 
-//#define LIPO_LOW                3400 // mV
-//#define LIPO_CRITICAL           3200 // mV
-//
-//#define LEAD_ACID_LOW           1920 // mV
-//#define LEAD_ACID_CRITICAL      1750 // mV
+#define LIPO_LOW                3400 // mV
+#define LIPO_CRITICAL           3200 // mV
+
+#define LEAD_ACID_LOW           1920 // mV
+#define LEAD_ACID_CRITICAL      1750 // mV
 
 #define MAIN_VOLTAGE_IGNORE       1000  // mV, sensor not connected at all
 
@@ -65,8 +65,8 @@ typedef enum {
  * voltage constrains (mV per cell)
  */
 static const uint32_t voltage_constrains[BAT_CHEMISTRY_ENUM_END][2] = {
-    {3400, 3200},   // LiPo
-    {1920, 1750}    // Lead acid
+    {LIPO_LOW,      LIPO_CRITICAL},     // LiPo
+    {LEAD_ACID_LOW, LEAD_ACID_CRITICAL} // Lead acid
 };
 
 static filters::AlphaBeta<int32_t, 128> main_voltage_p_filter;
