@@ -219,7 +219,7 @@ static THD_FUNCTION(ShellThread, arg) {
 
   setGlobalFlag(GlobalFlags.shell_ready);
 
-  while (!chThdShouldTerminateX()){
+  while (!chThdShouldTerminateX()) {
     // put received char from stdin to microrl lib
     msg_t c = chnGetTimeout(ShellChnp, MS2ST(50));
     if (c != Q_TIMEOUT) {
@@ -297,8 +297,11 @@ static thread_t* help_clicmd(int argc, const char * const * argv, BaseChannel *b
 /**
  * Print routine for microrl.
  */
-void cli_print(const char *str){
-  chnWrite(ShellChnp, (const uint8_t*)str, strlen(str));
+void cli_print(const char *str) {
+  size_t N = strlen(str);
+  if (N > 0) {
+    chnWrite(ShellChnp, (const uint8_t*)str, N);
+  }
 }
 
 /**

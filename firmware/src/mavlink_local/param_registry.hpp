@@ -6,9 +6,11 @@
 #include "string.h"
 
 /* периодичность посылки данных телеметрии в милисекундах */
-#define TELEMETRY_SEND_OFF            0
+#define TELEMETRY_SEND_OFF        0
 
-#define PARAM_REGISTRY_ID_SIZE        16
+#define PARAM_REGISTRY_ID_SIZE    16
+
+#define PARAM_IDX_INVALID         (~0U)
 
 /**
  *
@@ -96,7 +98,7 @@ private:
 /**
  *
  */
-class ParamRegistry{
+class ParamRegistry {
 public:
   ParamRegistry(void);
   void start(void);
@@ -105,20 +107,22 @@ public:
   bool saveAll(void);
   bool syncParam(const char* key);
   ParamStatus setParam(const param_union_t *value, const GlobalParam_t *param);
-  template<typename T> int valueSearch(const char *key, T **vp);
-  int paramcnt(void);
-  const GlobalParam_t *getParam(const char *key, int n, int *i);
-  int key_index_search(const char* key);
+  template<typename T> void valueSearch(const char *key, T **vp);
+  size_t paramcnt(void);
+  size_t capacity(void);
+  GlobalParam_t* search(const char *key);
+  size_t ptr2idx(const GlobalParam_t *ptr);
+  const GlobalParam_t* idx2ptr(size_t idx);
 
 private:
   void open_file(void);
   bool save_all(void);
-  void store_value(int i, float **vp);
-  void store_value(int i, int32_t **vp);
-  void store_value(int i, uint32_t **vp);
-  void store_value(int i, const float **vp);
-  void store_value(int i, const int32_t **vp);
-  void store_value(int i, const uint32_t **vp);
+  void store_value(size_t i, float **vp);
+  void store_value(size_t i, int32_t **vp);
+  void store_value(size_t i, uint32_t **vp);
+  void store_value(size_t i, const float **vp);
+  void store_value(size_t i, const int32_t **vp);
+  void store_value(size_t i, const uint32_t **vp);
   bool load_extensive(void);
   void acquire(void);
   void release(void);
@@ -127,27 +131,26 @@ private:
   chibios_rt::BinarySemaphore mutual_sem;
   nvram::File *ParamFile = nullptr;
   bool ready;
+  time_measurement_t tmeas;
 };
 
 /**
  * Return pointer to value. High level function.
  */
 template <typename T>
-int ParamRegistry::valueSearch(const char *key, T **vp) {
+void ParamRegistry::valueSearch(const char *key, T **vp) {
 
-  osalDbgCheck(true == this->ready);
+  osalDbgCheck(this->ready);
 
-  int i = this->key_index_search(key);
+  const GlobalParam_t* ptr = this->search(key);
 
-  if (i == -1) {
+  if (nullptr == ptr) {
     osalSysHalt("key not found");
-    vp = NULL;
+    vp = nullptr;
   }
   else {
-    store_value(i, vp);
+    store_value(ptr2idx(ptr), vp);
   }
-
-  return i;
 }
 
 extern ParamRegistry param_registry;

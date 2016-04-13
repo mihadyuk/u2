@@ -57,13 +57,12 @@ static void confirm(ParamStatus status){
 /**
  *
  */
-static void print(uint32_t i, bool need_help){
-
+static void print(const GlobalParam_t *param_p, bool need_help) {
   int n = 80;
   int nres = 0;
   char str[n];
-  const GlobalParam_t *param_p = param_registry.getParam(NULL, i, NULL);
-  if (NULL == param_p){
+
+  if (nullptr == param_p){
     cli_println("Something goes too bad with param registry");
     chThdSleepMilliseconds(50);
     return;
@@ -105,12 +104,12 @@ static void print(uint32_t i, bool need_help){
 /**
  *
  */
-static void dump(uint32_t i) {
+static void dump(size_t i) {
 
   int n = 80;
   int nres = 0;
   char str[n];
-  const GlobalParam_t *param_p = param_registry.getParam(nullptr, i, nullptr);
+  const GlobalParam_t *param_p = param_registry.idx2ptr(i);
   if (nullptr == param_p){
     cli_println("Something goes too bad with param registry");
     chThdSleepMilliseconds(50);
@@ -146,40 +145,51 @@ static void print_header(void){
 /**
  *
  */
-static void print_all(void){
-  uint32_t i = 0;
-  uint32_t paramcnt = param_registry.paramcnt();
-  print_header();
+static void print_footer(void){
+  int N = 80;
+  char str[N];
 
-  for (i = 0; i < paramcnt; i++)
-    print(i, FALSE);
+  cli_println("--------------------------------------------------------------");
+  snprintf(str, N, "Total/used: %d/%d", param_registry.capacity(), param_registry.paramcnt());
+  cli_println(str);
+}
+
+/**
+ *
+ */
+static void print_all(void){
+  size_t paramcnt = param_registry.paramcnt();
+
+  print_header();
+  for (size_t i=0; i<paramcnt; i++) {
+    print(param_registry.idx2ptr(i), false);
+  }
+  print_footer();
 }
 
 /**
  *
  */
 static void dump_all(void){
-  uint32_t i = 0;
-  uint32_t paramcnt = param_registry.paramcnt();
-
-  for (i=0; i<paramcnt; i++)
+  for (size_t i=0; i<param_registry.paramcnt(); i++) {
     dump(i);
+  }
 }
 
 /**
  *
  */
-static ParamStatus set(const char * val, uint32_t i){
+static ParamStatus set(const char *val, const GlobalParam_t *param_p) {
   param_union_t v;
   int sscanf_status;
-  const GlobalParam_t *param_p = param_registry.getParam(NULL, i, NULL);
-  if (NULL == param_p){
+
+  if (nullptr == param_p) {
     cli_println("Something goes too bad with param registry");
     chThdSleepMilliseconds(50);
     return ParamStatus::UNKNOWN_ERROR;
   }
 
-  switch(param_p->param_type){
+  switch(param_p->param_type) {
   case MAVLINK_TYPE_FLOAT:
     sscanf_status = sscanf(val, "%f", &v.f32);
     break;
@@ -223,7 +233,7 @@ static void help(void){
 thread_t* param_clicmd(int argc, const char * const * argv, BaseChannel *bchnp){
   (void)bchnp;
 
-  int32_t i = -1;
+  const GlobalParam_t *param_p;
   ParamStatus status;
 
   /* wait until value uninitialized (just to be safe) */
@@ -246,10 +256,10 @@ thread_t* param_clicmd(int argc, const char * const * argv, BaseChannel *bchnp){
       cli_println("Done.");
     }
     else{
-      i = param_registry.key_index_search(*argv);
-      if (i != -1){
+      param_p = param_registry.search(*argv);
+      if (nullptr != param_p) {
         print_header();
-        print(i, TRUE);
+        print(param_p, true);
       }
       else{
         cli_println("ERROR: unknown parameter name.");
@@ -259,10 +269,9 @@ thread_t* param_clicmd(int argc, const char * const * argv, BaseChannel *bchnp){
 
   /* two arguments */
   else if (argc == 2){
-    i = -1;
-    i = param_registry.key_index_search(argv[0]);
-    if (i != -1){
-      status = set(argv[1], i);
+    param_p = param_registry.search(argv[0]);
+    if (nullptr != param_p) {
+      status = set(argv[1], param_p);
       confirm(status);
     }
     else{

@@ -1,5 +1,6 @@
 #include <cmath>
 #include <cstring>
+#include <cstdlib> /* bsearch */
 
 #include "main.h"
 #include "mavlink_local.hpp"
@@ -91,48 +92,82 @@ void ParamRegistry::release(void) {
   this->mutual_sem.signal();
 }
 
-/**
- * @brief   Performs key-value search. Low level function
- *
- * @return      Index in dictionary.
- * @retval -1   key not found.
- */
-int ParamRegistry::key_index_search(const char* key) {
+///**
+// * @brief   Performs linear key-value search. Low level function
+// *
+// * @return      Index in dictionary.
+// * @retval -1   key not found.
+// */
+//int ParamRegistry::key_index_search(const char* key) {
+//
+//  for (int i=0; i<ONBOARD_PARAM_CNT; i++) {
+//    if (0 == strncmp(key, param_db[i].name, PARAM_REGISTRY_ID_SIZE)) {
+//      return i;
+//    }
+//  }
+//  return -1;
+//}
 
-  for (int i=0; i<ONBOARD_PARAM_CNT; i++) {
-    if (0 == strncmp(key, param_db[i].name, PARAM_REGISTRY_ID_SIZE)) {
-      return i;
-    }
-  }
-  return -1;
+/**
+ * @brief   Helper for binary search.
+ */
+static int paramcmp(const void* key, const void* pelem) {
+  return strncmp((const char *)key, ((GlobalParam_t *)pelem)->name, PARAM_REGISTRY_ID_SIZE);
 }
 
-void ParamRegistry::store_value(int i, float **vp){
+/**
+ *
+ */
+size_t ParamRegistry::ptr2idx(const GlobalParam_t *ptr) {
+  const GlobalParam_t *start = param_db;
+
+  if (ptr < start) {
+    return PARAM_IDX_INVALID;
+  }
+  else {
+    return ((uintptr_t)ptr - (uintptr_t)start) / sizeof(GlobalParam_t);
+  }
+}
+
+/**
+ *
+ */
+const GlobalParam_t* ParamRegistry::idx2ptr(size_t idx) {
+
+  if (idx >= paramcnt()) {
+    return nullptr;
+  }
+  else {
+    return &param_db[idx];
+  }
+}
+
+void ParamRegistry::store_value(size_t i, float **vp){
   osalDbgCheck(MAVLINK_TYPE_FLOAT == param_db[i].param_type);
   *vp = &param_db[i].valuep->f32;
 }
 
-void ParamRegistry::store_value(int i, int32_t **vp){
+void ParamRegistry::store_value(size_t i, int32_t **vp){
   osalDbgCheck(MAVLINK_TYPE_INT32_T == param_db[i].param_type);
   *vp = &param_db[i].valuep->i32;
 }
 
-void ParamRegistry::store_value(int i, uint32_t **vp){
+void ParamRegistry::store_value(size_t i, uint32_t **vp){
   osalDbgCheck(MAVLINK_TYPE_UINT32_T == param_db[i].param_type);
   *vp = &param_db[i].valuep->u32;
 }
 
-void ParamRegistry::store_value(int i, const float **vp){
+void ParamRegistry::store_value(size_t i, const float **vp){
   osalDbgCheck(MAVLINK_TYPE_FLOAT == param_db[i].param_type);
   *vp = &param_db[i].valuep->f32;
 }
 
-void ParamRegistry::store_value(int i, const int32_t **vp){
+void ParamRegistry::store_value(size_t i, const int32_t **vp){
   osalDbgCheck(MAVLINK_TYPE_INT32_T == param_db[i].param_type);
   *vp = &param_db[i].valuep->i32;
 }
 
-void ParamRegistry::store_value(int i, const uint32_t **vp){
+void ParamRegistry::store_value(size_t i, const uint32_t **vp){
   osalDbgCheck(MAVLINK_TYPE_UINT32_T == param_db[i].param_type);
   *vp = &param_db[i].valuep->u32;
 }
@@ -166,7 +201,7 @@ bool ParamRegistry::load_extensive(void) {
   uint8_t bitmap[max_param_cnt/8 + 1];
   memset(bitmap, 0, sizeof(bitmap));
 
-  for (int i=0; i<this->paramcnt(); i++) {
+  for (size_t i=0; i<this->paramcnt(); i++) {
     found = false;
 
     for (n=0; n<max_param_cnt; n++){
@@ -209,7 +244,7 @@ bool ParamRegistry::save_all(void) {
 
   ParamFile->setPosition(0);
 
-  for (int i=0; i<this->paramcnt(); i++){
+  for (size_t i=0; i<this->paramcnt(); i++){
 
     memset(&eeprombuf, 0, sizeof(eeprombuf));
 
@@ -262,6 +297,8 @@ ParamRegistry::ParamRegistry(void) :
   int i = 0, j = 0;
   const int N = paramcnt();
 
+  chTMObjectInit(&this->tmeas);
+
   osalDbgAssert((sizeof(gp_val) / sizeof(gp_val[0])) == N,
       "sizes of volatile array and param array must be equal");
 
@@ -274,34 +311,45 @@ ParamRegistry::ParamRegistry(void) :
 
   /* check hardcoded name lengths */
   for (i = 0; i<N; i++) {
-    if (strlen(param_db[i].name) > PARAM_REGISTRY_ID_SIZE)
+    if (strlen(param_db[i].name) > PARAM_REGISTRY_ID_SIZE) {
       osalSysHalt("name too long");
+    }
   }
 
   /* check for keys' names collisions */
   for (j=0; j<N; j++) {
     for (i=j+1; i<N; i++) {
-      if (0 == strncmp(param_db[i].name, param_db[j].name, PARAM_REGISTRY_ID_SIZE))
+      if (0 == strncmp(param_db[i].name, param_db[j].name, PARAM_REGISTRY_ID_SIZE)) {
         osalSysHalt("name collision detected");
+      }
     }
   }
+
+  /* check search engine */
+  chTMStartMeasurementX(&this->tmeas);
+  for (size_t i=0; i<paramcnt(); i++) {
+    strncpy(eeprombuf.name, param_db[i].name, PARAM_REGISTRY_ID_SIZE);
+    const GlobalParam_t *result = this->search(eeprombuf.name);
+    osalDbgCheck(ptr2idx(result) == i);
+  }
+  chTMStopMeasurementX(&this->tmeas);
 }
 
 /**
  *
  */
 bool ParamRegistry::syncParam(const char* key) {
-  int i = 0;
+  size_t i = 0;
   size_t status = 0;
   param_union_t v_eeprom, v_ram;
 
-  i = key_index_search(key);
-  osalDbgAssert(i != -1, "Not found");
+  i = ptr2idx(search(key));
+  osalDbgAssert(PARAM_IDX_INVALID != i, "Not found");
 
   acquire();
   ParamFile->setPosition(i * sizeof(param_record_t));
 
-  /* ensure we found exacly what we need */
+  /* ensure we found _exactly_ what we need */
   status = ParamFile->read((uint8_t *)&eeprombuf, sizeof(eeprombuf));
   osalDbgAssert(status == sizeof(eeprombuf), "read failed");
   osalDbgAssert(strncmp(eeprombuf.name, key, PARAM_REGISTRY_ID_SIZE) == 0,
@@ -345,7 +393,7 @@ bool ParamRegistry::loadToRam(void) {
   acquire();
   ParamFile->setPosition(0);
 
-  for (int i=0; i<this->paramcnt(); i++){
+  for (size_t i=0; i<this->paramcnt(); i++){
 
     /* read field from EEPROM and check number of red bytes */
     status = ParamFile->read((uint8_t *)&eeprombuf, sizeof(param_record_t));
@@ -436,38 +484,24 @@ ParamStatus ParamRegistry::setParam(const param_union_t *value,
 /**
  *
  */
-int ParamRegistry::paramcnt(void) {
+size_t ParamRegistry::paramcnt(void) {
   return ONBOARD_PARAM_CNT;
 }
 
 /**
- * @brief   Retrieve parameter from registry.
  *
- * @param[in] key     if NULL than perform search by index
- * @param[in] n       search index
- * @param[out] *i     store founded index here. Set to NULL if not used
- *
- * @return    pointer to parameter structure
- * @retval    NULL - parameter not found
  */
-const GlobalParam_t * ParamRegistry::getParam(const char *key, int n, int *i) {
-  int index = -1;
-  osalDbgCheck(ready);
-
-  if (key != nullptr) {
-    index = param_registry.key_index_search(key);
-    if (-1 == index)
-      return nullptr;
-  }
-  else {
-    if ((n > paramcnt()) || (-1 == n))
-      return nullptr;
-    else
-      index = n;
-  }
-
-  /**/
-  if (nullptr != i)
-    *i = index;
-  return &(param_db[index]);
+size_t ParamRegistry::capacity(void) {
+  return this->ParamFile->getSize() / sizeof(param_record_t);
 }
+
+/**
+ * @brief   Performs binary key-value search. Low level function.
+ *
+ * @return          Pointer to found parameter.
+ * @retval nullptr  key not found.
+ */
+GlobalParam_t* ParamRegistry::search(const char* key) {
+  return (GlobalParam_t*)bsearch(key, param_db, paramcnt(), sizeof(GlobalParam_t), paramcmp);
+}
+
