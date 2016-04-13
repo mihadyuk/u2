@@ -106,7 +106,7 @@ public:
   bool syncParam(const char* key);
   ParamStatus setParam(const param_union_t *value, const GlobalParam_t *param);
   template<typename T> int valueSearch(const char *key, T **vp);
-  int paramCount(void);
+  int paramcnt(void);
   const GlobalParam_t *getParam(const char *key, int n, int *i);
   int key_index_search(const char* key);
 
@@ -137,9 +137,8 @@ int ParamRegistry::valueSearch(const char *key, T **vp) {
 
   osalDbgCheck(true == this->ready);
 
-  int i = -1;
+  int i = this->key_index_search(key);
 
-  i = this->key_index_search(key);
   if (i == -1) {
     osalSysHalt("key not found");
     vp = NULL;
@@ -147,6 +146,7 @@ int ParamRegistry::valueSearch(const char *key, T **vp) {
   else {
     store_value(i, vp);
   }
+
   return i;
 }
 

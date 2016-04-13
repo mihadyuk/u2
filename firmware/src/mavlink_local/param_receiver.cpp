@@ -98,7 +98,7 @@ static bool send_value(const char *key, int n){
     /* fill all fields */
     mavlink_out_param_value_struct.param_value = p->valuep->f32;
     mavlink_out_param_value_struct.param_type  = p->param_type;
-    mavlink_out_param_value_struct.param_count = param_registry.paramCount();
+    mavlink_out_param_value_struct.param_count = param_registry.paramcnt();
     mavlink_out_param_value_struct.param_index = index;
     strncpy(mavlink_out_param_value_struct.param_id, p->name, PARAM_REGISTRY_ID_SIZE);
 
@@ -121,8 +121,8 @@ static void ignore_value(const mavlink_param_set_t *p){
   /* fill all fields */
   mavlink_out_param_value_struct.param_value = p->param_value;
   mavlink_out_param_value_struct.param_type  = p->param_type;
-  mavlink_out_param_value_struct.param_count = param_registry.paramCount();
-  mavlink_out_param_value_struct.param_index = param_registry.paramCount();
+  mavlink_out_param_value_struct.param_count = param_registry.paramcnt();
+  mavlink_out_param_value_struct.param_index = param_registry.paramcnt();
   strncpy(mavlink_out_param_value_struct.param_id, p->param_id, PARAM_REGISTRY_ID_SIZE);
 
   /* inform sending thread */
@@ -142,7 +142,7 @@ static void send_all_values(const mavlink_message_t *recv_msg) {
     return;
 
   int i = 0;
-  while (i < param_registry.paramCount()){
+  while (i < param_registry.paramcnt()){
     send_value(nullptr, i);
     i++;
   }

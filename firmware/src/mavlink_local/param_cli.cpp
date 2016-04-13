@@ -148,7 +148,7 @@ static void print_header(void){
  */
 static void print_all(void){
   uint32_t i = 0;
-  uint32_t paramcnt = param_registry.paramCount();
+  uint32_t paramcnt = param_registry.paramcnt();
   print_header();
 
   for (i = 0; i < paramcnt; i++)
@@ -160,7 +160,7 @@ static void print_all(void){
  */
 static void dump_all(void){
   uint32_t i = 0;
-  uint32_t paramcnt = param_registry.paramCount();
+  uint32_t paramcnt = param_registry.paramcnt();
 
   for (i=0; i<paramcnt; i++)
     dump(i);

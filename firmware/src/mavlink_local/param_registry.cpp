@@ -98,11 +98,11 @@ void ParamRegistry::release(void) {
  * @retval -1   key not found.
  */
 int ParamRegistry::key_index_search(const char* key) {
-  int i = 0;
 
-  for (i = 0; i < ONBOARD_PARAM_CNT; i++) {
-    if (0 == strncmp(key, param_db[i].name, PARAM_REGISTRY_ID_SIZE))
+  for (int i=0; i<ONBOARD_PARAM_CNT; i++) {
+    if (0 == strncmp(key, param_db[i].name, PARAM_REGISTRY_ID_SIZE)) {
       return i;
+    }
   }
   return -1;
 }
@@ -140,14 +140,14 @@ void ParamRegistry::store_value(int i, const uint32_t **vp){
 /**
  *
  */
-static uint8_t get_bit(const uint8_t *map, size_t N) {
+static uint8_t bitmap_get(const uint8_t *map, size_t N) {
   return (map[N / 8] >> (N % 8)) & 1;
 }
 
 /**
  *
  */
-static void set_bit(uint8_t *map, size_t N) {
+static void bitmap_set(uint8_t *map, size_t N) {
   map[N / 8] |= 1 << (N % 8);
 }
 
@@ -158,7 +158,6 @@ static void set_bit(uint8_t *map, size_t N) {
  * 2) perform brute force search in EEPROM file
  */
 bool ParamRegistry::load_extensive(void) {
-  int i = 0;
   size_t n, status;
   param_union_t v;
   bool found = false;
@@ -167,22 +166,22 @@ bool ParamRegistry::load_extensive(void) {
   uint8_t bitmap[max_param_cnt/8 + 1];
   memset(bitmap, 0, sizeof(bitmap));
 
-  for (i = 0; i < this->paramCount(); i++){
+  for (int i=0; i<this->paramcnt(); i++) {
     found = false;
 
     for (n=0; n<max_param_cnt; n++){
-      if (0 == get_bit(bitmap, n)){
+      if (0 == bitmap_get(bitmap, n)){
         ParamFile->setPosition(sizeof(param_record_t) * n);
         status = ParamFile->read((uint8_t *)&eeprombuf, sizeof(eeprombuf));
         if (status < sizeof(eeprombuf)){
           return OSAL_FAILED;
         }
         if (OSAL_SUCCESS != check_param_crc(&eeprombuf)){
-          set_bit(bitmap, n);
+          bitmap_set(bitmap, n);
           continue;
         }
         if (0 == strncmp(eeprombuf.name, param_db[i].name, PARAM_REGISTRY_ID_SIZE)) {
-          set_bit(bitmap, n);
+          bitmap_set(bitmap, n);
           found = true;
           break;
         }
@@ -206,12 +205,11 @@ bool ParamRegistry::load_extensive(void) {
  *
  */
 bool ParamRegistry::save_all(void) {
-  int i;
   size_t status = 0;
 
   ParamFile->setPosition(0);
 
-  for (i = 0; i < this->paramCount(); i++){
+  for (int i=0; i<this->paramcnt(); i++){
 
     memset(&eeprombuf, 0, sizeof(eeprombuf));
 
@@ -262,7 +260,7 @@ ParamRegistry::ParamRegistry(void) :
     ready(false)
 {
   int i = 0, j = 0;
-  const int N = paramCount();
+  const int N = paramcnt();
 
   osalDbgAssert((sizeof(gp_val) / sizeof(gp_val[0])) == N,
       "sizes of volatile array and param array must be equal");
@@ -337,18 +335,17 @@ bool ParamRegistry::syncParam(const char* key) {
  *
  */
 bool ParamRegistry::loadToRam(void) {
-  int i = 0;
   size_t status = 0;
   param_union_t v;
 
   /* check reserved space in EEPROM */
-  osalDbgAssert(((sizeof(param_record_t) * this->paramCount()) < ParamFile->getSize()),
+  osalDbgAssert(((sizeof(param_record_t) * this->paramcnt()) < ParamFile->getSize()),
           "not enough room in file");
 
   acquire();
   ParamFile->setPosition(0);
 
-  for (i = 0; i < this->paramCount(); i++){
+  for (int i=0; i<this->paramcnt(); i++){
 
     /* read field from EEPROM and check number of red bytes */
     status = ParamFile->read((uint8_t *)&eeprombuf, sizeof(param_record_t));
@@ -439,7 +436,7 @@ ParamStatus ParamRegistry::setParam(const param_union_t *value,
 /**
  *
  */
-int ParamRegistry::paramCount(void){
+int ParamRegistry::paramcnt(void) {
   return ONBOARD_PARAM_CNT;
 }
 
@@ -463,7 +460,7 @@ const GlobalParam_t * ParamRegistry::getParam(const char *key, int n, int *i) {
       return nullptr;
   }
   else {
-    if ((n > paramCount()) || (-1 == n))
+    if ((n > paramcnt()) || (-1 == n))
       return nullptr;
     else
       index = n;

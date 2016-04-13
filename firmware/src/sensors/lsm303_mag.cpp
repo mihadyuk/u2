@@ -157,11 +157,11 @@ void LSM303_mag::pickle(float *result, int16_t *result_raw) {
   for (size_t i=0; i<3; i++)
     raw[i] = static_cast<int16_t>(pack8to16be(&rxbuf[i*2]));
 
-  #if LSM_SWAP_Y_Z
+#if LSM_SWAP_Y_Z
   float tmp = raw[2];
   raw[2] = raw[1];
   raw[1] = tmp;
-  #endif
+#endif
 
   /* */
   for (size_t i=0; i<3; i++) {
