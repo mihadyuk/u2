@@ -57,7 +57,7 @@ static void confirm(ParamStatus status){
 /**
  *
  */
-static void print(const GlobalParam_t *param_p, bool need_help) {
+static void print(const uavparam_t *param_p, bool need_help) {
   int n = 80;
   int nres = 0;
   char str[n];
@@ -109,7 +109,7 @@ static void dump(size_t i) {
   int n = 80;
   int nres = 0;
   char str[n];
-  const GlobalParam_t *param_p = param_registry.idx2ptr(i);
+  const uavparam_t *param_p = param_registry.idx2ptr(i);
   if (nullptr == param_p){
     cli_println("Something goes too bad with param registry");
     chThdSleepMilliseconds(50);
@@ -179,7 +179,7 @@ static void dump_all(void){
 /**
  *
  */
-static ParamStatus set(const char *val, const GlobalParam_t *param_p) {
+static ParamStatus set(const char *val, const uavparam_t *param_p) {
   param_union_t v;
   int sscanf_status;
 
@@ -233,7 +233,7 @@ static void help(void){
 thread_t* param_clicmd(int argc, const char * const * argv, BaseChannel *bchnp){
   (void)bchnp;
 
-  const GlobalParam_t *param_p;
+  const uavparam_t *param_p;
   ParamStatus status;
 
   /* wait until value uninitialized (just to be safe) */

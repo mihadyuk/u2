@@ -89,7 +89,7 @@ static void param_value_send(const mavlink_param_value_t &m) {
  * @param[in] n     search index
  */
 static bool send_value(const char *key, size_t n){
-  const GlobalParam_t *p;
+  const uavparam_t *p;
 
   if (nullptr != key) {
     p = param_registry.search(key);
@@ -160,7 +160,7 @@ static void send_all_values(const mavlink_message_t *recv_msg) {
 static void param_set_handler(const mavlink_message_t *recv_msg) {
 
   param_union_t *valuep = nullptr;
-  const GlobalParam_t *paramp = nullptr;
+  const uavparam_t *paramp = nullptr;
   ParamStatus status;
   mavlink_param_set_t ps;
 

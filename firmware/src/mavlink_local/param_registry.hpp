@@ -37,7 +37,7 @@ typedef enum {
 /**
  *
  */
-typedef struct GlobalParam_t GlobalParam_t;
+typedef struct uavparam_t uavparam_t;
 
 /**
  * Combined data type for use in mavlink
@@ -51,7 +51,7 @@ typedef union{
 /**
  * Global parameter
  */
-struct GlobalParam_t {
+struct uavparam_t {
 
   /**
    * Name of parameter
@@ -83,16 +83,16 @@ struct GlobalParam_t {
  */
 class ParamValidator{
 public:
-  ParamStatus set(const param_union_t *value, const GlobalParam_t *param);
+  ParamStatus set(const param_union_t *value, const uavparam_t *param);
 
 private:
-  ParamStatus int_val(const param_union_t *value, const GlobalParam_t *param);
-  ParamStatus uint_val(const param_union_t *value, const GlobalParam_t *param);
-  ParamStatus float_val(const param_union_t *value, const GlobalParam_t *param);
-  ParamStatus default_val(const param_union_t *value, const GlobalParam_t *param);
-  ParamStatus sendtmo_val(const param_union_t *value, const GlobalParam_t *param);
-  ParamStatus sortmtrx_val(const param_union_t *value, const GlobalParam_t *param);
-  ParamStatus polarity_val(const param_union_t *value, const GlobalParam_t *param);
+  ParamStatus int_val(const param_union_t *value, const uavparam_t *param);
+  ParamStatus uint_val(const param_union_t *value, const uavparam_t *param);
+  ParamStatus float_val(const param_union_t *value, const uavparam_t *param);
+  ParamStatus default_val(const param_union_t *value, const uavparam_t *param);
+  ParamStatus sendtmo_val(const param_union_t *value, const uavparam_t *param);
+  ParamStatus sortmtrx_val(const param_union_t *value, const uavparam_t *param);
+  ParamStatus polarity_val(const param_union_t *value, const uavparam_t *param);
 };
 
 /**
@@ -106,13 +106,13 @@ public:
   bool loadToRam(void);
   bool saveAll(void);
   bool syncParam(const char* key);
-  ParamStatus setParam(const param_union_t *value, const GlobalParam_t *param);
+  ParamStatus setParam(const param_union_t *value, const uavparam_t *param);
   template<typename T> void valueSearch(const char *key, T **vp);
   size_t paramcnt(void);
   size_t capacity(void);
-  GlobalParam_t* search(const char *key);
-  size_t ptr2idx(const GlobalParam_t *ptr);
-  const GlobalParam_t* idx2ptr(size_t idx);
+  uavparam_t* search(const char *key);
+  size_t ptr2idx(const uavparam_t *ptr);
+  const uavparam_t* idx2ptr(size_t idx);
 
 private:
   void open_file(void);
@@ -127,7 +127,7 @@ private:
   void acquire(void);
   void release(void);
   ParamValidator validator;
-  static const GlobalParam_t param_db[];
+  static const uavparam_t param_db[];
   chibios_rt::BinarySemaphore mutual_sem;
   nvram::File *ParamFile = nullptr;
   bool ready;
@@ -142,7 +142,7 @@ void ParamRegistry::valueSearch(const char *key, T **vp) {
 
   osalDbgCheck(this->ready);
 
-  const GlobalParam_t* ptr = this->search(key);
+  const uavparam_t* ptr = this->search(key);
 
   if (nullptr == ptr) {
     osalSysHalt("key not found");

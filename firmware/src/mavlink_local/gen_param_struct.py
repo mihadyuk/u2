@@ -110,7 +110,7 @@ f.write("""
  *
  */
 """)
-f.write("const GlobalParam_t ParamRegistry::param_db[] = {\n")
+f.write("const uavparam_t ParamRegistry::param_db[] = {\n")
 
 
 ########### generator #############

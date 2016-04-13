@@ -112,27 +112,27 @@ void ParamRegistry::release(void) {
  * @brief   Helper for binary search.
  */
 static int paramcmp(const void* key, const void* pelem) {
-  return strncmp((const char *)key, ((GlobalParam_t *)pelem)->name, PARAM_REGISTRY_ID_SIZE);
+  return strncmp((const char *)key, ((uavparam_t *)pelem)->name, PARAM_REGISTRY_ID_SIZE);
 }
 
 /**
  *
  */
-size_t ParamRegistry::ptr2idx(const GlobalParam_t *ptr) {
-  const GlobalParam_t *start = param_db;
+size_t ParamRegistry::ptr2idx(const uavparam_t *ptr) {
+  const uavparam_t *start = param_db;
 
   if (ptr < start) {
     return PARAM_IDX_INVALID;
   }
   else {
-    return ((uintptr_t)ptr - (uintptr_t)start) / sizeof(GlobalParam_t);
+    return ((uintptr_t)ptr - (uintptr_t)start) / sizeof(uavparam_t);
   }
 }
 
 /**
  *
  */
-const GlobalParam_t* ParamRegistry::idx2ptr(size_t idx) {
+const uavparam_t* ParamRegistry::idx2ptr(size_t idx) {
 
   if (idx >= paramcnt()) {
     return nullptr;
@@ -329,7 +329,7 @@ ParamRegistry::ParamRegistry(void) :
   chTMStartMeasurementX(&this->tmeas);
   for (size_t i=0; i<paramcnt(); i++) {
     strncpy(eeprombuf.name, param_db[i].name, PARAM_REGISTRY_ID_SIZE);
-    const GlobalParam_t *result = this->search(eeprombuf.name);
+    const uavparam_t *result = this->search(eeprombuf.name);
     osalDbgCheck(ptr2idx(result) == i);
   }
   chTMStopMeasurementX(&this->tmeas);
@@ -476,7 +476,7 @@ bool ParamRegistry::saveAll(void){
  *
  */
 ParamStatus ParamRegistry::setParam(const param_union_t *value,
-                                    const GlobalParam_t *param) {
+                                    const uavparam_t *param) {
   osalDbgCheck(ready);
   return validator.set(value, param);
 }
@@ -501,7 +501,7 @@ size_t ParamRegistry::capacity(void) {
  * @return          Pointer to found parameter.
  * @retval nullptr  key not found.
  */
-GlobalParam_t* ParamRegistry::search(const char* key) {
-  return (GlobalParam_t*)bsearch(key, param_db, paramcnt(), sizeof(GlobalParam_t), paramcmp);
+uavparam_t* ParamRegistry::search(const char* key) {
+  return (uavparam_t*)bsearch(key, param_db, paramcnt(), sizeof(uavparam_t), paramcmp);
 }
 
