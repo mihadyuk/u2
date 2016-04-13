@@ -12,6 +12,8 @@
 
 #define MPU6050_FIR_LEN     129
 
+#define POLYC_LEN           3   /* thermal compensation poly order + 1 */
+
 /**
  *
  */
@@ -82,10 +84,10 @@ private:
   const uint32_t *dlpf = NULL;
   const uint32_t *smplrtdiv = NULL;
   const int32_t  *fir_f = NULL;
-  const float *gyr_bias_c[3][3] = {};
-  const float *acc_bias_c[3][3] = {};
-  const float *acc_sens_c[3][3] = {};
-  float poly_c[3];
+  const float *gyr_bias_c[3][POLYC_LEN] = {};
+  const float *acc_bias_c[3][POLYC_LEN] = {};
+  const float *acc_sens_c[3][POLYC_LEN] = {};
+  float poly_c[POLYC_LEN];
   uint8_t gyr_fs_current;
   uint8_t acc_fs_current;
   uint8_t dlpf_current;

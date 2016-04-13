@@ -155,10 +155,10 @@ void MPU6050::pickle_temp(float *result, const uint8_t *buf) {
 void MPU6050::gyro_thermo_comp(float *result) {
   //bias
   for (size_t axis=0; axis<3; axis++) {
-    for (size_t i=0; i<3; i++) {
-      poly_c[i] = *gyr_bias_c[axis][2-i]; //x^2 goes first
+    for (size_t i=0; i<POLYC_LEN; i++) {
+      poly_c[i] = *gyr_bias_c[axis][(POLYC_LEN-1)-i]; //x^2 goes first
     }
-    result[axis] -= PolyMul(poly_c, 3, temperature);
+    result[axis] -= PolyMul(poly_c, POLYC_LEN, temperature);
   }
 }
 
@@ -169,17 +169,17 @@ void MPU6050::acc_egg_comp(float *result) {
   size_t axis, i;
   //bias
   for (axis=0; axis<3; axis++) {
-    for (i=0; i<3; i++) {
-      poly_c[i] = *acc_bias_c[axis][2-i];
+    for (i=0; i<POLYC_LEN; i++) {
+      poly_c[i] = *acc_bias_c[axis][(POLYC_LEN-1)-i];
     }
-    result[axis] -= PolyMul(poly_c, 3, temperature);
+    result[axis] -= PolyMul(poly_c, POLYC_LEN, temperature);
   }
   //sens
   for (axis=0; axis<3; axis++) {
-    for (i=0; i<3; i++) {
-      poly_c[i] = *acc_sens_c[axis][2-i];
+    for (i=0; i<POLYC_LEN; i++) {
+      poly_c[i] = *acc_sens_c[axis][(POLYC_LEN-1)-i];
     }
-    result[axis] *= PolyMul(poly_c, 3, temperature);
+    result[axis] *= PolyMul(poly_c, POLYC_LEN, temperature);
   }
 }
 
@@ -610,14 +610,14 @@ sensor_state_t MPU6050::start(void) {
     param_registry.valueSearch("MPU_dlpf",      &dlpf);
     param_registry.valueSearch("MPU_smplrtdiv", &smplrtdiv);
 
-    char search_key[13];
+    char search_key[PARAM_REGISTRY_ID_SIZE];
     for (size_t axis=0; axis<3; axis++) {
       for (size_t i=0; i<3; i++) {
-        sprintf(search_key, "MPUG_%cbias_c%u", 'x'+axis, i);
+        snprintf(search_key, PARAM_REGISTRY_ID_SIZE, "MPUG_%cbias_c%u", 'x'+axis, i);
         param_registry.valueSearch(search_key, &gyr_bias_c[axis][i]);
-        sprintf(search_key, "MPUA_%cbias_c%u", 'x'+axis, i);
+        snprintf(search_key, PARAM_REGISTRY_ID_SIZE, "MPUA_%cbias_c%u", 'x'+axis, i);
         param_registry.valueSearch(search_key, &acc_bias_c[axis][i]);
-        sprintf(search_key, "MPUA_%csens_c%u", 'x'+axis, i);
+        snprintf(search_key, PARAM_REGISTRY_ID_SIZE, "MPUA_%csens_c%u", 'x'+axis, i);
         param_registry.valueSearch(search_key, &acc_sens_c[axis][i]);
       }
     }
