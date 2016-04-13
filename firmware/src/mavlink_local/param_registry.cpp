@@ -282,6 +282,45 @@ void ParamRegistry::open_file(void) {
   osalDbgCheck(nullptr != ParamFile);
 }
 
+/**
+ *
+ */
+void ParamRegistry::self_test(void) {
+  const size_t N = paramcnt();
+
+  /* check hardcoded name lengths */
+  for (size_t i=0; i<N; i++) {
+    if (strlen(param_db[i].name) > PARAM_REGISTRY_ID_SIZE) {
+      osalSysHalt("name too long");
+    }
+  }
+
+  /* check for keys' names collisions */
+  for (size_t j=0; j<N; j++) {
+    for (size_t i=j+1; i<N; i++) {
+      if (0 == strncmp(param_db[i].name, param_db[j].name, PARAM_REGISTRY_ID_SIZE)) {
+        osalSysHalt("name collision detected");
+      }
+    }
+  }
+
+  /* names must be alphabetically sorted */
+  for (size_t i=0; i<N-1; i++) {
+    if (strncmp(param_db[i].name, param_db[i+1].name, PARAM_REGISTRY_ID_SIZE) >= 0) {
+      osalSysHalt("Names unsorted");
+    }
+  }
+
+  /* check search engine */
+  chTMStartMeasurementX(&this->tmeas);
+  for (size_t i=0; i<paramcnt(); i++) {
+    strncpy(eeprombuf.name, param_db[i].name, PARAM_REGISTRY_ID_SIZE);
+    const uavparam_t *result = this->search(eeprombuf.name);
+    osalDbgCheck(ptr2idx(result) == i);
+  }
+  chTMStopMeasurementX(&this->tmeas);
+}
+
 /*
  *******************************************************************************
  * EXPORTED FUNCTIONS
@@ -294,8 +333,7 @@ ParamRegistry::ParamRegistry(void) :
     mutual_sem(false),
     ready(false)
 {
-  int i = 0, j = 0;
-  const int N = paramcnt();
+  const size_t N = paramcnt();
 
   chTMObjectInit(&this->tmeas);
 
@@ -305,34 +343,9 @@ ParamRegistry::ParamRegistry(void) :
   /* Initialize variable array with zeroes to be safer */
   param_union_t tmp;
   tmp.u32 = 0;
-  for (i = 0; i < N; i++){
+  for (size_t i=0; i<N; i++){
     gp_val[i] = tmp;
   }
-
-  /* check hardcoded name lengths */
-  for (i = 0; i<N; i++) {
-    if (strlen(param_db[i].name) > PARAM_REGISTRY_ID_SIZE) {
-      osalSysHalt("name too long");
-    }
-  }
-
-  /* check for keys' names collisions */
-  for (j=0; j<N; j++) {
-    for (i=j+1; i<N; i++) {
-      if (0 == strncmp(param_db[i].name, param_db[j].name, PARAM_REGISTRY_ID_SIZE)) {
-        osalSysHalt("name collision detected");
-      }
-    }
-  }
-
-  /* check search engine */
-  chTMStartMeasurementX(&this->tmeas);
-  for (size_t i=0; i<paramcnt(); i++) {
-    strncpy(eeprombuf.name, param_db[i].name, PARAM_REGISTRY_ID_SIZE);
-    const uavparam_t *result = this->search(eeprombuf.name);
-    osalDbgCheck(ptr2idx(result) == i);
-  }
-  chTMStopMeasurementX(&this->tmeas);
 }
 
 /**
@@ -443,6 +456,8 @@ FAIL:
  */
 void ParamRegistry::start(void) {
   bool status;
+
+  this->self_test();
 
   this->open_file();
   status = this->loadToRam();

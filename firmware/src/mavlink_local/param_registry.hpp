@@ -115,6 +115,7 @@ public:
   const uavparam_t* idx2ptr(size_t idx);
 
 private:
+  void self_test(void);
   void open_file(void);
   bool save_all(void);
   void store_value(size_t i, float **vp);
