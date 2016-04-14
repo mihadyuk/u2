@@ -85,6 +85,7 @@ param = [
 ("MPU_acc_fs",      0,          3,          3,          "u", "default",     "MPU accelerometer full scale (0 - 2, 1 - 4, 2 - 8, 3 - 16) g"),
 
 # MPU6050 gyroscopes' settings
+("MPUG_Tcomp_en",   0,          1,          1,          "u", "default",     "Enable thermal compensation for gyroscope"),
 ("MPUG_xbias_c0",   -10,        0,          10,         "f", "default",     "Coefficient for thermal zero compensation polynomial"),
 ("MPUG_xbias_c1",   -10,        0,          10,         "f", "default",     "Coefficient for thermal zero compensation polynomial"),
 ("MPUG_xbias_c2",   -10,        0,          10,         "f", "default",     "Coefficient for thermal zero compensation polynomial"),
@@ -125,6 +126,7 @@ param = [
 ("ACC_still_flen",  1,          256,        2048,       "i", "default",     "Length of filter used in immobility detector"),
 
 # Polynomial coeffs for accelerometer thermal compensation
+("MPUA_Tcomp_en",   0,          1,          1,          "u", "default",     "Enable thermal compensation for accelerometer"),
 ("MPUA_xbias_c0",   -10,        0,          10,         "f", "default",     "Coefficient for thermal compensation polynomial"),
 ("MPUA_xbias_c1",   -10,        0,          10,         "f", "default",     "Coefficient for thermal compensation polynomial"),
 ("MPUA_xbias_c2",   -10,        0,          10,         "f", "default",     "Coefficient for thermal compensation polynomial"),

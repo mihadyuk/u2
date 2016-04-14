@@ -149,37 +149,18 @@ void MPU6050::pickle_temp(float *result, const uint8_t *buf) {
   result[0] += 36.53f;
 }
 
-/**
- *
- */
-void MPU6050::gyro_thermo_comp(float *result) {
-  //bias
-  for (size_t axis=0; axis<3; axis++) {
-    for (size_t i=0; i<POLYC_LEN; i++) {
-      poly_c[i] = *gyr_bias_c[axis][(POLYC_LEN-1)-i]; //x^2 goes first
-    }
-    result[axis] -= PolyMul(poly_c, POLYC_LEN, temperature);
-  }
-}
-
-/**
- *
- */
-void MPU6050::acc_egg_comp(float *result) {
+void MPU6050::thermo_comp(float *result, const float **coeff_ptr, tcomp_t type) {
   size_t axis, i;
-  //bias
+  float poly_c[POLYC_LEN];
+
   for (axis=0; axis<3; axis++) {
     for (i=0; i<POLYC_LEN; i++) {
-      poly_c[i] = *acc_bias_c[axis][(POLYC_LEN-1)-i];
+      poly_c[i] = *coeff_ptr[3*axis+(POLYC_LEN-1)-i]; //x^2 goes first
     }
-    result[axis] -= PolyMul(poly_c, POLYC_LEN, temperature);
-  }
-  //sens
-  for (axis=0; axis<3; axis++) {
-    for (i=0; i<POLYC_LEN; i++) {
-      poly_c[i] = *acc_sens_c[axis][(POLYC_LEN-1)-i];
-    }
-    result[axis] *= PolyMul(poly_c, POLYC_LEN, temperature);
+    if (type==TCOMP_BIAS)
+      result[axis] -= PolyMul(poly_c, POLYC_LEN, temperature);
+    else if (type==TCOMP_SENS)
+      result[axis] *= PolyMul(poly_c, POLYC_LEN, temperature);
   }
 }
 
@@ -199,8 +180,8 @@ void MPU6050::pickle_gyr(float *result) {
     gyr_raw_data[i] = raw[i];
     result[i] = sens * raw[i];
   }
-
-  gyro_thermo_comp(result);
+  if (*MPUG_Tcomp_en!=0)
+    thermo_comp(result, gyr_bias_c, TCOMP_BIAS);
 }
 
 /**
@@ -220,8 +201,10 @@ void MPU6050::pickle_acc(float *result) {
     acc_raw_data[i] = raw[i];
     result[i] = sens * raw[i];
   }
-
-  acc_egg_comp(result);
+  if (*MPUA_Tcomp_en!=0) {
+    thermo_comp(result, acc_bias_c, TCOMP_BIAS);
+    thermo_comp(result, acc_sens_c, TCOMP_SENS);
+  }
 }
 
 /**
@@ -468,14 +451,18 @@ void MPU6050::pickle_fifo(float *acc, float *gyr, const size_t sample_cnt) {
   acc[0] *= sens;
   acc[1] *= sens;
   acc[2] *= sens;
-  acc_egg_comp(acc);
+  if (*MPUA_Tcomp_en!=0) {
+    thermo_comp(acc, acc_bias_c, TCOMP_BIAS);
+    thermo_comp(acc, acc_sens_c, TCOMP_SENS);
+  }
 
   /* gyr */
   sens = this->gyr_sens();
   gyr[0] *= sens;
   gyr[1] *= sens;
   gyr[2] *= sens;
-  gyro_thermo_comp(gyr);
+  if (*MPUG_Tcomp_en!=0)
+    thermo_comp(gyr, gyr_bias_c, TCOMP_BIAS);
 }
 
 /**
@@ -609,16 +596,18 @@ sensor_state_t MPU6050::start(void) {
     param_registry.valueSearch("MPU_fir_f",     &fir_f);
     param_registry.valueSearch("MPU_dlpf",      &dlpf);
     param_registry.valueSearch("MPU_smplrtdiv", &smplrtdiv);
+    param_registry.valueSearch("MPUG_Tcomp_en", &MPUG_Tcomp_en);
+    param_registry.valueSearch("MPUA_Tcomp_en", &MPUA_Tcomp_en);
 
     char search_key[PARAM_REGISTRY_ID_SIZE];
     for (size_t axis=0; axis<3; axis++) {
-      for (size_t i=0; i<3; i++) {
+      for (size_t i=0; i<POLYC_LEN; i++) {
         snprintf(search_key, PARAM_REGISTRY_ID_SIZE, "MPUG_%cbias_c%u", 'x'+axis, i);
-        param_registry.valueSearch(search_key, &gyr_bias_c[axis][i]);
+        param_registry.valueSearch(search_key, &gyr_bias_c[3*axis+i]);
         snprintf(search_key, PARAM_REGISTRY_ID_SIZE, "MPUA_%cbias_c%u", 'x'+axis, i);
-        param_registry.valueSearch(search_key, &acc_bias_c[axis][i]);
+        param_registry.valueSearch(search_key, &acc_bias_c[3*axis+i]);
         snprintf(search_key, PARAM_REGISTRY_ID_SIZE, "MPUA_%csens_c%u", 'x'+axis, i);
-        param_registry.valueSearch(search_key, &acc_sens_c[axis][i]);
+        param_registry.valueSearch(search_key, &acc_sens_c[3*axis+i]);
       }
     }
 
