@@ -527,10 +527,10 @@ param = [
 ("DBG_mag_data",    0,          0,          100,        "u", "default",     "NULL"),
 ("DBG_maneuver",    0,          0,          100,        "u", "default",     "NULL"),
 
-#/* Timezone. */
+# Timezone
 ("TIME_zone",       -24,        0,          24,         "i", "default",    "Simple offset in hours."),
 
-#/* Length of filters for different systems. */
+# Length of filters for different systems
 ("FLEN_adc",        1,          16,         32768,      "i", "default",    "NULL"),
 ("FLEN_pres_dyn",   1,          16,         32768,      "i", "default",    "NULL"),
 ("FLEN_pres_stat",  1,          16,         32768,      "i", "default",    "NULL"),
@@ -540,17 +540,17 @@ param = [
 ("FLEN_reserved3",  1,          16,         32768,      "i", "default",    "NULL"),
 ("FLEN_reserved4",  1,          16,         32768,      "i", "default",    "NULL"),
 
-#/*  */
+# speedometer
 ("SPD_pulse2m",     0.0,        0.0555555,  1.0,        "f", "default",    "Multiply odometer pulses count by this coefficient to get\\ntrip in meters. Coarse value is 0.05555555"),
 ("SPD_trgt_speed",  0.0,        0,          60.0,       "f", "default",    "NULL"),
 ("SPD_speed_max",   0.0,        0,          60.0,       "f", "default",    "NULL"),
 
 # GNSS settings
-("GNSS_dyn_model",  0,          8,          8,          "u", "default",    "0 - portable, 2 - stationary, 3 - pedestrian 4 - automotive, 5 - sea,\\n 6 - airborne with <1g Acceleration, 7 - airborne with <2g Acceleration, 8 - airborne with <4g Acceleration"),
+("GNSS_dyn_model",  0,          8,          8,          "u", "default",    "0 - portable, 1 - forbidden, 2 - stationary, 3 - pedestrian \\n 4 - automotive, 5 - sea, 6 - airborne with <1g Acceleration, \\n 7 - airborne with <2g Acceleration, 8 - airborne with <4g Acceleration"),
 ("GNSS_fix_period", 100,        200,        1000,       "u", "default",    "NULL"),
 
-#/**** fake field with 14 symbols name ****/
-("param_end_mark__",0,      0,      1224,   "u", "default",    "Fake parameter with maximum allowable name length"),
+# fake field with 16 symbols name
+("Z_param_capacity",0,          0,          2048,       "u", "default",    "2 purpose parameter. \\n 1) It has maximum allowable name length. \\n 2) contains max parameter count"),
 ]
 
 

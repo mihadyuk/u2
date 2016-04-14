@@ -462,6 +462,16 @@ void ParamRegistry::start(void) {
   this->open_file();
   status = this->loadToRam();
   osalDbgCheck(OSAL_SUCCESS == status);
+
+  uavparam_t *capp = search("Z_param_capacity");
+  osalDbgCheck(nullptr != capp);
+  param_union_t val;
+  val.u32 = this->capacity();
+
+  if (val.u32 != capp->valuep->u32) {
+    ParamStatus status = setParam(&val, capp);
+    osalDbgCheck(ParamStatus::OK == status);
+  }
 }
 
 /**
