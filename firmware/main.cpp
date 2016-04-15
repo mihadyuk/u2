@@ -155,15 +155,6 @@ __CCM__ static TimeKeeper time_keeper(GNSS);
 ADCLocal adc_local;
 PowerMonitor power_monitor(adc_local);
 
-/**
- * C++11 stub for std::function
- */
-#include <functional>
-void std::__throw_bad_function_call(void) {
-  osalSysHalt("__throw_bad_function_call");
-  while(true);
-}
-
 /*
  ******************************************************************************
  * GLOBAL VARIABLES

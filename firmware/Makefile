@@ -242,6 +242,7 @@ CPPSRC = $(CHCPPSRC) \
 		$(CLISRC) \
 		$(CONTROLSRC) \
 		main.cpp \
+		cpp_exception_stubs.cpp \
 		src/instantiator.cpp \
 		src/debouncer.cpp \
 		src/blinker.cpp \
