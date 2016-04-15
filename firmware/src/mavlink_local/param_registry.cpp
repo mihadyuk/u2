@@ -92,27 +92,13 @@ void ParamRegistry::release(void) {
   this->mutual_sem.signal();
 }
 
-///**
-// * @brief   Performs linear key-value search. Low level function
-// *
-// * @return      Index in dictionary.
-// * @retval -1   key not found.
-// */
-//int ParamRegistry::key_index_search(const char* key) {
-//
-//  for (int i=0; i<ONBOARD_PARAM_CNT; i++) {
-//    if (0 == strncmp(key, param_db[i].name, PARAM_REGISTRY_ID_SIZE)) {
-//      return i;
-//    }
-//  }
-//  return -1;
-//}
-
 /**
- * @brief   Helper for binary search.
+ * @brief   Helper function for binary search.
  */
-static int paramcmp(const void* key, const void* pelem) {
-  return strncmp((const char *)key, ((uavparam_t *)pelem)->name, PARAM_REGISTRY_ID_SIZE);
+static int param_comparator(const void* key, const void* pelem) {
+  return strncmp((const char *)key,
+                 ((uavparam_t *)pelem)->name,
+                 PARAM_REGISTRY_ID_SIZE);
 }
 
 /**
@@ -527,6 +513,7 @@ size_t ParamRegistry::capacity(void) {
  * @retval nullptr  key not found.
  */
 uavparam_t* ParamRegistry::search(const char* key) {
-  return (uavparam_t*)bsearch(key, param_db, paramcnt(), sizeof(uavparam_t), paramcmp);
+  return (uavparam_t*)bsearch(
+      key, param_db, paramcnt(), sizeof(uavparam_t), param_comparator);
 }
 
