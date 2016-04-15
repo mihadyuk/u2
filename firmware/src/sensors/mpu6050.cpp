@@ -60,26 +60,6 @@ using namespace filters;
   #define WHO_AM_I_VAL          0X68
 
 /**
- * @brief   Gyro full scale in deg/s
- */
-typedef enum {
-  MPU_GYRO_FULL_SCALE_250 = 0,
-  MPU_GYRO_FULL_SCALE_500,
-  MPU_GYRO_FULL_SCALE_1000,
-  MPU_GYRO_FULL_SCALE_2000
-} gyro_sens_t;
-
-/**
- * @brief   Accel full scale in g
- */
-typedef enum {
-  MPU_ACC_FULL_SCALE_2 = 0,
-  MPU_ACC_FULL_SCALE_4,
-  MPU_ACC_FULL_SCALE_8,
-  MPU_ACC_FULL_SCALE_16
-} acc_sens_t;
-
-/**
  * @brief   Human readable termo compensation subtypes
  */
 enum class tcomp_t {
@@ -113,9 +93,9 @@ static const float gyro_sens_array[4] = {
 };
 
 static const float acc_sens_array[4] = {
-    (2 * 9.81f)  / 32768.0f,
-    (4 * 9.81f)  / 32768.0f,
-    (8 * 9.81f)  / 32768.0f,
+    (2  * 9.81f) / 32768.0f,
+    (4  * 9.81f) / 32768.0f,
+    (8  * 9.81f) / 32768.0f,
     (16 * 9.81f) / 32768.0f
 };
 
