@@ -131,7 +131,7 @@ float MPU6050::acc_sens(void) {
 /**
  *
  */
-void MPU6050::pickle_temp(float *result, const uint8_t *buf) {
+static void pickle_temp(float *result, const uint8_t *buf) {
   result[0] = static_cast<int16_t>(pack8to16be(buf));
   result[0] /= 340;
   result[0] += 36.53f;
@@ -140,7 +140,8 @@ void MPU6050::pickle_temp(float *result, const uint8_t *buf) {
 /**
  *
  */
-static void thermo_comp(float *result, const float **coeff_ptr, tcomp_t type, float temperature) {
+static void thermo_comp(float *result, const float **coeff_ptr,
+                        tcomp_t type, float temperature) {
   size_t axis, i;
   float poly_c[POLYC_LEN];
 
@@ -149,12 +150,17 @@ static void thermo_comp(float *result, const float **coeff_ptr, tcomp_t type, fl
       poly_c[i] = *coeff_ptr[3*axis+(POLYC_LEN-1)-i]; //x^2 goes first
     }
 
-    if (type == tcomp_t::BIAS)
+    switch(type) {
+    case tcomp_t::BIAS:
       result[axis] -= PolyMul(poly_c, POLYC_LEN, temperature);
-    else if (type == tcomp_t::SENS)
+      break;
+    case tcomp_t::SENS:
       result[axis] *= PolyMul(poly_c, POLYC_LEN, temperature);
-    else
+      break;
+    default:
       osalSysHalt("Unhandled type");
+      break;
+    }
   }
 }
 

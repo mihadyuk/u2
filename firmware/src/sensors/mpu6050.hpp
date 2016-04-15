@@ -64,7 +64,6 @@ private:
   void pickle_gyr(float *result);
   void pickle_fifo(float *acc, float *gyr, const size_t sample_cnt);
   void pickle_acc(float *result);
-  void pickle_temp(float *result, const uint8_t *buf);
   bool hw_init_full(void);
   bool hw_init_fast(void);
 
