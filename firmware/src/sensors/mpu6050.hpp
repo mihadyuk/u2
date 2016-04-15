@@ -31,11 +31,6 @@ struct MPU6050_fir_block {
   filters::FIR<T, dataT, L> gyr[3];
 };
 
-typedef enum {
-  TCOMP_BIAS,
-  TCOMP_SENS
-} tcomp_t;
-
 /**
  *
  */
@@ -66,7 +61,6 @@ private:
   msg_t param_update(void);
   float gyr_sens(void);
   float acc_sens(void);
-  void thermo_comp(float *result, const float **coeff_ptr, tcomp_t type);
   void pickle_gyr(float *result);
   void pickle_fifo(float *acc, float *gyr, const size_t sample_cnt);
   void pickle_acc(float *result);

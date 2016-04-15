@@ -79,6 +79,14 @@ typedef enum {
   MPU_ACC_FULL_SCALE_16
 } acc_sens_t;
 
+/**
+ * @brief   Human readable termo compensation subtypes
+ */
+enum class tcomp_t {
+  BIAS,
+  SENS
+};
+
 /* reset fifo if it contains such amount of bytes */
 #define FIFO_RESET_THRESHOLD  1024
 
@@ -149,7 +157,10 @@ void MPU6050::pickle_temp(float *result, const uint8_t *buf) {
   result[0] += 36.53f;
 }
 
-void MPU6050::thermo_comp(float *result, const float **coeff_ptr, tcomp_t type) {
+/**
+ *
+ */
+static void thermo_comp(float *result, const float **coeff_ptr, tcomp_t type, float temperature) {
   size_t axis, i;
   float poly_c[POLYC_LEN];
 
@@ -157,10 +168,13 @@ void MPU6050::thermo_comp(float *result, const float **coeff_ptr, tcomp_t type) 
     for (i=0; i<POLYC_LEN; i++) {
       poly_c[i] = *coeff_ptr[3*axis+(POLYC_LEN-1)-i]; //x^2 goes first
     }
-    if (type==TCOMP_BIAS)
+
+    if (type == tcomp_t::BIAS)
       result[axis] -= PolyMul(poly_c, POLYC_LEN, temperature);
-    else if (type==TCOMP_SENS)
+    else if (type == tcomp_t::SENS)
       result[axis] *= PolyMul(poly_c, POLYC_LEN, temperature);
+    else
+      osalSysHalt("Unhandled type");
   }
 }
 
@@ -180,8 +194,9 @@ void MPU6050::pickle_gyr(float *result) {
     gyr_raw_data[i] = raw[i];
     result[i] = sens * raw[i];
   }
-  if (*MPUG_Tcomp_en!=0)
-    thermo_comp(result, gyr_bias_c, TCOMP_BIAS);
+  if (*MPUG_Tcomp_en != 0) {
+    thermo_comp(result, gyr_bias_c, tcomp_t::BIAS, temperature);
+  }
 }
 
 /**
@@ -201,9 +216,9 @@ void MPU6050::pickle_acc(float *result) {
     acc_raw_data[i] = raw[i];
     result[i] = sens * raw[i];
   }
-  if (*MPUA_Tcomp_en!=0) {
-    thermo_comp(result, acc_bias_c, TCOMP_BIAS);
-    thermo_comp(result, acc_sens_c, TCOMP_SENS);
+  if (*MPUA_Tcomp_en != 0) {
+    thermo_comp(result, acc_bias_c, tcomp_t::BIAS, temperature);
+    thermo_comp(result, acc_sens_c, tcomp_t::SENS, temperature);
   }
 }
 
@@ -451,9 +466,9 @@ void MPU6050::pickle_fifo(float *acc, float *gyr, const size_t sample_cnt) {
   acc[0] *= sens;
   acc[1] *= sens;
   acc[2] *= sens;
-  if (*MPUA_Tcomp_en!=0) {
-    thermo_comp(acc, acc_bias_c, TCOMP_BIAS);
-    thermo_comp(acc, acc_sens_c, TCOMP_SENS);
+  if (*MPUA_Tcomp_en !=0 ) {
+    thermo_comp(acc, acc_bias_c, tcomp_t::BIAS, temperature);
+    thermo_comp(acc, acc_sens_c, tcomp_t::SENS, temperature);
   }
 
   /* gyr */
@@ -461,8 +476,9 @@ void MPU6050::pickle_fifo(float *acc, float *gyr, const size_t sample_cnt) {
   gyr[0] *= sens;
   gyr[1] *= sens;
   gyr[2] *= sens;
-  if (*MPUG_Tcomp_en!=0)
-    thermo_comp(gyr, gyr_bias_c, TCOMP_BIAS);
+  if (*MPUG_Tcomp_en != 0) {
+    thermo_comp(gyr, gyr_bias_c, tcomp_t::BIAS, temperature);
+  }
 }
 
 /**
