@@ -22,20 +22,6 @@
 #define LSM_REG_TEMP_OUT      0x31
 #define GAIN_BITS_SHIFT       5
 
-/**
- * @brief   Magnetometer gain (LSB/Gauss)
- */
-typedef enum {
-  LSM_MAG_GAIN_1370 = 0,
-  LSM_MAG_GAIN_1090,
-  LSM_MAG_GAIN_820,
-  LSM_MAG_GAIN_660,
-  LSM_MAG_GAIN_440,
-  LSM_MAG_GAIN_390,
-  LSM_MAG_GAIN_330,
-  LSM_MAG_GAIN_230
-} mag_sens_t;
-
 /* update period for boards without hardware interrupt line from LSM303
  * to EXTI controller */
 #if defined(BOARD_MNU)
@@ -59,7 +45,9 @@ typedef enum {
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-
+/**
+ * @brief   Magnetometer sens 1 / (LSB/Gauss)
+ */
 static const float mag_sens_array[8] = {
     1.0f / 1370,
     1.0f / 1090,

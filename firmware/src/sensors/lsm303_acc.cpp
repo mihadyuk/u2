@@ -12,16 +12,6 @@
 #define CTRL_REG2_A             0x21
 #define OUT_X_L_A               0x28
 
-/**
- * @brief   Accel full scale in g
- */
-typedef enum {
-  LSM_ACC_FULL_SCALE_2 = 0,
-  LSM_ACC_FULL_SCALE_4,
-  LSM_ACC_FULL_SCALE_8,
-  LSM_ACC_FULL_SCALE_16
-} acc_sens_t;
-
 /*
  ******************************************************************************
  * EXTERNS
@@ -40,13 +30,16 @@ typedef enum {
  ******************************************************************************
  */
 
-static const acc_sens_t DEFAULT_FULL_SCALE = LSM_ACC_FULL_SCALE_8;
+static const size_t DEFAULT_FULL_SCALE = 2;
 
+/**
+ * @brief   Accel data conversion coefficients
+ */
 static const float acc_sens_array[4] = {
-    (2 * 9.81)  / 32768.0,
-    (4 * 9.81)  / 32768.0,
-    (8 * 9.81)  / 32768.0,
-    (16 * 9.81) / 32768.0
+    (2  * 9.81f) / 32768,
+    (4  * 9.81f) / 32768,
+    (8  * 9.81f) / 32768,
+    (16 * 9.81f) / 32768
 };
 
 /*
