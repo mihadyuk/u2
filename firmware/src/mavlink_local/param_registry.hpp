@@ -81,7 +81,7 @@ struct uavparam_t {
 /**
  *
  */
-class ParamValidator{
+class ParamValidator {
 public:
   ParamStatus set(const param_union_t *value, const uavparam_t *param);
 
@@ -107,23 +107,23 @@ public:
   bool saveAll(void);
   bool syncParam(const char* key);
   ParamStatus setParam(const param_union_t *value, const uavparam_t *param);
-  template<typename T> void valueSearch(const char *key, T **vp);
-  size_t paramcnt(void);
-  size_t capacity(void);
-  uavparam_t* search(const char *key);
-  size_t ptr2idx(const uavparam_t *ptr);
-  const uavparam_t* idx2ptr(size_t idx);
+  template<typename T> void valueSearch(const char *key, T **vp) const;
+  size_t paramcnt(void) const;
+  size_t capacity(void) const;
+  uavparam_t* search(const char *key) const;
+  size_t ptr2idx(const uavparam_t *ptr) const;
+  const uavparam_t* idx2ptr(size_t idx) const;
 
 private:
   void self_test(void);
   void open_file(void);
   bool save_all(void);
-  void store_value(size_t i, float **vp);
-  void store_value(size_t i, int32_t **vp);
-  void store_value(size_t i, uint32_t **vp);
-  void store_value(size_t i, const float **vp);
-  void store_value(size_t i, const int32_t **vp);
-  void store_value(size_t i, const uint32_t **vp);
+  void store_value(size_t i, float **vp) const;
+  void store_value(size_t i, int32_t **vp) const;
+  void store_value(size_t i, uint32_t **vp) const;
+  void store_value(size_t i, const float **vp) const;
+  void store_value(size_t i, const int32_t **vp) const;
+  void store_value(size_t i, const uint32_t **vp) const;
   bool load_extensive(void);
   void acquire(void);
   void release(void);
@@ -139,7 +139,7 @@ private:
  * Return pointer to value. High level function.
  */
 template <typename T>
-void ParamRegistry::valueSearch(const char *key, T **vp) {
+void ParamRegistry::valueSearch(const char *key, T **vp) const {
 
   osalDbgCheck(this->ready);
 

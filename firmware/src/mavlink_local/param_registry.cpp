@@ -1,3 +1,5 @@
+#pragma GCC optimize "-O2"
+
 #include <cmath>
 #include <cstring>
 #include <cstdlib> /* bsearch */
@@ -104,7 +106,7 @@ static int param_comparator(const void* key, const void* pelem) {
 /**
  *
  */
-size_t ParamRegistry::ptr2idx(const uavparam_t *ptr) {
+size_t ParamRegistry::ptr2idx(const uavparam_t *ptr) const {
   const uavparam_t *start = param_db;
 
   if (ptr < start) {
@@ -118,7 +120,7 @@ size_t ParamRegistry::ptr2idx(const uavparam_t *ptr) {
 /**
  *
  */
-const uavparam_t* ParamRegistry::idx2ptr(size_t idx) {
+const uavparam_t* ParamRegistry::idx2ptr(size_t idx) const {
 
   if (idx >= paramcnt()) {
     return nullptr;
@@ -128,32 +130,32 @@ const uavparam_t* ParamRegistry::idx2ptr(size_t idx) {
   }
 }
 
-void ParamRegistry::store_value(size_t i, float **vp){
+void ParamRegistry::store_value(size_t i, float **vp) const {
   osalDbgCheck(MAVLINK_TYPE_FLOAT == param_db[i].param_type);
   *vp = &param_db[i].valuep->f32;
 }
 
-void ParamRegistry::store_value(size_t i, int32_t **vp){
+void ParamRegistry::store_value(size_t i, int32_t **vp) const {
   osalDbgCheck(MAVLINK_TYPE_INT32_T == param_db[i].param_type);
   *vp = &param_db[i].valuep->i32;
 }
 
-void ParamRegistry::store_value(size_t i, uint32_t **vp){
+void ParamRegistry::store_value(size_t i, uint32_t **vp) const {
   osalDbgCheck(MAVLINK_TYPE_UINT32_T == param_db[i].param_type);
   *vp = &param_db[i].valuep->u32;
 }
 
-void ParamRegistry::store_value(size_t i, const float **vp){
+void ParamRegistry::store_value(size_t i, const float **vp) const {
   osalDbgCheck(MAVLINK_TYPE_FLOAT == param_db[i].param_type);
   *vp = &param_db[i].valuep->f32;
 }
 
-void ParamRegistry::store_value(size_t i, const int32_t **vp){
+void ParamRegistry::store_value(size_t i, const int32_t **vp) const {
   osalDbgCheck(MAVLINK_TYPE_INT32_T == param_db[i].param_type);
   *vp = &param_db[i].valuep->i32;
 }
 
-void ParamRegistry::store_value(size_t i, const uint32_t **vp){
+void ParamRegistry::store_value(size_t i, const uint32_t **vp) const {
   osalDbgCheck(MAVLINK_TYPE_UINT32_T == param_db[i].param_type);
   *vp = &param_db[i].valuep->u32;
 }
@@ -495,14 +497,14 @@ ParamStatus ParamRegistry::setParam(const param_union_t *value,
 /**
  *
  */
-size_t ParamRegistry::paramcnt(void) {
+size_t ParamRegistry::paramcnt(void) const {
   return ONBOARD_PARAM_CNT;
 }
 
 /**
  *
  */
-size_t ParamRegistry::capacity(void) {
+size_t ParamRegistry::capacity(void) const {
   return this->ParamFile->getSize() / sizeof(param_record_t);
 }
 
@@ -512,7 +514,7 @@ size_t ParamRegistry::capacity(void) {
  * @return          Pointer to found parameter.
  * @retval nullptr  key not found.
  */
-uavparam_t* ParamRegistry::search(const char* key) {
+uavparam_t* ParamRegistry::search(const char* key) const {
   return (uavparam_t*)bsearch(
       key, param_db, paramcnt(), sizeof(uavparam_t), param_comparator);
 }
