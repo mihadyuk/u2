@@ -93,10 +93,10 @@ static const float gyro_sens_array[4] = {
 };
 
 static const float acc_sens_array[4] = {
-    (2  * 9.81f) / 32768.0f,
-    (4  * 9.81f) / 32768.0f,
-    (8  * 9.81f) / 32768.0f,
-    (16 * 9.81f) / 32768.0f
+    (2  * 9.81f) / 32768,
+    (4  * 9.81f) / 32768,
+    (8  * 9.81f) / 32768,
+    (16 * 9.81f) / 32768
 };
 
 __CCM__ static MPU6050_fir_block<float, float, MPU6050_FIR_LEN> fir_block(taps, ArrayLen(taps));
@@ -146,8 +146,9 @@ static void thermo_comp(marg_vector_t &result, const float **coeff_ptr,
   float poly_c[POLYC_LEN];
 
   for (axis=0; axis<3; axis++) {
+    const size_t tip = 3*axis + (POLYC_LEN-1);
     for (i=0; i<POLYC_LEN; i++) {
-      poly_c[i] = *coeff_ptr[3*axis+(POLYC_LEN-1)-i]; //x^2 goes first
+      poly_c[i] = *coeff_ptr[tip - i]; //x^2 goes first
     }
 
     switch(type) {
