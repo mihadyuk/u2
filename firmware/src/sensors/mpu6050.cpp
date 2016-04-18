@@ -140,7 +140,7 @@ static void pickle_temp(float *result, const uint8_t *buf) {
 /**
  *
  */
-static void thermo_comp(float *result, const float **coeff_ptr,
+static void thermo_comp(marg_vector_t &result, const float **coeff_ptr,
                         tcomp_t type, float temperature) {
   size_t axis, i;
   float poly_c[POLYC_LEN];
@@ -167,7 +167,7 @@ static void thermo_comp(float *result, const float **coeff_ptr,
 /**
  *
  */
-void MPU6050::pickle_gyr(float *result) {
+void MPU6050::pickle_gyr(marg_vector_t &result) {
 
   int16_t raw[3];
   uint8_t *b = &rxbuf[MPU_GYRO_OFFSET];
@@ -188,7 +188,7 @@ void MPU6050::pickle_gyr(float *result) {
 /**
  *
  */
-void MPU6050::pickle_acc(float *result) {
+void MPU6050::pickle_acc(marg_vector_t &result) {
 
   int16_t raw[3];
   uint8_t *b = &rxbuf[MPU_ACCEL_OFFSET];
@@ -404,7 +404,7 @@ msg_t MPU6050::param_update(void) {
 /**
  *
  */
-msg_t MPU6050::acquire_simple(float *acc, float *gyr) {
+msg_t MPU6050::acquire_simple(marg_vector_t &acc, marg_vector_t &gyr) {
 
   msg_t ret = MSG_RESET;
 
@@ -414,10 +414,8 @@ msg_t MPU6050::acquire_simple(float *acc, float *gyr) {
   this->set_lock();
 
   pickle_temp(&temperature, &rxbuf[MPU_TEMP_OFFSET]);
-  if (nullptr != gyr)
-    pickle_gyr(gyr);
-  if (nullptr != acc)
-    pickle_acc(acc);
+  pickle_gyr(gyr);
+  pickle_acc(acc);
   fifo_remainder = 0;
 
   this->release_lock();
@@ -428,7 +426,7 @@ msg_t MPU6050::acquire_simple(float *acc, float *gyr) {
 /**
  *
  */
-void MPU6050::pickle_fifo(float *acc, float *gyr, const size_t sample_cnt) {
+void MPU6050::pickle_fifo(marg_vector_t &acc, marg_vector_t &gyr, const size_t sample_cnt) {
 
   float sens;
   const size_t acc_fifo_offset = 0;
@@ -470,7 +468,7 @@ void MPU6050::pickle_fifo(float *acc, float *gyr, const size_t sample_cnt) {
 /**
  *
  */
-msg_t MPU6050::acquire_fifo(float *acc, float *gyr) {
+msg_t MPU6050::acquire_fifo(marg_vector_t &acc, marg_vector_t &gyr) {
 
   msg_t ret = MSG_RESET;
   size_t recvd;
@@ -684,12 +682,12 @@ sensor_state_t MPU6050::get(marg_data_t &result) {
 
     set_lock();
     if (1 == result.request.acc) {
-      memcpy(result.acc,     this->acc_data,     sizeof(this->acc_data));
-      memcpy(result.acc_raw, this->acc_raw_data, sizeof(this->acc_raw_data));
+      result.acc     = this->acc_data;
+      result.acc_raw = this->acc_raw_data;
     }
     if (1 == result.request.gyr) {
-      memcpy(result.gyr,     this->gyr_data,     sizeof(this->gyr_data));
-      memcpy(result.gyr_raw, this->gyr_raw_data, sizeof(this->gyr_raw_data));
+      result.gyr     = this->gyr_data;
+      result.gyr_raw = this->gyr_raw_data;
     }
     if (1 == result.request.dT) {
       result.dT = this->dT();

@@ -51,8 +51,8 @@ private:
   float dT(void);
   void acquire_data(void);
   msg_t soft_reset(void);
-  msg_t acquire_simple(float *acc, float *gyr);
-  msg_t acquire_fifo(float *acc, float *gyr);
+  msg_t acquire_simple(marg_vector_t &acc, marg_vector_t &gyr);
+  msg_t acquire_fifo(marg_vector_t &acc, marg_vector_t &gyr);
   void set_lock(void);
   void release_lock(void);
   msg_t set_gyr_fs(uint8_t fs);
@@ -61,9 +61,9 @@ private:
   msg_t param_update(void);
   float gyr_sens(void);
   float acc_sens(void);
-  void pickle_gyr(float *result);
-  void pickle_fifo(float *acc, float *gyr, const size_t sample_cnt);
-  void pickle_acc(float *result);
+  void pickle_gyr(marg_vector_t &result);
+  void pickle_acc(marg_vector_t &result);
+  void pickle_fifo(marg_vector_t &acc, marg_vector_t &gyr, const size_t sample_cnt);
   bool hw_init_full(void);
   bool hw_init_fast(void);
 
@@ -71,10 +71,10 @@ private:
   chibios_rt::BinarySemaphore protect_sem;
   chibios_rt::BinarySemaphore data_ready_sem;
   thread_t *worker;
-  float acc_data[3];
-  float gyr_data[3];
-  int16_t acc_raw_data[3];
-  int16_t gyr_raw_data[3];
+  marg_vector_t acc_data;
+  marg_vector_t gyr_data;
+  marg_vector_raw_t acc_raw_data;
+  marg_vector_raw_t gyr_raw_data;
 
   const uint32_t *gyr_fs = NULL;
   const uint32_t *acc_fs = NULL;

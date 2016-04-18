@@ -9,12 +9,12 @@
  *
  */
 typedef struct {
-  float acc[3];
-  float gyr[3];
-  float mag[3];
+  marg_vector_t acc;
+  marg_vector_t gyr;
+  marg_vector_t mag;
   float baro;
-  float quat[4];
-  float euler[3];
+  std::array<float, 4> quat;
+  marg_vector_t euler;
   float temp;
   uint16_t errors;
 } adis_measurement_t;

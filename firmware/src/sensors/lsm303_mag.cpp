@@ -135,21 +135,21 @@ float LSM303_mag::mag_sens(void) {
 /**
  *
  */
-void LSM303_mag::thermo_comp(float *result){
+void LSM303_mag::thermo_comp(marg_vector_t &result){
   (void)result;
 }
 
 /**
  *
  */
-void LSM303_mag::iron_comp(float *result){
+void LSM303_mag::iron_comp(marg_vector_t &result){
   (void)result;
 }
 
 /**
  *
  */
-void LSM303_mag::pickle(float *result, int16_t *result_raw) {
+void LSM303_mag::pickle(marg_vector_t &result, marg_vector_raw_t &result_raw) {
 
   int16_t raw[3];
   float sens = this->mag_sens();
@@ -250,7 +250,7 @@ msg_t LSM303_mag::param_update(void) {
 /**
  *
  */
-msg_t LSM303_mag::get_prev_measurement(float *result, int16_t *result_raw) {
+msg_t LSM303_mag::get_prev_measurement(marg_vector_t &result, marg_vector_raw_t &result_raw) {
 
   msg_t ret = MSG_RESET;
 
@@ -258,8 +258,8 @@ msg_t LSM303_mag::get_prev_measurement(float *result, int16_t *result_raw) {
   ret = transmit(txbuf, 1, rxbuf, 6);
   if (MSG_OK == ret) {
     pickle(result, result_raw);
-    memcpy(cache, result, sizeof(cache));
-    memcpy(cache_raw, result_raw, sizeof(cache_raw));
+    cache = result;
+    cache_raw = result_raw;
   }
 
   return ret;
@@ -295,8 +295,8 @@ sensor_state_t LSM303_mag::get(marg_data_t &result) {
         this->state = SENSOR_STATE_DEAD;
     }
     else {
-      memcpy(result.mag,     cache,     sizeof(cache));
-      memcpy(result.mag_raw, cache_raw, sizeof(cache_raw));
+      result.mag = cache;
+      result.mag_raw = cache_raw;
     }
 
     if (MSG_OK != param_update())

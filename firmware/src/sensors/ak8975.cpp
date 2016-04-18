@@ -48,21 +48,21 @@ float AK8975::mag_sens(void) {
 /**
  *
  */
-void AK8975::thermo_comp(float *result){
+void AK8975::thermo_comp(marg_vector_t &result){
   (void)result;
 }
 
 /**
  *
  */
-void AK8975::iron_comp(float *result){
+void AK8975::iron_comp(marg_vector_t &result){
   (void)result;
 }
 
 /**
  *
  */
-void AK8975::pickle(float *result, int16_t *result_raw) {
+void AK8975::pickle(marg_vector_t &result, marg_vector_raw_t &result_raw) {
 
   int16_t raw[3];
   float sens = this->mag_sens();
@@ -215,16 +215,16 @@ sensor_state_t AK8975::get(marg_data_t &result) {
     if (ST1_DATA_READY == (rxbuf[0] & ST1_DATA_READY)) {
       /* read measured data and immediately start new measurement */
       pickle(result.mag, result.mag_raw);
-      memcpy(cache, result.mag, sizeof(cache));
-      memcpy(cache_raw, result.mag_raw, sizeof(cache_raw));
+      cache = result.mag;
+      cache_raw = result.mag_raw;
       if (MSG_OK != start_measurement()) {
         this->state = SENSOR_STATE_DEAD;
         return this->state;
       }
     }
     else {
-      memcpy(result.mag, cache, sizeof(cache));
-      memcpy(result.mag_raw, cache_raw, sizeof(cache_raw));
+      result.mag = cache;
+      result.mag_raw = cache_raw;
     }
   }
 

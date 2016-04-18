@@ -1,6 +1,7 @@
 #pragma GCC optimize "-O2"
 
 #include <cstring>
+#include <array>
 
 #include "main.h"
 #include "pads.h"
@@ -223,19 +224,21 @@ static T u32_conv(T scale, uint32_t msb, uint32_t lsb) {
 /**
  *
  */
-template<typename T>
-static void u16_block_conv(T scale, const uint16_t *raw, T *ret, size_t len){
-  for (size_t i = 0; i<len; i++)
+template<typename T, size_t N>
+static void u16_block_conv(T scale, const uint16_t *raw, std::array<T,N> &ret) {
+  for (size_t i = 0; i<ret.size(); i++) {
     ret[i] = u16_conv(scale, raw[i]);
+  }
 }
 
 /**
  *
  */
-template<typename T>
-static void u32_block_conv(T scale, const uint16_t *raw, T *ret, size_t len){
-  for (size_t i = 0; i<len; i++)
+template<typename T, size_t N>
+static void u32_block_conv(T scale, const uint16_t *raw, std::array<T,N> &ret) {
+  for (size_t i = 0; i<ret.size(); i++) {
     ret[i] = u32_conv(scale, raw[2*i+1], raw[2*i]);
+  }
 }
 
 
@@ -282,12 +285,12 @@ void Adis::acquire_data(void) {
   /* converting to human useful values */
   this->set_lock();
   measurement.temp = 25 + u16_conv(temp_scale, rxbuf[1]);
-  u32_block_conv(acc_scale, &rxbuf[8], measurement.acc, 3);
-  u32_block_conv(gyr_scale, &rxbuf[2], measurement.gyr, 3);
-  u16_block_conv(mag_scale, &rxbuf[14], measurement.mag, 3);
+  u32_block_conv(acc_scale, &rxbuf[8], measurement.acc);
+  u32_block_conv(gyr_scale, &rxbuf[2], measurement.gyr);
+  u16_block_conv(mag_scale, &rxbuf[14], measurement.mag);
   measurement.baro = u32_conv(baro_scale, rxbuf[14], rxbuf[15]);
-  u16_block_conv(quat_scale, &rxbuf[19], measurement.quat, 4);
-  u16_block_conv(euler_scale, &rxbuf[24], measurement.euler, 3);
+  u16_block_conv(quat_scale, &rxbuf[19], measurement.quat);
+  u16_block_conv(euler_scale, &rxbuf[24], measurement.euler);
   measurement.errors = rxbuf[0];
   this->release_lock();
 
@@ -526,11 +529,11 @@ sensor_state_t Adis::get(marg_data_t &result) {
   if (SENSOR_STATE_READY == this->state) {
     set_lock();
     if (1 == result.request.acc)
-      memcpy(result.acc, &measurement.acc, sizeof(result.acc));
+      result.acc = measurement.acc;
     if (1 == result.request.gyr)
-      memcpy(result.gyr, &measurement.gyr, sizeof(result.gyr));
+      result.gyr = measurement.gyr;
     if (1 == result.request.mag)
-      memcpy(result.mag, &measurement.mag, sizeof(result.mag));
+      result.mag = measurement.mag;
     if (1 == result.request.dT)
       result.dT = this->dT();
     release_lock();

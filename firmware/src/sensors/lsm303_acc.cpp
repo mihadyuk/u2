@@ -67,7 +67,7 @@ float LSM303_acc::acc_sens(void){
 /**
  *
  */
-void LSM303_acc::pickle(float *result, int16_t *result_raw){
+void LSM303_acc::pickle(marg_vector_t &result, marg_vector_raw_t &result_raw){
 
   int16_t raw[3];
   float sens = this->acc_sens();
