@@ -185,7 +185,7 @@ bool ParamRegistry::load_extensive(void) {
   param_union_t v;
   bool found = false;
 
-  const size_t max_param_cnt = ParamFile->getSize() / sizeof(param_record_t);
+  const size_t max_param_cnt = this->capacity();
   uint8_t bitmap[max_param_cnt/8 + 1];
   memset(bitmap, 0, sizeof(bitmap));
 
