@@ -14,7 +14,10 @@
 #include "putinrange.hpp"
 #include "mav_logger.hpp"
 #include "mav_postman.hpp"
+#include "mav_dbg_sender.hpp"
 #include "debug_indices.h"
+#include "polynomial.hpp"
+#include <cstdio>
 
 using namespace filters;
 
@@ -57,24 +60,12 @@ using namespace filters;
   #define WHO_AM_I_VAL          0X68
 
 /**
- * @brief   Gyro full scale in deg/s
+ * @brief   Human readable termo compensation subtypes
  */
-typedef enum {
-  MPU_GYRO_FULL_SCALE_250 = 0,
-  MPU_GYRO_FULL_SCALE_500,
-  MPU_GYRO_FULL_SCALE_1000,
-  MPU_GYRO_FULL_SCALE_2000
-} gyro_sens_t;
-
-/**
- * @brief   Accel full scale in g
- */
-typedef enum {
-  MPU_ACC_FULL_SCALE_2 = 0,
-  MPU_ACC_FULL_SCALE_4,
-  MPU_ACC_FULL_SCALE_8,
-  MPU_ACC_FULL_SCALE_16
-} acc_sens_t;
+enum class tcomp_t {
+  BIAS,
+  SENS
+};
 
 /* reset fifo if it contains such amount of bytes */
 #define FIFO_RESET_THRESHOLD  1024
@@ -82,14 +73,11 @@ typedef enum {
 /* how many bytes in single fifo sample */
 #define BYTES_IN_SAMPLE       12
 
-#define SEND_DEBUG_TEMP       TRUE
-
 /*
  ******************************************************************************
  * EXTERNS
  ******************************************************************************
  */
-extern MavLogger mav_logger;
 
 /*
  ******************************************************************************
@@ -105,9 +93,9 @@ static const float gyro_sens_array[4] = {
 };
 
 static const float acc_sens_array[4] = {
-    (2 * 9.81f)  / 32768.0f,
-    (4 * 9.81f)  / 32768.0f,
-    (8 * 9.81f)  / 32768.0f,
+    (2  * 9.81f) / 32768.0f,
+    (4  * 9.81f) / 32768.0f,
+    (8  * 9.81f) / 32768.0f,
     (16 * 9.81f) / 32768.0f
 };
 
@@ -117,9 +105,6 @@ size_t MPU6050::isr_count = 0;
 uint8_t MPU6050::isr_dlpf = 0;
 uint8_t MPU6050::isr_smplrtdiv = 0;
 chibios_rt::BinarySemaphore MPU6050::isr_sem(true);
-
-__CCM__ static mavlink_debug_t dbg_temp;
-__CCM__ static mavMail mail_dbg_temp;
 
 /*
  *******************************************************************************
@@ -146,7 +131,7 @@ float MPU6050::acc_sens(void) {
 /**
  *
  */
-void MPU6050::pickle_temp(float *result, const uint8_t *buf) {
+static void pickle_temp(float *result, const uint8_t *buf) {
   result[0] = static_cast<int16_t>(pack8to16be(buf));
   result[0] /= 340;
   result[0] += 36.53f;
@@ -155,15 +140,28 @@ void MPU6050::pickle_temp(float *result, const uint8_t *buf) {
 /**
  *
  */
-void MPU6050::gyro_thermo_comp(float *result) {
-  (void)result;
-}
+static void thermo_comp(float *result, const float **coeff_ptr,
+                        tcomp_t type, float temperature) {
+  size_t axis, i;
+  float poly_c[POLYC_LEN];
 
-/**
- *
- */
-void MPU6050::acc_egg_comp(float *result) {
-  (void)result;
+  for (axis=0; axis<3; axis++) {
+    for (i=0; i<POLYC_LEN; i++) {
+      poly_c[i] = *coeff_ptr[3*axis+(POLYC_LEN-1)-i]; //x^2 goes first
+    }
+
+    switch(type) {
+    case tcomp_t::BIAS:
+      result[axis] -= PolyMul(poly_c, POLYC_LEN, temperature);
+      break;
+    case tcomp_t::SENS:
+      result[axis] *= PolyMul(poly_c, POLYC_LEN, temperature);
+      break;
+    default:
+      osalSysHalt("Unhandled type");
+      break;
+    }
+  }
 }
 
 /**
@@ -182,8 +180,9 @@ void MPU6050::pickle_gyr(float *result) {
     gyr_raw_data[i] = raw[i];
     result[i] = sens * raw[i];
   }
-
-  gyro_thermo_comp(result);
+  if (*MPUG_Tcomp_en != 0) {
+    thermo_comp(result, gyr_bias_c, tcomp_t::BIAS, temperature);
+  }
 }
 
 /**
@@ -203,8 +202,10 @@ void MPU6050::pickle_acc(float *result) {
     acc_raw_data[i] = raw[i];
     result[i] = sens * raw[i];
   }
-
-  acc_egg_comp(result);
+  if (*MPUA_Tcomp_en != 0) {
+    thermo_comp(result, acc_bias_c, tcomp_t::BIAS, temperature);
+    thermo_comp(result, acc_sens_c, tcomp_t::SENS, temperature);
+  }
 }
 
 /**
@@ -451,14 +452,19 @@ void MPU6050::pickle_fifo(float *acc, float *gyr, const size_t sample_cnt) {
   acc[0] *= sens;
   acc[1] *= sens;
   acc[2] *= sens;
-  acc_egg_comp(acc);
+  if (*MPUA_Tcomp_en !=0 ) {
+    thermo_comp(acc, acc_bias_c, tcomp_t::BIAS, temperature);
+    thermo_comp(acc, acc_sens_c, tcomp_t::SENS, temperature);
+  }
 
   /* gyr */
   sens = this->gyr_sens();
   gyr[0] *= sens;
   gyr[1] *= sens;
   gyr[2] *= sens;
-  gyro_thermo_comp(gyr);
+  if (*MPUG_Tcomp_en != 0) {
+    thermo_comp(gyr, gyr_bias_c, tcomp_t::BIAS, temperature);
+  }
 }
 
 /**
@@ -504,19 +510,6 @@ msg_t MPU6050::acquire_fifo(float *acc, float *gyr) {
 /**
  *
  */
-void MPU6050::send_debug_temp(void) {
-#if SEND_DEBUG_TEMP
-  dbg_temp.value = this->temperature;
-  dbg_temp.ind = DEBUG_INDEX_MPU6050;
-  dbg_temp.time_boot_ms = TIME_BOOT_MS;
-  mail_dbg_temp.fill(&dbg_temp, MAV_COMP_ID_SYSTEM_CONTROL, MAVLINK_MSG_ID_DEBUG);
-  mav_postman.post(mail_dbg_temp);
-#endif
-}
-
-/**
- *
- */
 void MPU6050::acquire_data(void) {
 
   msg_t ret1 = MSG_RESET;
@@ -532,7 +525,7 @@ void MPU6050::acquire_data(void) {
       ret1 = acquire_fifo(acc_data, gyr_data);
     }
 
-    send_debug_temp();
+    mav_dbg_sender.send(this->temperature, DEBUG_INDEX_MPU6050, TIME_BOOT_MS);
 
     if ((MSG_OK != ret1) || (MSG_OK != ret2))
       this->state = SENSOR_STATE_DEAD;
@@ -605,6 +598,20 @@ sensor_state_t MPU6050::start(void) {
     param_registry.valueSearch("MPU_fir_f",     &fir_f);
     param_registry.valueSearch("MPU_dlpf",      &dlpf);
     param_registry.valueSearch("MPU_smplrtdiv", &smplrtdiv);
+    param_registry.valueSearch("MPUG_Tcomp_en", &MPUG_Tcomp_en);
+    param_registry.valueSearch("MPUA_Tcomp_en", &MPUA_Tcomp_en);
+
+    char search_key[PARAM_REGISTRY_ID_SIZE];
+    for (size_t axis=0; axis<3; axis++) {
+      for (size_t i=0; i<POLYC_LEN; i++) {
+        snprintf(search_key, PARAM_REGISTRY_ID_SIZE, "MPUG_%cbias_c%u", 'x'+axis, i);
+        param_registry.valueSearch(search_key, &gyr_bias_c[3*axis+i]);
+        snprintf(search_key, PARAM_REGISTRY_ID_SIZE, "MPUA_%cbias_c%u", 'x'+axis, i);
+        param_registry.valueSearch(search_key, &acc_bias_c[3*axis+i]);
+        snprintf(search_key, PARAM_REGISTRY_ID_SIZE, "MPUA_%csens_c%u", 'x'+axis, i);
+        param_registry.valueSearch(search_key, &acc_sens_c[3*axis+i]);
+      }
+    }
 
     osalSysLock();
     gyr_fs_current      = *gyr_fs;

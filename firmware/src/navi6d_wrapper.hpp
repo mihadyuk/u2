@@ -23,7 +23,7 @@ private:
   void sins_cold_start(void);
   void navi2acs(void);
   void navi2mavlink(void);
-  void debug2mavlink(float dT);
+  void debug2mavlink(void);
   void prepare_data(const baro_data_t &baro,
                     const odometer_data_t &odo,
                     const marg_data_t &marg);
@@ -36,17 +36,13 @@ private:
   float time_meas_decimator = 0;
   bool ready = false;
   float dT_cache = 0.01;
-  float debug_vect_decimator = 0;
-  float debug_decimator = 0;
   ACSInput &acs_in;
   gnss::GNSSReceiver &GNSS;
   gnss::gnss_data_t gps;
   chibios_rt::EvtListener gnss_evl;
 
-  const uint32_t *T_debug      = nullptr;
-  const uint32_t *T_debug_vect = nullptr;
-
-  const uint32_t *en_gnss    = nullptr;
+  const uint32_t *en_r_sns   = nullptr;
+  const uint32_t *en_v_sns   = nullptr;
   const uint32_t *en_baro    = nullptr;
   const uint32_t *en_odo     = nullptr;
   const uint32_t *en_nhl_y   = nullptr;
@@ -61,7 +57,9 @@ private:
   const float *acc_sigma    = nullptr;
   const float *gyr_sigma    = nullptr;
   const float *gamma        = nullptr;
+  const float *sns_v_th     = nullptr;
   const float *R_pos_sns    = nullptr;
+  const float *R_alt_sns    = nullptr;
   const float *R_vel_sns    = nullptr;
   const float *R_odo        = nullptr;
   const float *R_nhl_y      = nullptr;
@@ -73,7 +71,9 @@ private:
   const float *R_v_nav_st   = nullptr;
   const float *R_v_veh_st   = nullptr;
   const float *R_yaw_st     = nullptr;
-
+  const float *P_ned        = nullptr;
+  const float *P_acc_b      = nullptr;
+  const float *P_gyr_b      = nullptr;
   const float *init_lat     = nullptr;
   const float *init_lon     = nullptr;
   const float *init_alt     = nullptr;
@@ -89,10 +89,6 @@ private:
   const float *eu_vh_roll   = nullptr;
   const float *eu_vh_pitch  = nullptr;
   const float *eu_vh_yaw    = nullptr;
-
-  const float *P_ned        = nullptr;
-  const float *P_acc_b      = nullptr;
-  const float *P_gyr_b      = nullptr;
 
   const float *B_acc_b      = nullptr;
   const float *B_gyr_b      = nullptr;

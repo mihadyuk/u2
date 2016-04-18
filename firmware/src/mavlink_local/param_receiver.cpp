@@ -3,7 +3,7 @@
 #include "mavlink_local.hpp"
 #include "param_registry.hpp"
 #include "mav_postman.hpp"
-#include "mav_dbg.hpp"
+#include "mav_dbg_print.hpp"
 #include "mav_cmd_confirm.hpp"
 
 using namespace chibios_rt;
@@ -88,18 +88,22 @@ static void param_value_send(const mavlink_param_value_t &m) {
  * @param[in] key   if NULL than perform search by index
  * @param[in] n     search index
  */
-static bool send_value(const char *key, int n){
-  int index = -1;
-  const GlobalParam_t *p;
+static bool send_value(const char *key, size_t n){
+  const uavparam_t *p;
 
-  p = param_registry.getParam(key, n, &index);
+  if (nullptr != key) {
+    p = param_registry.search(key);
+  }
+  else {
+    p = param_registry.idx2ptr(n);
+  }
 
-  if (-1 != index){
+  if (nullptr != p) {
     /* fill all fields */
     mavlink_out_param_value_struct.param_value = p->valuep->f32;
     mavlink_out_param_value_struct.param_type  = p->param_type;
-    mavlink_out_param_value_struct.param_count = param_registry.paramCount();
-    mavlink_out_param_value_struct.param_index = index;
+    mavlink_out_param_value_struct.param_count = param_registry.paramcnt();
+    mavlink_out_param_value_struct.param_index = param_registry.ptr2idx(p);
     strncpy(mavlink_out_param_value_struct.param_id, p->name, PARAM_REGISTRY_ID_SIZE);
 
     /* inform sending thread */
@@ -107,8 +111,9 @@ static bool send_value(const char *key, int n){
     osalThreadSleep(SEND_PAUSE);
     return OSAL_SUCCESS;
   }
-  else
+  else {
     return OSAL_FAILED;
+  }
 }
 
 /**
@@ -121,8 +126,8 @@ static void ignore_value(const mavlink_param_set_t *p){
   /* fill all fields */
   mavlink_out_param_value_struct.param_value = p->param_value;
   mavlink_out_param_value_struct.param_type  = p->param_type;
-  mavlink_out_param_value_struct.param_count = param_registry.paramCount();
-  mavlink_out_param_value_struct.param_index = param_registry.paramCount();
+  mavlink_out_param_value_struct.param_count = param_registry.paramcnt();
+  mavlink_out_param_value_struct.param_index = param_registry.paramcnt();
   strncpy(mavlink_out_param_value_struct.param_id, p->param_id, PARAM_REGISTRY_ID_SIZE);
 
   /* inform sending thread */
@@ -141,8 +146,8 @@ static void send_all_values(const mavlink_message_t *recv_msg) {
   if (! mavlink_msg_for_me(&prl))
     return;
 
-  int i = 0;
-  while (i < param_registry.paramCount()){
+  size_t i = 0;
+  while (i < param_registry.paramcnt()) {
     send_value(nullptr, i);
     i++;
   }
@@ -155,7 +160,7 @@ static void send_all_values(const mavlink_message_t *recv_msg) {
 static void param_set_handler(const mavlink_message_t *recv_msg) {
 
   param_union_t *valuep = nullptr;
-  const GlobalParam_t *paramp = nullptr;
+  const uavparam_t *paramp = nullptr;
   ParamStatus status;
   mavlink_param_set_t ps;
 
@@ -165,12 +170,12 @@ static void param_set_handler(const mavlink_message_t *recv_msg) {
     return;
 
   valuep = (param_union_t *)&(ps.param_value);
-  paramp = param_registry.getParam(ps.param_id, -1, nullptr);
-  if (nullptr == paramp){
+  paramp = param_registry.search(ps.param_id);
+  if (nullptr == paramp) {
     ignore_value(&ps);
     return;
   }
-  else{
+  else {
     status = param_registry.setParam(valuep, paramp);
   }
 

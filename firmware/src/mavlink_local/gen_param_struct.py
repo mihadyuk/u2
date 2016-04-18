@@ -110,12 +110,16 @@ f.write("""
  *
  */
 """)
-f.write("const GlobalParam_t ParamRegistry::param_db[] = {\n")
+f.write("const uavparam_t ParamRegistry::param_db[] = {\n")
 
 
 ########### generator #############
 n = 0
-for i in param:
+
+def getKey(item):
+    return item[0]
+
+for i in sorted(param, key=getKey):
     # delete pythonic new line symbols and enclose in quotes text strings
     if i[6] != "NULL":
         helpstr = ""

@@ -18,57 +18,7 @@ import pymavlink.mavutil as mavutil
 
 mavutil.set_dialect("lapwing")
 
-param_list = [
-    "PID_ail_h_P",
-    "PID_ail_h_I",
-    "PID_ail_h_D",
-    "PID_ail_h_B",
-    "PID_ail_m_P",
-    "PID_ail_m_I",
-    "PID_ail_m_D",
-    "PID_ail_m_B",
-    "PID_ail_l_P",
-    "PID_ail_l_I",
-    "PID_ail_l_D",
-    "PID_ail_l_B",
-    "PID_ele_h_P",
-    "PID_ele_h_I",
-    "PID_ele_h_D",
-    "PID_ele_h_B",
-    "PID_ele_m_P",
-    "PID_ele_m_I",
-    "PID_ele_m_D",
-    "PID_ele_m_B",
-    "PID_ele_l_P",
-    "PID_ele_l_I",
-    "PID_ele_l_D",
-    "PID_ele_l_B",
-    "PID_rud_h_P",
-    "PID_rud_h_I",
-    "PID_rud_h_D",
-    "PID_rud_h_B",
-    "PID_rud_m_P",
-    "PID_rud_m_I",
-    "PID_rud_m_D",
-    "PID_rud_m_B",
-    "PID_rud_l_P",
-    "PID_rud_l_I",
-    "PID_rud_l_D",
-    "PID_rud_l_B",
-    "PID_thr_h_P",
-    "PID_thr_h_I",
-    "PID_thr_h_D",
-    "PID_thr_h_B",
-    "PID_thr_m_P",
-    "PID_thr_m_I",
-    "PID_thr_m_D",
-    "PID_thr_m_B",
-    "PID_thr_l_P",
-    "PID_thr_l_I",
-    "PID_thr_l_D",
-    "PID_thr_l_B"
-]
-
+TOTAL_PIDS = 16
 
 class AcquiredParam(object):
     def __init__(self, name, var):
@@ -78,14 +28,23 @@ class AcquiredParam(object):
 
 class CommWorker(Thread):
 
-    def __init__(self, to_pnc, from_pnc, gui, device):
+    def __init__(self, to_pnc, from_pnc, gui, udpin, udpout):
         Thread.__init__(self)
         self.to_pnc = to_pnc
         self.from_pnc = from_pnc
         self.gui = gui
-        self.device = device
+        self.udpin  = udpin
+        self.udpout = udpout
         self.__stop = Event()
-
+        self.param_list = []
+        for i in range(0, TOTAL_PIDS):
+            s = ('PID_%02d_' % i)
+            self.param_list.append(s + 'P')
+            self.param_list.append(s + 'I')
+            self.param_list.append(s + 'D')
+            self.param_list.append(s + 'Min')
+            self.param_list.append(s + 'Max')
+            self.param_list.append(s + 'proc')
 
     def stop(self):
         self.__stop.set()
@@ -94,27 +53,31 @@ class CommWorker(Thread):
     def run(self):
         print("Communication worker started")
 
-        mav = mavutil.mavserial(self.device, 115200)
+        mavin  = mavutil.mavlink_connection(self.udpin)
+        mavout = mavutil.mavlink_connection(self.udpout)
         recv = None
 
         # wait heartbeat
-        m = mav.recv_match(type="HEARTBEAT", blocking=True, timeout=5)
+        m = mavin.recv_match(type="HEARTBEAT", blocking=True, timeout=5)
         if m is not None:
             self.from_pnc.put_nowait(m)
             self.gui.event_generate('<<NewParam>>', when='tail')
-            mav.target_system = m.get_srcSystem()
+            mavout.target_system = m.get_srcSystem()
         else:
             self.gui.update("Connection time is out")
             return
 
         # acquire PIDs settings
-        self._recv_param_all(mav)
+        self._recv_param_all(mavin, mavout)
 
         # main working loop
         while not (self.__stop.is_set()):
+            recv = None
             try:
                 recv = self.to_pnc.get_nowait()
             except Empty:
+                pass
+            if recv is not None:
                 pass
             time.sleep(0.02)
 
@@ -122,10 +85,11 @@ class CommWorker(Thread):
         print("Communication worker stopped")
 
 
-    def _recv_param_value(self, name, timeout, retry, mav):
+    def _recv_param_value(self, name, timeout, retry, mavin, mavout):
         while retry > 0:
-            mav.param_fetch_one(bytearray(name, "ascii"))
-            m = mav.recv_match(type="PARAM_VALUE", blocking=True, timeout=timeout)
+            mavout.param_fetch_one(bytearray(name, "ascii"))
+            print("Trying to get:", name)
+            m = mavin.recv_match(type="PARAM_VALUE", blocking=True, timeout=timeout)
             if m is None:
                 retry -= 1
                 print ("Time is out. Retrying:", retry)
@@ -141,15 +105,15 @@ class CommWorker(Thread):
                     return i[0]
             else:
                 retry -= 1
-                print ("Time is out. Retrying:", retry)
+                print ("Name is incorrect. Expected: %s Got: %s", name, st)
         return None
 
 
-    def _recv_param_all(self, mav):
-        for name in param_list:
+    def _recv_param_all(self, mavin, mavout):
+        for name in self.param_list:
             if self.__stop.is_set():
                 return
-            pv = self._recv_param_value(name, 2, 5, mav)
+            pv = self._recv_param_value(name, 2, 5, mavin, mavout)
             if (pv is not None):
                 self.from_pnc.put_nowait(AcquiredParam(name, pv))
                 try:

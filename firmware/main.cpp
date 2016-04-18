@@ -68,6 +68,7 @@ Giovanni
 #include "ms5806.hpp"
 #include "npa700.hpp"
 #include "pmu.hpp"
+#include "mav_dbg_sender.hpp"
 #if defined(BOARD_BEZVODIATEL)
   #include "odometer_stm.hpp"
 #elif defined(BOARD_MNU)
@@ -115,6 +116,7 @@ sensor_state_registry_t SensorStateRegistry;
 TlmSender tlm_sender;
 static LinkMgr link_mgr;
 MavLogger mav_logger;
+MavDbgSender mav_dbg_sender;
 Marg marg;
 
 #if defined(BOARD_BEZVODIATEL)
@@ -153,15 +155,6 @@ __CCM__ static TimeKeeper time_keeper(GNSS);
 ADCLocal adc_local;
 PowerMonitor power_monitor(adc_local);
 
-/**
- * C++11 stub for std::function
- */
-#include <functional>
-void std::__throw_bad_function_call(void) {
-  osalSysHalt("__throw_bad_function_call");
-  while(true);
-}
-
 /*
  ******************************************************************************
  * GLOBAL VARIABLES
@@ -193,6 +186,7 @@ static void start_services(void) {
   GNSS.start();
   time_keeper.start();
   mav_logger.start(NORMALPRIO);
+  mav_dbg_sender.start();
   osalThreadSleepMilliseconds(1);
   marg.start();
   calibrator.start();
@@ -212,6 +206,7 @@ static void stop_services(void) {
   wpdb.stop();
   odometer.stop();
   marg.stop();
+  mav_dbg_sender.stop();
   mav_logger.stop();
   time_keeper.stop();
   GNSS.stop();

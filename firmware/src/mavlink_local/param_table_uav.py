@@ -85,17 +85,16 @@ param = [
 ("MPU_acc_fs",      0,          3,          3,          "u", "default",     "MPU accelerometer full scale (0 - 2, 1 - 4, 2 - 8, 3 - 16) g"),
 
 # MPU6050 gyroscopes' settings
-("MPUG_xt_c0",      -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
-("MPUG_xt_c1",      -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
-("MPUG_xt_c2",      -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
-
-("MPUG_yt_c0",      -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
-("MPUG_yt_c1",      -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
-("MPUG_yt_c2",      -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
-
-("MPUG_zt_c0",      -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
-("MPUG_zt_c1",      -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
-("MPUG_zt_c2",      -1000,      0,          1000,       "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+("MPUG_Tcomp_en",   0,          1,          1,          "u", "default",     "Enable thermal compensation for gyroscope"),
+("MPUG_xbias_c0",   -10,        0,          10,         "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+("MPUG_xbias_c1",   -10,        0,          10,         "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+("MPUG_xbias_c2",   -10,        0,          10,         "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+("MPUG_ybias_c0",   -10,        0,          10,         "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+("MPUG_ybias_c1",   -10,        0,          10,         "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+("MPUG_ybias_c2",   -10,        0,          10,         "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+("MPUG_zbias_c0",   -10,        0,          10,         "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+("MPUG_zbias_c1",   -10,        0,          10,         "f", "default",     "Coefficient for thermal zero compensation polynomial"),
+("MPUG_zbias_c2",   -10,        0,          10,         "f", "default",     "Coefficient for thermal zero compensation polynomial"),
 
 ("MPUG_xsens",      0.9,        1,          1.1,        "f", "default",     "Sensitivity correction"),
 ("MPUG_ysens",      0.9,        1,          1.1,        "f", "default",     "Sensitivity correction"),
@@ -126,6 +125,27 @@ param = [
 ("ACC_still_thr",   0,          0.006,      0.1,        "f", "default",     "Device immobility threshold in g"),
 ("ACC_still_flen",  1,          256,        2048,       "i", "default",     "Length of filter used in immobility detector"),
 
+# Polynomial coeffs for accelerometer thermal compensation
+("MPUA_Tcomp_en",   0,          1,          1,          "u", "default",     "Enable thermal compensation for accelerometer"),
+("MPUA_xbias_c0",   -10,        0,          10,         "f", "default",     "Coefficient for thermal compensation polynomial"),
+("MPUA_xbias_c1",   -10,        0,          10,         "f", "default",     "Coefficient for thermal compensation polynomial"),
+("MPUA_xbias_c2",   -10,        0,          10,         "f", "default",     "Coefficient for thermal compensation polynomial"),
+("MPUA_ybias_c0",   -10,        0,          10,         "f", "default",     "Coefficient for thermal compensation polynomial"),
+("MPUA_ybias_c1",   -10,        0,          10,         "f", "default",     "Coefficient for thermal compensation polynomial"),
+("MPUA_ybias_c2",   -10,        0,          10,         "f", "default",     "Coefficient for thermal compensation polynomial"),
+("MPUA_zbias_c0",   -10,        0,          10,         "f", "default",     "Coefficient for thermal compensation polynomial"),
+("MPUA_zbias_c1",   -10,        0,          10,         "f", "default",     "Coefficient for thermal compensation polynomial"),
+("MPUA_zbias_c2",   -10,        0,          10,         "f", "default",     "Coefficient for thermal compensation polynomial"),
+("MPUA_xsens_c0",   -10,        1,          10,         "f", "default",     "Coefficient for thermal compensation polynomial"),
+("MPUA_xsens_c1",   -10,        0,          10,         "f", "default",     "Coefficient for thermal compensation polynomial"),
+("MPUA_xsens_c2",   -10,        0,          10,         "f", "default",     "Coefficient for thermal compensation polynomial"),
+("MPUA_ysens_c0",   -10,        1,          10,         "f", "default",     "Coefficient for thermal compensation polynomial"),
+("MPUA_ysens_c1",   -10,        0,          10,         "f", "default",     "Coefficient for thermal compensation polynomial"),
+("MPUA_ysens_c2",   -10,        0,          10,         "f", "default",     "Coefficient for thermal compensation polynomial"),
+("MPUA_zsens_c0",   -10,        1,          10,         "f", "default",     "Coefficient for thermal compensation polynomial"),
+("MPUA_zsens_c1",   -10,        0,          10,         "f", "default",     "Coefficient for thermal compensation polynomial"),
+("MPUA_zsens_c2",   -10,        0,          10,         "f", "default",     "Coefficient for thermal compensation polynomial"),
+
 #/**** PMU - pressure measurement unit ****/
 #// coefficients for thermal compensation
 ("PMU_above_msl",   -200,       255,        4000,       "i", "default",     "Height of barometric sensor above sea level in meters"),
@@ -154,7 +174,8 @@ param = [
 ("SINS_c_alg_t",    0,          5,          90,         "f", "default",     "Coarse align time"),
 ("SINS_f_alg_t",    0,          15,         60,         "f", "default",     "Finale align time"),
 
-("SINS_en_gnss",    0,          1,          1,          "u", "default",     "NULL"),
+("SINS_en_r_sns",   0,          1,          1,          "u", "default",     "NULL"),
+("SINS_en_v_sns",   0,          1,          1,          "u", "default",     "NULL"),
 ("SINS_en_baro",    0,          1,          1,          "u", "default",     "NULL"),
 ("SINS_en_odo",     0,          1,          1,          "u", "default",     "NULL"),
 ("SINS_en_nhl_y",   0,          1,          1,          "u", "default",     "NULL"),
@@ -164,27 +185,23 @@ param = [
 ("SINS_en_yaw",     0,          1,          1,          "u", "default",     "NULL"),
 ("SINS_en_mg_v",    0,          1,          1,          "u", "default",     "NULL"),
 ("SINS_en_mg_yaw",  0,          1,          1,          "u", "default",     "NULL"),
+("SINS_sns_v_th",   0,          1,          100,        "f", "default",     "NULL"),
 ("SINS_zupt_src",   0,          1,          2,          "u", "default",     "NULL"),
 
 ("SINS_R_pos_sns",  0.001,      5,          10000,      "f", "default",     "NULL"),
+("SINS_R_alt_sns",  0.001,      5,          10000,      "f", "default",     "NULL"),
 ("SINS_R_vel_sns",  0.001,      0.2,        10000,      "f", "default",     "NULL"),
-("SINS_R_odo",      0.001,      0.1,        100,        "f", "default",     "NULL"),
-("SINS_R_nhl_y",    0.001,      0.1,        100,        "f", "default",     "NULL"),
-("SINS_R_nhl_z",    0.001,      0.1,        100,        "f", "default",     "NULL"),
+("SINS_R_odo",      0.001,      0.1,        10000,      "f", "default",     "NULL"),
+("SINS_R_nhl_y",    0.001,      0.1,        10000,      "f", "default",     "NULL"),
+("SINS_R_nhl_z",    0.001,      0.1,        10000,      "f", "default",     "NULL"),
 ("SINS_R_baro",     0.001,      0.3,        100,        "f", "default",     "NULL"),
 ("SINS_R_mag",      0.001,      0.3,        100,        "f", "default",     "NULL"),
 ("SINS_R_euler",    0.001,      0.01,       100,        "f", "default",     "NULL"),
-("SINS_R_zihr",     0.001,      0.01,       100,        "f", "default",     "NULL"),
 
-("SINS_R_vn_st",    0.0001,     0.01,       10,         "f", "default",     "NULL"),
-("SINS_R_vv_st",    0.0001,     0.01,       10,         "f", "default",     "NULL"),
-("SINS_R_yaw_st",   0.0001,     0.001,      100,        "f", "default",     "NULL"),
-("SINS_R_yaw_mg",   0.0001,     0.001,      100,        "f", "default",     "NULL"),
-
-("SINS_P_ned",      0.1,        50,         1000,       "f", "default",     "NULL"),
-("SINS_P_acc_b",    0.01,       0.5,        5,          "f", "default",     "NULL"),
-("SINS_P_gyr_b",    0.001,      0.1,        30,         "f", "default",     "NULL"),
-
+("SINS_R_vn_st",    0.0,        0.01,       10,         "f", "default",     "NULL"),
+("SINS_R_vv_st",    0.0,        0.01,       10,         "f", "default",     "NULL"),
+("SINS_R_yaw_st",   0.0,        0.001,      100,        "f", "default",     "NULL"),
+("SINS_R_yaw_mg",   0.0,        0.001,      100,        "f", "default",     "NULL"),
 
 ("SINS_B_acc_b",    0.0,        1,          50000,      "f", "default",     "NULL"),
 ("SINS_B_gyr_b",    0.0,        1,          50000,      "f", "default",     "NULL"),
@@ -476,13 +493,8 @@ param = [
 ("PID_vm_scale_02", -10000,     1,          10000,      "f", "default",     "NULL"),
 ("PID_vm_scale_03", -10000,     1,          10000,      "f", "default",     "NULL"),
 
-
-
 #/* intervals between sending different data (mS) */
 ("T_attitude",      SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
-("T_debug",         SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
-("T_debug_vect",    SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
-("T_debug_mnr",     SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 ("T_global_pos",    SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 ("T_gps_raw_int",   SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 ("T_gps_status",    SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
@@ -490,8 +502,8 @@ param = [
 ("T_nav_output",    SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 ("T_mission_curr",  SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 ("T_position_ned",  SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
-("T_raw_imu",       SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "Interval of sending this data in milliseconds.\\nSet it to 0 for disabling"),
-("T_raw_press",     SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
+#("T_raw_imu",       SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "Interval of sending this data in milliseconds.\\nSet it to 0 for disabling"),
+#("T_raw_press",     SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 ("T_rc",            SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 ("T_rc_scaled",     SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 ("T_scal_imu",      SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
@@ -500,10 +512,27 @@ param = [
 ("T_system_time",   SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 ("T_vfr_hud",       SEND_MIN,   0,          SEND_MAX,   "u", "send_tmo",    "NULL"),
 
-#/* Timezone. */
+# decimators for debug values
+("DBG_val_0",       0,          0,          100,        "u", "default",     "NULL"),
+("DBG_val_1",       0,          0,          100,        "u", "default",     "NULL"),
+("DBG_val_2",       0,          0,          100,        "u", "default",     "NULL"),
+("DBG_val_3",       0,          0,          100,        "u", "default",     "NULL"),
+("DBG_val_4",       0,          0,          100,        "u", "default",     "NULL"),
+("DBG_val_5",       0,          0,          100,        "u", "default",     "NULL"),
+("DBG_val_6",       0,          0,          100,        "u", "default",     "NULL"),
+("DBG_val_7",       0,          0,          100,        "u", "default",     "NULL"),
+("DBG_gps_vel",     0,          0,          100,        "u", "default",     "NULL"),
+("DBG_acc_bias",    0,          0,          100,        "u", "default",     "NULL"),
+("DBG_gyr_bias",    0,          0,          100,        "u", "default",     "NULL"),
+("DBG_acc_scale",   0,          0,          100,        "u", "default",     "NULL"),
+("DBG_gyr_scale",   0,          0,          100,        "u", "default",     "NULL"),
+("DBG_mag_data",    0,          0,          100,        "u", "default",     "NULL"),
+("DBG_maneuver",    0,          0,          100,        "u", "default",     "NULL"),
+
+# Timezone
 ("TIME_zone",       -24,        0,          24,         "i", "default",    "Simple offset in hours."),
 
-#/* Length of filters for different systems. */
+# Length of filters for different systems
 ("FLEN_adc",        1,          16,         32768,      "i", "default",    "NULL"),
 ("FLEN_pres_dyn",   1,          16,         32768,      "i", "default",    "NULL"),
 ("FLEN_pres_stat",  1,          16,         32768,      "i", "default",    "NULL"),
@@ -513,17 +542,17 @@ param = [
 ("FLEN_reserved3",  1,          16,         32768,      "i", "default",    "NULL"),
 ("FLEN_reserved4",  1,          16,         32768,      "i", "default",    "NULL"),
 
-#/*  */
+# speedometer
 ("SPD_pulse2m",     0.0,        0.0555555,  1.0,        "f", "default",    "Multiply odometer pulses count by this coefficient to get\\ntrip in meters. Coarse value is 0.05555555"),
 ("SPD_trgt_speed",  0.0,        0,          60.0,       "f", "default",    "NULL"),
 ("SPD_speed_max",   0.0,        0,          60.0,       "f", "default",    "NULL"),
 
 # GNSS settings
-("GNSS_dyn_model",  0,          8,          8,          "u", "default",    "0 - portable, 2 - stationary, 3 - pedestrian 4 - automotive, 5 - sea,\\n 6 - airborne with <1g Acceleration, 7 - airborne with <2g Acceleration, 8 - airborne with <4g Acceleration"),
+("GNSS_dyn_model",  0,          8,          8,          "u", "default",    "0 - portable, 1 - forbidden, 2 - stationary, 3 - pedestrian \\n 4 - automotive, 5 - sea, 6 - airborne with <1g Acceleration, \\n 7 - airborne with <2g Acceleration, 8 - airborne with <4g Acceleration"),
 ("GNSS_fix_period", 100,        200,        1000,       "u", "default",    "NULL"),
 
-#/**** fake field with 14 symbols name ****/
-("param_end_mark__",0,      0,      1224,   "u", "default",    "Fake parameter with maximum allowable name length"),
+# fake field with 16 symbols name
+("Z_param_capacity",0,          0,          2048,       "u", "default",    "2 purpose parameter. \\n 1) It has maximum allowable name length. \\n 2) contains max parameter count"),
 ]
 
 

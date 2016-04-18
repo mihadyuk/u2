@@ -57,7 +57,7 @@ private:
   void analyze_partexecout();
   void partexecout2mavlink(const partExecOut<double> &out);
   void partexecout2acsin(const partExecOut<double> &out);
-  void debug2mavlink(float dT);
+  void debug2mavlink(void);
   void navigate(float dT);
 
   MissionState state;
@@ -68,9 +68,6 @@ private:
   uint32_t part_number = 0;
   bool maneuver_completed = false;
   partExecOut<double> out;
-
-  float debug_mnr_decimator = 0.0f;
-  const uint32_t *T_debug_mnr = nullptr;
 
   mavlink_mission_item_t prev;
   mavlink_mission_item_t trgt;

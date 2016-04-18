@@ -20,7 +20,7 @@ protected:
   virtual void subscribe_inject(void){return;}
   virtual void release_inject(void){return;}
   virtual void inject(void){return;}
-  void start_impl(void);
+  void start_impl(void) override;
   ProtoNmea parser;
 private:
   static THD_FUNCTION(nmeaRxThread, arg);

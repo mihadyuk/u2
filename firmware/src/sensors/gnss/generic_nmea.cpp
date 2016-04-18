@@ -7,7 +7,6 @@
 #include "mav_logger.hpp"
 #include "geometry.hpp"
 #include "time_keeper.hpp"
-#include "chprintf.h"
 #include "array_len.hpp"
 #include "param_registry.hpp"
 

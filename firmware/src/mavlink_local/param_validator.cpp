@@ -53,7 +53,7 @@ static bool sortmtrx_good(uint32_t v){
  *
  */
 ParamStatus ParamValidator::sortmtrx_val(const param_union_t *value,
-                                         const GlobalParam_t *param) {
+                                         const uavparam_t *param) {
   uint32_t v = param->valuep->u32;
 
   if ( ! sortmtrx_good(v))
@@ -86,7 +86,7 @@ static bool polarity_good(int32_t v) {
 }
 
 ParamStatus ParamValidator::polarity_val(const param_union_t *value,
-                                         const GlobalParam_t *param) {
+                                         const uavparam_t *param) {
   int32_t v = param->valuep->i32;
   if ( ! polarity_good(v))
     param->valuep->i32 = param->def.i32;
@@ -109,7 +109,7 @@ ParamStatus ParamValidator::polarity_val(const param_union_t *value,
  * It must be zero OR between min and max.
  */
 ParamStatus ParamValidator::sendtmo_val(const param_union_t *value,
-                                        const GlobalParam_t *param) {
+                                        const uavparam_t *param) {
 
   uint32_t initial_value = value->u32;
   uint32_t v = initial_value;
@@ -138,7 +138,7 @@ ParamStatus ParamValidator::sendtmo_val(const param_union_t *value,
  * Uint32 boundary checker.
  */
 ParamStatus ParamValidator::uint_val(const param_union_t *value,
-                                     const GlobalParam_t *param) {
+                                     const uavparam_t *param) {
   uint32_t initial_value = value->u32;
   uint32_t v = initial_value;
 
@@ -158,7 +158,7 @@ ParamStatus ParamValidator::uint_val(const param_union_t *value,
  * Float boundary checker.
  */
 ParamStatus ParamValidator::float_val(const param_union_t *value,
-                                      const GlobalParam_t *param) {
+                                      const uavparam_t *param) {
   float initial_value = value->f32;
   float v = initial_value;
 
@@ -182,7 +182,7 @@ ParamStatus ParamValidator::float_val(const param_union_t *value,
  * Int32 boundary checker.
  */
 ParamStatus ParamValidator::int_val(const param_union_t *value,
-                                    const GlobalParam_t *param) {
+                                    const uavparam_t *param) {
   int32_t initial_value = value->i32;
   int32_t v = initial_value;
 
@@ -199,7 +199,7 @@ ParamStatus ParamValidator::int_val(const param_union_t *value,
 }
 
 ParamStatus ParamValidator::default_val(const param_union_t *value,
-                                        const GlobalParam_t *param) {
+                                        const uavparam_t *param) {
   switch(param->param_type){
   case MAVLINK_TYPE_FLOAT:
     return this->float_val(value, param);
@@ -230,7 +230,7 @@ ParamStatus ParamValidator::default_val(const param_union_t *value,
  * @return            operation status.
  */
 ParamStatus ParamValidator::set(const param_union_t *value,
-                                const GlobalParam_t *param) {
+                                const uavparam_t *param) {
   switch(param->func){
   case PARAM_DEFAULT:
     return this->default_val(value, param);

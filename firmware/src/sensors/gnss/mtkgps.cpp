@@ -8,7 +8,6 @@
 #include "geometry.hpp"
 #include "time_keeper.hpp"
 #include "pads.h"
-#include "chprintf.h"
 #include "array_len.hpp"
 #include "param_registry.hpp"
 

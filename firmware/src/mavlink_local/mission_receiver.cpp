@@ -7,7 +7,7 @@
 #include "mission_receiver.hpp"
 #include "global_flags.h"
 #include "waypoint_db.hpp"
-#include "mav_dbg.hpp"
+#include "mav_dbg_print.hpp"
 
 using namespace chibios_rt;
 
@@ -22,7 +22,7 @@ using namespace chibios_rt;
 #define MIN_POINTS_PER_MISSION        3       /* minimal number of waypoints in valid mission */
 #define TARGET_RADIUS                 param2  /* convenience alias */
 
-#define MISSION_RETRY_CNT             10
+#define MISSION_RETRY_CNT             5
 #define MISSION_CHECK_PERIOD          MS2ST(100)
 #define MISSION_TIMEOUT               MS2ST(2000)
 #define MISSION_SEND_PAUSE            MS2ST(100)
@@ -254,7 +254,7 @@ static void send_mission_item(uint16_t seq) {
  *             gets the WAYPOINT_ACK or another message that starts
  *             a different transaction or a timeout happens.
  */
-static msg_t mav2gcs(Mailbox<mavlink_message_t*, 1> &mission_mailbox) {
+static msg_t to_gcs(Mailbox<mavlink_message_t*, 1> &mission_mailbox) {
 
   uint32_t retry_cnt = MISSION_RETRY_CNT;
   mavlink_message_t *recv_msg;
@@ -404,7 +404,7 @@ static MAV_MISSION_RESULT check_mission(uint16_t N) {
   }
 
   /* check available space */
-  if ((N > wpdb.getCapacity()) || (OSAL_FAILED == wpdb.reset())) {
+  if (N > wpdb.getCapacity()) {
     return MAV_MISSION_NO_SPACE;
   }
 
@@ -414,7 +414,7 @@ static MAV_MISSION_RESULT check_mission(uint16_t N) {
 /**
  *
  */
-static msg_t gcs2mav(Mailbox<mavlink_message_t*, 1> &mission_mailbox, uint16_t total_wps) {
+static msg_t from_gcs(Mailbox<mavlink_message_t*, 1> &mission_mailbox, uint16_t total_wps) {
 
   size_t seq = 0;
   MAV_MISSION_RESULT storage_status = MAV_MISSION_ERROR;
@@ -428,7 +428,7 @@ static msg_t gcs2mav(Mailbox<mavlink_message_t*, 1> &mission_mailbox, uint16_t t
   /**/
   for (seq=0; seq<total_wps; seq++) {
     if (MSG_OK == try_exchange(mission_mailbox, &mavlink_in_mission_item_struct, seq)) {
-      /* check waypoint cosherness and write it if cosher */
+      /* check waypoint cosherness and than write it */
       storage_status = check_wp(&mavlink_in_mission_item_struct, seq, total_wps);
       if (MAV_MISSION_ACCEPTED != storage_status) {
         ret = MSG_RESET;
@@ -441,7 +441,6 @@ static msg_t gcs2mav(Mailbox<mavlink_message_t*, 1> &mission_mailbox, uint16_t t
       }
     }
     else {
-      mission_clear_all();
       storage_status = MAV_MISSION_ERROR;
       ret = MSG_RESET;
       goto EXIT;
@@ -494,15 +493,16 @@ void MissionReceiver::main(void) {
       case MAVLINK_MSG_ID_MISSION_COUNT:
         mavlink_msg_mission_count_decode(recv_msg, &mission_count);
         destCompID = static_cast<MAV_COMPONENT>(recv_msg->compid);
-        if (MSG_OK == gcs2mav(mission_mailbox, mission_count.count))
+        if (MSG_OK == from_gcs(mission_mailbox, mission_count.count)) {
           event_mission_updated.broadcastFlags(EVMSK_MISSION_UPDATED);
+        }
         mav_postman.free(recv_msg);
         break;
 
       /* ground want to know how many items we have */
       case MAVLINK_MSG_ID_MISSION_REQUEST_LIST:
         destCompID = static_cast<MAV_COMPONENT>(recv_msg->compid);
-        mav2gcs(mission_mailbox);
+        to_gcs(mission_mailbox);
         mav_postman.free(recv_msg);
         break;
 

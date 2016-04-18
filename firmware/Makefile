@@ -193,6 +193,7 @@ MAVSRC = \
 		src/mavlink_local/mission_receiver.cpp \
 		src/mavlink_local/waypoint_db.cpp \
 		src/mavlink_local/link_mgr.cpp \
+		src/mavlink_local/mav_dbg_sender.cpp \
 
 SENSORSRC = src/i2c_local.cpp \
 		src/sensors/adis.cpp \
@@ -241,6 +242,7 @@ CPPSRC = $(CHCPPSRC) \
 		$(CLISRC) \
 		$(CONTROLSRC) \
 		main.cpp \
+		cpp_exception_stubs.cpp \
 		src/instantiator.cpp \
 		src/debouncer.cpp \
 		src/blinker.cpp \

@@ -12,6 +12,8 @@
 
 #define MPU6050_FIR_LEN     129
 
+#define POLYC_LEN           3   /* thermal compensation poly order + 1 */
+
 /**
  *
  */
@@ -48,7 +50,6 @@ private:
   friend THD_FUNCTION(Mpu6050Thread, arg);
   float dT(void);
   void acquire_data(void);
-  void send_debug_temp(void);
   msg_t soft_reset(void);
   msg_t acquire_simple(float *acc, float *gyr);
   msg_t acquire_fifo(float *acc, float *gyr);
@@ -60,12 +61,9 @@ private:
   msg_t param_update(void);
   float gyr_sens(void);
   float acc_sens(void);
-  void gyro_thermo_comp(float *result);
-  void acc_egg_comp(float *result);
   void pickle_gyr(float *result);
   void pickle_fifo(float *acc, float *gyr, const size_t sample_cnt);
   void pickle_acc(float *result);
-  void pickle_temp(float *result, const uint8_t *buf);
   bool hw_init_full(void);
   bool hw_init_fast(void);
 
@@ -88,6 +86,11 @@ private:
   uint8_t dlpf_current;
   uint8_t smplrtdiv_current;
   MPU6050_fir_block<float, float, MPU6050_FIR_LEN> &fir;
+  const uint32_t *MPUG_Tcomp_en = NULL;
+  const uint32_t *MPUA_Tcomp_en = NULL;
+  const float *gyr_bias_c[3*POLYC_LEN] = {};
+  const float *acc_bias_c[3*POLYC_LEN] = {};
+  const float *acc_sens_c[3*POLYC_LEN] = {};
 
   uint16_t fifo_remainder = 0;
   int16_t rxbuf_fifo[960 / 2];
