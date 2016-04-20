@@ -56,7 +56,7 @@ HIL::HIL(void) {
 void HIL::update(ACSInput &acs_in) {
 
   for (size_t i=0; i<ACS_INPUT_ENUM_END; i++) {
-    if (bitmapGet(&this->bmp.bitmap, i) > 0) {
+    if (1 == bmp[i]) {
       acs_in.ch[i] = this->shadow.ch[i];
     }
   }
@@ -66,7 +66,7 @@ void HIL::update(ACSInput &acs_in) {
  *
  */
 void HIL::disableAll(void) {
-  bitmapObjectInit(&this->bmp.bitmap, 0);
+  bmp.reset();
 }
 
 /**
@@ -76,5 +76,5 @@ void HIL::override(float val, state_vector_enum addr) {
   osalDbgCheck(addr < ACS_INPUT_ENUM_END);
 
   shadow.ch[addr] = val;
-  bitmapSet(&this->bmp.bitmap, addr);
+  bmp.set(addr);
 }

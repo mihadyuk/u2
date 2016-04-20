@@ -10,10 +10,6 @@ static time_measurement_t tmu;
 std::bitset<32> mybitset;
 uint32_t myword;
 
-void std::__throw_out_of_range_fmt(char const *msg, ...) {
-  osalSysHalt(msg);
-}
-
 void bitset_benchmark(void){
   chTMObjectInit(&tmu_memcpy);
   chTMObjectInit(&tmu);

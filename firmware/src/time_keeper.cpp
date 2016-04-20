@@ -262,7 +262,7 @@ int64_t TimeKeeper::utc(void) {
   uint32_t cnt1, cnt2;
   syssts_t sts;
 
-  sts = osalSysGetStatusAndLockX();
+  sts  = osalSysGetStatusAndLockX();
   cnt1 = RTC_GPTD.tim->CNT;
   ret  = unix_usec;
   cnt2 = RTC_GPTD.tim->CNT;

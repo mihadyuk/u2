@@ -3,6 +3,7 @@
 
 #include "i2c_sensor.hpp"
 #include "fir.hpp"
+#include "iir.hpp"
 #include "marg_data.hpp"
 
 #define MPU6050_I2C_ADDR    0b1101000
@@ -11,13 +12,14 @@
 #define MPU_TX_DEPTH        4
 
 #define MPU6050_FIR_LEN     129
+#define MPU6050_IIR_LEN     3
 
-#define POLYC_LEN           3   /* thermal compensation poly order + 1 */
+#define POLYC_LEN           3   /* thermal compensation polynomial order + 1 */
 
 /**
  *
  */
-template <typename T, typename dataT, int L>
+template <typename T, typename dataT>
 struct MPU6050_fir_block {
   MPU6050_fir_block(const T *taps, int taps_len) {
     for (size_t i=0; i<3; i++) {
@@ -27,8 +29,25 @@ struct MPU6050_fir_block {
   }
   MPU6050_fir_block(void) = delete;
 
-  filters::FIR<T, dataT, L> acc[3];
-  filters::FIR<T, dataT, L> gyr[3];
+  filters::FIR<T, dataT, MPU6050_FIR_LEN> acc[3];
+  filters::FIR<T, dataT, MPU6050_FIR_LEN> gyr[3];
+};
+
+/**
+ *
+ */
+template <typename T, typename dataT>
+struct MPU6050_iir_block {
+  MPU6050_iir_block(const T *taps_a, const T *taps_b) {
+    for (size_t i=0; i<3; i++) {
+      acc[i].setKernel(taps_a, taps_b);
+      gyr[i].setKernel(taps_a, taps_b);
+    }
+  }
+  MPU6050_iir_block(void) = delete;
+
+  filters::IIR<T, dataT, MPU6050_IIR_LEN> acc[3];
+  filters::IIR<T, dataT, MPU6050_IIR_LEN> gyr[3];
 };
 
 /**
@@ -85,7 +104,8 @@ private:
   uint8_t acc_fs_current;
   uint8_t dlpf_current;
   uint8_t smplrtdiv_current;
-  MPU6050_fir_block<float, float, MPU6050_FIR_LEN> &fir;
+  MPU6050_fir_block<float, float> &fir;
+  MPU6050_iir_block<double, double> &iir;
   const uint32_t *MPUG_Tcomp_en = NULL;
   const uint32_t *MPUA_Tcomp_en = NULL;
   const float *gyr_bias_c[3*POLYC_LEN] = {};

@@ -3,23 +3,16 @@
 
 #include <cstring>
 
-namespace filters {
+#include "filter_base.hpp"
 
-/**
- *
- */
-template<typename T, typename dataT>
-class FIRBase {
-public:
-  virtual T update (dataT sample) = 0;
-};
+namespace filters {
 
 /**
  * @brief   FIR filter.
  * @note    set "T" and "dataT" to the same type for fastest possible code
  */
 template<typename T, typename dataT, int L>
-class FIR : public FIRBase<T, dataT> {
+class FIR : public FilterBase<T, dataT> {
 public:
   /**
    * @brief   Default constructor

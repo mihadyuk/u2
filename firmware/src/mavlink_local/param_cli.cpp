@@ -40,18 +40,27 @@
 /*
  * confirmation of changes
  */
-static void confirm(ParamStatus status){
-  if (status == ParamStatus::OK)
+static void confirm(ParamStatus status) {
+  switch(status){
+  case ParamStatus::OK:
     return;
-    //cli_println("Success");
-  else if (status == ParamStatus::CLAMPED)
+    break;
+  case ParamStatus::CLAMPED:
     cli_println("WARNING: value clamped to safety limits.");
-  else if (status == ParamStatus::NOT_CHANGED)
+    break;
+  case ParamStatus::NOT_CHANGED:
     cli_println("WARNING: value not changed.");
-  else if (status == ParamStatus::INCONSISTENT)
+    break;
+  case ParamStatus::INCONSISTENT:
     cli_println("ERROR: value inconsistent.");
-  else
+    break;
+  case ParamStatus::WRONG_TYPE:
+    cli_println("ERROR: wrong type.");
+    break;
+  case ParamStatus::UNKNOWN_ERROR:
     cli_println("ERROR: Unhandled error.");
+    break;
+  }
 }
 
 /**

@@ -1,29 +1,26 @@
 #ifndef IIR_HPP_
 #define IIR_HPP_
 
+#include <cmath>
 #include <cstring>
+#include <array>
+
+#include "filter_base.hpp"
 
 namespace filters {
 
 /**
  *
  */
-template <typename T, typename dataT>
-class IIRBase {
-public:
-  virtual T update (T sample) = 0;
-};
-
-/**
- *
- */
-template <typename T, typename dataT, unsigned int L>
-class IIR : public IIRBase<T, dataT> {
+template <typename T, typename dataT, size_t L>
+class IIR : public FilterBase<T, dataT> {
 public:
   /**
    * @brief   Default constructor.
    */
-  IIR(void) : a(nullptr), b(nullptr) {
+  IIR(void) :
+  a(nullptr),
+  b(nullptr) {
     memset(a_state, 0, sizeof(a_state));
     memset(b_state, 0, sizeof(b_state));
   }
@@ -31,7 +28,9 @@ public:
   /**
    * @brief   Default constructor.
    */
-  IIR(const T *a_taps, const T *b_taps) : a(a_taps), b(b_taps) {
+  IIR(const T *a_taps, const T *b_taps) :
+  a(a_taps),
+  b(b_taps) {
     osalDbgCheck((nullptr != a) && (nullptr != b));
     memset(a_state, 0, sizeof(a_state));
     memset(b_state, 0, sizeof(b_state));
@@ -40,8 +39,8 @@ public:
   /**
    * @brief   Switch transformation kernels.
    */
-  void set_taps(const T *a_taps, const T *b_taps) {
-    osalDbgCheck((nullptr != a) && (nullptr != b));
+  void setKernel(const T *a_taps, const T *b_taps) {
+    osalDbgCheck((nullptr != a_taps) && (nullptr != b_taps));
     a = a_taps;
     b = b_taps;
   }
@@ -49,16 +48,17 @@ public:
   /**
    *
    */
-  T update (T sample) {
+  T update(dataT sample) {
 
-    unsigned int i;
+    size_t i;
     T s;
 
     /* filter */
     s = sample * b[0];
-    for (i=0; i<L; i++)
+    for (i=0; i<L; i++) {
       s += b_state[i] * b[i+1] + a_state[i] * a[i];
-
+    }
+    osalDbgCheck(! std::isinf(s));
     /* shift B */
     for (i=L-1; i>0; i--) {
       a_state[i] = a_state[i-1];
