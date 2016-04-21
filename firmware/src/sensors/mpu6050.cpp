@@ -73,7 +73,7 @@ enum class tcomp_t {
 /* how many bytes in single fifo sample */
 #define BYTES_IN_SAMPLE       12
 
-#define MPU6050_USE_IIR       true
+#define MPU6050_USE_IIR       false
 
 /*
  ******************************************************************************
@@ -101,34 +101,22 @@ static const float acc_sens_array[4] = {
     (16 * 9.81f) / 32768
 };
 
-__CCM__ static MPU6050_fir_block<float, float> fir_block(taps, ArrayLen(taps));
-
-//static const double iir_taps_b[MPU6050_IIR_LEN + 1] = {
-//    0.00101504498161375522613525390625,
-//   -0.001014283741824328899383544921875,
-//   -0.001014283741824328899383544921875,
-//    0.00101504498161375522613525390625
-//};
-//
-//static const double iir_taps_a[MPU6050_IIR_LEN] = {
-//    -2.9884192943572998046875,
-//    2.9770987033843994140625,
-//    -0.988677978515625
-//};
-
 static const double iir_taps_a[MPU6050_IIR_LEN + 1] = {
-    0.099686574022485416324279583477618871257,
-    -0.199332707548142668008139821722579654306,
-    0.099686574022485416324279583477618871257
+    0.00000049465842266727122478187084197998,
+    0.000001483975324845232535153627395629883,
+    0.000001483975324845232535153627395629883,
+    0.00000049465842266727122478187084197998,
 };
 
 static const double iir_taps_b[MPU6050_IIR_LEN] = {
-    1
-    -1.993506590473694162213291747320909053087,
-    0.993551965457436514483902101346757262945
+    2.968198299407958984375,
+    -2.9369003772735595703125,
+    0.968698024749755859375,
 };
 
-__CCM__ static MPU6050_iir_block<double, double> iir_block(iir_taps_a, iir_taps_b);
+__CCM__ static MPU6050_iir_block<double> iir_block(iir_taps_a, iir_taps_b);
+
+__CCM__ static MPU6050_fir_block<float> fir_block(taps);
 
 size_t MPU6050::isr_count = 0;
 uint8_t MPU6050::isr_dlpf = 0;
@@ -467,20 +455,19 @@ void MPU6050::pickle_fifo(marg_vector_t &acc, marg_vector_t &gyr, const size_t s
     gyr_raw_data[i] = rxbuf_fifo[gyr_fifo_offset + i];
   }
 
-  acc[0] = iir.acc[0].update(42);
-//  for (size_t n=0; n<sample_cnt; n++) {
-//    for (size_t i=0; i<3; i++) {
-//      size_t shift = n * BYTES_IN_SAMPLE / 2 + i;
-//      if (MPU6050_USE_IIR) {
-//        acc[i] = iir.acc[i].update(rxbuf_fifo[shift + acc_fifo_offset]);
-//        gyr[i] = iir.gyr[i].update(rxbuf_fifo[shift + gyr_fifo_offset]);
-//      }
-//      else {
-//        acc[i] = fir.acc[i].update(rxbuf_fifo[shift + acc_fifo_offset]);
-//        gyr[i] = fir.gyr[i].update(rxbuf_fifo[shift + gyr_fifo_offset]);
-//      }
-//    }
-//  }
+  for (size_t n=0; n<sample_cnt; n++) {
+    for (size_t i=0; i<3; i++) {
+      size_t shift = n * BYTES_IN_SAMPLE / 2 + i;
+      if (MPU6050_USE_IIR) {
+        acc[i] = iir.acc[i].update(rxbuf_fifo[shift + acc_fifo_offset]);
+        gyr[i] = iir.gyr[i].update(rxbuf_fifo[shift + gyr_fifo_offset]);
+      }
+      else {
+        acc[i] = fir.acc[i].update(rxbuf_fifo[shift + acc_fifo_offset]);
+        gyr[i] = fir.gyr[i].update(rxbuf_fifo[shift + gyr_fifo_offset]);
+      }
+    }
+  }
 
   /* acc */
   sens = this->acc_sens();

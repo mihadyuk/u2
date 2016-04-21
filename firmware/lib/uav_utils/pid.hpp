@@ -182,7 +182,7 @@ public:
   }
 
 private:
-  filters::IIR<T, T, 1> filter;
+  filters::IIR<T, 1> filter;
   bool need_filter;
 };
 

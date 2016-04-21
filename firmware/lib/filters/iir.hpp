@@ -12,8 +12,8 @@ namespace filters {
 /**
  *
  */
-template <typename T, typename dataT, size_t L>
-class IIR : public FilterBase<T, dataT> {
+template <typename T, size_t L>
+class IIR : public FilterBase<T> {
 public:
   /**
    * @brief   Default constructor.
@@ -26,41 +26,35 @@ public:
   }
 
   /**
-   * @brief   Default constructor.
-   */
-  IIR(const T *a_taps, const T *b_taps) :
-  a(a_taps),
-  b(b_taps) {
-    osalDbgCheck((nullptr != a) && (nullptr != b));
-    memset(a_state, 0, sizeof(a_state));
-    memset(b_state, 0, sizeof(b_state));
-  }
-
-  /**
    * @brief   Switch transformation kernels.
    */
   void setKernel(const T *a_taps, const T *b_taps) {
-    osalDbgCheck((nullptr != a_taps) && (nullptr != b_taps));
     a = a_taps;
     b = b_taps;
   }
 
   /**
-   *
+   * @brief   main filter function.
+   * @details @b is kernel for input (left) branch, @ is kernel for
+   *          output (right) branch. @a is shorter than @b by one element,
+   *          some time this unused element represents as unity.
    */
-  T update(dataT sample) {
+  T update(T sample) {
 
-    size_t i;
     T s;
 
     /* filter */
     s = sample * b[0];
-    for (i=0; i<L; i++) {
+    for (size_t i=0; i<L; i++) {
       s += b_state[i] * b[i+1] + a_state[i] * a[i];
+      /*-----------------------^
+       Note: signe '+' here is for performance reasons. You need to
+       premultiply a[] kernel by -1 in higher level if it calculated
+       for case like y(n) = S(P) - S(Q) */
     }
-    osalDbgCheck(! std::isinf(s));
-    /* shift B */
-    for (i=L-1; i>0; i--) {
+
+    /* shift delay lines */
+    for (size_t i=L-1; i>0; i--) {
       a_state[i] = a_state[i-1];
       b_state[i] = b_state[i-1];
     }
@@ -73,8 +67,38 @@ public:
 private:
   const T *a;
   const T *b;
-  dataT a_state[L];
-  dataT b_state[L];
+  T a_state[L];
+  T b_state[L];
+};
+
+/**
+ *
+ */
+template<typename T, size_t L, size_t links>
+class IIRChain {
+  static_assert(links > 1, "Chain with single link is pointless");
+public:
+  /**
+   *
+   */
+  T update(T sample) {
+    T s = gain[0] * chain[0].update(sample);
+    for (size_t i=1; i<links; i++) {
+      s += gain[i] * chain[i].update(s);
+    }
+    return s;
+  }
+
+  /**
+   *
+   */
+  void setGain(const T *gain_p) {
+    gain = gain_p;
+  }
+
+private:
+  IIR<T, L> chain[links];
+  const T *gain;
 };
 
 } /* namespace */

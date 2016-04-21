@@ -12,31 +12,31 @@
 #define MPU_TX_DEPTH        4
 
 #define MPU6050_FIR_LEN     129
-#define MPU6050_IIR_LEN     3
+#define MPU6050_IIR_LEN     4
 
 #define POLYC_LEN           3   /* thermal compensation polynomial order + 1 */
 
 /**
  *
  */
-template <typename T, typename dataT>
+template <typename T>
 struct MPU6050_fir_block {
-  MPU6050_fir_block(const T *taps, int taps_len) {
+  MPU6050_fir_block(const std::array<float, MPU6050_FIR_LEN> &taps) {
     for (size_t i=0; i<3; i++) {
-      acc[i].setKernel(taps, taps_len);
-      gyr[i].setKernel(taps, taps_len);
+      acc[i].setKernel(taps);
+      gyr[i].setKernel(taps);
     }
   }
   MPU6050_fir_block(void) = delete;
 
-  filters::FIR<T, dataT, MPU6050_FIR_LEN> acc[3];
-  filters::FIR<T, dataT, MPU6050_FIR_LEN> gyr[3];
+  filters::FIR<T, MPU6050_FIR_LEN> acc[3];
+  filters::FIR<T, MPU6050_FIR_LEN> gyr[3];
 };
 
 /**
  *
  */
-template <typename T, typename dataT>
+template <typename T>
 struct MPU6050_iir_block {
   MPU6050_iir_block(const T *taps_a, const T *taps_b) {
     for (size_t i=0; i<3; i++) {
@@ -46,8 +46,8 @@ struct MPU6050_iir_block {
   }
   MPU6050_iir_block(void) = delete;
 
-  filters::IIR<T, dataT, MPU6050_IIR_LEN> acc[3];
-  filters::IIR<T, dataT, MPU6050_IIR_LEN> gyr[3];
+  filters::IIR<T, MPU6050_IIR_LEN> acc[3];
+  filters::IIR<T, MPU6050_IIR_LEN> gyr[3];
 };
 
 /**
@@ -104,8 +104,8 @@ private:
   uint8_t acc_fs_current;
   uint8_t dlpf_current;
   uint8_t smplrtdiv_current;
-  MPU6050_fir_block<float, float> &fir;
-  MPU6050_iir_block<double, double> &iir;
+  MPU6050_fir_block<float> &fir;
+  MPU6050_iir_block<double> &iir;
   const uint32_t *MPUG_Tcomp_en = NULL;
   const uint32_t *MPUA_Tcomp_en = NULL;
   const float *gyr_bias_c[3*POLYC_LEN] = {};

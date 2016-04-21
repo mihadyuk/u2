@@ -6,10 +6,10 @@ namespace filters {
 /**
  *
  */
-template <typename T, typename dataT>
+template <typename T>
 class FilterBase {
 public:
-  virtual T update(dataT sample) = 0;
+  virtual T update(T sample) = 0;
 };
 
 } /* namespace */
