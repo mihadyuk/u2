@@ -98,7 +98,7 @@ public:
    *
    */
   T update(T sample) {
-    T s = gain[0] * chain[0].update(sample);;
+    T s = gain[0] * chain[0].update(sample);
 
     for (size_t i=1; i<links; i++) {
       s += gain[i] * chain[i].update(s);
