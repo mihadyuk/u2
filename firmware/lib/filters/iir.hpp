@@ -20,9 +20,20 @@ public:
    */
   IIR(void) :
   a(nullptr),
-  b(nullptr) {
-    memset(a_state, 0, sizeof(a_state));
-    memset(b_state, 0, sizeof(b_state));
+  b(nullptr)
+  {
+    this->clean_state();
+  }
+
+  /**
+   * @brief   Constructor setting kernels
+   */
+  IIR(const T *a_taps, const T *b_taps) :
+  a(a_taps),
+  b(b_taps)
+  {
+    this->clean_state();
+    this->setKernel(a_taps, b_taps);
   }
 
   /**
@@ -65,6 +76,14 @@ public:
   }
 
 private:
+  /**
+   *
+   */
+  void clean_state(void) {
+    memset(a_state, 0, sizeof(a_state));
+    memset(b_state, 0, sizeof(b_state));
+  }
+
   const T *a;
   const T *b;
   T a_state[L];
@@ -81,16 +100,17 @@ public:
   /**
    *
    */
-  void setKernel(const T **a_taps, const T **b_taps) {
-    for(size_t i=0; i<links; i++) {
-      chain[i].setKernel(a_taps[i], b_taps[i]);
-    }
+  IIRChain(const T **a_taps, const T **b_taps, const T *gain_p) {
+    this->setKernel(a_taps, b_taps, gain_p);
   }
 
   /**
-   *
+   * @brief   Set both kernel and gain
    */
-  void setGain(const T *gain_p) {
+  void setKernel(const T **a_taps, const T **b_taps, const T *gain_p) {
+    for(size_t i=0; i<links; i++) {
+      chain[i].setKernel(a_taps[i], b_taps[i]);
+    }
     gain = gain_p;
   }
 
