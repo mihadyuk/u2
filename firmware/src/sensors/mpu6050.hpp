@@ -11,8 +11,10 @@
 #define MPU_RX_DEPTH        16  /* 1 status byte + 14 bytes of data + 1 padding */
 #define MPU_TX_DEPTH        4
 
-#define MPU6050_FIR_LEN     129
-#define MPU6050_IIR_LEN     4
+#define MPU6050_FIR_LEN     257
+
+#define MPU6050_IIR_LEN     2
+#define MPU6050_IIR_SEC     2
 
 #define POLYC_LEN           3   /* thermal compensation polynomial order + 1 */
 
@@ -36,19 +38,42 @@ struct MPU6050_fir_block {
 /**
  *
  */
+//template <typename T>
+//struct MPU6050_iir_block {
+//  MPU6050_iir_block(const T *taps_a, const T *taps_b) {
+//    for (size_t i=0; i<3; i++) {
+//      acc[i].setKernel(taps_a, taps_b);
+//      gyr[i].setKernel(taps_a, taps_b);
+//    }
+//  }
+//  MPU6050_iir_block(void) = delete;
+//
+//  filters::IIR<T, MPU6050_IIR_LEN> acc[3];
+//  filters::IIR<T, MPU6050_IIR_LEN> gyr[3];
+//};
+
+
+/**
+ *
+ */
 template <typename T>
 struct MPU6050_iir_block {
-  MPU6050_iir_block(const T *taps_a, const T *taps_b) {
+  MPU6050_iir_block(const T **taps_a, const T **taps_b, const T *gain) {
     for (size_t i=0; i<3; i++) {
       acc[i].setKernel(taps_a, taps_b);
       gyr[i].setKernel(taps_a, taps_b);
+      acc[i].setGain(gain);
+      gyr[i].setGain(gain);
     }
   }
   MPU6050_iir_block(void) = delete;
 
-  filters::IIR<T, MPU6050_IIR_LEN> acc[3];
-  filters::IIR<T, MPU6050_IIR_LEN> gyr[3];
+  filters::IIRChain<T, MPU6050_IIR_LEN, MPU6050_IIR_SEC> acc[3];
+  filters::IIRChain<T, MPU6050_IIR_LEN, MPU6050_IIR_SEC> gyr[3];
 };
+
+
+
 
 /**
  *

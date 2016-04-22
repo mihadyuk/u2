@@ -81,12 +81,10 @@ public:
   /**
    *
    */
-  T update(T sample) {
-    T s = gain[0] * chain[0].update(sample);
-    for (size_t i=1; i<links; i++) {
-      s += gain[i] * chain[i].update(s);
+  void setKernel(const T **a_taps, const T **b_taps) {
+    for(size_t i=0; i<links; i++) {
+      chain[i].setKernel(a_taps[i], b_taps[i]);
     }
-    return s;
   }
 
   /**
@@ -94,6 +92,18 @@ public:
    */
   void setGain(const T *gain_p) {
     gain = gain_p;
+  }
+
+  /**
+   *
+   */
+  T update(T sample) {
+    T s = gain[0] * chain[0].update(sample);;
+
+    for (size_t i=1; i<links; i++) {
+      s += gain[i] * chain[i].update(s);
+    }
+    return s;
   }
 
 private:
