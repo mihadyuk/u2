@@ -100,6 +100,15 @@ public:
   /**
    *
    */
+  IIRChain(void) :
+  gain(nullptr)
+  {
+    return;
+  }
+
+  /**
+   *
+   */
   IIRChain(const T **a_taps, const T **b_taps, const T *gain_p) {
     this->setKernel(a_taps, b_taps, gain_p);
   }
@@ -118,10 +127,10 @@ public:
    *
    */
   T update(T sample) {
-    T s = gain[0] * chain[0].update(sample);
+    T s = chain[0].update(sample * gain[0]);
 
     for (size_t i=1; i<links; i++) {
-      s += gain[i] * chain[i].update(s);
+      s = chain[i].update(s * gain[i]);
     }
     return s;
   }
