@@ -60,10 +60,8 @@ template <typename T>
 struct MPU6050_iir_block {
   MPU6050_iir_block(const T **taps_a, const T **taps_b, const T *gain) {
     for (size_t i=0; i<3; i++) {
-      acc[i].setKernel(taps_a, taps_b);
-      gyr[i].setKernel(taps_a, taps_b);
-      acc[i].setGain(gain);
-      gyr[i].setGain(gain);
+      acc[i].setKernel(taps_a, taps_b, gain);
+      gyr[i].setKernel(taps_a, taps_b, gain);
     }
   }
   MPU6050_iir_block(void) = delete;
@@ -130,7 +128,7 @@ private:
   uint8_t dlpf_current;
   uint8_t smplrtdiv_current;
   MPU6050_fir_block<float> &fir;
-  MPU6050_iir_block<double> &iir;
+  MPU6050_iir_block<float> &iir;
   const uint32_t *MPUG_Tcomp_en = NULL;
   const uint32_t *MPUA_Tcomp_en = NULL;
   const float *gyr_bias_c[3*POLYC_LEN] = {};

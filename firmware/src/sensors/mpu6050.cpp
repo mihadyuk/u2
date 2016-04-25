@@ -101,54 +101,29 @@ static const float acc_sens_array[4] = {
     (16 * 9.81f) / 32768
 };
 
-//static const float iir_taps_a[MPU6050_IIR_LEN] = {
-//    2.968198299407958984375,
-//    -2.9369003772735595703125,
-//    0.968698024749755859375,
-//};
-//
-//static const float iir_taps_b[MPU6050_IIR_LEN + 1] = {
-//    0.00000049465842266727122478187084197998,
-//    0.000001483975324845232535153627395629883,
-//    0.000001483975324845232535153627395629883,
-//    0.00000049465842266727122478187084197998,
-//};
+/* IIR taps -40dB on 3 Hz */
+static const float iir_taps_a1[MPU6050_IIR_LEN] = {
+    1.9825484752655029296875,  -0.982643544673919677734375};
+
+static const float iir_taps_a2[MPU6050_IIR_LEN] = {
+    1.994026660919189453125,   -0.994111359119415283203125};
+
+static const float *iir_taps_a[MPU6050_IIR_SEC] = {iir_taps_a1, iir_taps_a2};
 
 
+static const float iir_taps_b1[MPU6050_IIR_LEN+1] = {
+    1,  -1.997833728790283203125,   1};
 
-static const double iir_taps_a1[MPU6050_IIR_LEN] = {
-1.999556541442871e+00,
--9.995566606521606e-01};
+static const float iir_taps_b2[MPU6050_IIR_LEN+1] = {
+    1,  -1.9996240139007568359375,  1};
 
-static const double iir_taps_a2[MPU6050_IIR_LEN] = {
-1.999849438667297e+00,
--9.998498558998108e-01};
+static const float *iir_taps_b[MPU6050_IIR_SEC] = {iir_taps_b1, iir_taps_b2};
 
-static const double *iir_taps_a[MPU6050_IIR_SEC] = {iir_taps_a1, iir_taps_a2};
+static const float gain[MPU6050_IIR_SEC] ={
+    0.22409628331661224365234375,
+    0.044132225215435028076171875};
 
-
-static const double iir_taps_b1[MPU6050_IIR_LEN+1] = {
-    1.000000000000000e+00,
-    -1.999991416931152e+00,
-    1.000000000000000e+00};
-
-static const double iir_taps_b2[MPU6050_IIR_LEN+1] = {
-    1.000000000000000e+00,
-    -1.999998331069946e+00,
-    1.000000000000000e+00};
-
-static const double *iir_taps_b[MPU6050_IIR_SEC] = {iir_taps_b1, iir_taps_b2};
-
-//static const double gain[MPU6050_IIR_SEC] ={
-//    2.122794389724731e-01,
-//    1.489238440990448e-02};
-
-static const double gain[MPU6050_IIR_SEC] ={
-    1.489238440990448e-02,
-    2.122794389724731e-01};
-
-
-__CCM__ static MPU6050_iir_block<double> iir_block(iir_taps_a, iir_taps_b, gain);
+__CCM__ static MPU6050_iir_block<float> iir_block(iir_taps_a, iir_taps_b, gain);
 
 __CCM__ static MPU6050_fir_block<float> fir_block(taps);
 
