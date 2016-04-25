@@ -19,16 +19,16 @@ public:
   void stop(void);
   void sleep(void);
 private:
-  void thermo_comp(float *result);
-  void iron_comp(float *result);
+  void thermo_comp(marg_vector_t &result);
+  void iron_comp(marg_vector_t &result);
   float mag_sens(void);
-  void pickle(float *result, int16_t *result_raw);
+  void pickle(marg_vector_t &result, marg_vector_raw_t &result_raw);
   bool hw_init_full(void);
   bool hw_init_fast(void);
   msg_t start_measurement(void);
   uint8_t rxbuf[AK8975_RX_DEPTH];
-  float cache[3];
-  int16_t cache_raw[3];
+  marg_vector_t cache;
+  marg_vector_raw_t cache_raw;
 };
 
 #endif /* AK8975_HPP_ */

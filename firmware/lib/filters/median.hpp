@@ -1,42 +1,36 @@
 #ifndef MEDIAN_H_
 #define MEDIAN_H_
 
+#include "filter_base.hpp"
+
 namespace filters {
 
 /**
  *
  */
-template <typename T>
-class MedianBase {
-  virtual T update (T sample) = 0;
-};
-
-/**
- *
- */
-template<typename T, unsigned int N>
-class Median : public MedianBase<T> {
+template<typename T, size_t N>
+class Median : public FilterBase<T> {
 public:
   /**
    * default constructor
    */
-  Median(void){
+  Median(void) {
     /* check correctness of template parameters
      * 1) length must be odd
      * 2) lenght more than 3 is inefficient
      * 3) lenght more than 5 is totally inefficient */
     static_assert(((3 == N) || (5 == N)), "incorrect filter length");
 
-    unsigned int i;
-    for(i=0; i<N; i++)
+    for(size_t i=0; i<N; i++) {
       buf[i] = 0;
+    }
   };
 
   /**
    * Update filter state and return filtered value
    */
   T update (T sample) {
-    unsigned int j = 0, i = 0;
+    size_t j;
     T tmp;
 
     /* place new sample in fifo */
@@ -51,6 +45,7 @@ public:
     }
 
     /* booble sort */
+    size_t i;
     for(i=0; i<=(N-1); i++){
       for(j=i+1; j<N; j++){
         if(sorted[i] > sorted[j]){

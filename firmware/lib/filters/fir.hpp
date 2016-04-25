@@ -2,24 +2,18 @@
 #define FIR_HPP_
 
 #include <cstring>
+#include <array>
+
+#include "filter_base.hpp"
 
 namespace filters {
 
 /**
- *
- */
-template<typename T, typename dataT>
-class FIRBase {
-public:
-  virtual T update (dataT sample) = 0;
-};
-
-/**
  * @brief   FIR filter.
- * @note    set "T" and "dataT" to the same type for fastest possible code
+ * @note    set "T" and "T" to the same type for fastest possible code
  */
-template<typename T, typename dataT, int L>
-class FIR : public FIRBase<T, dataT> {
+template<typename T, int L>
+class FIR : public FilterBase<T> {
 public:
   /**
    * @brief   Default constructor
@@ -39,11 +33,11 @@ public:
    * @param[in] tapsp           pointer to transformation core
    * @param[in] len             length of filter
    */
-  FIR(const T *tapsp, size_t len):
+  FIR(const T *tapsp):
   kernel(tapsp),
   tip(L)
   {
-    ctor_impl(tapsp, len, 0);
+    ctor_impl(tapsp, 0);
   }
 
   /**
@@ -54,11 +48,11 @@ public:
    * @param[in] len             length of filter
    * @param[in] initial_value   initial value for gapless filter start
    */
-  FIR(const T *tapsp, size_t len, dataT initial_value):
+  FIR(const T *tapsp, T initial_value):
   kernel(tapsp),
   tip(L)
   {
-    ctor_impl(tapsp, len, initial_value);
+    ctor_impl(tapsp, initial_value);
   }
 
   /**
@@ -67,9 +61,8 @@ public:
    * @param[in] tapsp           pointer to transformation kernel
    * @param[in] len             length of filter
    */
-  void setKernel(const T *tapsp, size_t len) {
-    osalDbgCheck((L == len) && (nullptr != tapsp));
-    kernel = tapsp;
+  void setKernel(const std::array<T, L> &taps) {
+    kernel = taps.data();
   }
 
   /**
@@ -79,7 +72,7 @@ public:
    *
    * @retval    filtered sample.
    */
-  T update_reference(dataT sample) {
+  T update_reference(T sample) {
 
     /* shift */
     for (size_t i=L-1; i>0; i--)
@@ -97,13 +90,13 @@ public:
   /**
    * @brief   this variant works faster for MCUs without hardware multiplication
    */
-  T update_half_mul(dataT sample) {
+  T update_half_mul(T sample) {
 
     T s = 0;
     const size_t Nblock = (L - (L % 8)) / 2;
 
     /* shift */
-    memmove(X, &X[1], sizeof(X) - sizeof(dataT));
+    memmove(X, &X[1], sizeof(X) - sizeof(T));
     X[L-1] = sample;
 
     /* main filter */
@@ -142,7 +135,7 @@ public:
   /**
    * @brief   Fastest variant for cortex-m4.
    */
-  T update(dataT sample) {
+  T update(T sample) {
     T s;
 
     tip--;
@@ -162,9 +155,9 @@ private:
    * @brief     Constructor implementation.
    * @details   Performs checks and array initialization.
    */
-  void ctor_impl(const T *tapsp, size_t len, dataT initial_value) {
+  void ctor_impl(const T *tapsp, T initial_value) {
 
-    osalDbgCheck((NULL != tapsp) && (L == len));
+    osalDbgCheck(nullptr != tapsp);
 
     T tapsum = 0;
     for (size_t i=0; i<L; i++)
@@ -180,7 +173,7 @@ private:
    * @brief     Optimized for Cortex-M4F version.
    * @note      Shift must be performed in higher level
    */
-  T convolution_engine(const T *taps, dataT *x, size_t len) {
+  T convolution_engine(const T *taps, T *x, size_t len) {
 
     const size_t Nblock = len & ~3; /* equivalent to len - (len % 4); */
     T s = 0;
@@ -222,7 +215,7 @@ private:
   /**
    * Filter state
    */
-  dataT X[L];
+  T X[L];
 
   /**
    * Buffer head for shift avoidance

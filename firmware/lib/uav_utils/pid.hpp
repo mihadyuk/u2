@@ -147,7 +147,7 @@ public:
     osalDbgCheck(((nullptr == iir_a) && (nullptr == iir_b)) ||
                  ((nullptr != iir_a) && (nullptr != iir_b)));
     if (nullptr != iir_a) {
-      filter.set_taps(iir_a, iir_b);
+      filter.setKernel(iir_a, iir_b);
       need_filter = true;
     }
     else
@@ -182,7 +182,7 @@ public:
   }
 
 private:
-  filters::IIR<T, T, 1> filter;
+  filters::IIR<T, 1> filter;
   bool need_filter;
 };
 

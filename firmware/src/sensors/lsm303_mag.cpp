@@ -22,20 +22,6 @@
 #define LSM_REG_TEMP_OUT      0x31
 #define GAIN_BITS_SHIFT       5
 
-/**
- * @brief   Magnetometer gain (LSB/Gauss)
- */
-typedef enum {
-  LSM_MAG_GAIN_1370 = 0,
-  LSM_MAG_GAIN_1090,
-  LSM_MAG_GAIN_820,
-  LSM_MAG_GAIN_660,
-  LSM_MAG_GAIN_440,
-  LSM_MAG_GAIN_390,
-  LSM_MAG_GAIN_330,
-  LSM_MAG_GAIN_230
-} mag_sens_t;
-
 /* update period for boards without hardware interrupt line from LSM303
  * to EXTI controller */
 #if defined(BOARD_MNU)
@@ -59,7 +45,9 @@ typedef enum {
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-
+/**
+ * @brief   Magnetometer sens 1 / (LSB/Gauss)
+ */
 static const float mag_sens_array[8] = {
     1.0f / 1370,
     1.0f / 1090,
@@ -135,21 +123,21 @@ float LSM303_mag::mag_sens(void) {
 /**
  *
  */
-void LSM303_mag::thermo_comp(float *result){
+void LSM303_mag::thermo_comp(marg_vector_t &result){
   (void)result;
 }
 
 /**
  *
  */
-void LSM303_mag::iron_comp(float *result){
+void LSM303_mag::iron_comp(marg_vector_t &result){
   (void)result;
 }
 
 /**
  *
  */
-void LSM303_mag::pickle(float *result, int16_t *result_raw) {
+void LSM303_mag::pickle(marg_vector_t &result, marg_vector_raw_t &result_raw) {
 
   int16_t raw[3];
   float sens = this->mag_sens();
@@ -250,7 +238,7 @@ msg_t LSM303_mag::param_update(void) {
 /**
  *
  */
-msg_t LSM303_mag::get_prev_measurement(float *result, int16_t *result_raw) {
+msg_t LSM303_mag::get_prev_measurement(marg_vector_t &result, marg_vector_raw_t &result_raw) {
 
   msg_t ret = MSG_RESET;
 
@@ -258,8 +246,8 @@ msg_t LSM303_mag::get_prev_measurement(float *result, int16_t *result_raw) {
   ret = transmit(txbuf, 1, rxbuf, 6);
   if (MSG_OK == ret) {
     pickle(result, result_raw);
-    memcpy(cache, result, sizeof(cache));
-    memcpy(cache_raw, result_raw, sizeof(cache_raw));
+    cache = result;
+    cache_raw = result_raw;
   }
 
   return ret;
@@ -295,8 +283,8 @@ sensor_state_t LSM303_mag::get(marg_data_t &result) {
         this->state = SENSOR_STATE_DEAD;
     }
     else {
-      memcpy(result.mag,     cache,     sizeof(cache));
-      memcpy(result.mag_raw, cache_raw, sizeof(cache_raw));
+      result.mag = cache;
+      result.mag_raw = cache_raw;
     }
 
     if (MSG_OK != param_update())

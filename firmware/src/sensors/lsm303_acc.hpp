@@ -21,7 +21,7 @@ public:
 
 private:
   float acc_sens(void);
-  void pickle(float *result, int16_t *raw_ret);
+  void pickle(marg_vector_t &result, marg_vector_raw_t &result_raw);
   msg_t stop_sleep_code(void);
   bool hw_init_full(void);
   bool hw_init_fast(void);

@@ -3,6 +3,7 @@
 
 #include "i2c_sensor.hpp"
 #include "fir.hpp"
+#include "iir.hpp"
 #include "marg_data.hpp"
 
 #define MPU6050_I2C_ADDR    0b1101000
@@ -10,26 +11,69 @@
 #define MPU_RX_DEPTH        16  /* 1 status byte + 14 bytes of data + 1 padding */
 #define MPU_TX_DEPTH        4
 
-#define MPU6050_FIR_LEN     129
+#define MPU6050_FIR_LEN     257
 
-#define POLYC_LEN           3   /* thermal compensation poly order + 1 */
+#define MPU6050_IIR_LEN     2
+#define MPU6050_IIR_SEC     2
+
+#define POLYC_LEN           3   /* thermal compensation polynomial order + 1 */
 
 /**
  *
  */
-template <typename T, typename dataT, int L>
+template <typename T>
 struct MPU6050_fir_block {
-  MPU6050_fir_block(const T *taps, int taps_len) {
+  MPU6050_fir_block(const std::array<float, MPU6050_FIR_LEN> &taps) {
     for (size_t i=0; i<3; i++) {
-      acc[i].setKernel(taps, taps_len);
-      gyr[i].setKernel(taps, taps_len);
+      acc[i].setKernel(taps);
+      gyr[i].setKernel(taps);
     }
   }
   MPU6050_fir_block(void) = delete;
 
-  filters::FIR<T, dataT, L> acc[3];
-  filters::FIR<T, dataT, L> gyr[3];
+  filters::FIR<T, MPU6050_FIR_LEN> acc[3];
+  filters::FIR<T, MPU6050_FIR_LEN> gyr[3];
 };
+
+/**
+ *
+ */
+//template <typename T>
+//struct MPU6050_iir_block {
+//  MPU6050_iir_block(const T *taps_a, const T *taps_b) {
+//    for (size_t i=0; i<3; i++) {
+//      acc[i].setKernel(taps_a, taps_b);
+//      gyr[i].setKernel(taps_a, taps_b);
+//    }
+//  }
+//  MPU6050_iir_block(void) = delete;
+//
+//  filters::IIR<T, MPU6050_IIR_LEN> acc[3];
+//  filters::IIR<T, MPU6050_IIR_LEN> gyr[3];
+//};
+
+
+/**
+ *
+ */
+template <typename T>
+struct MPU6050_iir_block {
+  MPU6050_iir_block(const T **taps_a, const T **taps_b, const T *gain) {
+    for (size_t i=0; i<3; i++) {
+      acc[i].setKernel(taps_a, taps_b);
+      gyr[i].setKernel(taps_a, taps_b);
+      acc[i].setGain(gain);
+      gyr[i].setGain(gain);
+    }
+  }
+  MPU6050_iir_block(void) = delete;
+
+  filters::IIRChain<T, MPU6050_IIR_LEN, MPU6050_IIR_SEC> acc[3];
+  filters::IIRChain<T, MPU6050_IIR_LEN, MPU6050_IIR_SEC> gyr[3];
+};
+
+
+
 
 /**
  *
@@ -51,8 +95,8 @@ private:
   float dT(void);
   void acquire_data(void);
   msg_t soft_reset(void);
-  msg_t acquire_simple(float *acc, float *gyr);
-  msg_t acquire_fifo(float *acc, float *gyr);
+  msg_t acquire_simple(marg_vector_t &acc, marg_vector_t &gyr);
+  msg_t acquire_fifo(marg_vector_t &acc, marg_vector_t &gyr);
   void set_lock(void);
   void release_lock(void);
   msg_t set_gyr_fs(uint8_t fs);
@@ -61,9 +105,9 @@ private:
   msg_t param_update(void);
   float gyr_sens(void);
   float acc_sens(void);
-  void pickle_gyr(float *result);
-  void pickle_fifo(float *acc, float *gyr, const size_t sample_cnt);
-  void pickle_acc(float *result);
+  void pickle_gyr(marg_vector_t &result);
+  void pickle_acc(marg_vector_t &result);
+  void pickle_fifo(marg_vector_t &acc, marg_vector_t &gyr, const size_t sample_cnt);
   bool hw_init_full(void);
   bool hw_init_fast(void);
 
@@ -71,10 +115,10 @@ private:
   chibios_rt::BinarySemaphore protect_sem;
   chibios_rt::BinarySemaphore data_ready_sem;
   thread_t *worker;
-  float acc_data[3];
-  float gyr_data[3];
-  int16_t acc_raw_data[3];
-  int16_t gyr_raw_data[3];
+  marg_vector_t acc_data;
+  marg_vector_t gyr_data;
+  marg_vector_raw_t acc_raw_data;
+  marg_vector_raw_t gyr_raw_data;
 
   const uint32_t *gyr_fs = NULL;
   const uint32_t *acc_fs = NULL;
@@ -85,7 +129,8 @@ private:
   uint8_t acc_fs_current;
   uint8_t dlpf_current;
   uint8_t smplrtdiv_current;
-  MPU6050_fir_block<float, float, MPU6050_FIR_LEN> &fir;
+  MPU6050_fir_block<float> &fir;
+  MPU6050_iir_block<double> &iir;
   const uint32_t *MPUG_Tcomp_en = NULL;
   const uint32_t *MPUA_Tcomp_en = NULL;
   const float *gyr_bias_c[3*POLYC_LEN] = {};

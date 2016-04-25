@@ -1,4 +1,4 @@
-#pragma GCC optimize "-O2"
+#pragma GCC optimize "-O0"
 
 #include "main.h"
 #include "pads.h"
@@ -73,6 +73,8 @@ enum class tcomp_t {
 /* how many bytes in single fifo sample */
 #define BYTES_IN_SAMPLE       12
 
+#define MPU6050_USE_IIR       true
+
 /*
  ******************************************************************************
  * EXTERNS
@@ -93,13 +95,62 @@ static const float gyro_sens_array[4] = {
 };
 
 static const float acc_sens_array[4] = {
-    (2  * 9.81f) / 32768.0f,
-    (4  * 9.81f) / 32768.0f,
-    (8  * 9.81f) / 32768.0f,
-    (16 * 9.81f) / 32768.0f
+    (2  * 9.81f) / 32768,
+    (4  * 9.81f) / 32768,
+    (8  * 9.81f) / 32768,
+    (16 * 9.81f) / 32768
 };
 
-__CCM__ static MPU6050_fir_block<float, float, MPU6050_FIR_LEN> fir_block(taps, ArrayLen(taps));
+//static const float iir_taps_a[MPU6050_IIR_LEN] = {
+//    2.968198299407958984375,
+//    -2.9369003772735595703125,
+//    0.968698024749755859375,
+//};
+//
+//static const float iir_taps_b[MPU6050_IIR_LEN + 1] = {
+//    0.00000049465842266727122478187084197998,
+//    0.000001483975324845232535153627395629883,
+//    0.000001483975324845232535153627395629883,
+//    0.00000049465842266727122478187084197998,
+//};
+
+
+
+static const double iir_taps_a1[MPU6050_IIR_LEN] = {
+1.999556541442871e+00,
+-9.995566606521606e-01};
+
+static const double iir_taps_a2[MPU6050_IIR_LEN] = {
+1.999849438667297e+00,
+-9.998498558998108e-01};
+
+static const double *iir_taps_a[MPU6050_IIR_SEC] = {iir_taps_a1, iir_taps_a2};
+
+
+static const double iir_taps_b1[MPU6050_IIR_LEN+1] = {
+    1.000000000000000e+00,
+    -1.999991416931152e+00,
+    1.000000000000000e+00};
+
+static const double iir_taps_b2[MPU6050_IIR_LEN+1] = {
+    1.000000000000000e+00,
+    -1.999998331069946e+00,
+    1.000000000000000e+00};
+
+static const double *iir_taps_b[MPU6050_IIR_SEC] = {iir_taps_b1, iir_taps_b2};
+
+//static const double gain[MPU6050_IIR_SEC] ={
+//    2.122794389724731e-01,
+//    1.489238440990448e-02};
+
+static const double gain[MPU6050_IIR_SEC] ={
+    1.489238440990448e-02,
+    2.122794389724731e-01};
+
+
+__CCM__ static MPU6050_iir_block<double> iir_block(iir_taps_a, iir_taps_b, gain);
+
+__CCM__ static MPU6050_fir_block<float> fir_block(taps);
 
 size_t MPU6050::isr_count = 0;
 uint8_t MPU6050::isr_dlpf = 0;
@@ -140,14 +191,15 @@ static void pickle_temp(float *result, const uint8_t *buf) {
 /**
  *
  */
-static void thermo_comp(float *result, const float **coeff_ptr,
+static void thermo_comp(marg_vector_t &result, const float **coeff_ptr,
                         tcomp_t type, float temperature) {
   size_t axis, i;
   float poly_c[POLYC_LEN];
 
   for (axis=0; axis<3; axis++) {
+    const size_t tip = 3*axis + (POLYC_LEN-1);
     for (i=0; i<POLYC_LEN; i++) {
-      poly_c[i] = *coeff_ptr[3*axis+(POLYC_LEN-1)-i]; //x^2 goes first
+      poly_c[i] = *coeff_ptr[tip - i]; //x^2 goes first
     }
 
     switch(type) {
@@ -167,7 +219,7 @@ static void thermo_comp(float *result, const float **coeff_ptr,
 /**
  *
  */
-void MPU6050::pickle_gyr(float *result) {
+void MPU6050::pickle_gyr(marg_vector_t &result) {
 
   int16_t raw[3];
   uint8_t *b = &rxbuf[MPU_GYRO_OFFSET];
@@ -188,7 +240,7 @@ void MPU6050::pickle_gyr(float *result) {
 /**
  *
  */
-void MPU6050::pickle_acc(float *result) {
+void MPU6050::pickle_acc(marg_vector_t &result) {
 
   int16_t raw[3];
   uint8_t *b = &rxbuf[MPU_ACCEL_OFFSET];
@@ -404,7 +456,7 @@ msg_t MPU6050::param_update(void) {
 /**
  *
  */
-msg_t MPU6050::acquire_simple(float *acc, float *gyr) {
+msg_t MPU6050::acquire_simple(marg_vector_t &acc, marg_vector_t &gyr) {
 
   msg_t ret = MSG_RESET;
 
@@ -414,10 +466,8 @@ msg_t MPU6050::acquire_simple(float *acc, float *gyr) {
   this->set_lock();
 
   pickle_temp(&temperature, &rxbuf[MPU_TEMP_OFFSET]);
-  if (nullptr != gyr)
-    pickle_gyr(gyr);
-  if (nullptr != acc)
-    pickle_acc(acc);
+  pickle_gyr(gyr);
+  pickle_acc(acc);
   fifo_remainder = 0;
 
   this->release_lock();
@@ -428,7 +478,7 @@ msg_t MPU6050::acquire_simple(float *acc, float *gyr) {
 /**
  *
  */
-void MPU6050::pickle_fifo(float *acc, float *gyr, const size_t sample_cnt) {
+void MPU6050::pickle_fifo(marg_vector_t &acc, marg_vector_t &gyr, const size_t sample_cnt) {
 
   float sens;
   const size_t acc_fifo_offset = 0;
@@ -440,10 +490,16 @@ void MPU6050::pickle_fifo(float *acc, float *gyr, const size_t sample_cnt) {
   }
 
   for (size_t n=0; n<sample_cnt; n++) {
-    for (size_t i=0; i<3; i++){
+    for (size_t i=0; i<3; i++) {
       size_t shift = n * BYTES_IN_SAMPLE / 2 + i;
-      acc[i] = fir.acc[i].update(rxbuf_fifo[shift + acc_fifo_offset]);
-      gyr[i] = fir.gyr[i].update(rxbuf_fifo[shift + gyr_fifo_offset]);
+      if (MPU6050_USE_IIR) {
+        acc[i] = iir.acc[i].update(rxbuf_fifo[shift + acc_fifo_offset]);
+        gyr[i] = iir.gyr[i].update(rxbuf_fifo[shift + gyr_fifo_offset]);
+      }
+      else {
+        acc[i] = fir.acc[i].update(rxbuf_fifo[shift + acc_fifo_offset]);
+        gyr[i] = fir.gyr[i].update(rxbuf_fifo[shift + gyr_fifo_offset]);
+      }
     }
   }
 
@@ -470,7 +526,7 @@ void MPU6050::pickle_fifo(float *acc, float *gyr, const size_t sample_cnt) {
 /**
  *
  */
-msg_t MPU6050::acquire_fifo(float *acc, float *gyr) {
+msg_t MPU6050::acquire_fifo(marg_vector_t &acc, marg_vector_t &gyr) {
 
   msg_t ret = MSG_RESET;
   size_t recvd;
@@ -581,7 +637,8 @@ MPU6050::MPU6050(I2CDriver *i2cdp, i2caddr_t addr) :
 I2CSensor(i2cdp, addr),
 protect_sem(false),
 data_ready_sem(true),
-fir(fir_block)
+fir(fir_block),
+iir(iir_block)
 {
   state = SENSOR_STATE_STOP;
 }
@@ -684,12 +741,12 @@ sensor_state_t MPU6050::get(marg_data_t &result) {
 
     set_lock();
     if (1 == result.request.acc) {
-      memcpy(result.acc,     this->acc_data,     sizeof(this->acc_data));
-      memcpy(result.acc_raw, this->acc_raw_data, sizeof(this->acc_raw_data));
+      result.acc     = this->acc_data;
+      result.acc_raw = this->acc_raw_data;
     }
     if (1 == result.request.gyr) {
-      memcpy(result.gyr,     this->gyr_data,     sizeof(this->gyr_data));
-      memcpy(result.gyr_raw, this->gyr_raw_data, sizeof(this->gyr_raw_data));
+      result.gyr     = this->gyr_data;
+      result.gyr_raw = this->gyr_raw_data;
     }
     if (1 == result.request.dT) {
       result.dT = this->dT();

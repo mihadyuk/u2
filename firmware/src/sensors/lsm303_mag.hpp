@@ -25,22 +25,22 @@ private:
   msg_t set_gain(uint8_t val);
   msg_t param_update(void);
   msg_t start_single_measurement(void);
-  msg_t get_prev_measurement(float *result, int16_t *result_raw);
+  msg_t get_prev_measurement(marg_vector_t &result, marg_vector_raw_t &result_raw);
   msg_t stop_sleep_code(void);
   void enable_interrupts(void);
   void disable_interrupts(void);
-  void thermo_comp(float *result);
-  void iron_comp(float *result);
+  void thermo_comp(marg_vector_t &result);
+  void iron_comp(marg_vector_t &result);
   float mag_sens(void);
-  void pickle(float *result, int16_t *result_raw);
+  void pickle(marg_vector_t &result, marg_vector_raw_t &result_raw);
   bool hw_init_full(void);
   bool hw_init_fast(void);
   uint8_t rxbuf[LSM_MAG_RX_DEPTH];
   uint8_t txbuf[LSM_MAG_TX_DEPTH];
   size_t sample_cnt;
   const uint32_t *gain = NULL;
-  float cache[3];
-  int16_t cache_raw[3];
+  marg_vector_t cache;
+  marg_vector_raw_t cache_raw;
   uint8_t gain_current;
 };
 
