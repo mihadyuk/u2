@@ -229,13 +229,13 @@ static MAV_MISSION_RESULT check_wp(const mavlink_mission_item_t *wp,
  */
 static void send_mission_item(uint16_t seq) {
 
-  wpdb.read(&mavlink_out_mission_item_struct, seq);
-  mavlink_out_mission_item_struct.target_component = destCompID;
-  mavlink_out_mission_item_struct.target_system = GROUND_SYSTEM_ID;
-
   osalThreadSleep(MISSION_SEND_PAUSE);
 
   if (mission_item_mail.free()) {
+    wpdb.read(&mavlink_out_mission_item_struct, seq);
+    mavlink_out_mission_item_struct.target_component = destCompID;
+    mavlink_out_mission_item_struct.target_system = GROUND_SYSTEM_ID;
+
     mission_item_mail.fill(&mavlink_out_mission_item_struct,
                            GLOBAL_COMPONENT_ID, MAVLINK_MSG_ID_MISSION_ITEM);
     mav_postman.postAhead(mission_item_mail);
@@ -312,11 +312,11 @@ SUCCESS:
  */
 static msg_t send_mission_request(uint16_t seq) {
 
-  mavlink_out_mission_request_struct.target_component = destCompID;
-  mavlink_out_mission_request_struct.target_system = GROUND_SYSTEM_ID;
-  mavlink_out_mission_request_struct.seq = seq;
-
   if (mission_request_mail.free()) {
+    mavlink_out_mission_request_struct.target_component = destCompID;
+    mavlink_out_mission_request_struct.target_system = GROUND_SYSTEM_ID;
+    mavlink_out_mission_request_struct.seq = seq;
+
     mission_request_mail.fill(&mavlink_out_mission_request_struct,
                             GLOBAL_COMPONENT_ID, MAVLINK_MSG_ID_MISSION_REQUEST);
     mav_postman.postAhead(mission_request_mail);
