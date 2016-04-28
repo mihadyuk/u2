@@ -40,7 +40,7 @@ endif
 
 # Enable this if you want to see the full log while compiling.
 ifeq ($(USE_VERBOSE_COMPILE),)
-  USE_VERBOSE_COMPILE = no
+  USE_VERBOSE_COMPILE = yes
 endif
 
 # If enabled, this option makes the build process faster by not compiling
@@ -251,7 +251,7 @@ CPPSRC = $(CHCPPSRC) \
 		src/navi6d_wrapper.cpp \
 		src/kinematic/ahrs.cpp \
 		src/kinematic/ahrs_starlino.cpp \
-		lib/filters/fir_test.cpp \
+		lib/filters/filter_test.cpp \
 		$(FPGACPPSRC)
 
 # C sources to be compiled in ARM mode regardless of the global setting.
@@ -288,7 +288,6 @@ INCDIR = $(CHIBIOS)/os/license \
          lib/microrl/src \
          lib/uav_utils \
          lib/filters \
-         lib/onewire \
          lib/24aa/src \
          lib/tlsf \
          src \

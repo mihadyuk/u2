@@ -57,7 +57,7 @@ Giovanni
 #include "mav_logger.hpp"
 #include "adc_local.hpp"
 #include "power_monitor.hpp"
-#include "fir_test.hpp"
+#include "filter_test.hpp"
 #include "maxsonar.hpp"
 #include "pps.hpp"
 #include "mpxv.hpp"
