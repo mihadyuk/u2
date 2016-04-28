@@ -238,10 +238,12 @@ void uBlox::write_with_confirm(const T &msg, systime_t timeout) {
   sdWrite(this->sdp, buf, len);
   if (0 != timeout) {
     ack = wait_ack(msg.rtti, timeout);
-    if (ack == ublox_ack_t::ACK)
+    if (ack == ublox_ack_t::ACK) {
       this->nack_cnt++;
-    if (ack == ublox_ack_t::NONE)
+    }
+    if (ack == ublox_ack_t::NONE) {
       this->no_answer_cnt++;
+    }
   }
 }
 
