@@ -13,8 +13,8 @@
 
 #define MPU6050_FIR_LEN     257
 
-#define MPU6050_IIR_LEN     2
-#define MPU6050_IIR_SEC     2
+#define IIR_LEN     2
+#define IIR_SEC     2
 
 #define POLYC_LEN           3   /* thermal compensation polynomial order + 1 */
 
@@ -66,8 +66,8 @@ struct MPU6050_iir_block {
   }
   MPU6050_iir_block(void) = delete;
 
-  filters::IIRChain<T, MPU6050_IIR_LEN, MPU6050_IIR_SEC> acc[3];
-  filters::IIRChain<T, MPU6050_IIR_LEN, MPU6050_IIR_SEC> gyr[3];
+  filters::IIRChain<T, IIR_LEN, IIR_SEC> acc[3];
+  filters::IIRChain<T, IIR_LEN, IIR_SEC> gyr[3];
 };
 
 

@@ -1,4 +1,4 @@
-#pragma GCC optimize "-O0"
+#pragma GCC optimize "-O2"
 
 #include "main.h"
 #include "pads.h"
@@ -102,24 +102,24 @@ static const float acc_sens_array[4] = {
 };
 
 /* IIR taps -40dB on 3 Hz */
-static const float iir_taps_a1[MPU6050_IIR_LEN] = {
+static const float iir_taps_a1[IIR_LEN] = {
     1.9825484752655029296875,  -0.982643544673919677734375};
 
-static const float iir_taps_a2[MPU6050_IIR_LEN] = {
+static const float iir_taps_a2[IIR_LEN] = {
     1.994026660919189453125,   -0.994111359119415283203125};
 
-static const float *iir_taps_a[MPU6050_IIR_SEC] = {iir_taps_a1, iir_taps_a2};
+static const float *iir_taps_a[IIR_SEC] = {iir_taps_a1, iir_taps_a2};
 
 
-static const float iir_taps_b1[MPU6050_IIR_LEN+1] = {
+static const float iir_taps_b1[IIR_LEN+1] = {
     1,  -1.997833728790283203125,   1};
 
-static const float iir_taps_b2[MPU6050_IIR_LEN+1] = {
+static const float iir_taps_b2[IIR_LEN+1] = {
     1,  -1.9996240139007568359375,  1};
 
-static const float *iir_taps_b[MPU6050_IIR_SEC] = {iir_taps_b1, iir_taps_b2};
+static const float *iir_taps_b[IIR_SEC] = {iir_taps_b1, iir_taps_b2};
 
-static const float gain[MPU6050_IIR_SEC] ={
+static const float gain[IIR_SEC] ={
     0.22409628331661224365234375,
     0.044132225215435028076171875};
 
