@@ -25,7 +25,7 @@ typedef uint8_t checksum_t;
 
 typedef struct {
   char name[PARAM_REGISTRY_ID_SIZE];
-  param_union_t v;
+  param_union_t value;
   checksum_t crc;
 } __attribute__((packed)) param_record_t;
 
@@ -63,7 +63,7 @@ static param_record_t eeprombuf, checkbuf;
 static void fill_param_crc(param_record_t *buf) {
 
   uint8_t sum = crc8((uint8_t *)buf->name, sizeof(buf->name), 0xFF);
-  buf->crc = crc8((uint8_t *)&buf->v, sizeof(buf->v), sum);
+  buf->crc = crc8((uint8_t *)&buf->value, sizeof(buf->value), sum);
 }
 
 /**
@@ -72,7 +72,7 @@ static void fill_param_crc(param_record_t *buf) {
 static bool check_param_crc(const param_record_t *buf) {
 
   uint8_t sum = crc8((uint8_t *)buf->name, sizeof(buf->name), 0xFF);
-  sum = crc8((uint8_t *)&buf->v, sizeof(buf->v), sum);
+  sum = crc8((uint8_t *)&buf->value, sizeof(buf->value), sum);
 
   if (buf->crc == sum)
     return OSAL_SUCCESS;
@@ -182,7 +182,7 @@ static void bitmap_set(uint8_t *map, size_t N) {
  */
 bool ParamRegistry::load_extensive(void) {
   size_t n, status;
-  param_union_t v;
+  param_union_t value;
   bool found = false;
 
   const size_t max_param_cnt = this->capacity();
@@ -213,12 +213,12 @@ bool ParamRegistry::load_extensive(void) {
 
     /* was parameter previously stored in eeprom */
     if (found)
-      v = eeprombuf.v;
+      value = eeprombuf.value;
     else
-      v = param_db[i].def;
+      value = param_db[i].def;
 
     /* check value acceptability and set it */
-    validator.set(&v, &(param_db[i]));
+    validator.set(&value, &(param_db[i]));
   }
 
   return save_all();
@@ -240,7 +240,7 @@ bool ParamRegistry::save_all(void) {
     strncpy(eeprombuf.name, param_db[i].name, sizeof(eeprombuf.name));
 
     /* now write data */
-    eeprombuf.v = *param_db[i].valuep;
+    eeprombuf.value = *param_db[i].valuep;
 
     /* put crc */
     fill_param_crc(&eeprombuf);
@@ -318,8 +318,8 @@ void ParamRegistry::self_test(void) {
  *
  */
 ParamRegistry::ParamRegistry(void) :
-    mutual_sem(false),
-    ready(false)
+mutual_sem(false),
+ready(false)
 {
   const size_t N = paramcnt();
 
@@ -361,7 +361,7 @@ bool ParamRegistry::syncParam(const char* key) {
   osalDbgAssert(status == sizeof(v_eeprom.u32), "read failed");
   v_ram = *param_db[i].valuep;
   if (v_eeprom.u32 != v_ram.u32) {
-    eeprombuf.v = v_ram;
+    eeprombuf.value = v_ram;
     fill_param_crc(&eeprombuf);
     ParamFile->setPosition(i * sizeof(eeprombuf));
     status = ParamFile->write((uint8_t *)&eeprombuf, sizeof(eeprombuf));
@@ -408,7 +408,7 @@ bool ParamRegistry::loadToRam(void) {
     if (0 == strncmp(param_db[i].name, eeprombuf.name, PARAM_REGISTRY_ID_SIZE) &&
         OSAL_SUCCESS == check_param_crc(&eeprombuf)) {
       /* OK, this parameter already presents in EEPROM and checksum is correct */
-      v = eeprombuf.v;
+      v = eeprombuf.value;
     }
     else{
       /* there is no such parameter in EEPROM. Possible reasons:
