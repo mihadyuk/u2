@@ -9,7 +9,7 @@ public:
   void resume(void);
   void stop(void);
 private:
-  thread_t *worker;
+  thread_t *worker = nullptr;
 };
 
 #endif /* TLM_SENDER_HPP_ */
