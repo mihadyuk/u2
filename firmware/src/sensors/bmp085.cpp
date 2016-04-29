@@ -197,6 +197,7 @@ THD_FUNCTION(bmp085Thread, arg) {
 BMP085::BMP085(I2CDriver* i2cdp, i2caddr_t addr):
 I2CSensor(i2cdp, addr)
 {
+  memset(&cache, 0, sizeof(cache));
   state = SENSOR_STATE_STOP;
 }
 

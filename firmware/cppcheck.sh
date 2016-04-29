@@ -9,7 +9,7 @@ GCC_INCLUDES="-I/opt/arm-none-eabi/arm-none-eabi/include \
 			-I/opt/arm-none-eabi/arm-none-eabi/include/c++/${GCC_VERSION}"
 
 mkdir -p build
-#cppcheck $GCC_INCLUDES $CHIBI_INCLUDES main.cpp
-#cppcheck --force --enable=all --template=gcc src 2> cppcheck_report.txt 
-cppcheck --force --enable=warning $GCC_INCLUDES $CHIBI_INCLUDES src 2> build/cppcheck_report.txt
+#cppcheck --force --enable=warning $GCC_INCLUDES $CHIBI_INCLUDES . 2> build/cppcheck_report.txt
+#cppcheck --enable=warning $GCC_INCLUDES $CHIBI_INCLUDES . 2> build/cppcheck_report.txt
+cppcheck --enable=warning ./src 2> build/cppcheck_report.txt
 

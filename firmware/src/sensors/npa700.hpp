@@ -23,9 +23,9 @@ private:
   void pickle(baro_diff_data_t &result);
   bool hw_init_full(void);
   bool hw_init_fast(void);
-  uint32_t const *mid;
-  float const *sens;
-  uint8_t rxbuf[NPA700_RX_DEPTH];
+  uint32_t const *mid = nullptr;
+  float const *sens = nullptr;
+  uint8_t rxbuf[NPA700_RX_DEPTH] = {0};
 };
 
 #endif /* NPA700_HPP_ */

@@ -25,8 +25,8 @@ private:
   msg_t stop_sleep_code(void);
   bool hw_init_full(void);
   bool hw_init_fast(void);
-  uint8_t rxbuf[LSM_ACC_RX_DEPTH];
-  uint8_t txbuf[LSM_ACC_TX_DEPTH];
+  uint8_t rxbuf[LSM_ACC_RX_DEPTH] = {0};
+  uint8_t txbuf[LSM_ACC_TX_DEPTH] = {0};
 };
 
 #endif /* LSM303_ACC_HPP_ */

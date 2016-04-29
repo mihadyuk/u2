@@ -26,7 +26,7 @@ private:
   bool hw_init_full(void);
   bool hw_init_fast(void);
   msg_t start_measurement(void);
-  uint8_t rxbuf[AK8975_RX_DEPTH];
+  uint8_t rxbuf[AK8975_RX_DEPTH] = {0};
   marg_vector_t cache;
   marg_vector_raw_t cache_raw;
 };

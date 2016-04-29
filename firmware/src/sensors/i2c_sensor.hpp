@@ -20,11 +20,11 @@ private:
   I2CDriver *i2cdp;
   const i2caddr_t addr;
   #if I2C_SENSOR_USE_ERROR_COUNTERS
-    uint16_t ack_failure;
-    uint16_t bus_error;
-    uint16_t arbitration_lost;
-    uint16_t overrun;
-    uint16_t bus_restart;
+    uint16_t ack_failure = 0;
+    uint16_t bus_error = 0;
+    uint16_t arbitration_lost = 0;
+    uint16_t overrun = 0;
+    uint16_t bus_restart = 0;
   #endif
 };
 

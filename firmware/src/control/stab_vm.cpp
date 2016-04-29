@@ -441,21 +441,22 @@ void StabVM::pid_pool_start(void) {
  *
  */
 void StabVM::scale_pool_start(void) {
-  const size_t N = 16;
+  const size_t N = PARAM_REGISTRY_ID_SIZE + 1;
   char key[N];
   char numstr[4];
   size_t sumnum;
   float *tmp;
+  const char preffix[] = "PID_vm_scale";
+  osalDbgCheck(strlen(preffix) + sizeof(numstr) < N);
 
   for (sumnum=0; sumnum<TOTAL_SCALE_CNT; sumnum++) {
-    memset(numstr, 0, sizeof(numstr));
     numstr[0] = '_';
     numstr[1] = (sumnum / 10) + '0';
     numstr[2] = (sumnum % 10) + '0';
+    numstr[3] = 0;
 
-    memset(key, 0, N);
-    strncpy(key, "PID_vm_scale", N);
-    strncat(key, numstr, N);
+    strncpy(key, preffix, N);
+    strncat(key, numstr, sizeof(numstr));
 
     param_registry.valueSearch(key, &tmp);
     scale_pool[sumnum].init(tmp);

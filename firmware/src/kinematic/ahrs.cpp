@@ -152,7 +152,10 @@ void Ahrs::reschedule(void) {
 /**
  *
  */
-Ahrs::Ahrs(void) {
+Ahrs::Ahrs(void) :
+mode(nullptr),
+mode_current(0)
+{
   state = AHRS_STATE_STOP;
   return;
 }

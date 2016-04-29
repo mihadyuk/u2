@@ -35,10 +35,10 @@ private:
   void pickle(marg_vector_t &result, marg_vector_raw_t &result_raw);
   bool hw_init_full(void);
   bool hw_init_fast(void);
-  uint8_t rxbuf[LSM_MAG_RX_DEPTH];
-  uint8_t txbuf[LSM_MAG_TX_DEPTH];
+  uint8_t rxbuf[LSM_MAG_RX_DEPTH] = {0};
+  uint8_t txbuf[LSM_MAG_TX_DEPTH] = {0};
   size_t sample_cnt;
-  const uint32_t *gain = NULL;
+  const uint32_t *gain = nullptr;
   marg_vector_t cache;
   marg_vector_raw_t cache_raw;
   uint8_t gain_current;

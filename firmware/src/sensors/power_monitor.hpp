@@ -15,8 +15,11 @@ private:
   main_battery_health millivolts2healt(uint32_t mv);
   bool ready = false;
   ADCLocal &adc;
-  uint32_t const *cells, *chemistry, *ignore;
-  uint32_t const *second_v, *main_v;
+  uint32_t const *cells = nullptr;
+  uint32_t const *chemistry = nullptr;
+  uint32_t const *ignore = nullptr;
+  uint32_t const *second_v = nullptr;
+  uint32_t const *main_v = nullptr;
 };
 
 #endif /* POWER_MONITOR_HPP_ */

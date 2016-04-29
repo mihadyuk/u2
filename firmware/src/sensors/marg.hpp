@@ -27,8 +27,12 @@ private:
   LSM303_mag lsm303mag;
   LSM303_acc lsm303acc;
   bool ready = false;
-  const uint32_t *gyr_src, *acc_src, *mag_src;
-  uint8_t gyr_src_current, acc_src_current, mag_src_current;
+  const uint32_t *gyr_src = nullptr;
+  const uint32_t *acc_src = nullptr;
+  const uint32_t *mag_src = nullptr;
+  uint8_t gyr_src_current = 0;
+  uint8_t acc_src_current = 0;
+  uint8_t mag_src_current = 0;
 };
 
 #endif /* MARG_HPP_ */

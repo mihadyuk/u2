@@ -33,16 +33,16 @@ private:
   bool acquire_p(void);
   void picle(baro_abs_data_t &result);
   void calc_pressure(void);
-  uint8_t rxbuf[BMP085_RX_DEPTH];
-  uint8_t txbuf[BMP085_TX_DEPTH];
+  uint8_t rxbuf[BMP085_RX_DEPTH] = {0};
+  uint8_t txbuf[BMP085_TX_DEPTH] = {0};
   // uncompensated temperature and pressure values
-  uint32_t up, ut;
+  uint32_t up = 0, ut = 0;
   // bmp085 calibration coefficients
-  int16_t  ac1, ac2, ac3, b1, b2, mb, mc, md;
-  uint16_t ac4, ac5, ac6;
+  int16_t  ac1 = 0, ac2 = 0, ac3 = 0, b1 = 0, b2 = 0, mb = 0, mc = 0, md = 0;
+  uint16_t ac4 = 0, ac5 = 0, ac6 = 0;
   baro_abs_data_t cache;
-  uint32_t pressure_compensated;
-  thread_t *worker;
+  uint32_t pressure_compensated = 0;
+  thread_t *worker = nullptr;
   friend void bmp085Thread(void *arg);
 };
 

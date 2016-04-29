@@ -317,7 +317,8 @@ void Navi6dWrapper::stop_time_measurement(float dT) {
  */
 Navi6dWrapper::Navi6dWrapper(ACSInput &acs_in, gnss::GNSSReceiver &GNSS) :
 acs_in(acs_in),
-GNSS(GNSS)
+GNSS(GNSS),
+time_overrun_cnt(0)
 {
   chTMObjectInit(&tmeas);
   return;

@@ -263,7 +263,8 @@ msg_t LSM303_mag::get_prev_measurement(marg_vector_t &result, marg_vector_raw_t 
  */
 LSM303_mag::LSM303_mag(I2CDriver *i2cdp, i2caddr_t addr):
 I2CSensor(i2cdp, addr),
-sample_cnt(0)
+sample_cnt(0),
+gain_current(0)
 {
   state = SENSOR_STATE_STOP;
 }

@@ -408,7 +408,9 @@ static void load_parameters(void) {
 /**
  *
  */
-TlmSender::TlmSender(void){
+TlmSender::TlmSender(void) :
+worker(nullptr)
+{
   return;
 }
 

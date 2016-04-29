@@ -40,7 +40,7 @@ endif
 
 # Enable this if you want to see the full log while compiling.
 ifeq ($(USE_VERBOSE_COMPILE),)
-  USE_VERBOSE_COMPILE = yes
+  USE_VERBOSE_COMPILE = no
 endif
 
 # If enabled, this option makes the build process faster by not compiling
@@ -127,7 +127,6 @@ CSRC = $(STARTUPSRC) \
        lib/uav_utils/cpu_load.c \
        lib/uav_utils/soft_crc.c \
        lib/microrl/src/microrl.c \
-       lib/tlsf/tlsf.c \
        src/fault_handlers.c \
        benchmark/memcpy_bench.c \
        src/mavlink_local/mav_encoder.c \
@@ -289,7 +288,6 @@ INCDIR = $(CHIBIOS)/os/license \
          lib/uav_utils \
          lib/filters \
          lib/24aa/src \
-         lib/tlsf \
          src \
          src/mavlink_local \
          src/kinematic \
@@ -319,6 +317,9 @@ else
 	CC   = ccache $(TRGT)gcc
 	CPPC = ccache $(TRGT)g++
 endif
+
+#CC   = cppcheck --template=gcc
+#CPPC = cppcheck --template=gcc
 
 # Enable loading with g++ only if you need C++ runtime support.
 # NOTE: You can use C++ even without C++ support if you are careful. C++
@@ -380,7 +381,10 @@ RULESPATH = $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC
 include $(RULESPATH)/rules.mk
 
 ######## resource usage show ################
-POST_MAKE_ALL_RULE_HOOK: res_usage
+POST_MAKE_ALL_RULE_HOOK: res_usage analyze
+
+analyze:
+	cppcheck $(CSRC) $(CPPSRC) --enable=warning --force --template=gcc
 
 res_usage: $(BUILDDIR)/$(PROJECT).bin $(BUILDDIR)/$(PROJECT).elf \
 			$(BUILDDIR)/$(PROJECT).hex $(BUILDDIR)/$(PROJECT).dmp
