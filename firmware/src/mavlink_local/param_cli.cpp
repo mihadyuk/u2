@@ -155,11 +155,13 @@ static void print_header(void){
  *
  */
 static void print_footer(void){
-  int N = 80;
+  const size_t N = 80;
   char str[N];
 
   cli_println("--------------------------------------------------------------");
-  snprintf(str, N, "Total/used: %d/%d", param_registry.capacity(), param_registry.paramcnt());
+  snprintf(str, N, "Total/used: %u/%u",
+      (unsigned int)param_registry.capacity(),
+      (unsigned int)param_registry.paramcnt());
   cli_println(str);
 }
 

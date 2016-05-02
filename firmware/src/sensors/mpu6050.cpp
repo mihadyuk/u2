@@ -636,11 +636,11 @@ sensor_state_t MPU6050::start(void) {
     char search_key[PARAM_REGISTRY_ID_SIZE];
     for (size_t axis=0; axis<3; axis++) {
       for (size_t i=0; i<POLYC_LEN; i++) {
-        snprintf(search_key, PARAM_REGISTRY_ID_SIZE, "MPUG_%cbias_c%zu", 'x'+(char)axis, i);
+        snprintf(search_key, PARAM_REGISTRY_ID_SIZE, "MPUG_%cbias_c%u", 'x'+(char)axis, (unsigned int)i);
         param_registry.valueSearch(search_key, &gyr_bias_c[3*axis+i]);
-        snprintf(search_key, PARAM_REGISTRY_ID_SIZE, "MPUA_%cbias_c%zu", 'x'+(char)axis, i);
+        snprintf(search_key, PARAM_REGISTRY_ID_SIZE, "MPUA_%cbias_c%u", 'x'+(char)axis, (unsigned int)i);
         param_registry.valueSearch(search_key, &acc_bias_c[3*axis+i]);
-        snprintf(search_key, PARAM_REGISTRY_ID_SIZE, "MPUA_%csens_c%zu", 'x'+(char)axis, i);
+        snprintf(search_key, PARAM_REGISTRY_ID_SIZE, "MPUA_%csens_c%u", 'x'+(char)axis, (unsigned int)i);
         param_registry.valueSearch(search_key, &acc_sens_c[3*axis+i]);
       }
     }
