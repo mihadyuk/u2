@@ -70,7 +70,7 @@ void landingAlignmentManeuver(ManeuverPart<T> &part,
 
   /* calculate rotate angle for alignment arm of infinity maneuver and direction to maneuver center */
   T distanceToArcCenter = HEIGHT/2.0 - RADIUS; /* if maneuver center in the coordinates 0, 0 */
-  T armRatationAngle = asin(static_cast<T>(RADIUS)/distanceToArcCenter);
+  T armRatationAngle = atan2(static_cast<T>(RADIUS), distanceToArcCenter);
   T prevToTrgtVector[2][1];
   m_minus<T, 2, 1>(prevToTrgtVector, localTrgt, localPrev);
   T prevToTrgtCourse = atan2(prevToTrgtVector[1][0],
