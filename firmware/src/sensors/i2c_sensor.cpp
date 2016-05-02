@@ -41,8 +41,8 @@ systime_t I2CSensor::calc_timeout(size_t txbytes, size_t rxbytes) {
  *
  */
 I2CSensor::I2CSensor(I2CDriver *i2cdp, i2caddr_t addr):
-  i2cdp(i2cdp),
-  addr(addr)
+i2cdp(i2cdp),
+addr(addr)
 {
   return;
 }

@@ -63,7 +63,7 @@ struct ubx_ack_ack_payload {
 struct ubx_ack_ack {
   ubx_ack_ack_payload payload;
   const ubx_msg_t rtti = ubx_msg_t::ACK_ACK;
-  uint16_t recvd_bytes;
+  uint16_t recvd_bytes = 0;
 };
 
 /**
@@ -76,7 +76,7 @@ struct ubx_ack_nack_payload {
 struct ubx_ack_nack {
   ubx_ack_nack_payload payload;
   const ubx_msg_t rtti = ubx_msg_t::ACK_NACK;
-  uint16_t recvd_bytes;
+  uint16_t recvd_bytes = 0;
 };
 
 /**
@@ -91,7 +91,7 @@ struct ubx_cfg_rate_payload {
 struct ubx_cfg_rate {
   ubx_cfg_rate_payload payload;
   const ubx_msg_t rtti = ubx_msg_t::CFG_RATE;
-  uint16_t recvd_bytes;
+  uint16_t recvd_bytes = 0;
 };
 
 /**
@@ -105,7 +105,7 @@ struct ubx_cfg_msg_payload {
 struct ubx_cfg_msg {
   ubx_cfg_msg_payload payload;
   const ubx_msg_t rtti = ubx_msg_t::CFG_MSG;
-  uint16_t recvd_bytes;
+  uint16_t recvd_bytes = 0;
 };
 
 /**
@@ -127,7 +127,7 @@ struct ubx_cfg_prt_payload {
 struct ubx_cfg_prt {
   ubx_cfg_prt_payload payload;
   const ubx_msg_t rtti = ubx_msg_t::CFG_PRT;
-  uint16_t recvd_bytes;
+  uint16_t recvd_bytes = 0;
 };
 
 /**
@@ -159,7 +159,7 @@ struct ubx_cfg_nav5_payload {
 struct ubx_cfg_nav5 {
   ubx_cfg_nav5_payload payload;
   const ubx_msg_t rtti = ubx_msg_t::CFG_NAV5;
-  uint16_t recvd_bytes;
+  uint16_t recvd_bytes = 0;
 };
 
 /**
@@ -207,7 +207,7 @@ struct ubx_nav_pvt_payload {
 struct ubx_nav_pvt {
   ubx_nav_pvt_payload payload;
   const ubx_msg_t rtti = ubx_msg_t::NAV_PVT;
-  uint16_t recvd_bytes;
+  uint16_t recvd_bytes = 0;
 };
 
 /**
@@ -237,7 +237,7 @@ template <size_t svs_cnt>
 struct ubx_nav_sat {
   ubx_nav_sat_payload<svs_cnt> payload;
   const ubx_msg_t rtti = ubx_msg_t::NAV_SAT;
-  uint16_t recvd_bytes;
+  uint16_t recvd_bytes = 0;
 };
 
 /**
@@ -258,7 +258,7 @@ struct ubx_nav_dop_payload {
 struct ubx_nav_dop {
   ubx_nav_dop_payload payload;
   const ubx_msg_t rtti = ubx_msg_t::NAV_DOP;
-  uint16_t recvd_bytes;
+  uint16_t recvd_bytes = 0;
 };
 
 /**
@@ -278,7 +278,7 @@ template <size_t ext_cnt>
 struct ubx_mon_ver {
   ubx_mon_ver_payload<ext_cnt> payload;
   const ubx_msg_t rtti = ubx_msg_t::MON_VER;
-  uint16_t recvd_bytes;
+  uint16_t recvd_bytes = 0;
 };
 
 /**

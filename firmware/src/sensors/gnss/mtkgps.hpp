@@ -18,7 +18,7 @@ private:
   void load_params(void);
   const uint32_t *fix_period = nullptr;
   uint32_t fix_period_cache = 200;
-  char txbuf[80];
+  char txbuf[80] = {0};
 };
 
 } // namespace

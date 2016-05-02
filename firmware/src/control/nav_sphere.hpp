@@ -116,8 +116,13 @@ public:
   T get_crsAB(void) {return crsAB;}
 
 private:
-  T latA, lonA, latB, lonB; // radians
-  T crsAB, distAB; // radians
+  // all values in radians
+  T latA = 0;
+  T lonA = 0;
+  T latB = 0;
+  T lonB = 0;
+  T crsAB = 0;
+  T distAB = 0;
 };
 
 /**

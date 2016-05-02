@@ -59,7 +59,7 @@ public:
     for (size_t i=0; i<L; i++) {
       s += b_state[i] * b[i+1] + a_state[i] * a[i];
       /*-----------------------^
-       Note: signe '+' here is for performance reasons. You need to
+       Note: '+' instead of '-' here is for performance reasons. You need to
        premultiply a[] kernel by -1 in higher level if it calculated
        for case like y(n) = S(P) - S(Q) */
     }
@@ -94,9 +94,18 @@ private:
  *
  */
 template<typename T, size_t L, size_t links>
-class IIRChain {
+class IIRChain : public FilterBase<T> {
   static_assert(links > 1, "Chain with single link is pointless");
 public:
+  /**
+   *
+   */
+  IIRChain(void) :
+  gain(nullptr)
+  {
+    return;
+  }
+
   /**
    *
    */
@@ -118,10 +127,10 @@ public:
    *
    */
   T update(T sample) {
-    T s = gain[0] * chain[0].update(sample);
+    T s = chain[0].update(sample * gain[0]);
 
     for (size_t i=1; i<links; i++) {
-      s += gain[i] * chain[i].update(s);
+      s = chain[i].update(s * gain[i]);
     }
     return s;
   }

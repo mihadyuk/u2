@@ -203,7 +203,8 @@ void mtkgps::load_params(void) {
  *
  */
 mtkgps::mtkgps(SerialDriver *sdp, uint32_t start_baudrate, uint32_t working_baudrate) :
-    GenericNMEA(sdp, start_baudrate, working_baudrate) {
+GenericNMEA(sdp, start_baudrate, working_baudrate)
+{
   return;
 }
 

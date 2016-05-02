@@ -383,6 +383,7 @@ Adis::Adis(void):
 protect_sem(false),
 data_ready_sem(true)
 {
+  memset(&measurement, 0, sizeof(measurement));
   state = SENSOR_STATE_STOP;
   chTMObjectInit(&tm);
   return;

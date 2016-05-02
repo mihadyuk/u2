@@ -127,7 +127,6 @@ CSRC = $(STARTUPSRC) \
        lib/uav_utils/cpu_load.c \
        lib/uav_utils/soft_crc.c \
        lib/microrl/src/microrl.c \
-       lib/tlsf/tlsf.c \
        src/fault_handlers.c \
        benchmark/memcpy_bench.c \
        src/mavlink_local/mav_encoder.c \
@@ -251,7 +250,7 @@ CPPSRC = $(CHCPPSRC) \
 		src/navi6d_wrapper.cpp \
 		src/kinematic/ahrs.cpp \
 		src/kinematic/ahrs_starlino.cpp \
-		lib/filters/fir_test.cpp \
+		lib/filters/filter_test.cpp \
 		$(FPGACPPSRC)
 
 # C sources to be compiled in ARM mode regardless of the global setting.
@@ -275,9 +274,11 @@ TCSRC =
 TCPPSRC =
 
 # List ASM source files here
-ASMSRC = $(STARTUPASM) $(PORTASM) $(OSALASM)
+ASMSRC =
+ASMXSRC = $(STARTUPASM) $(PORTASM) $(OSALASM)
 
-INCDIR = $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
+INCDIR = $(CHIBIOS)/os/license \
+         $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
          $(HALINC) $(PLATFORMINC) $(BOARDINC) $(STREAMSINC) $(CHCPPINC) \
          $(FATFSINC) \
          $(CHIBIOS_CONTRIB)/os/various \
@@ -286,9 +287,7 @@ INCDIR = $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
          lib/microrl/src \
          lib/uav_utils \
          lib/filters \
-         lib/onewire \
          lib/24aa/src \
-         lib/tlsf \
          src \
          src/mavlink_local \
          src/kinematic \
@@ -318,6 +317,9 @@ else
 	CC   = ccache $(TRGT)gcc
 	CPPC = ccache $(TRGT)g++
 endif
+
+#CC   = cppcheck --template=gcc
+#CPPC = cppcheck --template=gcc
 
 # Enable loading with g++ only if you need C++ runtime support.
 # NOTE: You can use C++ even without C++ support if you are careful. C++
@@ -379,7 +381,10 @@ RULESPATH = $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC
 include $(RULESPATH)/rules.mk
 
 ######## resource usage show ################
-POST_MAKE_ALL_RULE_HOOK: res_usage
+POST_MAKE_ALL_RULE_HOOK: res_usage analyze
+
+analyze:
+	cppcheck $(CSRC) $(CPPSRC) --enable=warning --force --template=gcc
 
 res_usage: $(BUILDDIR)/$(PROJECT).bin $(BUILDDIR)/$(PROJECT).elf \
 			$(BUILDDIR)/$(PROJECT).hex $(BUILDDIR)/$(PROJECT).dmp
