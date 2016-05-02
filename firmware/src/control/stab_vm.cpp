@@ -363,20 +363,22 @@ static size_t alcoi_pid = 0;
 /**
  *
  */
-static void construct_key(char *buf, size_t buflen, uint8_t pidnum, const char *suffix) {
+static void construct_pid_key(char *buf, size_t buflen, uint8_t pidnum, const char *suffix) {
   char numstr[4];
+  const char preffix[4] = "PID";
 
   osalDbgCheck(pidnum < TOTAL_PID_CNT);
 
-  memset(numstr, 0, sizeof(numstr));
   numstr[0] = '_';
   numstr[1] = (pidnum / 10) + '0';
   numstr[2] = (pidnum % 10) + '0';
+  numstr[3] = 0;
 
-  memset(buf, 0, buflen);
-  strncpy(buf, "PID", buflen);
-  strncat(buf, numstr, buflen);
-  strncat(buf, suffix, buflen);
+  osalDbgCheck((strlen(preffix) + strlen(numstr) + strlen(suffix)) < buflen);
+
+  strcpy(buf, "PID");
+  strcat(buf, numstr);
+  strcat(buf, suffix);
 }
 
 /**
@@ -388,22 +390,22 @@ static PIDInit<float> get_pid_init(uint8_t pidnum) {
   PIDInit<float> ret;
   uint32_t *postproc;
 
-  construct_key(key, N, pidnum, "_P");
+  construct_pid_key(key, N, pidnum, "_P");
   param_registry.valueSearch(key, &ret.P);
 
-  construct_key(key, N, pidnum, "_I");
+  construct_pid_key(key, N, pidnum, "_I");
   param_registry.valueSearch(key, &ret.I);
 
-  construct_key(key, N, pidnum, "_D");
+  construct_pid_key(key, N, pidnum, "_D");
   param_registry.valueSearch(key, &ret.D);
 
-  construct_key(key, N, pidnum, "_Min");
+  construct_pid_key(key, N, pidnum, "_Min");
   param_registry.valueSearch(key, &ret.Min);
 
-  construct_key(key, N, pidnum, "_Max");
+  construct_pid_key(key, N, pidnum, "_Max");
   param_registry.valueSearch(key, &ret.Max);
 
-  construct_key(key, N, pidnum, "_proc");
+  construct_pid_key(key, N, pidnum, "_proc");
   param_registry.valueSearch(key, &postproc);
   switch (*postproc) {
   case 0:
@@ -442,22 +444,15 @@ void StabVM::pid_pool_start(void) {
  */
 void StabVM::scale_pool_start(void) {
   const size_t N = PARAM_REGISTRY_ID_SIZE + 1;
-  char key[N];
-  char numstr[4];
-  size_t sumnum;
-  float *tmp;
-  const char preffix[] = "PID_vm_scale";
-  osalDbgCheck(strlen(preffix) + sizeof(numstr) < N);
+  char key[N] = "PID_vm_scale_00";
 
-  for (sumnum=0; sumnum<TOTAL_SCALE_CNT; sumnum++) {
-    numstr[0] = '_';
-    numstr[1] = (sumnum / 10) + '0';
-    numstr[2] = (sumnum % 10) + '0';
-    numstr[3] = 0;
+  char *suffix = strstr(key, "00");
 
-    strncpy(key, preffix, N);
-    strncat(key, numstr, sizeof(numstr));
+  for (size_t sumnum=0; sumnum<TOTAL_SCALE_CNT; sumnum++) {
+    suffix[0] = (sumnum / 10) + '0';
+    suffix[1] = (sumnum % 10) + '0';
 
+    float *tmp;
     param_registry.valueSearch(key, &tmp);
     scale_pool[sumnum].init(tmp);
   }
