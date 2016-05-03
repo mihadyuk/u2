@@ -51,7 +51,7 @@ void NPA700::pickle(baro_diff_data_t &result) {
 
   // diagnostic
   uint8_t diag = rxbuf[0] >> 6;
-  if ((3 == diag) && (1 == diag)) {
+  if ((3 == diag) || (1 == diag)) {
     this->state = SENSOR_STATE_DEAD;
     return;
   }
