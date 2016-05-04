@@ -73,13 +73,15 @@ bool ProtoNmea::_autotest(const char *sentence) const {
 
   uint8_t ref_sum = checksumFromStr(sump + 1);
   uint8_t sum = checksum((uint8_t *)sentence + 1, len - 1);
-  if (sum != ref_sum)
+  if (sum != ref_sum) {
     return OSAL_FAILED;
+  }
 
   char str_sum[2];
   checksum2str(sum, str_sum);
-  if (0 != memcmp(sump+1, str_sum, 2))
+  if (0 != memcmp(sump+1, str_sum, 2)) {
     return OSAL_FAILED;
+  }
 
   return OSAL_SUCCESS;
 }
@@ -89,8 +91,9 @@ bool ProtoNmea::_autotest(const char *sentence) const {
  */
 bool ProtoNmea::checksum_autotest(void) const {
   for (size_t i=0; i<ArrayLen(test_sentence_array); i++) {
-    if (OSAL_FAILED == _autotest(test_sentence_array[i]))
+    if (OSAL_FAILED == _autotest(test_sentence_array[i])) {
       return OSAL_FAILED;
+    }
   }
 
   return OSAL_SUCCESS;
@@ -436,12 +439,14 @@ void ProtoNmea::unpack(nmea_gsv_t &result) const {
 
   // silently prevent overflow
   size_t satcnt = (tokens_available() - 1) / 4;
-  if (satcnt > ArrayLen(result.sat))
+  if (satcnt > ArrayLen(result.sat)) {
     satcnt = ArrayLen(result.sat);
+  }
 
   /* reset to known state */
-  for (size_t i=0; i<ArrayLen(result.sat); i++)
+  for (size_t i=0; i<ArrayLen(result.sat); i++) {
     memset(&result.sat, 0, sizeof(result.sat));
+  }
 
   /* fill apropriate fields */
   for (size_t i=0; i<satcnt; i++) {
