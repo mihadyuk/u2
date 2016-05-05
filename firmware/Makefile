@@ -318,9 +318,6 @@ else
 	CPPC = ccache $(TRGT)g++
 endif
 
-#CC   = cppcheck --template=gcc
-#CPPC = cppcheck --template=gcc
-
 # Enable loading with g++ only if you need C++ runtime support.
 # NOTE: You can use C++ even without C++ support if you are careful. C++
 #       runtime support makes code size explode.
@@ -417,12 +414,6 @@ else
 	@echo Checking $(<F)
 	@$(CHECKCMD) $(CHECKOPT) $< > $@
 endif
-
-#$(CHECKCOBJS) : $(CHECKDIR)/%.check : %.c Makefile
-#	$(CHECKCMD) $(CHECKOPT) $< > $@
-#
-#$(CHECKCPPOBJS) : $(CHECKDIR)/%.check : %.cpp Makefile
-#	$(CHECKCMD) $(CHECKOPT) $< > $@
 
 #cppcheck: $(OUTFILES)
 #	$(CHECKCMD) $(CSRC) $(CPPSRC) --enable=warning --force --template=gcc
