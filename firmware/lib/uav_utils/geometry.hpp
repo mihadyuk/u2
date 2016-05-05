@@ -11,7 +11,7 @@
  *
  */
 template<typename T>
-static inline T deg2rad(T deg) {
+T deg2rad(T deg) {
   return deg * static_cast<T>(DEG_TO_RAD);
 }
 
@@ -19,7 +19,7 @@ static inline T deg2rad(T deg) {
  *
  */
 template<typename T>
-static inline T rad2deg(T rad) {
+T rad2deg(T rad) {
   return rad * static_cast<T>(RAD_TO_DEG);
 }
 
@@ -27,7 +27,7 @@ static inline T rad2deg(T rad) {
  * Get meters from radians on earth sphere
  */
 template<typename T>
-static inline T rad2m(T rad) {
+T rad2m(T rad) {
   return rad * static_cast<T>(RAD_TO_M);
 }
 
@@ -79,6 +79,9 @@ T wrap_2pi(T angle) {
   return angle;
 }
 
+/**
+ *
+ */
 template <typename T>
 T tangentLineCourse(const T (&lineVector)[2][1], T clockwise) {
   T course = atan2(lineVector[1][0], lineVector[0][0]);
