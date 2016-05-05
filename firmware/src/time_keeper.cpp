@@ -327,10 +327,12 @@ static size_t format_usec(char *buf, size_t N, int64_t tv_usec) {
   int32_t i = tv_usec / 1000000;
   int32_t f = tv_usec % 1000000;
 
-  if (0 != f)
+  if (0 != f) {
     return snprintf(buf, N, "%ld.%ld", i, f);
-  else
+  }
+  else {
     return snprintf(buf, N, "%ld.000000", i);
+  }
 }
 
 /**
@@ -341,17 +343,19 @@ thread_t* date_clicmd(int argc, const char * const * argv, BaseChannel *bchnp) {
 
   time_t tv_sec = 0;
   int64_t tv_usec = 0;
-  int sscanf_status;
 
   /**/
   if (argc == 2) {
+    int status;
     if (0 == strcmp(argv[0], "set")) {
-      sscanf_status = sscanf(argv[1], "%i", (int*)&tv_sec);
-      if (sscanf_status != 1)
+      status = sscanf(argv[1], "%i", (int*)&tv_sec);
+      if (status != 1) {
         cli_println("ERROR. Time value inconsistent");
-      else if (tv_sec < BUILD_TIME)
+      }
+      else if (tv_sec < BUILD_TIME) {
         cli_println("ERROR. Time in past");
-      else{
+      }
+      else {
         tv_usec = tv_sec;
         tv_usec *= 1000000;
         rtc_set_time_unix(tv_sec);
@@ -359,9 +363,10 @@ thread_t* date_clicmd(int argc, const char * const * argv, BaseChannel *bchnp) {
       }
     }
     else if (0 == strcmp(argv[0], "drift")) {
-      sscanf_status = sscanf(argv[1], "%i", (int*)&tv_sec);
-      if (sscanf_status != 1)
+      status = sscanf(argv[1], "%i", (int*)&tv_sec);
+      if (status != 1) {
         cli_println("ERROR. Value inconsistent");
+      }
       else {
         timer_skew = tv_sec;
       }
