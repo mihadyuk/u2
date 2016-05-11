@@ -47,10 +47,10 @@ static double press2height(uint32_t pval) {
 /**
  * Move pressure value to MSL as it done by meteo sites in iternet.
  */
-static double press2msl(uint32_t pval, int32_t height) {
-  double p = 1.0 - height / 44330.0;
-  return pval / pow(p, 5.255);
-}
+//static double press2msl(uint32_t pval, int32_t height) {
+//  double p = 1.0 - height / 44330.0;
+//  return pval / pow(p, 5.255);
+//}
 
 /**
  *
@@ -79,7 +79,6 @@ static void baro2mavlink(const baro_data_t &data,
   (void)abs;
 
   mavlink_out_vfr_hud_struct.alt = data.alt;
-  mavlink_out_vfr_hud_struct.climb = data.climb;
   mavlink_out_vfr_hud_struct.airspeed = data.airspeed;
 
   // Fill baro data only in HIGHRES_IMU mavlink package
@@ -113,14 +112,13 @@ static void baro2mavlink(const baro_data_t &data,
 /**
  *
  */
-void PMUGet(const baro_abs_data_t &abs, const baro_diff_data_t &diff,
-            const float gnss_alt, baro_data_t &result) {
+void PMUGet(const baro_abs_data_t &abs,
+            const baro_diff_data_t &diff,
+            baro_data_t &result) {
 
   result.alt = press2height(abs.p);
   result.p_abs = abs.p;
-  result.p_msl_adjusted = press2msl(abs.p, gnss_alt);
   result.t = abs.t;
-  result.climb = 0;
 
   result.p_diff = diff.p;
   result.airspeed = press2airspeed(diff.p);

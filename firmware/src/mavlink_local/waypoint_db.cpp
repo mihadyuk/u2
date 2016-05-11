@@ -121,9 +121,9 @@ uint16_t WpDB::start(void) {
   for (size_t seq=0; seq<count; seq++) {
     dbfile->setPosition(calc_offset(seq, active_bank));
     readcnt = dbfile->read(buf, WAYPOINT_FOOTPRINT);
-    if (WAYPOINT_FOOTPRINT != readcnt)
+    if (WAYPOINT_FOOTPRINT != readcnt) {
       goto FAILED;
-
+    }
     if (! crc_valid(buf)) {
       goto FAILED;
     }
@@ -150,8 +150,6 @@ void WpDB::stop(void) {
  */
 bool WpDB::read(mavlink_mission_item_t *wpp, uint16_t seq) {
 
-  size_t result;
-
   osalDbgCheck(nullptr != this->dbfile);
   osalDbgCheck(nullptr != wpp);
   osalDbgCheck(active_bank <= 1);
@@ -161,12 +159,13 @@ bool WpDB::read(mavlink_mission_item_t *wpp, uint16_t seq) {
   else {
     dbfile->setPosition(calc_offset(seq, active_bank));
 
-    result = dbfile->read(buf, WAYPOINT_FOOTPRINT);
-    if (WAYPOINT_FOOTPRINT != result)
+    size_t result = dbfile->read(buf, WAYPOINT_FOOTPRINT);
+    if (WAYPOINT_FOOTPRINT != result) {
       return OSAL_FAILED;
-
-    if (! crc_valid(buf))
+    }
+    if (! crc_valid(buf)) {
       return OSAL_FAILED;
+    }
 
     memcpy(wpp, buf, sizeof(*wpp));
     return OSAL_SUCCESS;
@@ -190,14 +189,16 @@ bool WpDB::write(const mavlink_mission_item_t *wpp, uint16_t seq) {
   /* actual write */
   dbfile->setPosition(calc_offset(seq, shadow_bank));
   bytecnt = dbfile->write(buf, WAYPOINT_FOOTPRINT);
-  if (WAYPOINT_FOOTPRINT != bytecnt)
+  if (WAYPOINT_FOOTPRINT != bytecnt) {
     return OSAL_FAILED;
+  }
 
   /* read back and verify checksum */
   dbfile->setPosition(calc_offset(seq, shadow_bank));
   bytecnt = dbfile->read(buf, WAYPOINT_FOOTPRINT);
-  if (WAYPOINT_FOOTPRINT != bytecnt)
+  if (WAYPOINT_FOOTPRINT != bytecnt) {
     return OSAL_FAILED;
+  }
 
   if (crc_valid(buf)) {
     shadow_count++;

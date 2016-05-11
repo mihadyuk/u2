@@ -2,7 +2,6 @@
 #include "acs_input.hpp"
 #include "hil.hpp"
 
-using namespace chibios_rt;
 using namespace control;
 
 /*
@@ -72,9 +71,18 @@ void HIL::disableAll(void) {
 /**
  *
  */
-void HIL::override(float val, state_vector_enum addr) {
+void HIL::override(double val, state_vector_enum addr) {
   osalDbgCheck(addr < ACS_INPUT_ENUM_END);
 
   shadow.ch[addr] = val;
   bmp.set(addr);
+}
+
+/**
+ *
+ */
+void HIL::disable(state_vector_enum addr) {
+  osalDbgCheck(addr < ACS_INPUT_ENUM_END);
+
+  bmp.reset(addr);
 }

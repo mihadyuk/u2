@@ -400,11 +400,11 @@ int main(void) {
 #error "board unsupported"
 #endif
 
-    /* TODO: change constant GNSS altitude to real */
-    PMUGet(abs_press, diff_press, 252, baro_data);
+    PMUGet(abs_press, diff_press, baro_data);
     baro2acs_in(baro_data, acs_in);
 
     if (MAV_STATE_CALIBRATING == mavlink_system_info_struct.state) {
+      /* TODO: add SINS alignment check */
       CalibratorState cs = calibrator.update(marg_data);
       if (CalibratorState::idle == cs)
         mavlink_system_info_struct.state = MAV_STATE_STANDBY;
