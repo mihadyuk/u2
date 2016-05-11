@@ -9,6 +9,13 @@ namespace control
 namespace maneuver
 {
 
+enum class ThreePointsParts: uint32_t
+{
+  line,
+  arc,
+  count
+};
+
 void threePointsManeuver(
     ManeuverPart &part,
     uint32_t partNumber,
@@ -17,7 +24,7 @@ void threePointsManeuver(
     const mnrfp (&localTrgt)[2][1],
     const mnrfp (&localThird)[2][1])
 {
-  if (partNumber < 2)
+  if (partNumber < static_cast<uint32_t>(ThreePointsParts::count))
   {
     mnrfp trgtToPrevVect[2][1];
     m_minus<mnrfp, 2, 1>(trgtToPrevVect, localPrev, localTrgt);
@@ -47,16 +54,16 @@ void threePointsManeuver(
     mnrfp alpha = deltaCrs/2;
 
     if (deltaCrs >= static_cast<mnrfp>(0.0))
-    {
       radius = -fabs(radius);
-    }
-    else {
+    else
       radius = fabs(radius);
-    }
 
-    switch (partNumber)
+    ThreePointsParts threePointsPart =
+        static_cast<ThreePointsParts>(partNumber);
+
+    switch (threePointsPart)
     {
-      case 0:
+      case ThreePointsParts::line:
       {
         mnrfp lineFinish[2][1];
         mnrfp arm = static_cast<mnrfp>(-radius) / tan(alpha);
@@ -74,7 +81,7 @@ void threePointsManeuver(
       }
         break;
 
-      case 1:
+      case ThreePointsParts::arc:
       {
         mnrfp cosAlpha = cos(alpha);
         mnrfp sinAlpha = sin(alpha);
@@ -100,6 +107,9 @@ void threePointsManeuver(
         part.fillArc(arcCenter, radius, startCrs, dCrs);
         part.setFinal(true);
       }
+        break;
+
+      default:
         break;
     }
 

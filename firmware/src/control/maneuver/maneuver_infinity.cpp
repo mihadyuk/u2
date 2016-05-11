@@ -1,4 +1,4 @@
-#include <math.h>
+#include <cmath>
 #include "maneuver_infinity.hpp"
 #include "matrix_math.hpp"
 #include "geometry.hpp"
@@ -9,82 +9,93 @@ namespace control
 namespace maneuver
 {
 
+enum class ApproachToInfinity: uint32_t
+{
+  lineToInfinityCenter,
+  count
+};
+
+enum class InfinityParts: uint32_t
+{
+  rightUpperLine,
+  rightUpperArc,
+  leftUpperArc,
+  leftUpperRightBottomLine,
+  rightBottomArc,
+  leftBottomArc,
+  leftBottomLine,
+  count
+};
+
 void infinityManeuver(
     ManeuverPart &part,
     uint32_t partNumber,
     float repeats,
-    float radius,
+    float width,
     float height,
     float angle,
     const mnrfp (&localPrev)[2][1],
     const mnrfp (&localTrgt)[2][1])
 {
-  const uint32_t INFINITY_PARTS_COUNT = 7;
-  const uint32_t APPROACH_PARTS_COUNT = 1;
-
   uint32_t partsCount = round(
-      fabs(repeats)
-    * INFINITY_PARTS_COUNT
-    + APPROACH_PARTS_COUNT);
+        fabs(repeats)
+      * static_cast<uint32_t>(InfinityParts::count)
+      + static_cast<uint32_t>(ApproachToInfinity::count));
 
-  if (0 == partNumber)
-  {
-    /* line from previous waypoint to the infinity's center */
-    part.fillLine(localPrev, localTrgt);
-    part.setFinal(false);
-  }
-  else if (partNumber > (partsCount - 1))
-  {
-    /* out of maneuver parts range */
-    part.fillUnknown();
-  }
-  else
+  mnrfp radius = width / 2.0;
+
+  if (   partNumber >= static_cast<uint32_t>(ApproachToInfinity::count)
+      && partNumber < partsCount)
   {
     /* maneuver parts */
-    mnrfp distToArcCenter = height / 2.0 - radius;
+    mnrfp distToArcCenter = static_cast<mnrfp>(height / 2.0) - radius;
     mnrfp arm = sqrt(
-        distToArcCenter
-      * distToArcCenter
-      - static_cast<mnrfp>(radius * radius));
-    mnrfp alpha = asin(static_cast<mnrfp>(radius) / distToArcCenter);
+        distToArcCenter * distToArcCenter
+      - radius * radius);
+    mnrfp alpha = asin(radius / distToArcCenter);
 
-    switch (partNumber % 7)
+    InfinityParts infinityPart = static_cast<InfinityParts>(
+        (  partNumber
+         - static_cast<uint32_t>(ApproachToInfinity::count))
+      % static_cast<uint32_t>(InfinityParts::count));
+
+    switch (infinityPart)
     {
-      case 1:
+      case InfinityParts::rightUpperLine:
         part.fillLine(0.0, 0.0, arm, 0.0);
         part.setFinal(false);
         part.rotate(alpha);
         break;
 
-      case 2:
+      case InfinityParts::rightUpperArc:
         part.fillArc(
             distToArcCenter,
             0.0,
-            -fabs(radius),
+           -fabs(radius),
             wrap_2pi(alpha),
             static_cast<mnrfp>(M_PI_2) + alpha);
         part.setFinal(false);
         break;
 
-      case 3:
+      case InfinityParts::leftUpperArc:
         part.fillArc(
             distToArcCenter,
             0.0,
-            -fabs(radius),
+           -fabs(radius),
             3.0 * M_PI_2,
             static_cast<mnrfp>(M_PI_2) + alpha);
         part.setFinal(false);
         break;
 
-      case 4:
+      case InfinityParts::leftUpperRightBottomLine:
         part.fillLine(arm, 0.0, -arm, 0.0);
         part.setFinal(false);
         part.rotate(-alpha);
         break;
 
-      case 5:
+      case InfinityParts::rightBottomArc:
         part.fillArc(
-            -distToArcCenter,
+           -distToArcCenter,
             0.0,
             fabs(radius),
             wrap_2pi(-alpha + static_cast<mnrfp>(M_PI)),
@@ -92,9 +103,9 @@ void infinityManeuver(
         part.setFinal(false);
         break;
 
-      case 6:
+      case InfinityParts::leftBottomArc:
         part.fillArc(
-            -distToArcCenter,
+           -distToArcCenter,
             0.0,
             fabs(radius),
             3.0 * M_PI_2,
@@ -102,26 +113,35 @@ void infinityManeuver(
         part.setFinal(false);
         break;
 
-      case 0:
+      case InfinityParts::leftBottomLine:
         part.fillLine(-arm, 0.0, 0.0, 0.0);
         part.setFinal(false);
         part.rotate(alpha);
         break;
+
+      default:
+        break;
     }
 
     if (sign(repeats) < 0.0)
-    {
       part.flipNorth();
-    }
 
-    part.rotate(deg2rad<mnrfp>(angle));
+    part.rotate(deg2rad<mnrfp>(static_cast<mnrfp>(angle)));
     part.move(localTrgt);
 
+    if ((partsCount - 1) == partNumber)
+        part.setFinal(true);
   }
-
-  if ((partsCount - 1) == partNumber)
+  else if (partNumber < static_cast<uint32_t>(ApproachToInfinity::count))
   {
-    part.setFinal(true);
+    /* line from previous waypoint to the infinity's center */
+    part.fillLine(localPrev, localTrgt);
+    part.setFinal(false);
+  }
+  else
+  {
+    /* out of maneuver parts range */
+    part.fillUnknown();
   }
 }
 

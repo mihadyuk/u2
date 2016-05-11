@@ -33,13 +33,9 @@ void ManeuverPart::executeLine(execOut &out) const
   mnrfp sgn = sign<mnrfp>(signMtr[0][0]);
   out.dist = sgn * m_vec_norm<mnrfp, 2>(line.finish);
   if (out.dist < static_cast<mnrfp>(0.0))
-  {
     out.crossed = true;
-  }
   else
-  {
     out.crossed = false;
-  }
 
   mnrfp perpendVector[2][1] = {
       {-lineVectorNorm[1][0]},

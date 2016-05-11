@@ -9,6 +9,26 @@ namespace control
 namespace maneuver
 {
 
+enum class ApproachToStadium: uint32_t
+{
+  lineToStadiumBorder,
+  count
+};
+
+enum class StadiumParts: uint32_t
+{
+  rightUpperLine,
+  rightUpperArc,
+  upperLine,
+  leftUpperArc,
+  leftLine,
+  leftBottomArc,
+  bottomLine,
+  rightBottomArc,
+  rightBottomLine,
+  count
+};
+
 void stadiumManeuver(
     ManeuverPart &part,
     uint32_t partNumber,
@@ -20,13 +40,10 @@ void stadiumManeuver(
     const mnrfp (&localPrev)[2][1],
     const mnrfp (&localTrgt)[2][1])
 {
-  const uint32_t STADIUM_PARTS_COUNT = 9;
-  const uint32_t APPROACH_PARTS_COUNT = 1;
-
   uint32_t partsCount = round(
       fabs(repeats)
-    * STADIUM_PARTS_COUNT
-    + APPROACH_PARTS_COUNT);
+    * static_cast<uint32_t>(StadiumParts::count)
+    + static_cast<uint32_t>(ApproachToStadium::count));
 
   mnrfp lineVector[2][1];
   m_minus<mnrfp, 2, 1>(lineVector, localPrev, localTrgt);
@@ -34,7 +51,7 @@ void stadiumManeuver(
   m_copy<mnrfp, 2, 1>(normedLineVector, lineVector);
   m_norm<mnrfp, 2>(normedLineVector);
 
-  if (   partNumber > 0
+  if (   partNumber >= static_cast<uint32_t>(ApproachToStadium::count)
       && partNumber < partsCount)
   {
     /* maneuver parts */
@@ -43,9 +60,14 @@ void stadiumManeuver(
     mnrfp semiWidth = width / 2.0;
     mnrfp semiHeight = height / 2.0;
 
-    switch (partNumber % 9)
+    StadiumParts stadiumPart = static_cast<StadiumParts>(
+            (  partNumber
+             - static_cast<uint32_t>(ApproachToStadium::count))
+          % static_cast<uint32_t>(StadiumParts::count));
+
+    switch (stadiumPart)
     {
-      case 1:
+      case StadiumParts::rightUpperLine:
         part.fillLine(
             0.0,
            -semiWidth,
@@ -54,7 +76,7 @@ void stadiumManeuver(
         part.setFinal(false);
         break;
 
-      case 2:
+      case StadiumParts::rightUpperArc:
         part.fillArc(
             northOffset,
            -eastOffset,
@@ -64,7 +86,7 @@ void stadiumManeuver(
         part.setFinal(false);
         break;
 
-      case 3:
+      case StadiumParts::upperLine:
         part.fillLine(
             semiHeight,
            -eastOffset,
@@ -73,7 +95,7 @@ void stadiumManeuver(
         part.setFinal(false);
         break;
 
-      case 4:
+      case StadiumParts::leftUpperArc:
         part.fillArc(
             northOffset,
             eastOffset,
@@ -83,7 +105,7 @@ void stadiumManeuver(
         part.setFinal(false);
         break;
 
-      case 5:
+      case StadiumParts::leftLine:
         part.fillLine(
             northOffset,
             semiWidth,
@@ -92,7 +114,7 @@ void stadiumManeuver(
         part.setFinal(false);
         break;
 
-      case 6:
+      case StadiumParts::leftBottomArc:
         part.fillArc(
            -northOffset,
             eastOffset,
@@ -102,7 +124,7 @@ void stadiumManeuver(
         part.setFinal(false);
         break;
 
-      case 7:
+      case StadiumParts::bottomLine:
         part.fillLine(
            -semiHeight,
             eastOffset,
@@ -111,7 +133,7 @@ void stadiumManeuver(
         part.setFinal(false);
         break;
 
-      case 8:
+      case StadiumParts::rightBottomArc:
         part.fillArc(
            -northOffset,
            -eastOffset,
@@ -121,7 +143,7 @@ void stadiumManeuver(
         part.setFinal(false);
         break;
 
-      case 0:
+      case StadiumParts::rightBottomLine:
         part.fillLine(
            -northOffset,
            -semiWidth,
@@ -130,16 +152,18 @@ void stadiumManeuver(
 
         part.setFinal(false);
         break;
+
+      default:
+        break;
     }
 
     if (sign(repeats) < 0.0)
-    {
       part.flipEast();
-    }
+
     part.rotate(deg2rad<mnrfp>(angle));
     part.move(localTrgt);
   }
-  else if (0 == partNumber)
+  else if (partNumber < static_cast<uint32_t>(ApproachToStadium::count))
   {
     /* line from previous waypoint to the stadium's border */
     part.fillLine(0.0, 0.0, 0.0, -width / 2.0);

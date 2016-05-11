@@ -120,6 +120,7 @@ void parseMissionComponent(
       break;
 
     case MissionComponent::threePoints:
+    {
       /* third waypoint use only here.  */
       mnrfp localThird[2][1];
       missionItemWGS84ToLocalNE(localThird, currWGS84, third);
@@ -130,6 +131,7 @@ void parseMissionComponent(
           localPrev,
           localTrgt,
           localThird);
+    }
       break;
 
     case MissionComponent::circle:
@@ -147,7 +149,7 @@ void parseMissionComponent(
           part,
           partNumber,
           trgt.param1,           /* number of repetitions */
-          trgt.param2,           /* radius of turn */
+          trgt.param2,           /* infinity width */
           trgt.param3,           /* infinity height */
           trgt.param4,           /* angle of rotation */
           localPrev,

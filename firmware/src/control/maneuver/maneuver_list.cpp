@@ -38,14 +38,11 @@ void lineSlopeManeuver(
   /* calculate target altitude for current position */
   mnrfp deltaAlt = trgtAlt - prevAlt;
   mnrfp prevToTrgtVector[2][1];
-
   m_minus<mnrfp, 2, 1>(prevToTrgtVector, localTrgt, localPrev);
-
   mnrfp prevToTrgtDistance = m_vec_norm<mnrfp, 2>(prevToTrgtVector);
   mnrfp slopeAngleTangent = deltaAlt / prevToTrgtDistance;
   mnrfp prevToCurrDistance = m_vec_norm<mnrfp, 2>(localPrev);
   mnrfp alt = prevAlt + prevToCurrDistance * slopeAngleTangent;
-
   part.fillAlt(alt);
 }
 
@@ -62,22 +59,20 @@ void landingAlignmentManeuver(
     mnrfp trgtAlt)
 {
   const float HEIGHT = 4.0f;
-  const float RADIUS = 1.0f;
+  const float WIDTH = 2.0f;
 
   /* calculate rotate angle for alignment arm of
    * infinity maneuver and direction to maneuver center */
-  mnrfp distanceToArcCenter = HEIGHT / 2.0 - RADIUS;
-  mnrfp armRatationAngleSin = static_cast<mnrfp>(RADIUS) / distanceToArcCenter;
+  mnrfp distanceToArcCenter = (HEIGHT - WIDTH) / 2.0;
+  mnrfp armRatationAngleSin =
+      static_cast<mnrfp>(WIDTH / 2.0) / distanceToArcCenter;
 
   mnrfp armRatationAngle;
   if (0 != std::isinf(armRatationAngleSin))
-  {
     armRatationAngle = M_PI_2;
-  }
   else
-  {
     armRatationAngle = asin(armRatationAngleSin);
-  }
+
   mnrfp prevToTrgtVector[2][1];
   m_minus<mnrfp, 2, 1>(prevToTrgtVector, localTrgt, localPrev);
 
@@ -91,7 +86,7 @@ void landingAlignmentManeuver(
       part,
       partNumber,
       1.0f,
-      RADIUS,
+      WIDTH,
       HEIGHT,
       rotateAngle,
       localPrev,
@@ -99,17 +94,10 @@ void landingAlignmentManeuver(
 
   /* set target altitude after line from previous waypoint to the infinity center */
   if (partNumber > 0)
-  {
     part.fillAlt(trgtAlt);
-  }
   else
-  {
     part.fillAlt(prevAlt);
-  }
-
 }
-
-
 
 } /* namespace maneuver */
 } /* namespace control */
