@@ -3,12 +3,13 @@
 #include "mission_executor.hpp"
 #include "waypoint_db.hpp"
 #include "mav_dbg_print.hpp"
-#include "navigator_types.hpp"
+//#include "navigator_types.hpp"
 #include "time_keeper.hpp"
 #include "param_registry.hpp"
 #include "mav_logger.hpp"
 #include "mav_postman.hpp"
 #include "mav_dbg_sender.hpp"
+#include "geometry.hpp"
 
 using namespace chibios_rt;
 using namespace control;
@@ -146,10 +147,31 @@ bool MissionExecutor::load_next_mission_item(void) {
   return load_status;
 }
 
-void MissionExecutor::analyze_partexecout() {
+void MissionExecutor::analyze_partexecout(MissionComponent component) {
+
+//  const double ALIGMENT_DZ_TRESHOLD = 0.3;
+//  const double ALIGMENT_DALT_TRESHOLD = deg2rad<double>(10.0);
+//  const double ALIGMENT_DYAW_TRESHOLD = 0.3;
+
   if (out.crossed && out.final) {
+    if (MissionComponent::landingAlignment != component){
     maneuver_completed = true;
     part_number = 0;
+    }
+//    else if (   fabs(out.dz) <= ALIGMENT_DZ_TRESHOLD
+//             && fabs(acs_in.ch[ACS_INPUT_dYaw]) <= ALIGMENT_DYAW_TRESHOLD
+//             && fabs(acs_in.ch[ACS_INPUT_alt] - acs_in.ch[ACS_INPUT_trgt_alt]) <= ALIGMENT_DALT_TRESHOLD) {
+//      maneuver_completed = true;
+//      part_number = 0;
+//    }
+//    else {
+//      maneuver_completed = false;
+//      part_number = 1;
+//    }
+    else {
+      maneuver_completed = true;
+      part_number = 0;
+    }
   }
   else if (out.crossed) {
     maneuver_completed = false;
@@ -160,19 +182,20 @@ void MissionExecutor::analyze_partexecout() {
   }
 }
 
-void MissionExecutor::partexecout2acsin(const partExecOut<double> &out) {
+void MissionExecutor::partexecout2acsin(const execOut &out) {
   acs_in.ch[ACS_INPUT_dZm]  = out.dz;
   acs_in.ch[ACS_INPUT_dYaw] = wrap_pi(acs_in.ch[ACS_INPUT_yaw] - out.crs);
   acs_in.ch[ACS_INPUT_trgt_alt] = out.alt;
 }
 
-void MissionExecutor::partexecout2mavlink(const partExecOut<double> &out) {
+void MissionExecutor::partexecout2mavlink(const execOut &out) {
 
   mavlink_out_nav_controller_output_struct.wp_dist = static_cast<uint16_t>(round(fabs(out.dist)));
   mavlink_out_nav_controller_output_struct.xtrack_error = static_cast<float>(out.dz);
   mavlink_out_nav_controller_output_struct.target_bearing = rad2deg(out.crs);
   mavlink_out_nav_controller_output_struct.nav_bearing = rad2deg(acs_in.ch[ACS_INPUT_dYaw]);
-  mavlink_out_nav_controller_output_struct.alt_error = acs_in.ch[ACS_INPUT_alt] - out.alt;
+//  mavlink_out_nav_controller_output_struct.alt_error = acs_in.ch[ACS_INPUT_alt] - out.alt;
+  mavlink_out_nav_controller_output_struct.alt_error = out.alt;
   /* TODO: change constant values of target roll and pitch to real */
   mavlink_out_nav_controller_output_struct.nav_roll = 0;
   mavlink_out_nav_controller_output_struct.nav_pitch = 0;
@@ -214,7 +237,7 @@ void MissionExecutor::navigate(float dT) {
   partexecout2acsin(out);
   partexecout2mavlink(out);
   debug2mavlink();
-  analyze_partexecout();
+  analyze_partexecout(component);
 
   if (maneuver_completed) {
     broadcast_mission_item_reached(trgt.seq);
@@ -273,7 +296,8 @@ void MissionExecutor::artificial_takeoff_point(void) {
   prev.x = rad2deg(acs_in.ch[ACS_INPUT_lat]);
   prev.y = rad2deg(acs_in.ch[ACS_INPUT_lon]);
   prev.z = acs_in.ch[ACS_INPUT_alt];
-  prev.command = MAV_CMD_NAV_TAKEOFF;
+//  prev.command = MAV_CMD_NAV_TAKEOFF;
+  prev.command = MAV_CMD_NAV_WAYPOINT;
   prev.frame = MAV_FRAME_GLOBAL;
   prev.seq = -1;
 

@@ -54,9 +54,9 @@ private:
   void broadcast_mission_item_reached(uint16_t seq);
   void artificial_takeoff_point(void);
   bool load_next_mission_item(void);
-  void analyze_partexecout();
-  void partexecout2mavlink(const partExecOut<double> &out);
-  void partexecout2acsin(const partExecOut<double> &out);
+  void analyze_partexecout(MissionComponent component);
+  void partexecout2mavlink(const execOut &out);
+  void partexecout2acsin(const execOut &out);
   void debug2mavlink(void);
   void navigate(float dT);
 
@@ -64,10 +64,10 @@ private:
   ACSInput &acs_in;
 //  ManeuverExecutor<double> mnr_executor;
 
-  ManeuverPart<double> part;
+  ManeuverPart part;
   uint32_t part_number = 0;
   bool maneuver_completed = false;
-  partExecOut<double> out;
+  execOut out;
 
   mavlink_mission_item_t prev;
   mavlink_mission_item_t trgt;
