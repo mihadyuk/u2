@@ -247,14 +247,15 @@ void Navi6dWrapper::debug2mavlink(void) {
 void Navi6dWrapper::navi2acs(void) {
 
   const NaviData<klmnfp> &data = nav_sins.navi_data;
+  const NaviData<sinsfp> &data_prec = nav_sins.navi_data_prec;
 
   acs_in.ch[ACS_INPUT_roll] = data.eu_nv[0][0];
   acs_in.ch[ACS_INPUT_pitch]= data.eu_nv[1][0];
   acs_in.ch[ACS_INPUT_yaw]  = data.eu_nv[2][0];
 
-  acs_in.ch[ACS_INPUT_lat] = data.r[0][0];
-  acs_in.ch[ACS_INPUT_lon] = data.r[1][0];
-  acs_in.ch[ACS_INPUT_alt] = data.r[2][0];
+  acs_in.ch[ACS_INPUT_lat] = data_prec.r[0][0];
+  acs_in.ch[ACS_INPUT_lon] = data_prec.r[1][0];
+  acs_in.ch[ACS_INPUT_alt] = data_prec.r[2][0];
 
   acs_in.ch[ACS_INPUT_vx] = data.v[0][0];
   acs_in.ch[ACS_INPUT_vy] = data.v[1][0];
@@ -499,14 +500,18 @@ void Navi6dWrapper::update(const baro_data_t &baro,
 
   nav_sins.run();
 
-//  if (NAV_RUN_STATIONARY_AUTONOMOUS == nav_sins.run_mode ||
-//      NAV_RUN_STATIONARY_PRIMARY    == nav_sins.run_mode) {
-//    blue_led_on();
-//    red_led_on();
-//  } else {
-//    blue_led_off();
-//    red_led_off();
-//  }
+#if defined(BOARD_BEZVODIATEL)
+
+  if (NAV_RUN_STATIONARY_AUTONOMOUS == nav_sins.run_mode ||
+      NAV_RUN_STATIONARY_PRIMARY    == nav_sins.run_mode) {
+    blue_led_on();
+    red_led_on();
+  } else {
+    blue_led_off();
+    red_led_off();
+  }
+
+#endif
 
   navi2acs();
   navi2mavlink();

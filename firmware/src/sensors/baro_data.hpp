@@ -6,9 +6,7 @@
  */
 struct baro_data_t {
   uint32_t  p_abs;          /* Pascals */
-  uint32_t  p_msl_adjusted; /* Pascals */
   float     alt;            /* m */
-  float     climb;          /* m/s */
   int32_t   p_diff;         /* Pascals */
   float     airspeed;       /* m/s */
   float     t;              /* Celsius */
