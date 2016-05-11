@@ -3,9 +3,6 @@
 
 #include "nvram_local.hpp"
 
-#define HEADER_SIZE         (sizeof(uint16_t))
-#define WAYPOINT_FOOTPRINT  (sizeof(mavlink_mission_item_t) + 1) /* waypoint + crc8 */
-
 /**
  *
  */
@@ -25,9 +22,9 @@ private:
   size_t calc_offset(uint16_t seq, size_t bank);
   nvram::File *dbfile = nullptr;
   size_t active_bank = 0;
-  uint16_t capacity = 0;
-  uint16_t shadow_count = 0;
-  uint16_t count = 0;
+  uint16_t shadow_count = 0; // number tracker for shadow bank loading procedure
+  uint16_t capacity = 0;    // single bank capacity
+  uint16_t count = 0;      // number of waypoints in active bank
 };
 
 extern WpDB wpdb;

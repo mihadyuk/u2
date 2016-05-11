@@ -18,7 +18,11 @@
  * DEFINES
  ******************************************************************************
  */
+
 #define WPDB_FILE_NAME    "wpdb"
+
+#define HEADER_SIZE         (sizeof(uint16_t))
+#define WAYPOINT_FOOTPRINT  (sizeof(mavlink_mission_item_t) + 1) /* waypoint + crc8 */
 
 /*
  ******************************************************************************
@@ -160,10 +164,7 @@ bool WpDB::read(mavlink_mission_item_t *wpp, uint16_t seq) {
     dbfile->setPosition(calc_offset(seq, active_bank));
 
     size_t result = dbfile->read(buf, WAYPOINT_FOOTPRINT);
-    if (WAYPOINT_FOOTPRINT != result) {
-      return OSAL_FAILED;
-    }
-    if (! crc_valid(buf)) {
+    if ((WAYPOINT_FOOTPRINT != result) || (! crc_valid(buf))) {
       return OSAL_FAILED;
     }
 
