@@ -125,13 +125,13 @@ bool MissionExecutor::load_next_mission_item(void) {
   }
   else {
     next = third.seq + 1;
-    __LOAD_JUMP:
+    LOAD_JUMP:
     load_status = wpdb.read(&third, next);
     if (OSAL_SUCCESS == load_status) {
       /* handle 'jump_to' command */
       if (MAV_CMD_DO_JUMP == third.command) {
         next = jump_to_handler(next);
-        goto __LOAD_JUMP;
+        goto LOAD_JUMP;
       }
       else {
         state = MissionState::navigate;
