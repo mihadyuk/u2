@@ -1,4 +1,4 @@
-#include <math.h>
+#include <cmath>
 #include <string.h>
 #include "maneuver_part.hpp"
 #include "matrix_math.hpp"
@@ -69,18 +69,14 @@ void ManeuverPart::executeArc(execOut &out) const
 
   m_mul_s<mnrfp, 2, 1>(centerToCurrVector, arc.center, -1.0);
   out.dist = m_vec_norm<mnrfp, 2>(centerToCurrVector);
-  out.dz = cwSign * (fabs(arc.radius) - out.dist);
+  out.dz = cwSign * (std::fabs(arc.radius) - out.dist);
   out.crs = tangentLineCourse(centerToCurrVector, cwSign);
   mnrfp deltaCourse = cwSign * (out.crs - arc.startCourse);
   deltaCourse = wrap_pi(deltaCourse);
-  if (fabs(deltaCourse) >= arc.deltaCourse)
-  {
+  if (std::fabs(deltaCourse) >= arc.deltaCourse)
     out.crossed = true;
-  }
   else
-  {
     out.crossed = false;
-  }
 }
 
 void ManeuverPart::executeUnknown(execOut &out) const

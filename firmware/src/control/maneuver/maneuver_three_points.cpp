@@ -1,4 +1,4 @@
-#include <math.h>
+#include <cmath>
 #include "maneuver_three_points.hpp"
 #include "matrix_math.hpp"
 #include "geometry.hpp"
@@ -66,7 +66,7 @@ void threePointsManeuver(
       case ThreePointsParts::line:
       {
         mnrfp lineFinish[2][1];
-        mnrfp arm = static_cast<mnrfp>(-radius) / tan(alpha);
+        mnrfp arm = static_cast<mnrfp>(-radius) / std::tan(alpha);
         // Check if arc's arm more than distance between waypoints
         if (   arm > distTrgtToPrev
             || arm > distTrgtToThird)
@@ -102,7 +102,7 @@ void threePointsManeuver(
           * startCrs);
         mnrfp dCrs =
             static_cast<mnrfp>(2.0)
-          * (static_cast<mnrfp>(M_PI_2) - fabs(alpha));
+          * (static_cast<mnrfp>(M_PI_2) - std::fabs(alpha));
         dCrs = wrap_2pi(dCrs);
         part.fillArc(arcCenter, radius, startCrs, dCrs);
         part.setFinal(true);

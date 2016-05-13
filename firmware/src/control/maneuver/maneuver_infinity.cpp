@@ -9,12 +9,6 @@ namespace control
 namespace maneuver
 {
 
-enum class ApproachToInfinity: uint32_t
-{
-  lineToInfinityCenter,
-  count
-};
-
 enum class InfinityParts: uint32_t
 {
   rightUpperLine,
@@ -33,7 +27,7 @@ void infinityManeuver(
     float repeats,
     float width,
     float height,
-    float angle,
+    float angle, /* rad */
     const mnrfp (&localPrev)[2][1],
     const mnrfp (&localTrgt)[2][1])
 {
@@ -126,7 +120,7 @@ void infinityManeuver(
     if (sign(repeats) < 0.0)
       part.flipNorth();
 
-    part.rotate(deg2rad<mnrfp>(static_cast<mnrfp>(angle)));
+    part.rotate(angle);
     part.move(localTrgt);
 
     if ((partsCount - 1) == partNumber)

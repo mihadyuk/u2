@@ -28,26 +28,26 @@ namespace maneuver
 
 void missionItemWGS84ToLocalNE(
     mnrfp (&localNE)[2][1],
-    const mnrfp (&currWGS84)[3][1],
+    const double (&currWGS84)[3][1],
     const mavlink_mission_item_t &wp);
 
 /*
  * Specifies current mission component depending on
  * command in previous, target and next (third) waypoints.
  */
-MissionComponent indetifyTargetMissonItem(
-    const mavlink_mission_item_t &prev,
-    const mavlink_mission_item_t &trgt,
-    const mavlink_mission_item_t &third);
-
-void parseMissionComponent(
-    ManeuverPart &part,
-    MissionComponent component,
-    uint32_t partNumber,
-    const mavlink_mission_item_t &prev,
-    const mavlink_mission_item_t &trgt,
-    const mavlink_mission_item_t &third,
-    const mnrfp (&currWGS84)[3][1]);
+//MissionComponent indetifyTargetMissonItem(
+//    const mavlink_mission_item_t &prev,
+//    const mavlink_mission_item_t &trgt,
+//    const mavlink_mission_item_t &third);
+//
+//void parseMissionComponent(
+//    ManeuverPart &part,
+//    MissionComponent component,
+//    uint32_t partNumber,
+//    const mavlink_mission_item_t &prev,
+//    const mavlink_mission_item_t &trgt,
+//    const mavlink_mission_item_t &third,
+//    const mnrfp (&currWGS84)[3][1]);
 
 
 } /* namespace maneuver */

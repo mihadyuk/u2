@@ -9,6 +9,12 @@ namespace control
 namespace maneuver
 {
 
+enum class ApproachToInfinity: uint32_t
+{
+  lineToInfinityCenter,
+  count
+};
+
 void infinityManeuver(
     ManeuverPart &part,
     uint32_t partNumber,

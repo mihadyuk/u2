@@ -1,6 +1,7 @@
 #include "main.h"
 
 #include "mission_executor.hpp"
+#include "maneuver/maneuver_infinity.hpp"
 #include "waypoint_db.hpp"
 #include "mav_dbg_print.hpp"
 //#include "navigator_types.hpp"
@@ -10,6 +11,7 @@
 #include "mav_postman.hpp"
 #include "mav_dbg_sender.hpp"
 #include "geometry.hpp"
+#include "maneuver/maneuver_list.hpp"
 
 using namespace chibios_rt;
 using namespace control;
@@ -147,31 +149,40 @@ bool MissionExecutor::load_next_mission_item(void) {
   return load_status;
 }
 
-void MissionExecutor::analyze_partexecout(MissionComponent component) {
-
-//  const double ALIGMENT_DZ_TRESHOLD = 0.3;
-//  const double ALIGMENT_DALT_TRESHOLD = deg2rad<double>(10.0);
-//  const double ALIGMENT_DYAW_TRESHOLD = 0.3;
+void MissionExecutor::analyze_execout(void) {
 
   if (out.crossed && out.final) {
-    if (MissionComponent::landingAlignment != component){
+    if (MissionComponent::landingAlignment != component) {
     maneuver_completed = true;
     part_number = 0;
     }
-//    else if (   fabs(out.dz) <= ALIGMENT_DZ_TRESHOLD
-//             && fabs(acs_in.ch[ACS_INPUT_dYaw]) <= ALIGMENT_DYAW_TRESHOLD
-//             && fabs(acs_in.ch[ACS_INPUT_alt] - acs_in.ch[ACS_INPUT_trgt_alt]) <= ALIGMENT_DALT_TRESHOLD) {
+    else {
+      double delta_alt = fabs(
+              acs_in.ch[ACS_INPUT_alt]
+            - acs_in.ch[ACS_INPUT_trgt_alt]);
+      double dz_treshold = fabs(*aligment_dz_treshold);
+      double dh_treshold = fabs(*aligment_dh_treshold);
+      double dyaw_treshold = deg2rad<float>(fabs(*aligment_dyaw_treshold));
+
+      if (   (   static_cast<double>(0.0) == dz_treshold
+              || fabs(out.dz) <= dz_treshold)
+          && (   static_cast<double>(0.0) == dh_treshold
+              || delta_alt <= dh_treshold)
+          && (   static_cast<double>(0.0) == dyaw_treshold
+              || fabs(acs_in.ch[ACS_INPUT_dYaw]) <= dyaw_treshold)) {
+        maneuver_completed = true;
+        part_number = 0;
+      }
+      else {
+        maneuver_completed = false;
+        part_number = static_cast<uint32_t>(
+            maneuver::ApproachToInfinity::count);
+      }
+    }
+//    else {
 //      maneuver_completed = true;
 //      part_number = 0;
 //    }
-//    else {
-//      maneuver_completed = false;
-//      part_number = 1;
-//    }
-    else {
-      maneuver_completed = true;
-      part_number = 0;
-    }
   }
   else if (out.crossed) {
     maneuver_completed = false;
@@ -182,25 +193,38 @@ void MissionExecutor::analyze_partexecout(MissionComponent component) {
   }
 }
 
-void MissionExecutor::partexecout2acsin(const execOut &out) {
+void MissionExecutor::execout2acsin() {
   acs_in.ch[ACS_INPUT_dZm]  = out.dz;
-  acs_in.ch[ACS_INPUT_dYaw] = wrap_pi(acs_in.ch[ACS_INPUT_yaw] - out.crs);
+  acs_in.ch[ACS_INPUT_dYaw] = wrap_pi(
+      acs_in.ch[ACS_INPUT_yaw]
+    - static_cast<double>(out.crs));
   acs_in.ch[ACS_INPUT_trgt_alt] = out.alt;
 }
 
-void MissionExecutor::partexecout2mavlink(const execOut &out) {
+void MissionExecutor::execout2mavlink() {
 
-  mavlink_out_nav_controller_output_struct.wp_dist = static_cast<uint16_t>(round(fabs(out.dist)));
-  mavlink_out_nav_controller_output_struct.xtrack_error = static_cast<float>(out.dz);
-  mavlink_out_nav_controller_output_struct.target_bearing = rad2deg(out.crs);
-  mavlink_out_nav_controller_output_struct.nav_bearing = rad2deg(acs_in.ch[ACS_INPUT_dYaw]);
-//  mavlink_out_nav_controller_output_struct.alt_error = acs_in.ch[ACS_INPUT_alt] - out.alt;
-  mavlink_out_nav_controller_output_struct.alt_error = out.alt;
+  mavlink_out_nav_controller_output_struct.wp_dist =
+      static_cast<uint16_t>(round(fabs(out.dist)));
+
+  mavlink_out_nav_controller_output_struct.xtrack_error =
+      static_cast<float>(out.dz);
+
+  mavlink_out_nav_controller_output_struct.target_bearing =
+      rad2deg(out.crs);
+
+  mavlink_out_nav_controller_output_struct.nav_bearing =
+      rad2deg(acs_in.ch[ACS_INPUT_dYaw]);
+
+  mavlink_out_nav_controller_output_struct.alt_error =
+      acs_in.ch[ACS_INPUT_alt] - static_cast<double>(out.alt);
+
+//  mavlink_out_nav_controller_output_struct.alt_error = out.alt;
   /* TODO: change constant values of target roll and pitch to real */
   mavlink_out_nav_controller_output_struct.nav_roll = 0;
   mavlink_out_nav_controller_output_struct.nav_pitch = 0;
   /* TODO: change odo_speed to air_speed */
-  mavlink_out_nav_controller_output_struct.aspd_error = acs_in.ch[ACS_INPUT_trgt_speed] - acs_in.ch[ACS_INPUT_odo_speed];
+  mavlink_out_nav_controller_output_struct.aspd_error =
+      acs_in.ch[ACS_INPUT_trgt_speed] - acs_in.ch[ACS_INPUT_odo_speed];
 }
 
 void MissionExecutor::debug2mavlink(void) {
@@ -213,31 +237,210 @@ void MissionExecutor::debug2mavlink(void) {
       TimeKeeper::utc());
 }
 
+/*
+ * Specifies current mission component depending on
+ * command in previous, target and next (third) waypoints.
+ */
+void MissionExecutor::ident_component(void) {
+  if (MAV_CMD_NAV_TAKEOFF == trgt.command) {
+    /* ground phase of take-off */
+    component = MissionComponent::takeoffGround;
+  }
+  else if (MAV_CMD_NAV_TAKEOFF == prev.command) {
+    /* slope phase of take-off */
+    component = MissionComponent::takeoffSlope;
+  }
+  else if (MAV_CMD_NAV_LAND == third.command) {
+    /* alignment phase of landing */
+    component = MissionComponent::landingAlignment;
+  }
+  else if (MAV_CMD_NAV_LAND == trgt.command) {
+    /* slope phase of landing */
+    component = MissionComponent::landingSlope;
+  }
+  else if (MAV_CMD_NAV_LAND == prev.command) {
+    /* ground phase of landing */
+    component = MissionComponent::landingGround;
+  }
+  else {
+    /* mission maneuvers */
+    switch (trgt.command) {
+      case MAV_CMD_NAV_WAYPOINT:
+        if (0.0f != trgt.param2) /* smoothing radius */
+          component = MissionComponent::threePoints;
+        else
+          component = MissionComponent::line;
+        break;
+
+      case MAV_CMD_NAV_LOITER_TURNS:
+        component = MissionComponent::circle;
+        break;
+
+      case MAV_CMD_NAV_STADIUM:
+        component = MissionComponent::stadium;
+        break;
+
+      case MAV_CMD_NAV_INFINITY:
+        component = MissionComponent::infinity;
+        break;
+
+      default:
+        break;
+    }
+  }
+}
+
+void MissionExecutor::parse_component(void) {
+
+  mnrfp localPrev[2][1];
+  mnrfp localTrgt[2][1];
+  double curr_wgs84[3][1] = {
+        {acs_in.ch[ACS_INPUT_lat]},
+        {acs_in.ch[ACS_INPUT_lon]},
+        {acs_in.ch[ACS_INPUT_alt]}};
+
+  maneuver::missionItemWGS84ToLocalNE(
+      localPrev,
+      curr_wgs84,
+      prev);
+  maneuver::missionItemWGS84ToLocalNE(
+      localTrgt,
+      curr_wgs84,
+      trgt);
+
+  // set target altitude from target waypoint
+  part.fillAlt(trgt.z);
+
+  switch (component) {
+    case MissionComponent::line:
+      maneuver::lineManeuver(part,localPrev,localTrgt);
+      break;
+
+    case MissionComponent::threePoints: {
+      /* third waypoint use only here.  */
+      mnrfp localThird[2][1];
+      maneuver::missionItemWGS84ToLocalNE(
+          localThird,
+          curr_wgs84,
+          third);
+      maneuver::threePointsManeuver(
+          part,
+          part_number,
+          trgt.param2,                  /* smoothing radius */
+          localPrev,
+          localTrgt,
+          localThird);
+      break;
+    }
+
+    case MissionComponent::circle:
+      maneuver::circleManeuver(
+          part,
+          part_number,
+          trgt.param1,                  /* number of repetitions */
+          trgt.param3,                  /* radius of turn */
+          localPrev,
+          localTrgt);
+      break;
+
+    case MissionComponent::infinity:
+      maneuver::infinityManeuver(
+          part,
+          part_number,
+          trgt.param1,                  /* number of repetitions */
+          trgt.param2,                  /* infinity width */
+          trgt.param3,                  /* infinity height */
+          deg2rad<mnrfp>(trgt.param4),  /* angle of rotation */
+          localPrev,
+          localTrgt);
+      break;
+
+    case MissionComponent::stadium:
+      maneuver::stadiumManeuver(
+          part,
+          part_number,
+          trgt.param1,                  /* number of repetitions */
+          trgt.param2,                  /* stadium width */
+          trgt.param3,                  /* stadium height */
+          deg2rad<mnrfp>(trgt.param4),  /* angle of rotation */
+          *default_radius,              /* radius of turn */
+          localPrev,
+          localTrgt);
+      break;
+
+    case MissionComponent::takeoffGround:
+      maneuver::lineManeuver(part, localPrev, localTrgt);
+      break;
+
+    case MissionComponent::takeoffSlope:
+      maneuver::lineSlopeManeuver(
+          part,
+          localPrev,
+          localTrgt,
+          static_cast<mnrfp>(prev.z),
+          static_cast<mnrfp>(trgt.z));
+      break;
+
+    case MissionComponent::landingAlignment:
+      maneuver::landingAlignmentManeuver(
+          part,
+          part_number,
+          *aligment_width,
+          *aligment_height,
+          localPrev,
+          localTrgt,
+          static_cast<mnrfp>(prev.z),
+          static_cast<mnrfp>(trgt.z));
+      break;
+
+    case MissionComponent::landingSlope:
+      maneuver::lineSlopeManeuver(
+          part,
+          localPrev,
+          localTrgt,
+          static_cast<mnrfp>(prev.z),
+          static_cast<mnrfp>(trgt.z));
+      break;
+
+    case MissionComponent::landingGround:
+      maneuver::lineManeuver(part, localPrev, localTrgt);
+      break;
+
+    default:
+      part.fillUnknown();
+      break;
+  }
+}
+
 /**
  *
  */
 void MissionExecutor::navigate(float dT) {
   (void)dT;
+//  double curr_wgs84[3][1] = {
+//      {acs_in.ch[ACS_INPUT_lat]},
+//      {acs_in.ch[ACS_INPUT_lon]},
+//      {acs_in.ch[ACS_INPUT_alt]}};
+//
+//  MissionComponent component =
+//      maneuver::indetifyTargetMissonItem(prev, trgt, third);
+//
+//  maneuver::parseMissionComponent(
+//      part,
+//      component,
+//      part_number,
+//      prev,
+//      trgt,
+//      third,
+//      curr_wgs84);
 
-  double curr_wgs84[3][1] = {{acs_in.ch[ACS_INPUT_lat]},
-                             {acs_in.ch[ACS_INPUT_lon]},
-                             {acs_in.ch[ACS_INPUT_alt]}};
-  //  partExecOut<double> out = mnr_executor.update(curr_wgs84);
-  MissionComponent component = maneuver::indetifyTargetMissonItem(prev,
-                                                                  trgt,
-                                                                  third);
-  maneuver::parseMissionComponent(part,
-                                  component,
-                                  part_number,
-                                  prev,
-                                  trgt,
-                                  third,
-                                  curr_wgs84);
+  ident_component();
+  parse_component();
   part.execute(out);
-  partexecout2acsin(out);
-  partexecout2mavlink(out);
+  execout2acsin();
+  execout2mavlink();
   debug2mavlink();
-  analyze_partexecout(component);
+  analyze_execout();
 
   if (maneuver_completed) {
     broadcast_mission_item_reached(trgt.seq);
@@ -262,8 +465,8 @@ void MissionExecutor::navigate(float dT) {
  */
 MissionExecutor::MissionExecutor(ACSInput &acs_in) :
   state(MissionState::uninit),
-  acs_in(acs_in) {
-//  mnr_executor(prev, trgt, third) {
+  acs_in(acs_in),
+  component(MissionComponent::unknown) {
 
   /* fill home point with invalid data. This denotes it uninitialized. */
   memset(&home, 0xFF, sizeof(home));
@@ -277,6 +480,14 @@ void MissionExecutor::start(void) {
   chTMObjectInit(&this->tmp_nav);
 
   state = MissionState::idle;
+
+  param_registry.valueSearch("ACS_lnd_dz_trsh", &aligment_dz_treshold);
+  param_registry.valueSearch("ACS_lnd_dh_trsh", &aligment_dh_treshold);
+  param_registry.valueSearch("ACS_lnd_dy_trsh", &aligment_dyaw_treshold);
+  param_registry.valueSearch("ACS_algmn_width", &aligment_width);
+  param_registry.valueSearch("ACS_algmn_height",&aligment_height);
+  param_registry.valueSearch("ACS_dflt_radius", &default_radius);
+
 }
 
 /**
@@ -321,7 +532,10 @@ bool MissionExecutor::takeoff(void) {
   bool read_status2 = OSAL_FAILED;
 
   if (wpdb.getCount() < 2) {
-    mavlink_dbg_print(MAV_SEVERITY_INFO, "ACS: mission must be at least 2 WP long", MAV_COMP_ID_SYSTEM_CONTROL);
+    mavlink_dbg_print(
+        MAV_SEVERITY_INFO,
+        "ACS: mission must be at least 2 WP long",
+        MAV_COMP_ID_SYSTEM_CONTROL);
     return OSAL_FAILED;
   }
   else {

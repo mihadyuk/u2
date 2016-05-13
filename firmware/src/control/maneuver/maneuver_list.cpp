@@ -53,19 +53,21 @@ void lineSlopeManeuver(
 void landingAlignmentManeuver(
     ManeuverPart &part,
     uint32_t partNumber,
+    float width,
+    float height,
     const mnrfp (&localPrev)[2][1],
     const mnrfp (&localTrgt)[2][1],
     mnrfp prevAlt,
     mnrfp trgtAlt)
 {
-  const float HEIGHT = 4.0f;
-  const float WIDTH = 2.0f;
+//  const float height = 3.0f;
+//  const float width = 1.2f;
 
   /* calculate rotate angle for alignment arm of
    * infinity maneuver and direction to maneuver center */
-  mnrfp distanceToArcCenter = (HEIGHT - WIDTH) / 2.0;
+  mnrfp distanceToArcCenter = (height - width) / 2.0;
   mnrfp armRatationAngleSin =
-      static_cast<mnrfp>(WIDTH / 2.0) / distanceToArcCenter;
+      static_cast<mnrfp>(width / 2.0) / distanceToArcCenter;
 
   mnrfp armRatationAngle;
   if (0 != std::isinf(armRatationAngleSin))
@@ -86,8 +88,8 @@ void landingAlignmentManeuver(
       part,
       partNumber,
       1.0f,
-      WIDTH,
-      HEIGHT,
+      width,
+      height,
       rotateAngle,
       localPrev,
       localTrgt);

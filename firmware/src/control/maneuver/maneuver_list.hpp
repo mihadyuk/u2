@@ -38,6 +38,8 @@ void lineSlopeManeuver(
 void landingAlignmentManeuver(
     ManeuverPart &part,
     uint32_t partNumber,
+    float width,
+    float height,
     const mnrfp (&localPrev)[2][1],
     const mnrfp (&localTrgt)[2][1],
     mnrfp prevAlt,

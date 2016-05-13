@@ -1,4 +1,4 @@
-#include <math.h>
+#include <cmath>
 #include "maneuver_stadium.hpp"
 #include "matrix_math.hpp"
 #include "geometry.hpp"
@@ -35,13 +35,17 @@ void stadiumManeuver(
     float repeats,
     float width,
     float height,
-    float angle,
+    float angle, /* rad */
     float radius,
     const mnrfp (&localPrev)[2][1],
     const mnrfp (&localTrgt)[2][1])
 {
-  uint32_t partsCount = round(
-      fabs(repeats)
+//  /* input parameters check */
+//  if (radius < 0.0f)
+//    radius = std::fabs(radius);
+
+  uint32_t partsCount = std::round(
+      std::fabs(repeats)
     * static_cast<uint32_t>(StadiumParts::count)
     + static_cast<uint32_t>(ApproachToStadium::count));
 
@@ -160,7 +164,7 @@ void stadiumManeuver(
     if (sign(repeats) < 0.0)
       part.flipEast();
 
-    part.rotate(deg2rad<mnrfp>(angle));
+    part.rotate(angle);
     part.move(localTrgt);
   }
   else if (partNumber < static_cast<uint32_t>(ApproachToStadium::count))
@@ -168,7 +172,7 @@ void stadiumManeuver(
     /* line from previous waypoint to the stadium's border */
     part.fillLine(0.0, 0.0, 0.0, -width / 2.0);
     part.setFinal(false);
-    part.rotate(deg2rad<mnrfp>(angle));
+    part.rotate(angle);
     part.move(localTrgt);
     ManeuverLine line = part.getLine();
     part.fillLine(localPrev, line.finish);
