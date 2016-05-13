@@ -77,7 +77,6 @@ void stadiumManeuver(
            -semiWidth,
             northOffset,
            -semiWidth);
-        part.setFinal(false);
         break;
 
       case StadiumParts::rightUpperArc:
@@ -87,7 +86,6 @@ void stadiumManeuver(
             radius,
             0.0,
             M_PI_2);
-        part.setFinal(false);
         break;
 
       case StadiumParts::upperLine:
@@ -96,7 +94,6 @@ void stadiumManeuver(
            -eastOffset,
             semiHeight,
             eastOffset);
-        part.setFinal(false);
         break;
 
       case StadiumParts::leftUpperArc:
@@ -106,7 +103,6 @@ void stadiumManeuver(
             radius,
             M_PI_2,
             M_PI_2);
-        part.setFinal(false);
         break;
 
       case StadiumParts::leftLine:
@@ -115,7 +111,6 @@ void stadiumManeuver(
             semiWidth,
            -northOffset,
             semiWidth);
-        part.setFinal(false);
         break;
 
       case StadiumParts::leftBottomArc:
@@ -125,7 +120,6 @@ void stadiumManeuver(
             radius,
             M_PI,
             M_PI_2);
-        part.setFinal(false);
         break;
 
       case StadiumParts::bottomLine:
@@ -134,7 +128,6 @@ void stadiumManeuver(
             eastOffset,
            -semiHeight,
            -eastOffset);
-        part.setFinal(false);
         break;
 
       case StadiumParts::rightBottomArc:
@@ -144,7 +137,6 @@ void stadiumManeuver(
             radius,
             3.0 * M_PI_2,
             M_PI_2);
-        part.setFinal(false);
         break;
 
       case StadiumParts::rightBottomLine:
@@ -153,8 +145,6 @@ void stadiumManeuver(
            -semiWidth,
             0.0,
            -semiWidth);
-
-        part.setFinal(false);
         break;
 
       default:
@@ -166,26 +156,28 @@ void stadiumManeuver(
 
     part.rotate(angle);
     part.move(localTrgt);
+
+    if ((partsCount - 1) == partNumber)
+      part.setFinal(true);
+    else
+      part.setFinal(false);
   }
   else if (partNumber < static_cast<uint32_t>(ApproachToStadium::count))
   {
     /* line from previous waypoint to the stadium's border */
     part.fillLine(0.0, 0.0, 0.0, -width / 2.0);
-    part.setFinal(false);
+
+    if ((partsCount - 1) == partNumber)
+      part.setFinal(true);
+    else
+      part.setFinal(false);
+
     part.rotate(angle);
     part.move(localTrgt);
     ManeuverLine line = part.getLine();
     part.fillLine(localPrev, line.finish);
 
   }
-//  else if ((partsCount - 1) == partNumber) {
-//    /* line from the stadium's border to the stadium's center */
-//    part.fillLine(0.0, -width/2.0, 0.0, 0.0);
-//    part.setFinal(false);
-//    part.rotate(deg2rad<T>(angle));
-//    part.move(localTrgt);
-//
-//  }
   else
   {
     /* out of maneuver parts range */

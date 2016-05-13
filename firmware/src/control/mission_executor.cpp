@@ -447,11 +447,6 @@ void MissionExecutor::navigate(float dT) {
     load_next_mission_item();
   }
 
-//  if (mnr_executor.isManeuverCompleted()) {
-//    broadcast_mission_item_reached(trgt.seq);
-//    load_next_mission_item();
-//  }
-
 }
 
 /*

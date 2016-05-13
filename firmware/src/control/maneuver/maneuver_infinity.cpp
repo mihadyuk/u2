@@ -43,10 +43,10 @@ void infinityManeuver(
   {
     /* maneuver parts */
     mnrfp distToArcCenter = static_cast<mnrfp>(height / 2.0) - radius;
-    mnrfp arm = sqrt(
+    mnrfp arm = std::sqrt(
         distToArcCenter * distToArcCenter
       - radius * radius);
-    mnrfp alpha = asin(radius / distToArcCenter);
+    mnrfp alpha = std::asin(radius / distToArcCenter);
 
     InfinityParts infinityPart = static_cast<InfinityParts>(
         (  partNumber
@@ -57,7 +57,6 @@ void infinityManeuver(
     {
       case InfinityParts::rightUpperLine:
         part.fillLine(0.0, 0.0, arm, 0.0);
-        part.setFinal(false);
         part.rotate(alpha);
         break;
 
@@ -68,7 +67,6 @@ void infinityManeuver(
            -fabs(radius),
             wrap_2pi(alpha),
             static_cast<mnrfp>(M_PI_2) + alpha);
-        part.setFinal(false);
         break;
 
       case InfinityParts::leftUpperArc:
@@ -78,12 +76,10 @@ void infinityManeuver(
            -fabs(radius),
             3.0 * M_PI_2,
             static_cast<mnrfp>(M_PI_2) + alpha);
-        part.setFinal(false);
         break;
 
       case InfinityParts::leftUpperRightBottomLine:
         part.fillLine(arm, 0.0, -arm, 0.0);
-        part.setFinal(false);
         part.rotate(-alpha);
         break;
 
@@ -94,7 +90,6 @@ void infinityManeuver(
             fabs(radius),
             wrap_2pi(-alpha + static_cast<mnrfp>(M_PI)),
             static_cast<mnrfp>(M_PI_2) + alpha);
-        part.setFinal(false);
         break;
 
       case InfinityParts::leftBottomArc:
@@ -104,12 +99,10 @@ void infinityManeuver(
             fabs(radius),
             3.0 * M_PI_2,
             static_cast<mnrfp>(M_PI_2) + alpha);
-        part.setFinal(false);
         break;
 
       case InfinityParts::leftBottomLine:
         part.fillLine(-arm, 0.0, 0.0, 0.0);
-        part.setFinal(false);
         part.rotate(alpha);
         break;
 
@@ -124,13 +117,19 @@ void infinityManeuver(
     part.move(localTrgt);
 
     if ((partsCount - 1) == partNumber)
-        part.setFinal(true);
+      part.setFinal(true);
+    else
+      part.setFinal(false);
   }
   else if (partNumber < static_cast<uint32_t>(ApproachToInfinity::count))
   {
     /* line from previous waypoint to the infinity's center */
     part.fillLine(localPrev, localTrgt);
-    part.setFinal(false);
+
+    if ((partsCount - 1) == partNumber)
+      part.setFinal(true);
+    else
+      part.setFinal(false);
   }
   else
   {

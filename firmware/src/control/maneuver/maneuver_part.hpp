@@ -24,7 +24,7 @@ struct ManeuverArc
 {
   mnrfp center[2][1]; /* local north (m), east (m) coordinates */
   mnrfp radius;       /* arc radius (m), if positive - clockwise, else - counter-clockwise */
-  mnrfp startCourse;  /* course (rad) on arc start, [0, 2*M_PI] */
+  mnrfp startCourse;  /* course (rad) on arc start, [0; 2*M_PI] */
   mnrfp deltaCourse;  /* course change (rad) on arc, [0; M_PI] */
 };
 

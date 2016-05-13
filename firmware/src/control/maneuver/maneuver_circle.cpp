@@ -98,7 +98,10 @@ void circleManeuver(
     m_mul_s<mnrfp, 2, 1>(tmp, normedLineVector, fabs(radius));
     m_plus<mnrfp, 2, 1>(tmp, localTrgt, tmp);
     part.fillLine(localPrev, tmp);
-    part.setFinal(false);
+    if ((partsCount - 1) == partNumber)
+      part.setFinal(true);
+    else
+      part.setFinal(false);
   }
   else
   {
