@@ -163,6 +163,13 @@ CONTROLSRC =\
 		src/control/acs_input.cpp \
 		src/control/acs_commands.cpp \
 		src/control/mission_executor.cpp \
+		src/control/maneuver/maneuver_part.cpp \
+		src/control/maneuver/maneuver_three_points.cpp \
+		src/control/maneuver/maneuver_circle.cpp \
+		src/control/maneuver/maneuver_infinity.cpp \
+		src/control/maneuver/maneuver_stadium.cpp \
+		src/control/maneuver/maneuver_list.cpp \
+		src/control/maneuver/maneuver_utils.cpp \
 		src/control/navigator.cpp \
 		src/control/stab_vm.cpp \
 		src/control/hil.cpp \

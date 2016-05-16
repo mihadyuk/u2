@@ -551,6 +551,14 @@ param = [
 ("GNSS_dyn_model",  0,          8,          8,          "u", "default",    "0 - portable, 1 - forbidden, 2 - stationary, 3 - pedestrian \\n 4 - automotive, 5 - sea, 6 - airborne with <1g Acceleration, \\n 7 - airborne with <2g Acceleration, 8 - airborne with <4g Acceleration"),
 ("GNSS_fix_period", 100,        200,        1000,       "u", "default",    "NULL"),
 
+# ACS settings
+("ACS_lnd_dz_trsh", 0.0,        0.0,        1000,       "f", "default",    "dz treshold for landing maneuver."),
+("ACS_lnd_dh_trsh", 0.0,        0.0,        1000,       "f", "default",    "dh treshold for landing maneuver."),
+("ACS_lnd_dy_trsh", 0.0,        0.0,        1000,       "f", "default",    "dYaw (deg) treshold for landing maneuver."),
+("ACS_dflt_radius", 0.1,        0.5,        10000,      "f", "default",    "Default radius for maneuvers arc."),
+("ACS_algmn_width", 0.1,        1.0,        10000,      "f", "default",    "Width of aligment maneuver for landing."),
+("ACS_algmn_height",0.1,        3.0,        10000,      "f", "default",    "Height of aligment maneuver for landing."),
+
 # fake field with 16 symbols name
 ("Z_param_capacity",0,          0,          2048,       "u", "default",    "2 purpose parameter. \\n 1) It has maximum allowable name length. \\n 2) contains max parameter count"),
 ]

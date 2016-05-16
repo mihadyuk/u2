@@ -2,7 +2,6 @@
 #define MISSION_EXECUTOR_HPP_
 
 #include "mavlink_local.hpp"
-//#include "maneuver/maneuver_executor.hpp"
 #include "maneuver/maneuver_utils.hpp"
 #include "maneuver/maneuver_part.hpp"
 #include "acs_input.hpp"
@@ -54,20 +53,29 @@ private:
   void broadcast_mission_item_reached(uint16_t seq);
   void artificial_takeoff_point(void);
   bool load_next_mission_item(void);
-  void analyze_partexecout();
-  void partexecout2mavlink(const partExecOut<double> &out);
-  void partexecout2acsin(const partExecOut<double> &out);
+  void ident_component(void);
+  void parse_component(void);
+  void analyze_execout(void);
+  void execout2mavlink(void);
+  void execout2acsin(void);
   void debug2mavlink(void);
   void navigate(float dT);
 
   MissionState state;
   ACSInput &acs_in;
-//  ManeuverExecutor<double> mnr_executor;
 
-  ManeuverPart<double> part;
+  ManeuverPart part;
   uint32_t part_number = 0;
   bool maneuver_completed = false;
-  partExecOut<double> out;
+  execOut out;
+  MissionComponent component;
+
+  const float *aligment_dz_treshold   = nullptr;
+  const float *aligment_dh_treshold   = nullptr;
+  const float *aligment_dyaw_treshold = nullptr;
+  const float *aligment_width         = nullptr;
+  const float *aligment_height        = nullptr;
+  const float *default_radius         = nullptr;
 
   mavlink_mission_item_t prev;
   mavlink_mission_item_t trgt;

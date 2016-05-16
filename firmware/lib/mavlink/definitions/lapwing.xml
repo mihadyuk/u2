@@ -9,7 +9,7 @@
                     <param index="1">Repeats, If positive - clockwise, else counter-clockwise</param>
                     <param index="2">Width</param>
                     <param index="3">Height</param>
-                    <param index="4">Angle</param>
+                    <param index="4">Rotation angle</param>
                     <param index="5">Latitude</param>
                     <param index="6">Longitude</param>
                     <param index="7">Altitude</param>
@@ -17,9 +17,9 @@
                <entry value="4" name="MAV_CMD_NAV_INFINITY">
                     <description>Infinity maneuver</description>
                     <param index="1">Repeats, If positive - clockwise, else counter-clockwise</param>
-                    <param index="2">Radius</param>
+                    <param index="2">Width</param>
                     <param index="3">Height</param>
-                    <param index="4">Angle</param>
+                    <param index="4">Rotation angle</param>
                     <param index="5">Latitude</param>
                     <param index="6">Longitude</param>
                     <param index="7">Altitude</param>
