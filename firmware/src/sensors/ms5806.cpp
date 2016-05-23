@@ -26,8 +26,10 @@
 #define CMD_ADC_4096    0x08 // ADC OSR=4096
 #define CMD_PROM_RD     0xA0 // Prom read command
 
-#define PRESS_CONV_TIME   MS2ST(10)
-#define TEMP_CONV_TIME    MS2ST(10)
+/* Conversion time. Datasheet claims maximum 9.04ms but on 80 celsius
+ * this time raises dramatically. */
+#define PRESS_CONV_TIME   MS2ST(20)
+#define TEMP_CONV_TIME    MS2ST(20)
 
 /*
  ******************************************************************************
@@ -52,7 +54,7 @@
 /**
  * @brief   CRC calculator copypasted from app note.
  */
-unsigned char MS5806::crc4(uint16_t n_prom[]) {
+static unsigned char crc4(uint16_t n_prom[]) {
   int cnt; // simple counter unsigned
   int n_rem; // crc reminder unsigned
   int crc_read; // original value of the crc
@@ -320,7 +322,9 @@ void MS5806::sleep(void) {
 sensor_state_t MS5806::get(baro_abs_data_t &result) {
   osalDbgCheck(state == SENSOR_STATE_READY);
 
+  osalSysLock();
   result = cache;
+  osalSysUnlock();
 
   return this->state;
 }

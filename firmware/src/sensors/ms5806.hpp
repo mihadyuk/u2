@@ -21,7 +21,6 @@ public:
   void sleep(void);
 
 private:
-  unsigned char crc4(uint16_t n_prom[]);
   void calc_pressure(baro_abs_data_t &result);
   bool start_t_measurement(void);
   bool start_p_measurement(void);
