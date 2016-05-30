@@ -26,8 +26,10 @@
 #define CMD_ADC_4096    0x08 // ADC OSR=4096
 #define CMD_PROM_RD     0xA0 // Prom read command
 
-#define PRESS_CONV_TIME   MS2ST(10)
-#define TEMP_CONV_TIME    MS2ST(10)
+/* Conversion time. Datasheet claims maximum 9.04ms but on 80 celsius
+ * this time raises dramatically. */
+#define PRESS_CONV_TIME   MS2ST(20)
+#define TEMP_CONV_TIME    MS2ST(20)
 
 /*
  ******************************************************************************
@@ -52,7 +54,7 @@
 /**
  * @brief   CRC calculator copypasted from app note.
  */
-unsigned char MS5806::crc4(uint16_t n_prom[]) {
+static unsigned char crc4(uint16_t n_prom[]) {
   int cnt; // simple counter unsigned
   int n_rem; // crc reminder unsigned
   int crc_read; // original value of the crc
@@ -86,18 +88,14 @@ unsigned char MS5806::crc4(uint16_t n_prom[]) {
  * Calculate compensated pressure value using black magic from datasheet.
  */
 void MS5806::calc_pressure(baro_abs_data_t &result) {
-  int64_t D1; // P raw
-  int64_t D2; // T raw
-
   int64_t dT;
   int64_t temp;
   int64_t off,  off2;
   int64_t sens, sens2;
-  int64_t P;
   int64_t T2;
 
-  D1 = rxbuf_p[0] * 65536 + rxbuf_p[1] * 256 + rxbuf_p[2];
-  D2 = rxbuf_t[0] * 65536 + rxbuf_t[1] * 256 + rxbuf_t[2];
+  const int64_t D1 = rxbuf_p[0] * 65536 + rxbuf_p[1] * 256 + rxbuf_p[2]; // P raw
+  const int64_t D2 = rxbuf_t[0] * 65536 + rxbuf_t[1] * 256 + rxbuf_t[2]; // T raw
 
   // first order compensation (when temperature > 20C)
   dT   = D2 - (int64_t)C[5] * (1<<8);
@@ -127,13 +125,10 @@ void MS5806::calc_pressure(baro_abs_data_t &result) {
   off  -= off2;
   temp -= T2;
 
-  // main formula
-  P = ((D1 * sens) / (1<<21) - off) / (1<<15);
-
   result.t = 0.01 * temp;
-  result.p = P;
-  result.p_raw = rxbuf_p[0] * 65536 + rxbuf_p[1] * 256 + rxbuf_p[2];
-  result.t_raw = rxbuf_t[0] * 65536 + rxbuf_t[1] * 256 + rxbuf_t[2];
+  result.p = ((D1 * sens) / (1<<21) - off) / (1<<15); // main datasheet formula
+  result.p_raw = D1;
+  result.t_raw = D2;
 }
 
 /**
@@ -320,7 +315,9 @@ void MS5806::sleep(void) {
 sensor_state_t MS5806::get(baro_abs_data_t &result) {
   osalDbgCheck(state == SENSOR_STATE_READY);
 
+  osalSysLock();
   result = cache;
+  osalSysUnlock();
 
   return this->state;
 }
