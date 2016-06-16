@@ -8,9 +8,10 @@
 
 void Navi6dWrapper::read_settings(void) {
 
-  param_registry.valueSearch("SINS_en_r_sns",    &en_r_sns);
-  param_registry.valueSearch("SINS_en_v_sns",    &en_v_sns);
-  param_registry.valueSearch("SINS_sns_v_th",    &sns_v_th);
+  param_registry.valueSearch("SINS_en_r_sns",   &en_r_sns);
+  param_registry.valueSearch("SINS_en_v_sns",   &en_v_sns);
+  param_registry.valueSearch("SINS_en_extr",    &en_extr);
+  param_registry.valueSearch("SINS_sns_v_th",   &sns_v_th);
 
   param_registry.valueSearch("SINS_en_odo",     &en_odo);
   param_registry.valueSearch("SINS_en_nhl_y",   &en_nhl_y);
@@ -50,9 +51,7 @@ void Navi6dWrapper::read_settings(void) {
 
   param_registry.valueSearch("SINS_Qm_acc",     &Qm_acc);
   param_registry.valueSearch("SINS_Qm_gyr",     &Qm_gyr);
-  param_registry.valueSearch("SINS_Qm_acc_x",   &Qm_acc_x);
-  param_registry.valueSearch("SINS_Qm_acc_y",   &Qm_acc_y);
-  param_registry.valueSearch("SINS_Qm_acc_z",   &Qm_acc_z);
+  param_registry.valueSearch("SINS_Qm_acc_bias",&Qm_acc_bias);
   param_registry.valueSearch("SINS_Qm_gyr_bias",&Qm_gyr_bias);
 
   param_registry.valueSearch("SINS_eu_vh_roll", &eu_vh_roll);

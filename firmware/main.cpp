@@ -143,6 +143,7 @@ __CCM__ static power_monitor_data_t power_monitor_data;
 __CCM__ gnss::uBlox GNSS(&GPSSD, 9600, 57600);
 __CCM__ static OdometerSTM odometer;
 #elif defined(BOARD_MNU)
+//__CCM__ gnss::msnonmea GNSS(&GPSSD, 115200, 115200);
 __CCM__ gnss::mtkgps GNSS(&GPSSD, 115200, 115200);
 __CCM__ static OdometerFPGA odometer(&FPGAPWMD1);
 #else
@@ -344,7 +345,9 @@ int main(void) {
 #if defined(BOARD_BEZVODIATEL)
   gps_power_on();
 #elif defined(BOARD_MNU)
+//  gnss_select(GNSSReceiver::msno_nmea);
   gnss_select(GNSSReceiver::it530);
+//  modem_select(ModemType::mors);
   modem_select(ModemType::xbee);
 #else
 #error "board unsupported"
