@@ -391,15 +391,15 @@ void Navi6dWrapper::update(const baro_data_t &baro,
 
   nav_sins.kalman_params.sigma_Qm.acc_x = *Qm_acc; //acc
   nav_sins.kalman_params.sigma_Qm.acc_y = *Qm_acc; //acc
-  nav_sins.kalman_params.sigma_Qm.acc_z = *Qm_acc; //acc
+  nav_sins.kalman_params.sigma_Qm.acc_z = *Qm_acc; //accbias
 
   nav_sins.kalman_params.sigma_Qm.gyr_x = *Qm_gyr; //gyr
   nav_sins.kalman_params.sigma_Qm.gyr_y = *Qm_gyr; //gyr
   nav_sins.kalman_params.sigma_Qm.gyr_z = *Qm_gyr; //gyr
 
-  nav_sins.kalman_params.sigma_Qm.acc_b_x = *Qm_acc_x; //acc_x
-  nav_sins.kalman_params.sigma_Qm.acc_b_y = *Qm_acc_y; //acc_y
-  nav_sins.kalman_params.sigma_Qm.acc_b_z = *Qm_acc_z; //acc_z
+  nav_sins.kalman_params.sigma_Qm.acc_b_x = *Qm_acc_bias; //acc_x
+  nav_sins.kalman_params.sigma_Qm.acc_b_y = *Qm_acc_bias; //acc_y
+  nav_sins.kalman_params.sigma_Qm.acc_b_z = *Qm_acc_bias; //acc_z
 
   nav_sins.kalman_params.sigma_Qm.gyr_b_x = *Qm_gyr_bias; //gyr_bias
   nav_sins.kalman_params.sigma_Qm.gyr_b_y = *Qm_gyr_bias; //gyr_bias
@@ -409,10 +409,10 @@ void Navi6dWrapper::update(const baro_data_t &baro,
   nav_sins.kalman_params.Beta_inv.acc_b = *B_acc_b;
   nav_sins.kalman_params.Beta_inv.gyr_b = *B_gyr_b;
 
-  nav_sins.kalman_params.Beta_inv.acc_s  = 10000000;
-  nav_sins.kalman_params.Beta_inv.gyr_s  = 10000000;
-  nav_sins.kalman_params.Beta_inv.acc_no = 1000000;
-  nav_sins.kalman_params.Beta_inv.gyr_no = 1000000;
+  nav_sins.kalman_params.Beta_inv.acc_s  = 10000000.0;
+  nav_sins.kalman_params.Beta_inv.gyr_s  = 10000000.0;
+  nav_sins.kalman_params.Beta_inv.acc_no = 10000000.0;
+  nav_sins.kalman_params.Beta_inv.gyr_no = 10000000.0;
 
   nav_sins.calib_params.ba[0][0] = *acc_bias_x;
   nav_sins.calib_params.ba[1][0] = *acc_bias_y;
@@ -489,7 +489,7 @@ void Navi6dWrapper::update(const baro_data_t &baro,
   nav_sins.ref_params.glrt_acc_sigma  = *acc_sigma;
   nav_sins.ref_params.glrt_gyr_sigma  = *gyr_sigma;
   nav_sins.ref_params.glrt_n          = *samples;
-  nav_sins.ref_params.sns_extr_en     = true;
+  nav_sins.ref_params.sns_extr_en     = *en_extr;
   nav_sins.ref_params.sns_vel_th      = *sns_v_th;
 
   dbg_in_fill_gnss(this->gps);
