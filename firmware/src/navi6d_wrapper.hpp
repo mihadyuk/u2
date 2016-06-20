@@ -43,6 +43,7 @@ private:
 
   const uint32_t *en_r_sns   = nullptr;
   const uint32_t *en_v_sns   = nullptr;
+  const uint32_t *en_extr    = nullptr;
   const uint32_t *en_baro    = nullptr;
   const uint32_t *en_odo     = nullptr;
   const uint32_t *en_nhl_y   = nullptr;
@@ -82,9 +83,7 @@ private:
   const float *f_alg_t      = nullptr;
   const float *Qm_acc       = nullptr;
   const float *Qm_gyr       = nullptr;
-  const float *Qm_acc_x     = nullptr;
-  const float *Qm_acc_y     = nullptr;
-  const float *Qm_acc_z     = nullptr;
+  const float *Qm_acc_bias  = nullptr;
   const float *Qm_gyr_bias  = nullptr;
   const float *eu_vh_roll   = nullptr;
   const float *eu_vh_pitch  = nullptr;
