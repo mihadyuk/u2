@@ -58,13 +58,17 @@ static THD_FUNCTION(RxThread, arg) {
   chRegSetThreadName("MavRx");
   msg_t c = Q_TIMEOUT;
   mavChannel *channel = static_cast<mavChannel *>(arg);
+  const systime_t timeout = MS2ST(20);
 
   while (!chThdShouldTerminateX()) {
-    c = channel->get(MS2ST(20));
-    if (c != Q_TIMEOUT){
+    c = channel->get(timeout);
+    if (c >= Q_OK) {
       if (mavlink_parse_char(MAVLINK_COMM_0, c, &rx_msg, &rx_status)) {
         MavPostman::spam_list.dispatch(rx_msg);
       }
+    }
+    if (c == Q_RESET) {
+      osalThreadSleep(timeout);
     }
   }
 
@@ -85,8 +89,9 @@ static THD_FUNCTION(TxThread, arg) {
     if (MSG_OK == txmb.fetch(&mail, MS2ST(100))) {
       if (0 != mavlink_encode(mail->msgid, mail->compid, &tx_msg,  mail->mavmsg)) {
         len = mavlink_msg_to_send_buffer(sendbuf, &tx_msg);
-        if (MSG_OK != channel->write(sendbuf, len, MS2ST(100)))
+        if (MSG_OK != channel->write(sendbuf, len, MS2ST(100))) {
           dbg_drop_cnt++;
+        }
       }
       mail->release();
     }

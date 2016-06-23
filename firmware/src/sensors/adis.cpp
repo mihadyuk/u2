@@ -67,7 +67,8 @@ static const SPIConfig spicfg = {
 #else
 #error "Unknown board"
 #endif
-  SPI_CR1_BR_1 | SPI_CR1_CPOL | SPI_CR1_CPHA | SPI_CR1_DFF // (84MHz/8, CPHA=1, CPOL=1, 16bit, MSb first).
+  SPI_CR1_BR_1 | SPI_CR1_CPOL | SPI_CR1_CPHA | SPI_CR1_DFF, // (84MHz/8, CPHA=1, CPOL=1, 16bit, MSb first).
+  0 // CR2 is empty
 };
 
 chibios_rt::BinarySemaphore Adis::isr_sem(true);

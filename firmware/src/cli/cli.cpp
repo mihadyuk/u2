@@ -193,6 +193,7 @@ static void sigint (void* user_handle){
  */
 //static THD_WORKING_AREA(ShellThreadWA, ShellThreadWASize);
 static THD_FUNCTION(ShellThread, arg) {
+  const systime_t timeout = MS2ST(50);
 
   chRegSetThreadName("Shell");
 
@@ -201,11 +202,6 @@ static THD_FUNCTION(ShellThread, arg) {
 
   // create and init microrl object
   microrl_t microrl_shell;
-  chThdSleepMilliseconds(10);
-  cli_print("Mobile Operational System Kamize (MOSK) welcomes you.");
-  cli_print(ENDL);
-  chThdSleepMilliseconds(10);
-  cli_print("Press enter to get command prompt.");
   microrl_init(&microrl_shell, NULL, microrl_print);
 
   // set callback for execute
@@ -219,11 +215,29 @@ static THD_FUNCTION(ShellThread, arg) {
 
   setGlobalFlag(GlobalFlags.shell_ready);
 
-  while (!chThdShouldTerminateX()) {
+  // wait any key pressed
+  while (true) {
+    osalThreadSleep(timeout);
+    msg_t c = chnGetTimeout(ShellChnp, TIME_IMMEDIATE);
+    if (c >= Q_OK) {
+      cli_print("Mobile Operational System Kamize =MOSK= welcomes you.");
+      microrl_insert_char(&microrl_shell, KEY_LF);
+      break;
+    }
+    if (chThdShouldTerminateX()) {
+      goto DEATH;
+    }
+  }
+
+  // main loop
+  while (true) {
     // put received char from stdin to microrl lib
-    msg_t c = chnGetTimeout(ShellChnp, MS2ST(50));
-    if (c != Q_TIMEOUT) {
+    msg_t c = chnGetTimeout(ShellChnp, timeout);
+    if (c >= Q_OK) {
       microrl_insert_char(&microrl_shell, (char)c);
+    }
+    if (c == Q_RESET) {
+      osalThreadSleep(timeout);
     }
 
     /* if fork finished than collect allocated for it memory */
@@ -231,12 +245,18 @@ static THD_FUNCTION(ShellThread, arg) {
       chThdWait(current_cmd_tp);
       current_cmd_tp = NULL;
     }
+
+    if (chThdShouldTerminateX()) {
+      goto DEATH;
+    }
   }
 
   /* умираем по всем правилам, не забываем убить потомков */
+DEATH:
   if (current_cmd_tp != NULL){
-    if (chThdTerminatedX(current_cmd_tp))
+    if (chThdTerminatedX(current_cmd_tp)) {
       chThdTerminate(current_cmd_tp);
+    }
     chThdWait(current_cmd_tp);
   }
 
@@ -393,7 +413,8 @@ void SpawnShellThreads(void *bchnp) {
 
   shell_tp = chThdCreateFromHeap(&ThdHeap, ShellThreadWASize, "Shell",
                                   SHELLPRIO, ShellThread, bchnp);
-  if (shell_tp == NULL)
+  if (shell_tp == NULL) {
     osalSysHalt("Can not allocate memory");
+  }
 }
 

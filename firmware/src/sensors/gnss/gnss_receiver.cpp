@@ -35,6 +35,7 @@ extern MavLogger mav_logger;
 
 chibios_rt::BinarySemaphore GNSSReceiver::protect_sem(false);
 chibios_rt::EvtSource event_gnss;
+static systime_t pps_timestamp;
 
 /*
  ******************************************************************************
@@ -88,7 +89,7 @@ GNSSReceiver::GNSSReceiver(SerialDriver *sdp, uint32_t start_baudrate,
     start_baudrate(start_baudrate),
     working_baudrate(working_baudrate)
 {
-  return;
+  pps_timestamp = chVTGetSystemTimeX();
 }
 
 /**
@@ -192,6 +193,14 @@ void GNSSReceiver::unsubscribe(gnss_data_t* result) {
 /**
  *
  */
-void GNSSReceiver::GNSS_PPS_ISR_I(void) {
+void GNSSReceiver::PPS_ISR_I(void) {
+  pps_timestamp = chVTGetSystemTimeX();
   event_gnss.broadcastFlagsI(EVMSK_GNSS_PPS);
+}
+
+/**
+ *
+ */
+systime_t GNSSReceiver::ppsTimestamp(void) {
+  return pps_timestamp;
 }

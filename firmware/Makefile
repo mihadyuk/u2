@@ -89,8 +89,8 @@ PROJECT = ch
 CHIBIOS = ../../ChibiOS-RT
 CHIBIOS_CONTRIB = ../../ChibiOS-Contrib
 
-include board_mnu/board.mk
-#include board_bezvodiatel/board.mk
+#include board_mnu/board.mk
+include board_bezvodiatel/board.mk
 
 # Startup files.
 include $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/mk/startup_stm32f4xx.mk
@@ -421,9 +421,6 @@ else
 	@echo Checking $(<F)
 	@$(CHECKCMD) $(CHECKOPT) $< > $@
 endif
-
-#cppcheck: $(OUTFILES)
-#	$(CHECKCMD) $(CSRC) $(CPPSRC) --enable=warning --force --template=gcc
 
 cppcheck : |$(CHECKDIR) $(CHECKCOBJS) $(CHECKCPPOBJS)
 
