@@ -30,13 +30,14 @@ public:
   void unsubscribe(gnss::gnss_data_t* result);
   void setSniffer(BaseChannel *bchnp);
   void deleteSniffer(void);
-  static void GNSS_PPS_ISR_I(void);
+  systime_t ppsTimestamp(void);
+  static void PPS_ISR_I(void);
 protected:
-  THD_WORKING_AREA(gnssRxThreadWA, GNSS_THREAD_SIZE);
   void log_append(const mavlink_gps_raw_int_t *msg);
   void acquire(void);
   void release(void);
   virtual void start_impl(void) = 0;
+  THD_WORKING_AREA(gnssRxThreadWA, GNSS_THREAD_SIZE);
   gnss_data_t* spamlist[GNSS_MAX_SUBSCRIBERS] = {};
   bool ready = false;
   thread_t *worker = nullptr;

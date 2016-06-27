@@ -29,7 +29,7 @@
 
 #define XBEESD                  SD3
 #define XBEE_BAUDRATE           115200
-#define XBEE_USE_CTS_RTS        TRUE
+#define XBEE_USE_HW_FLOW        TRUE
 
 #define GPSSD                   SD1
 

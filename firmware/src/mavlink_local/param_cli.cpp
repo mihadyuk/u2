@@ -228,8 +228,8 @@ static void help(void){
   cli_println("'param save' to save parameters to EEPROM.");
   cli_println("'param dump' to print parameters in form suitable for copy+paste.");
   cli_println("'param help' to get this message.");
-  cli_println("'param PARAM_name' to get value of parameter.");
-  cli_println("'param PARAM_name N' to set value of parameter to N.");
+  cli_println("'param PARAM_name' to print parameter's value.");
+  cli_println("'param PARAM_name N' to set parameter's value to N.");
 }
 
 /*

@@ -67,7 +67,7 @@ static void pps_cb(EXTDriver *extp, expchannel_t channel){
 
   osalSysLockFromISR();
   TimeKeeper::PPS_ISR_I();
-  gnss::GNSSReceiver::GNSS_PPS_ISR_I();
+  gnss::GNSSReceiver::PPS_ISR_I();
   osalSysUnlockFromISR();
 }
 
@@ -118,8 +118,8 @@ static const EXTConfig extcfg = {
     {EXT_CH_MODE_RISING_EDGE  | EXT_MODE_GPIOG, MPU6050::extiISR},
     {EXT_CH_MODE_DISABLED, NULL},                                           //8
     {EXT_CH_MODE_DISABLED, NULL},
-    {EXT_CH_MODE_RISING_EDGE  | EXT_MODE_GPIOB, pps_cb},
     {EXT_CH_MODE_DISABLED, NULL},
+    {EXT_CH_MODE_RISING_EDGE  | EXT_MODE_GPIOB, pps_cb},
     {EXT_CH_MODE_DISABLED, NULL},                                           //12
     {EXT_CH_MODE_DISABLED, NULL},
     {EXT_CH_MODE_DISABLED, NULL},
@@ -234,9 +234,9 @@ void ExtiPnc::pps(bool flag){
     extChannelDisable(&EXTD1, GPIOA_GPS_PPS);
 #elif defined(BOARD_MNU)
   if (flag)
-    extChannelEnable(&EXTD1, GPIOB_UBLOX_PPS);
+    extChannelEnable(&EXTD1, GPIOB_PPS4);
   else
-    extChannelDisable(&EXTD1, GPIOB_UBLOX_PPS);
+    extChannelDisable(&EXTD1, GPIOB_PPS4);
 #else
 #error "Unknown board"
 #endif

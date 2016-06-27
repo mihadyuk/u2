@@ -346,13 +346,13 @@ AOPT =
 TOPT = -mthumb -DTHUMB
 
 # Common warning flags
-WARN = -Wall -Wextra -Wdouble-promotion -Wformat -Wundef #-Wconversion -Werror
+WARN = -Wall -Wextra -Wdouble-promotion -Wformat -Wundef -Wparentheses #-Wconversion -Werror
 
 # Define C warning options here
 CWARN = $(WARN) -Wstrict-prototypes
 
 # Define C++ warning options here
-CPPWARN = $(WARN)
+CPPWARN = $(WARN) -Wsuggest-final-methods -Wsuggest-final-types #-Wsuggest-override 
 
 # 
 # Compiler settings
@@ -385,7 +385,7 @@ RULESPATH = $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC
 include $(RULESPATH)/rules.mk
 
 # Hook user rules
-POST_MAKE_ALL_RULE_HOOK: res_usage cppcheck
+POST_MAKE_ALL_RULE_HOOK: res_usage #cppcheck
 
 # Resource usage print
 res_usage: $(OUTFILES)
@@ -421,9 +421,6 @@ else
 	@echo Checking $(<F)
 	@$(CHECKCMD) $(CHECKOPT) $< > $@
 endif
-
-#cppcheck: $(OUTFILES)
-#	$(CHECKCMD) $(CSRC) $(CPPSRC) --enable=warning --force --template=gcc
 
 cppcheck : |$(CHECKDIR) $(CHECKCOBJS) $(CHECKCPPOBJS)
 

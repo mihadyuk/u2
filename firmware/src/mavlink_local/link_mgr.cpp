@@ -33,8 +33,8 @@ static const SerialConfig xbee_ser_cfg = {
     XBEE_BAUDRATE,
     0,
     0,
-#if XBEE_USE_CTS_RTS
-    USART_CR3_CTSE | USART_CR3_RTSE
+#if XBEE_USE_HW_FLOW
+    USART_CR3_RTSE
 #else
     0
 #endif
@@ -54,6 +54,31 @@ static mavChannelUsbSerial channel_usb_serial;
  *******************************************************************************
  *******************************************************************************
  */
+
+static void usb_serial_up(void) {
+  sduStart(&SDU1, &serusbcfg);
+
+  /*
+   * Activates the USB driver and then the USB bus pull-up on D+.
+   * Note, a delay is inserted in order to not have to disconnect the cable
+   * after a reset.
+   */
+  usbDisconnectBus(serusbcfg.usbp);
+  chThdSleepMilliseconds(1500);
+  usbStart(serusbcfg.usbp, &usbcfg);
+  usb_lld_connect_bus_workaround();
+  chThdSleepMilliseconds(1);
+  usbConnectBus(serusbcfg.usbp);
+}
+
+static void usb_serial_down(void) {
+  usb_lld_disconnect_bus_workaround();
+  chThdSleepMilliseconds(1);
+  usbDisconnectBus(serusbcfg.usbp);
+  usbStop(serusbcfg.usbp);
+  sduStop(&SDU1);
+}
+
 /**
  * Track changes of sh_overxbee flag and fork appropriate threads
  */
@@ -68,20 +93,11 @@ static THD_FUNCTION(LinkMgrThread, arg) {
   int plug_now;
 
   plug_prev = debouncer.update();
-  /* Activates the USB driver and then the USB bus pull-up on D+.
-     Note, a delay is inserted in order to not have to disconnect the cable
-     after a reset. */
-  usb_lld_disconnect_bus_workaround();
-  usbDisconnectBus(serusbcfg.usbp);
-  osalThreadSleepMilliseconds(1000);
 
   sh_now = sh_prev = *sh_overxbee;
   plug_now = debouncer.update();
   plug_prev = !plug_now; /* provocate state updating */
   sdStart(&XBEESD, &xbee_ser_cfg);
-  /* usb will be started once and forever because of some strange bugs in
-   * stopping sequence */
-  usbStart(serusbcfg.usbp, &usbcfg);
 
   /* now track changes of flag and fork appropriate threads */
   while (!chThdShouldTerminateX()) {
@@ -98,17 +114,13 @@ static THD_FUNCTION(LinkMgrThread, arg) {
       /* start or stop USB driver */
       if (plug_now != plug_prev) {
         if (1 == plug_now) {
-          sduStart(&SDU1, &serusbcfg);
-          usb_lld_connect_bus_workaround();
-          usbConnectBus(serusbcfg.usbp);
-          osalThreadSleepMilliseconds(500);
+          usb_serial_up();
         }
         else {
-          usbDisconnectBus(serusbcfg.usbp);
-          usb_lld_disconnect_bus_workaround();
-          sduStop(&SDU1);
+          usb_serial_down();
         }
       }
+
       /* now process shell flag */
       if (1 == sh_now) {
         if (1 == plug_now) {
@@ -125,9 +137,10 @@ static THD_FUNCTION(LinkMgrThread, arg) {
         mav_postman.start(&channel_serial);
       }
     }
+
+    /* process flags for next iteration */
     plug_prev = plug_now;
     sh_prev = sh_now;
-
     osalThreadSleep(DEBOUNCE_PERIOD);
     plug_now = debouncer.update();
     sh_now = *sh_overxbee;
@@ -137,10 +150,7 @@ static THD_FUNCTION(LinkMgrThread, arg) {
   mav_postman.stop();
   channel_serial.stop();
   channel_usb_serial.stop();
-  usbDisconnectBus(serusbcfg.usbp);
-  usb_lld_disconnect_bus_workaround();
-  usbStop(serusbcfg.usbp);
-  sduStop(&SDU1);
+  usb_serial_down();
   sdStop(&XBEESD);
 
   chThdExit(MSG_OK);
@@ -164,7 +174,7 @@ LinkMgr::LinkMgr(void){
 void LinkMgr::start(void){
   param_registry.valueSearch("SH_over_radio", &sh_overxbee);
   sduObjectInit(&SDU1);
-  sduStart(&SDU1, &serusbcfg); // workaround against stopping of non started driver
+
   this->worker = chThdCreateStatic(LinkMgrThreadWA, sizeof(LinkMgrThreadWA),
       SHELLPRIO, LinkMgrThread, NULL);
   osalDbgAssert(NULL != this->worker, "can not allocate memory");
@@ -176,6 +186,4 @@ void LinkMgr::start(void){
 void LinkMgr::stop(void){
   chThdTerminate(this->worker);
   chThdWait(this->worker);
-  sduStop(&SDU1);
-  sdStop(&XBEESD);
 }

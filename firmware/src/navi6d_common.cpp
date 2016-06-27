@@ -138,6 +138,7 @@ void Navi6dWrapper::prepare_data_gnss(gnss::gnss_data_t &gnss_data) {
     nav_sins.gnss_sensor.set_sample_rate(gnss_data.samplerate);
     nav_sins.gnss_sensor.set_pos(gnss_data.latitude, gnss_data.longitude, gnss_data.altitude);
     nav_sins.gnss_sensor.set_dop(gnss_data.hdop, gnss_data.vdop);
+    nav_sins.gnss_sensor.set_fix_type(gnss_data.fix);
 
     switch(gnss_data.speed_type) {
     case gnss::speed_t::SPEED_COURSE:

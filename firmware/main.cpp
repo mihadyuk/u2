@@ -143,8 +143,8 @@ __CCM__ static power_monitor_data_t power_monitor_data;
 __CCM__ gnss::uBlox GNSS(&GPSSD, 9600, 57600);
 __CCM__ static OdometerSTM odometer;
 #elif defined(BOARD_MNU)
-//__CCM__ gnss::msnonmea GNSS(&GPSSD, 115200, 115200);
-__CCM__ gnss::mtkgps GNSS(&GPSSD, 115200, 115200);
+__CCM__ gnss::msnonmea GNSS(&GPSSD, 115200, 115200);
+//__CCM__ gnss::mtkgps GNSS(&GPSSD, 115200, 115200);
 __CCM__ static OdometerFPGA odometer(&FPGAPWMD1);
 #else
 #error "board unsupported"
@@ -327,7 +327,7 @@ int main(void) {
   FPGAMathRst(true);
   osalThreadSleepMilliseconds(1);
   FPGAMathRst(false);
-  fpga_mtrx_mem_test(2);
+  //fpga_mtrx_mem_test(2);
 
 #else
 #error "board unsupported"
@@ -345,8 +345,8 @@ int main(void) {
 #if defined(BOARD_BEZVODIATEL)
   gps_power_on();
 #elif defined(BOARD_MNU)
-//  gnss_select(GNSSReceiver::msno_nmea);
-  gnss_select(GNSSReceiver::it530);
+  gnss_select(GNSSReceiver::msno_nmea);
+//  gnss_select(GNSSReceiver::it530);
 //  modem_select(ModemType::mors);
   modem_select(ModemType::xbee);
 #else
@@ -387,8 +387,9 @@ int main(void) {
     mavlink_out_system_time_struct.time_unix_usec = TimeKeeper::utc();
 
     power_monitor.update(power_monitor_data);
-    if (main_battery_health::CRITICAL == power_monitor_data.health)
-      break; // break main cycle
+    if (main_battery_health::CRITICAL == power_monitor_data.health) {
+      break; // kill main cycle
+    }
 
     marg.get(marg_data, MS2ST(200));
     odometer.update(odo_data, marg_data.dT);
