@@ -181,6 +181,7 @@ param = [
 ("SINS_en_odo",     0,          1,          1,          "u", "default",     "NULL"),
 ("SINS_en_nhl_y",   0,          1,          1,          "u", "default",     "NULL"),
 ("SINS_en_nhl_z",   0,          1,          1,          "u", "default",     "NULL"),
+("SINS_en_odo_sns", 0,          1,          1,          "u", "default",     "NULL"),
 ("SINS_en_roll",    0,          1,          1,          "u", "default",     "NULL"),
 ("SINS_en_pitch",   0,          1,          1,          "u", "default",     "NULL"),
 ("SINS_en_yaw",     0,          1,          1,          "u", "default",     "NULL"),

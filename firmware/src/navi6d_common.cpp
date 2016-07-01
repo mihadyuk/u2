@@ -16,6 +16,7 @@ void Navi6dWrapper::read_settings(void) {
   param_registry.valueSearch("SINS_en_odo",     &en_odo);
   param_registry.valueSearch("SINS_en_nhl_y",   &en_nhl_y);
   param_registry.valueSearch("SINS_en_nhl_z",   &en_nhl_z);
+  param_registry.valueSearch("SINS_en_odo_sns", &en_odo_sns);
 
   param_registry.valueSearch("SINS_en_baro",    &en_baro);
   param_registry.valueSearch("SINS_en_roll",    &en_roll);
@@ -174,17 +175,18 @@ void Navi6dWrapper::prepare_data(const baro_data_t &baro,
                                  const odometer_data_t &odo,
                                  const marg_data_t &marg) {
 
-  nav_sins.ctrl_params.use_r_sns      = *en_r_sns;
-  nav_sins.ctrl_params.use_v_sns      = *en_v_sns;
-  nav_sins.ctrl_params.use_baro_alt   = *en_baro;
-  nav_sins.ctrl_params.use_odo        = *en_odo;
-  nav_sins.ctrl_params.use_nonhol_y   = *en_nhl_y;
-  nav_sins.ctrl_params.use_nonhol_z   = *en_nhl_z;
-  nav_sins.ctrl_params.use_roll       = *en_roll;
-  nav_sins.ctrl_params.use_pitch      = *en_pitch;
-  nav_sins.ctrl_params.use_yaw        = *en_yaw;
-  nav_sins.ctrl_params.use_mag        = *en_mg_v;
-  nav_sins.ctrl_params.use_mag_course = *en_mg_yaw;
+  nav_sins.ctrl_params.use_r_sns        = *en_r_sns;
+  nav_sins.ctrl_params.use_v_sns        = *en_v_sns;
+  nav_sins.ctrl_params.use_baro_alt     = *en_baro;
+  nav_sins.ctrl_params.use_odo          = *en_odo;
+  nav_sins.ctrl_params.use_nonhol_y     = *en_nhl_y;
+  nav_sins.ctrl_params.use_nonhol_z     = *en_nhl_z;
+  nav_sins.ctrl_params.use_odo_with_sns = *en_odo_sns;
+  nav_sins.ctrl_params.use_roll         = *en_roll;
+  nav_sins.ctrl_params.use_pitch        = *en_pitch;
+  nav_sins.ctrl_params.use_yaw          = *en_yaw;
+  nav_sins.ctrl_params.use_mag          = *en_mg_v;
+  nav_sins.ctrl_params.use_mag_course   = *en_mg_yaw;
 
 
   nav_sins.sensor_flags.odo_en = odo.fresh;
