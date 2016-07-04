@@ -48,6 +48,7 @@ private:
   const uint32_t *en_odo     = nullptr;
   const uint32_t *en_nhl_y   = nullptr;
   const uint32_t *en_nhl_z   = nullptr;
+  const uint32_t *en_odo_sns = nullptr;
   const uint32_t *en_roll    = nullptr;
   const uint32_t *en_pitch   = nullptr;
   const uint32_t *en_yaw     = nullptr;
