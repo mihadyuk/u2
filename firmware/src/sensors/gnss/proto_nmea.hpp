@@ -109,7 +109,7 @@ public:
   uint8_t checksum(const uint8_t *data, size_t len) const;
   void checksum2str(uint8_t sum, char *str) const;
   uint8_t checksumFromStr(const char *str) const;
-  void seal(char *msg);
+  void seal(char *msg) const;
 private:
   bool checksum_autotest(void) const;
   bool _autotest(const char *sentence) const;

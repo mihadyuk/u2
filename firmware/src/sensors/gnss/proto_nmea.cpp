@@ -474,7 +474,7 @@ void ProtoNmea::unpack(nmea_rmc_t &result) const {
  * @brief   Fills checksum field and inserts CR/LF
  * @pre     Initial string must be started from '$' ended with '*'
  */
-void ProtoNmea::seal(char *msg) {
+void ProtoNmea::seal(char *msg) const {
   char *sump = strstr(msg, "*");
   osalDbgCheck(nullptr != sump);
 

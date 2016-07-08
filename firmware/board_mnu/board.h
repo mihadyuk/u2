@@ -48,7 +48,7 @@
 #define GPSSD                       SD2
 
 #define XBEESD                      SD6
-#define XBEE_BAUDRATE               57600
+#define XBEE_BAUDRATE               115200
 #define XBEE_USE_HW_FLOW            TRUE
 
 #define MODSD                       SD1
