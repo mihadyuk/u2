@@ -352,7 +352,7 @@ WARN = -Wall -Wextra -Wdouble-promotion -Wformat -Wundef -Wparentheses #-Wconver
 CWARN = $(WARN) -Wstrict-prototypes
 
 # Define C++ warning options here
-CPPWARN = $(WARN) -Wsuggest-final-methods -Wsuggest-final-types #-Wsuggest-override 
+CPPWARN = $(WARN) #-Wsuggest-final-methods -Wsuggest-final-types #-Wsuggest-override 
 
 # 
 # Compiler settings

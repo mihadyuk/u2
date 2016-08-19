@@ -76,7 +76,7 @@ Giovanni
   #include "fpga_pwm.h"
   #include "fpga_mtrx.h"
   #include "fpga_uart.h"
-  #include "test/fpga_mtrx_test.hpp"
+  #include "test/fpga_mtrx_test.h"
   #include "odometer_fpga.hpp"
   #include "mod_telem.hpp"
 #else
@@ -312,7 +312,7 @@ int main(void) {
 
   blinker.bootIndication();
 
-  endianness_test();
+  endiannessTest();
 
 #if defined(BOARD_BEZVODIATEL)
   osalThreadSleepMilliseconds(300);
@@ -327,8 +327,7 @@ int main(void) {
   FPGAMathRst(true);
   osalThreadSleepMilliseconds(1);
   FPGAMathRst(false);
-  //fpga_mtrx_mem_test(2);
-
+  //fpgamtrxFullTest(10);
 #else
 #error "board unsupported"
 #endif
