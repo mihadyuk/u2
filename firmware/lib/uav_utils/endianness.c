@@ -19,7 +19,7 @@ static bool is_big_endian(void){
 /**
  *
  */
-void endianness_test(void){
+void endiannessTest(void){
   bool big = is_big_endian();
 
 #if BYTE_ORDER == LITTLE_ENDIAN

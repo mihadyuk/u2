@@ -8,7 +8,7 @@
  * le == little endian
  */
 
-#include "string.h"
+#include <string.h>
 #include "endianness.h"
 
 #if BYTE_ORDER == LITTLE_ENDIAN

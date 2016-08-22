@@ -7,7 +7,6 @@
 
 #include "main.h"
 #include "proto_nmea.hpp"
-#include "pads.h"
 #include "array_len.hpp"
 
 using namespace gnss;

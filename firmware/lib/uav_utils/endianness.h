@@ -1,15 +1,24 @@
 #ifndef ENDIANNESS_H_
 #define ENDIANNESS_H_
 
-#define LITTLE_ENDIAN         1234UL
-#define BIG_ENDIAN            4321UL
+#include <machine/endian.h>
 
-#define BYTE_ORDER            LITTLE_ENDIAN
+#if !defined(BIG_ENDIAN)
+#define BIG_ENDIAN      4321
+#endif
+
+#if !defined(LITTLE_ENDIAN)
+#define LITTLE_ENDIAN   1234
+#endif
+
+#if !defined(BYTE_ORDER)
+#define BYTE_ORDER      LITTLE_ENDIAN
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-  void endianness_test(void);
+  void endiannessTest(void);
 #ifdef __cplusplus
 }
 #endif
