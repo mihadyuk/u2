@@ -107,6 +107,17 @@ private:
   const float *gyr_scale_y  = nullptr;
   const float *gyr_scale_z  = nullptr;
 
+  float *mag_declinate = nullptr;
+  float *mag_bias_x  = nullptr;
+  float *mag_bias_y  = nullptr;
+  float *mag_bias_z  = nullptr;
+  float *mag_scale_x = nullptr;
+  float *mag_scale_y = nullptr;
+  float *mag_scale_z = nullptr;
+  float *mag_nort_x  = nullptr;
+  float *mag_nort_y  = nullptr;
+  float *mag_nort_z  = nullptr;
+  /*
   const float *gyr_nort_0  = nullptr;
   const float *gyr_nort_1  = nullptr;
   const float *gyr_nort_2  = nullptr;
@@ -119,6 +130,7 @@ private:
   const float *acc_nort_3  = nullptr;
   const float *acc_nort_4  = nullptr;
   const float *acc_nort_5  = nullptr;
+  */
 
 
   const uint32_t *samples   = nullptr;

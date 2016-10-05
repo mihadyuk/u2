@@ -78,6 +78,20 @@ void Navi6dWrapper::read_settings(void) {
   param_registry.valueSearch("SINS_gyr_scale_y",&gyr_scale_y);
   param_registry.valueSearch("SINS_gyr_scale_z",&gyr_scale_z);
 
+  param_registry.valueSearch("MAG_declinate",   &mag_declinate);
+  param_registry.valueSearch("MAG_bx",          &mag_bias_x);
+  param_registry.valueSearch("MAG_by",          &mag_bias_y);
+  param_registry.valueSearch("MAG_bz",          &mag_bias_z);
+
+  param_registry.valueSearch("MAG_sx",          &mag_scale_x);
+  param_registry.valueSearch("MAG_sy",          &mag_scale_y);
+  param_registry.valueSearch("MAG_sz",          &mag_scale_z);
+
+  param_registry.valueSearch("MAG_nox",         &mag_nort_x);
+  param_registry.valueSearch("MAG_noy",         &mag_nort_y);
+  param_registry.valueSearch("MAG_noz",         &mag_nort_z);
+
+  /*
   param_registry.valueSearch("SINS_acc_nort_0", &acc_nort_0);
   param_registry.valueSearch("SINS_acc_nort_1", &acc_nort_1);
   param_registry.valueSearch("SINS_acc_nort_2", &acc_nort_2);
@@ -85,12 +99,13 @@ void Navi6dWrapper::read_settings(void) {
   param_registry.valueSearch("SINS_acc_nort_4", &acc_nort_4);
   param_registry.valueSearch("SINS_acc_nort_5", &acc_nort_5);
 
-  param_registry.valueSearch("SINS_gyr_nort_0", &acc_nort_0);
-  param_registry.valueSearch("SINS_gyr_nort_1", &acc_nort_1);
-  param_registry.valueSearch("SINS_gyr_nort_2", &acc_nort_2);
-  param_registry.valueSearch("SINS_gyr_nort_3", &acc_nort_3);
-  param_registry.valueSearch("SINS_gyr_nort_4", &acc_nort_4);
-  param_registry.valueSearch("SINS_gyr_nort_5", &acc_nort_5);
+  param_registry.valueSearch("SINS_gyr_nort_0", &gyr_nort_0);
+  param_registry.valueSearch("SINS_gyr_nort_1", &gyr_nort_1);
+  param_registry.valueSearch("SINS_gyr_nort_2", &gyr_nort_2);
+  param_registry.valueSearch("SINS_gyr_nort_3", &gyr_nort_3);
+  param_registry.valueSearch("SINS_gyr_nort_4", &gyr_nort_4);
+  param_registry.valueSearch("SINS_gyr_nort_5", &gyr_nort_5);
+  */
 
   param_registry.valueSearch("SINS_eu_vh_roll", &eu_vh_roll);
   param_registry.valueSearch("SINS_eu_vh_pitch",&eu_vh_pitch);
@@ -126,6 +141,33 @@ void Navi6dWrapper::sins_cold_start(void) {
   cmd.param[10][0] = *f_alg_t;
 
   nav_sins.command_executor(cmd);
+
+  if (SAVE_MAG_CALIB == cmd.command) {
+
+    *mag_bias_x = nav_sins.calib_params.bm_marg[0][0];
+    *mag_bias_y = nav_sins.calib_params.bm_marg[1][0];
+    *mag_bias_z = nav_sins.calib_params.bm_marg[2][0];
+
+    *mag_scale_x = nav_sins.calib_params.sm_marg[0][0];
+    *mag_scale_y = nav_sins.calib_params.sm_marg[1][0];
+    *mag_scale_z = nav_sins.calib_params.sm_marg[2][0];
+
+    *mag_nort_x = nav_sins.calib_params.no_m_marg[0][0];
+    *mag_nort_y = nav_sins.calib_params.no_m_marg[1][0];
+    *mag_nort_z = nav_sins.calib_params.no_m_marg[2][0];
+
+    param_registry.syncParam("MAG_bx");
+    param_registry.syncParam("MAG_by");
+    param_registry.syncParam("MAG_bz");
+
+    param_registry.syncParam("MAG_sx");
+    param_registry.syncParam("MAG_sy");
+    param_registry.syncParam("MAG_sz");
+
+    param_registry.syncParam("MAG_nox");
+    param_registry.syncParam("MAG_noy");
+    param_registry.syncParam("MAG_noz");
+  }
 }
 /**
  *

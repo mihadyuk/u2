@@ -61,7 +61,7 @@ extern MavLogger mav_logger;
  */
 
 #define KALMAN_STATE_SIZE         15
-#define KALMAN_MEASUREMENT_SIZE   10
+#define KALMAN_MEASUREMENT_SIZE   15
 
 __CCM__ static NavigatorSins<sinsfp, klmnfp, KALMAN_STATE_SIZE, KALMAN_MEASUREMENT_SIZE> nav_sins;
 
@@ -220,15 +220,15 @@ void Navi6dWrapper::debug2mavlink(void) {
   mav_dbg_sender.send(
       "acc_scale",
       nav_sins.navi_data.a_scale[0][0],
-      nav_sins.navi_data.a_scale[1][1],
-      nav_sins.navi_data.a_scale[2][2],
+      nav_sins.navi_data.a_scale[1][0],
+      nav_sins.navi_data.a_scale[2][0],
       time);
 
   mav_dbg_sender.send(
       "gyr_scale",
       nav_sins.navi_data.w_scale[0][0],
-      nav_sins.navi_data.w_scale[1][1],
-      nav_sins.navi_data.w_scale[2][2],
+      nav_sins.navi_data.w_scale[1][0],
+      nav_sins.navi_data.w_scale[2][0],
       time);
 
   mav_dbg_sender.send(
@@ -238,7 +238,21 @@ void Navi6dWrapper::debug2mavlink(void) {
       0,
       time);
 
+
   mav_dbg_sender.send(nav_sins.navi_data.status, DEBUG_INDEX_SINS, TIME_BOOT_MS);
+  mav_dbg_sender.send(nav_sins.navi_data.mag_quality, DEBUG_INDEX_MAG_QUALITY, TIME_BOOT_MS);
+
+  /*
+  klmnfp bx, by, bz;
+  nav_sins.marg_b.mag_calib.get_bias(bx, by, bz);
+  mav_dbg_sender.send(
+      "mag_data",
+      bx,
+      by,
+      bz,
+      time);
+      */
+
 }
 
 /**
@@ -430,6 +444,20 @@ void Navi6dWrapper::update(const baro_data_t &baro,
   nav_sins.calib_params.sw[1][0] = *gyr_scale_y;
   nav_sins.calib_params.sw[2][0] = *gyr_scale_z;
 
+  nav_sins.ref_params.mag_dec = deg2rad(*mag_declinate);
+  nav_sins.calib_params.bm_marg[0][0] = *mag_bias_x;
+  nav_sins.calib_params.bm_marg[1][0] = *mag_bias_y;
+  nav_sins.calib_params.bm_marg[2][0] = *mag_bias_z;
+
+  nav_sins.calib_params.sm_marg[0][0] = *mag_scale_x;
+  nav_sins.calib_params.sm_marg[1][0] = *mag_scale_y;
+  nav_sins.calib_params.sm_marg[2][0] = *mag_scale_z;
+
+  nav_sins.calib_params.no_m_marg[0][0] = *mag_nort_x;
+  nav_sins.calib_params.no_m_marg[1][0] = *mag_nort_y;
+  nav_sins.calib_params.no_m_marg[2][0] = *mag_nort_z;
+
+  /*
   nav_sins.calib_params.no_a[0][0] = *acc_nort_0;
   nav_sins.calib_params.no_a[1][0] = *acc_nort_1;
   nav_sins.calib_params.no_a[2][0] = *acc_nort_2;
@@ -443,18 +471,8 @@ void Navi6dWrapper::update(const baro_data_t &baro,
   nav_sins.calib_params.no_w[3][0] = *gyr_nort_3;
   nav_sins.calib_params.no_w[4][0] = *gyr_nort_4;
   nav_sins.calib_params.no_w[5][0] = *gyr_nort_5;
+  */
 
-  nav_sins.calib_params.bm[0][0] = -3.79611/1000;
-  nav_sins.calib_params.bm[1][0] = 15.2098/1000;
-  nav_sins.calib_params.bm[2][0] = -5.45266/1000;
-
-  nav_sins.calib_params.m_s[0][0] = 0.916692;
-  nav_sins.calib_params.m_s[1][0] = 0.912;
-  nav_sins.calib_params.m_s[2][0] = 0.9896;
-
-  nav_sins.calib_params.m_no[0][0] = -0.0031;
-  nav_sins.calib_params.m_no[1][0] = 0.0078;
-  nav_sins.calib_params.m_no[2][0] = 0.0018;
 
   nav_sins.calib_params.ba[0][0] = *acc_bias_x;
   nav_sins.calib_params.ba[1][0] = *acc_bias_y;
